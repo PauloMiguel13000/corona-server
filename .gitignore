@@ -1,0 +1,12 @@
+# Nunca subir segredos
+**/playit-config-SECRETO/
+**/anydesk-SECRETO/
+**/CoronaLoja/config.yml
+*.key
+*.pem
+# Lixo de build
+__pycache__/
+*.class
+*.pyc
+build/
+out/

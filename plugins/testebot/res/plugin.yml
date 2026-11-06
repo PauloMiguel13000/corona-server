@@ -1,0 +1,7 @@
+name: TesteBot
+version: '1.0'
+main: teste.bot.TesteBot
+api-version: '1.21'
+commands:
+  fake:
+    description: jogador falso para teste

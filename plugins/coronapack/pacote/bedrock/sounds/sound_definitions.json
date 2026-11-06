@@ -1,0 +1,951 @@
+{
+ "format_version": "1.14.0",
+ "sound_definitions": {
+  "backrooms.bacteria_estalo": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 20.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/bacteria_estalo",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:backrooms.bacteria_estalo": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 20.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/bacteria_estalo",
+     "volume": 1.0
+    }
+   ]
+  },
+  "backrooms.bacteria_grito": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 40.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/bacteria_grito",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:backrooms.bacteria_grito": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 40.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/bacteria_grito",
+     "volume": 1.0
+    }
+   ]
+  },
+  "backrooms.batidas": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 40.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/batidas",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:backrooms.batidas": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 40.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/batidas",
+     "volume": 1.0
+    }
+   ]
+  },
+  "backrooms.corrida_alarme": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/corrida_alarme",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:backrooms.corrida_alarme": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/corrida_alarme",
+     "volume": 1.0
+    }
+   ]
+  },
+  "backrooms.corrida_rugido": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/corrida_rugido",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:backrooms.corrida_rugido": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/corrida_rugido",
+     "volume": 1.0
+    }
+   ]
+  },
+  "backrooms.distante": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/distante",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:backrooms.distante": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/distante",
+     "volume": 1.0
+    }
+   ]
+  },
+  "backrooms.lampada": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 16.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/lampada",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:backrooms.lampada": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 16.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/lampada",
+     "volume": 1.0
+    }
+   ]
+  },
+  "backrooms.pego": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 16.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/pego",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:backrooms.pego": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 16.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/pego",
+     "volume": 1.0
+    }
+   ]
+  },
+  "backrooms.saida": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/saida",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:backrooms.saida": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/saida",
+     "volume": 1.0
+    }
+   ]
+  },
+  "backrooms.sorridente_grito": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 40.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/sorridente_grito",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:backrooms.sorridente_grito": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 40.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/sorridente_grito",
+     "volume": 1.0
+    }
+   ]
+  },
+  "backrooms.sorridente_risada": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 16.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/sorridente_risada",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:backrooms.sorridente_risada": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 16.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/sorridente_risada",
+     "volume": 1.0
+    }
+   ]
+  },
+  "backrooms.sussurros": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 8.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/sussurros",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:backrooms.sussurros": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 8.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/sussurros",
+     "volume": 1.0
+    }
+   ]
+  },
+  "backrooms.uivador_estalo": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 16.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/uivador_estalo",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:backrooms.uivador_estalo": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 16.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/uivador_estalo",
+     "volume": 1.0
+    }
+   ]
+  },
+  "backrooms.uivador_uivo": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/uivador_uivo",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:backrooms.uivador_uivo": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/uivador_uivo",
+     "volume": 1.0
+    }
+   ]
+  },
+  "backrooms.zumbido": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 10.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/zumbido",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:backrooms.zumbido": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 10.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/zumbido",
+     "volume": 1.0
+    }
+   ]
+  },
+  "hotel.estrondo": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/hotel/estrondo",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:hotel.estrondo": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/hotel/estrondo",
+     "volume": 1.0
+    }
+   ]
+  },
+  "hotel.retorno": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/hotel/retorno",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:hotel.retorno": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/hotel/retorno",
+     "volume": 1.0
+    }
+   ]
+  },
+  "hotel.figura": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 40.0,
+   "sounds": [
+    {
+     "name": "sounds/hotel/figura",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:hotel.figura": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 40.0,
+   "sounds": [
+    {
+     "name": "sounds/hotel/figura",
+     "volume": 1.0
+    }
+   ]
+  },
+  "hotel.perseguidor": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 56.0,
+   "sounds": [
+    {
+     "name": "sounds/hotel/perseguidor",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:hotel.perseguidor": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 56.0,
+   "sounds": [
+    {
+     "name": "sounds/hotel/perseguidor",
+     "volume": 1.0
+    }
+   ]
+  },
+  "hotel.psst": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 8.0,
+   "sounds": [
+    {
+     "name": "sounds/hotel/psst",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:hotel.psst": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 8.0,
+   "sounds": [
+    {
+     "name": "sounds/hotel/psst",
+     "volume": 1.0
+    }
+   ]
+  },
+  "hotel.sussurro_ataque": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 16.0,
+   "sounds": [
+    {
+     "name": "sounds/hotel/sussurro_ataque",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:hotel.sussurro_ataque": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 16.0,
+   "sounds": [
+    {
+     "name": "sounds/hotel/sussurro_ataque",
+     "volume": 1.0
+    }
+   ]
+  },
+  "hotel.passos": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 24.0,
+   "sounds": [
+    {
+     "name": "sounds/hotel/passos",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:hotel.passos": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 24.0,
+   "sounds": [
+    {
+     "name": "sounds/hotel/passos",
+     "volume": 1.0
+    }
+   ]
+  },
+  "backrooms.cao_rosnado": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 40.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/cao_rosnado",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:backrooms.cao_rosnado": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 40.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/cao_rosnado",
+     "volume": 1.0
+    }
+   ]
+  },
+  "backrooms.cao_ataque": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 56.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/cao_ataque",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:backrooms.cao_ataque": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 56.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/cao_ataque",
+     "volume": 1.0
+    }
+   ]
+  },
+  "backrooms.festeiro_risada": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 24.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/festeiro_risada",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:backrooms.festeiro_risada": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 24.0,
+   "sounds": [
+    {
+     "name": "sounds/backrooms/festeiro_risada",
+     "volume": 1.0
+    }
+   ]
+  },
+  "naochore.respiracao": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 12.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/respiracao",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:naochore.respiracao": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 12.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/respiracao",
+     "volume": 1.0
+    }
+   ]
+  },
+  "naochore.choro": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/choro",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:naochore.choro": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/choro",
+     "volume": 1.0
+    }
+   ]
+  },
+  "naochore.grito_vigia": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/grito_vigia",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:naochore.grito_vigia": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/grito_vigia",
+     "volume": 1.0
+    }
+   ]
+  },
+  "naochore.grito_chorona": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/grito_chorona",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:naochore.grito_chorona": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/grito_chorona",
+     "volume": 1.0
+    }
+   ]
+  },
+  "naochore.rosnado": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/rosnado",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:naochore.rosnado": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/rosnado",
+     "volume": 1.0
+    }
+   ]
+  },
+  "naochore.arranhao": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 16.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/arranhao",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:naochore.arranhao": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 16.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/arranhao",
+     "volume": 1.0
+    }
+   ]
+  },
+  "naochore.risada": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/risada",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:naochore.risada": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/risada",
+     "volume": 1.0
+    }
+   ]
+  },
+  "naochore.batida_porta": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 24.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/batida_porta",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:naochore.batida_porta": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 24.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/batida_porta",
+     "volume": 1.0
+    }
+   ]
+  },
+  "naochore.sussurro_nome": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 8.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/sussurro_nome",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:naochore.sussurro_nome": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 8.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/sussurro_nome",
+     "volume": 1.0
+    }
+   ]
+  },
+  "naochore.correndo": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 32.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/correndo",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:naochore.correndo": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 32.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/correndo",
+     "volume": 1.0
+    }
+   ]
+  },
+  "naochore.batimento": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 4.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/batimento",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:naochore.batimento": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 4.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/batimento",
+     "volume": 1.0
+    }
+   ]
+  },
+  "naochore.zumbido_noite": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 6.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/zumbido_noite",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:naochore.zumbido_noite": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 6.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/zumbido_noite",
+     "volume": 1.0
+    }
+   ]
+  },
+  "naochore.nina": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 24.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/nina",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:naochore.nina": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 24.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/nina",
+     "volume": 1.0
+    }
+   ]
+  },
+  "naochore.estatica": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 8.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/estatica",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:naochore.estatica": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 8.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/estatica",
+     "volume": 1.0
+    }
+   ]
+  },
+  "naochore.maos": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 12.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/maos",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:naochore.maos": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 12.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/maos",
+     "volume": 1.0
+    }
+   ]
+  },
+  "naochore.porta_rangendo": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 24.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/porta_rangendo",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:naochore.porta_rangendo": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 24.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/porta_rangendo",
+     "volume": 1.0
+    }
+   ]
+  },
+  "naochore.voce_chorou": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 8.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/voce_chorou",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:naochore.voce_chorou": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 8.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/voce_chorou",
+     "volume": 1.0
+    }
+   ]
+  },
+  "naochore.grito_duplo": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/grito_duplo",
+     "volume": 1.0
+    }
+   ]
+  },
+  "minecraft:naochore.grito_duplo": {
+   "category": "hostile",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/naochore/grito_duplo",
+     "volume": 1.0
+    }
+   ]
+  }
+ }
+}

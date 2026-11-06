@@ -1,0 +1,17 @@
+name: Backrooms
+version: '1.0'
+main: br.servidor.backrooms.Backrooms
+api-version: '1.21'
+softdepend: [AuthMe, Multiverse-Core, BabyPets, Geyser-Spigot]
+description: Minigame de terror - atravesse as 4 fases das Backrooms e ache a saida.
+commands:
+  backrooms:
+    description: Minigame Backrooms (/backrooms, /backrooms entrar, /backrooms sair)
+    aliases: [backroom, br]
+permissions:
+  backrooms.jogar:
+    description: Jogar nas Backrooms
+    default: true
+  backrooms.admin:
+    description: Administrar o minigame Backrooms
+    default: op

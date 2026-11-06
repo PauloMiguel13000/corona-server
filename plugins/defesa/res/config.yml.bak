@@ -1,0 +1,7 @@
+# Defesa da Torre
+essencia-inicial: 40
+vida-nucleo: 100
+intervalo-entre-ondas: 15
+arena-construida: false
+recorde: 0
+recorde-jogadores: ''

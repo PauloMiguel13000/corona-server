@@ -1,0 +1,196 @@
+# Minigame Backrooms
+# Jogadores: /backrooms (menu), /backrooms entrar, /backrooms sair, /backrooms modo <facil|normal|dificil>
+# Admin: /backrooms admin <iniciar|parar|status|nivel <0-7>|pular|abrir|itens|tp <0-7>|espera|modo <m>|recarregar>
+# Fases: Nivel 0 (saguao amarelo), 1 (garagem), 2 (canos), 3 (Estacao Eletrica, os Caes), Fun (Festeiros),
+#        37 (Piscinas, Afogados), 6 (Luzes Apagadas, as Sombras + lanterna) e o Nivel ! (corredor de 640 blocos).
+# A ordem e sorteada a cada partida: o Nivel 0 sempre primeiro, a corrida sempre no fim (embaralhar-niveis).
+# Aparicoes em todas as fases (festeiro-segundos), sustos que so uma pessoa ve (susto-a-cada), apagoes e passos.
+
+min-jogadores: 1           # quantos na fila para comecar a contagem
+max-jogadores: 8           # com essa quantidade na fila a contagem cai para 8 segundos
+contagem-segundos: 20
+tempo-limite-minutos: 90   # 0 = sem limite
+embaralhar-niveis: true    # sorteia a ordem das fases do meio a cada partida
+
+# ---------------------------------------------------------------- dificuldade
+# Velocidade das criaturas ~ 2,75 x ritmo x ritmo blocos/s (jogador andando faz 4,3 e correndo 5,6).
+modo-padrao: normal
+modos:
+  facil:
+    vidas: 4
+    itens: 3                 # chaves / fusiveis / valvulas para abrir a saida de cada fase
+    itens-extras: 4          # sobram alguns a mais no mapa
+    agua: 30                 # aguas de amendoa por fase
+    agua-sanidade: 45
+    sanidade-por-segundo: 0.05   # no escuro cai o dobro
+    bussola: sempre          # sempre | as-vezes | lenta (aponta para o item mais perto; lenta = so muda a cada bussola-segundos)
+    bacterias: 2             # Nivel 0
+    n1-bacterias: 0          # Nivel 1
+    bacteria-ritmo-ronda: 0.7
+    bacteria-ritmo-investigar: 0.9
+    bacteria-ritmo-caca: 1.0     # ~2,7 b/s
+    bacteria-visao: 18
+    bacteria-visao-agachado: 9
+    bacteria-angulo: 60
+    bacteria-memoria: 3
+    bacteria-audicao: 0.4
+    bacteria-visita-segundos: 45
+    sorridentes: 6           # Nivel 1
+    sorridente-gatilho: 6    # distancia em que olhar para ele faz ele atacar
+    sorridente-velocidade: 4.0
+    sorridente-tempo: 6
+    coisas: 1                # Nivel 2
+    coisa-ritmo-ronda: 0.7
+    coisa-ritmo-investigar: 0.95
+    coisa-ritmo-caca: 1.05
+    coisa-visao: 5
+    coisa-visao-agachado: 2.5
+    coisa-audicao: 0.8
+    coisa-memoria: 3
+    coisa-visita-segundos: 45
+    caes: 2                  # Nivel 3: os Caes (andam de quatro; encarar sem correr faz eles pararem)
+    cao-ritmo-ronda: 0.75
+    cao-ritmo-investigar: 0.95
+    cao-ritmo-caca: 1.05
+    cao-visao: 14
+    cao-visao-agachado: 7
+    cao-investida: 1.2         # mais rapido quando voce corre ou vira as costas
+    cao-encarar-segundos: 5    # encarando esse tempo seguido, ele desiste
+    cao-desiste-segundos: 25
+    festeiros: 2             # Nivel Fun
+    afogados: 2              # Nivel 37
+    sombras: 2               # Nivel 6: so andam quando ninguem olha para elas com luz
+    sombra-ritmo-caca: 1.3
+    sombra-alcance: 32
+    pilha-por-segundo: 0.35  # Nivel 6: quanto a lanterna gasta (100 = cheia)
+    susto-a-cada: 150        # segundos (media) entre sustos que so uma pessoa ve; 0 em sustos desliga
+    festeiro-segundos: 70
+    corrida-velocidade: 5.0  # Nivel ! (blocos/s; voce correndo faz 5,6 e correndo+pulando ~7)
+    corrida-distancia: 26    # ela nunca fica mais longe que isso de quem esta mais atras
+    corrida-investida-segundos: 16   # de tanto em tanto tempo ela ruge e acelera por 2 s
+    corrida-investida-forca: 1.3
+    corrida-escuridao: 0     # segundos entre apagoes (escuridao) na corrida; 0 = nunca
+  normal:
+    vidas: 3
+    itens: 4
+    itens-extras: 3
+    agua: 20
+    agua-sanidade: 40
+    sanidade-por-segundo: 0.09
+    bussola: as-vezes
+    bacterias: 3
+    n1-bacterias: 1
+    bacteria-ritmo-ronda: 0.78
+    bacteria-ritmo-investigar: 1.0
+    bacteria-ritmo-caca: 1.12    # ~3,4 b/s
+    bacteria-visao: 22
+    bacteria-visao-agachado: 11
+    bacteria-angulo: 70
+    bacteria-memoria: 4
+    bacteria-audicao: 0.5
+    bacteria-visita-segundos: 32
+    sorridentes: 10
+    sorridente-gatilho: 9
+    sorridente-velocidade: 4.8
+    sorridente-tempo: 7
+    coisas: 2
+    coisa-ritmo-ronda: 0.78
+    coisa-ritmo-investigar: 1.05
+    coisa-ritmo-caca: 1.15
+    coisa-visao: 6
+    coisa-visao-agachado: 3
+    coisa-audicao: 1.0
+    coisa-memoria: 4
+    coisa-visita-segundos: 32
+    caes: 3                  # Nivel 3: os Caes (andam de quatro; encarar sem correr faz eles pararem)
+    cao-ritmo-ronda: 0.8
+    cao-ritmo-investigar: 1.0
+    cao-ritmo-caca: 1.12
+    cao-visao: 16
+    cao-visao-agachado: 8
+    cao-investida: 1.25         # mais rapido quando voce corre ou vira as costas
+    cao-encarar-segundos: 4    # encarando esse tempo seguido, ele desiste
+    cao-desiste-segundos: 20
+    festeiros: 3
+    afogados: 3
+    sombras: 3
+    sombra-ritmo-caca: 1.45
+    sombra-alcance: 40
+    pilha-por-segundo: 0.45
+    susto-a-cada: 105
+    festeiro-segundos: 55
+    corrida-velocidade: 5.3
+    corrida-distancia: 20
+    corrida-investida-segundos: 12
+    corrida-investida-forca: 1.4
+    corrida-escuridao: 25
+  dificil:
+    vidas: 2
+    itens: 6
+    itens-extras: 2
+    agua: 12
+    agua-sanidade: 35
+    sanidade-por-segundo: 0.14
+    bussola: lenta
+    bussola-segundos: 15
+    bacterias: 5
+    n1-bacterias: 2
+    bacteria-ritmo-ronda: 0.85
+    bacteria-ritmo-investigar: 1.1
+    bacteria-ritmo-caca: 1.25    # ~4,3 b/s: igual a voce andando
+    bacteria-visao: 26
+    bacteria-visao-agachado: 13
+    bacteria-angulo: 80
+    bacteria-memoria: 6
+    bacteria-audicao: 0.7
+    bacteria-visita-segundos: 22
+    sorridentes: 16
+    sorridente-gatilho: 12
+    sorridente-velocidade: 5.3
+    sorridente-tempo: 8
+    coisas: 3
+    coisa-ritmo-ronda: 0.85
+    coisa-ritmo-investigar: 1.15
+    coisa-ritmo-caca: 1.27
+    coisa-visao: 7
+    coisa-visao-agachado: 3.5
+    coisa-audicao: 1.3
+    coisa-memoria: 6
+    coisa-visita-segundos: 22
+    caes: 4                  # Nivel 3: os Caes (andam de quatro; encarar sem correr faz eles pararem)
+    cao-ritmo-ronda: 0.85
+    cao-ritmo-investigar: 1.05
+    cao-ritmo-caca: 1.2
+    cao-visao: 18
+    cao-visao-agachado: 9
+    cao-investida: 1.35         # mais rapido quando voce corre ou vira as costas
+    cao-encarar-segundos: 3.5    # encarando esse tempo seguido, ele desiste
+    cao-desiste-segundos: 15
+    festeiros: 4
+    afogados: 4
+    sombras: 4
+    sombra-ritmo-caca: 1.6
+    sombra-alcance: 48
+    pilha-por-segundo: 0.6
+    susto-a-cada: 75
+    festeiro-segundos: 40
+    corrida-velocidade: 5.3
+    corrida-distancia: 18
+    corrida-investida-segundos: 11
+    corrida-investida-forca: 1.35
+    corrida-escuridao: 16
+
+# Comandos dados a quem escapar. %jogador% vira o nome e %modo% a dificuldade. Exemplo: "give %jogador% diamond 3"
+recompensa-comandos: []
+
+# O plugin preenche sozinho:
+mapa-versao: 0
+
+# ---------------------------------------------------------------- modelos 3D (pacote de recursos)
+# Bacteria, Uivador, Cao, Festeiro e Sombra em 3D para quem tem o pacote no Java. false = so os manequins com skin.
+modelos-3d: true
+modelo-giro: 0           # se os modelos aparecerem de costas, troque para 180
+modelo-brilho-corpo: 6   # luz propria do modelo (0 = so a luz do lugar; 15 = sempre claro)
+modelo-brilho-olhos: 15
+modelo-bedrock: true     # Bedrock ve a Bacteria e o Uivador em 3D (ghast feliz e zoglin redesenhados pelo pacote); false = manequim
+rosto-na-tela: true      # o rosto gigante do monstro na tela quando ele pega / aparece na cara (Java com o pacote)

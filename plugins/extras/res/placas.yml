@@ -1,0 +1,215 @@
+# Placas informativas da ilha do spawn (o Extras coloca sozinho quando a versao muda).
+# /extras placas = coloca de novo. Cores: &6 dourado, &e amarelo, &f branco, &7 cinza, &l negrito.
+# Cada placa: pos (x y z), olha (para onde o texto fica virado: NORTH, SOUTH, EAST, WEST) e 4 linhas
+# (ate ~15 letras; com negrito ~12).
+versao: 2
+mundo: world
+madeira: CRIMSON
+placas:
+  # Comece aqui (sul do spawn)
+  - pos: 12 123 4
+    olha: NORTH
+    texto: ['&6&lBEM-VINDO!', '&fEstes itens', '&fficam na sua', '&fbarra:']
+  - pos: 11 123 4
+    olha: NORTH
+    texto: ['&6&lBÚSSOLA', '&fMinigames', '&7segure e use', '&7(botão direito)']
+  - pos: 10 123 4
+    olha: NORTH
+    texto: ['&d&lESTRELA', '&fescolhe a sua', '&fclasse', '&7troca: 1 hora']
+  - pos: 9 123 4
+    olha: NORTH
+    texto: ['&a&lOSSO', '&fseus pets:', '&fchama e guarda', '&7(ou /pets)']
+  - pos: 4 123 4
+    olha: NORTH
+    texto: ['&b&lLIVRO', '&fhabilidades', '&fda sua classe', '&7(ou /poderes)']
+  - pos: 3 123 4
+    olha: NORTH
+    texto: ['&2&lMAPA', '&fmasmorras do', '&fmundo inteiro', '&7(kit Mapas)']
+  - pos: 2 123 4
+    olha: NORTH
+    texto: ['&e&lPERDEU?', '&fpegue de novo', '&fno &e/kit', '&7kit Itens: 1h']
+  - pos: 1 123 4
+    olha: NORTH
+    texto: ['&c&lSEM PvP', '&fno spawn e', '&fnas masmorras', '']
+  # Minigames (norte, lado oeste)
+  - pos: 3 123 -23
+    olha: EAST
+    texto: ['&6&lMINIGAMES', '&fuse a bússola', '&fou &e/minigames', '&7e escolha']
+  - pos: 3 123 -24
+    olha: EAST
+    texto: ['&5&lCASA DA VOVÓ', '&ffuja da casa', '&fsem ser pego', '&e/vovo']
+  - pos: 3 123 -25
+    olha: EAST
+    texto: ['&5&lVOVÓ: DICAS', '&fande agachado', '&f= sem barulho', '&7ache as chaves']
+  - pos: 3 123 -26
+    olha: EAST
+    texto: ['&4&lSLENDERMAN', '&fache 8 folhas', '&cnão encare ele', '&e/slender']
+  - pos: 3 123 -27
+    olha: EAST
+    texto: ['&e&lBACKROOMS', '&f4 fases: ache', '&fitens e saia', '&e/backrooms']
+  - pos: 3 123 -28
+    olha: EAST
+    texto: ['&6&lDEFESA TORRE', '&fponha torres e', '&fsegure as ondas', '&e/defesa']
+  - pos: 3 123 -29
+    olha: EAST
+    texto: ['&a&lSEUS ITENS', '&fficam salvos e', '&fvoltam no fim', '&7(e o seu pet)']
+  # Masmorras (norte, lado leste)
+  - pos: 9 123 -29
+    olha: WEST
+    texto: ['&4&lMASMORRAS', '&fchefes pelo', '&fmundo, Nether', '&fe End']
+  - pos: 9 123 -28
+    olha: WEST
+    texto: ['&4&lONDE FICAM?', '&e/masmorras', '&7as mais perto', '&7e a direção']
+  - pos: 9 123 -27
+    olha: WEST
+    texto: ['&4&lMAPA', '&e/masmorras mapa', '&fou kit Mapas', '&7cor = nível']
+  - pos: 9 123 -26
+    olha: WEST
+    texto: ['&4&lNÍVEL 1 A 5', '&fmais longe do', '&fspawn = mais', '&fforte']
+  - pos: 9 123 -25
+    olha: WEST
+    texto: ['&4&lPRÊMIOS', '&fitens do chefe', '&b+ XP de classe', '&7chefe volta 1h']
+  - pos: 9 123 -24
+    olha: WEST
+    texto: ['&4&lREGRAS', '&fsem PvP dentro', '&fas paredes não', '&fquebram']
+  - pos: 9 123 -23
+    olha: WEST
+    texto: ['&4&lVÁ EM GRUPO', '&e/grupo', '&fcom amigos é', '&fmais fácil']
+  # Kits (sul, lado oeste)
+  - pos: 3 123 17
+    olha: EAST
+    texto: ['&2&lKITS', '&e/kit &fabre o', '&fmenu de kits', '&7espere o tempo']
+  - pos: 3 123 16
+    olha: EAST
+    texto: ['&2&lINICIAL', '&fferramentas de', '&fpedra, pão e', '&ftochas (1 vez)']
+  - pos: 3 123 15
+    olha: EAST
+    texto: ['&2&lCOMIDA', '&fcarne e pão', '&7a cada 1 hora', '']
+  - pos: 3 123 14
+    olha: EAST
+    texto: ['&2&lITENS', '&fdevolve os 4', '&fitens da barra', '&7a cada 1 hora']
+  - pos: 3 123 13
+    olha: EAST
+    texto: ['&2&lMAPAS', '&fmapas das', '&fmasmorras', '&7a cada 1 hora']
+  - pos: 3 123 12
+    olha: EAST
+    texto: ['&d&lKIT PET', '&fovo de pet,', '&fincubadora e', '&flobo &7(4 horas)']
+  - pos: 3 123 11
+    olha: EAST
+    texto: ['&9&lPET RARO', '&fovo raro e 3', '&fpenas de voo', '&7a cada 24h']
+  # Pets (sul, lado leste)
+  - pos: 9 123 11
+    olha: WEST
+    texto: ['&a&lPETS', '&fosso na mão ou', '&e/pets', '&7chama e guarda']
+  - pos: 9 123 12
+    olha: WEST
+    texto: ['&a&lCHOCAR', '&fovo na', '&fincubadora', '&7espere 20 min']
+  - pos: 9 123 13
+    olha: WEST
+    texto: ['&a&lPET LUTA', '&fbate sozinho', '&fnos monstros', '&e/petpoder']
+  - pos: 9 123 14
+    olha: WEST
+    texto: ['&a&lDUELO', '&e/duelopet nick', '&fpet contra pet', '']
+  - pos: 9 123 15
+    olha: WEST
+    texto: ['&b&lPENA DE VOO', '&fsegure e use:', '&f30 s voando', '&7(kit Pet Raro)']
+  - pos: 9 123 16
+    olha: WEST
+    texto: ['&6&lLOBO', '&flobo guerreiro', '&fluta do seu', '&flado (kit Pet)']
+  - pos: 9 123 17
+    olha: WEST
+    texto: ['&a&lMINIGAMES', '&fo pet espera', '&ffora e volta', '&fdepois sozinho']
+  - pos: 9 123 18
+    olha: WEST
+    texto: ['&d&lPODERES PET', '&e/petpoder', '&f5 poderes: um', '&fnos níveis 1-9']
+  - pos: 9 123 19
+    olha: WEST
+    texto: ['&d&lXP DO PET', '&fmasmorras dão', '&fXP pro pet e', '&flibera poderes']
+  # Classes (oeste, lado norte)
+  - pos: -17 123 -9
+    olha: SOUTH
+    texto: ['&d&lCLASSES', '&festrela ou', '&e/classe', '&7troca: 1 hora']
+  - pos: -16 123 -9
+    olha: SOUTH
+    texto: ['&d&l6 CLASSES', '&dMago &6Engenheiro', '&eSaiyajin &aDruida', '&cGuerreiro &8Ninja']
+  - pos: -15 123 -9
+    olha: SOUTH
+    texto: ['&b&lUSAR PODER', '&fagache e soque', '&fo ar com a mão', '&fvazia']
+  - pos: -14 123 -9
+    olha: SOUTH
+    texto: ['&b&lTROCAR PODER', '&fagache + F', '&fou escolha no', '&e/poderes']
+  - pos: -13 123 -9
+    olha: SOUTH
+    texto: ['&b&lNÍVEL PODER', '&fsoma das skills', '&e/skills &fmostra', '&7libera poderes']
+  - pos: -12 123 -9
+    olha: SOUTH
+    texto: ['&b&lLIBERA COM', '&f0, 15, 30, 45', '&fe 60 de nível', '&fde poder']
+  - pos: -11 123 -9
+    olha: SOUTH
+    texto: ['&b&lSUBIR NÍVEL', '&fminere, lute,', '&fplante, pesque', '&fe masmorras!']
+  # Grupos e clas (oeste, lado sul)
+  - pos: -11 123 -3
+    olha: NORTH
+    texto: ['&3&lGRUPO', '&fjogue junto:', '&fgrupo não se', '&fmachuca']
+  - pos: -12 123 -3
+    olha: NORTH
+    texto: ['&3&lCHAMAR', '&e/grupo convidar', '&enick', '&7máximo 8']
+  - pos: -13 123 -3
+    olha: NORTH
+    texto: ['&3&lENTRAR/SAIR', '&e/grupo aceitar', '&e/grupo sair', '&e/gc msg &fchat']
+  - pos: -14 123 -3
+    olha: NORTH
+    texto: ['&5&lCLÃ', '&e/clan criar TAG', '&enome', '&7tag no chat']
+  - pos: -15 123 -3
+    olha: NORTH
+    texto: ['&5&lCONVIDAR', '&e/clan convidar', '&e/clan aceitar', '&e/clan sair']
+  - pos: -16 123 -3
+    olha: NORTH
+    texto: ['&5&lBASE DO CLÃ', '&e/clan base', '&e/clan setbase', '&7(dono/oficial)']
+  - pos: -17 123 -3
+    olha: NORTH
+    texto: ['&5&lMAIS', '&e/clan info', '&e/clan lista', '&e/cc msg &fchat']
+  # Comandos (leste, lado norte)
+  - pos: 23 123 -9
+    olha: SOUTH
+    texto: ['&e&lCOMANDOS', '&e/spawn', '&fvolta para cá', '']
+  - pos: 24 123 -9
+    olha: SOUTH
+    texto: ['&e&l/RTP', '&fvai para um', '&flugar aleatório', '&7(espera 5 min)']
+  - pos: 25 123 -9
+    olha: SOUTH
+    texto: ['&e&lCASAS', '&e/sethome nome', '&e/home nome', '&e/delhome nome']
+  - pos: 26 123 -9
+    olha: SOUTH
+    texto: ['&e&lPLOT', '&e/plot auto', '&fganha um plot', '&e/plot home']
+  - pos: 27 123 -9
+    olha: SOUTH
+    texto: ['&e&lBAÚ DO ENDER', '&e/ec &fabre o seu', '&fde qualquer', '&flugar']
+  - pos: 28 123 -9
+    olha: SOUTH
+    texto: ['&e&lSKILLS', '&e/skills', '&fsuas skills e', '&fnível de poder']
+  - pos: 29 123 -9
+    olha: SOUTH
+    texto: ['&e&lMASMORRAS', '&e/masmorras', '&e/masmorras mapa', '&e/grupo &7e &e/clan']
+  # Dicas (leste, lado sul)
+  - pos: 29 123 -3
+    olha: NORTH
+    texto: ['&a&lDICAS', '&fpule da ilha', '&fpara descer ao', '&fchão, sem dano']
+  - pos: 28 123 -3
+    olha: NORTH
+    texto: ['&a&lPROTEJA', '&fpá de ouro:', '&fclique em 2', '&fcantos da casa']
+  - pos: 27 123 -3
+    olha: NORTH
+    texto: ['&a&lVOAR', '&e/voar &fdentro', '&fdo seu terreno', '&7(pá de ouro)']
+  - pos: 26 123 -3
+    olha: NORTH
+    texto: ['&a&lMUNDO', '&fborda: 5000', '&fblocos de cada', '&flado do spawn']
+  - pos: 25 123 -3
+    olha: NORTH
+    texto: ['&a&lVOTE E CHAME', '&e/votar &f= itens', '&e/ip &fpara amigos', '&e/indicar &fprêmio']
+  - pos: 24 123 -3
+    olha: NORTH
+    texto: ['&a&lSEM PvP', '&fno spawn e nas', '&fmasmorras', '']
+  - pos: 23 123 -3
+    olha: NORTH
+    texto: ['&a&lBOM JOGO!', '&fJava e Bedrock', '&fjogam juntos', '&7Corona Server']

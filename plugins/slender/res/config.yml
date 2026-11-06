@@ -1,0 +1,31 @@
+# Minigame do Slenderman
+# Jogadores: /slender (menu), /slender entrar, /slender sair
+# Admin: /slender admin <iniciar|parar|construir [limpar]|status|folha|aparecer|tp|pontos|recarregar>
+
+min-jogadores: 1          # quantos na fila para comecar a contagem (1 = da para jogar sozinho)
+max-jogadores: 8          # com essa quantidade na fila a contagem cai para 10 segundos (nao e limite: entra quem quiser)
+contagem-segundos: 30
+folhas-para-vencer: 8
+escala: 1.3               # tamanho do Slenderman (1.0 = altura normal de jogador)
+distancia-visao: 5        # distancia de visao do mundo do Slenderman (em chunks); menor = mais neblina
+teto-escuro: true         # true = floresta escura o tempo todo (vidro escuro no limite de altura segura a luz da lua); false = tira
+escuridao-a-cada: 10      # segundos entre as piscadas (efeito Escuridao); com o Slenderman perto vem mais vezes
+escuridao-duracao: 3      # segundos de cada piscada (de 2 a 15)
+lanterna: true            # true = cada jogador recebe uma lanterna na mao esquerda
+lanterna-alcance: 16      # ate quantos blocos a lanterna ilumina para onde o jogador olha
+lanterna-luz: 12          # forca da luz no ponto iluminado (1 a 15)
+lanterna-luz-perto: 6     # luz fraca logo a frente do jogador (0 = sem)
+
+# Comandos dados a quem escapar. %jogador% vira o nome. Exemplo: "give %jogador% diamond 3"
+recompensa-comandos: []
+
+# Skin do Slenderman (conta "Slenderman" do Minecraft). Nao precisa mexer.
+skin:
+  nome: Slenderman
+  uuid: 6e2d0364-65c7-475b-96d9-f4796a4c6f13
+  valor: "ewogICJ0aW1lc3RhbXAiIDogMTc5Mjk0MDIzNjQyMywKICAicHJvZmlsZUlkIiA6ICI2ZTJkMDM2NDY1Yzc0NzViOTZkOWY0Nzk2YTRjNmYxMyIsCiAgInByb2ZpbGVOYW1lIiA6ICJTbGVuZGVybWFuIiwKICAic2lnbmF0dXJlUmVxdWlyZWQiIDogdHJ1ZSwKICAidGV4dHVyZXMiIDogewogICAgIlNLSU4iIDogewogICAgICAidXJsIiA6ICJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlLzg1OTY4YjYxNjBmMzgwZmJlNzg2OWEzMDcwZWI3ZmI3NjI2N2RiMDdkNjg0ZWMyMGY3ZTk4YzFkMDczZGQ3MDIiLAogICAgICAibWV0YWRhdGEiIDogewogICAgICAgICJtb2RlbCIgOiAic2xpbSIKICAgICAgfQogICAgfSwKICAgICJDQVBFIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS83NjU4YzUwMjVjNzdjZmFjNzU3NGFhYjNhZjk0YTQ2YTg4ODZlM2I3NzIyYTg5NTI1NWZiZjIyYWI4NjUyNDM0IgogICAgfQogIH0KfQ=="
+  assinatura: "Rfgq5xltC1kXskRng263/71HNQHn1C+WyBEKYO6kQSlCl1zb2GkLZPlvLnT0LNw72hL8joXKE5OdemKMaonQb7R6QRrJG3WNjbTOQL1rVvjdA5307D/VkrWC+vVuCtL5CfgqRBXi83bgSlzKGdCRd734qSx6/UBxO7HmRbtBHmT2WQIcr3LsgUyvd/ILDaGtsAXSBB0u+brYbdwrLO158DQss01phAkNfYgSCwHuyvhHVqLu80ZkHO/gswUEqb2gcjn6t/G9MvkL69i/OsH5g5mCRqa3BGylnHw5VHILJecITlJlWmqfxNPnDX0GUm6MR4Wg5UItuzCVCHJ726pojvWoMcH2rpDci9ngfz8GENQjF7FE8Rpkqwwb0ZNHgw0Dh8Yl4oivA95vdfbNsbnDwaaJ2IxWG3f9Ai3iKMgcWuq42xVpRPpYtaCd19hS1+RvwkRQ9P+WU5UH8lQNJYXiSnOxoRcgkAvPUCdhjWW5XETahbchCIFWke4J4/Clm1uM7G6J2LVuc/sKGJnqtWuL7cxyXxfIM9GjwA9ep/jP4DkabGiKW65KVCjS2iiz/IpuIGSH2EUYTFqXlVZjaNxJifad0gGRxb3H1H6z/LveYADYeuMbZgk2kQdCMwO30aTAVNhnvF4iSCKjZ2DL0nEQsV71jm199S02LlkM1QtktP4="
+
+# O plugin preenche sozinho:
+mapa-versao: 0
+folhas-mapas: []

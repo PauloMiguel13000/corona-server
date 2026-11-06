@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loja oficial do Corona Server</title>
+<meta name="description" content="Loja oficial do Corona Server, do coronadooscar. VIP, coronas e Moedas de Reviver com Pix pelo Mercado Pago e entrega automática no jogo.">
+<meta name="theme-color" content="#C8102E">
+<link rel="icon" href="/coroa.svg" type="image/svg+xml">
+<link rel="preload" href="/shoulders-900.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<a class="pular" href="#produtos-titulo">Pular para os produtos</a>
+
+<header class="faixa">
+  <div class="faixa-topo">
+    <a class="marca" href="/" aria-label="Corona Server, loja oficial">
+      <svg class="selo" viewBox="0 0 19 13" aria-hidden="true" shape-rendering="crispEdges"><use href="#coroa"/></svg>
+      <span>Loja oficial</span>
+    </a>
+    <p class="status" id="status" aria-live="polite"><span class="ponto"></span><span id="online">conectando…</span></p>
+  </div>
+
+  <div class="hero">
+    <div class="hero-texto">
+      <h1 class="palavra" id="nomeServidor">Corona Server</h1>
+      <p class="hero-sub">VIP, coronas e Moedas de Reviver. Pague com Pix e receba no seu personagem em segundos.</p>
+      <div class="hero-acoes">
+        <a class="botao claro" href="#produtos-titulo">Ver produtos</a>
+        <button class="botao vazado" type="button" data-ir="historico">Minhas compras</button>
+      </div>
+    </div>
+    <div class="coroa-grande" aria-hidden="true" id="coroaGrande"></div>
+  </div>
+</header>
+
+<section class="confianca" aria-label="Por que é seguro comprar aqui">
+  <div class="conf-item">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.3 8 11 4.6-1.7 8-6 8-11V5l-8-3Zm-1.2 13.6-3.4-3.4 1.4-1.4 2 2 4.6-4.6 1.4 1.4-6 6Z"/></svg>
+    <div><b>Pix pelo Mercado Pago</b><p>Você paga no app do seu banco. A confirmação vem do Mercado Pago, na hora.</p></div>
+  </div>
+  <div class="conf-item">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 9V7a5 5 0 0 0-10 0v2H5v13h14V9h-2Zm-8-2a3 3 0 0 1 6 0v2H9V7Zm4 9.7V19h-2v-2.3a2 2 0 1 1 2 0Z"/></svg>
+    <div><b>Site com cadeado</b><p>Conexão protegida (HTTPS). A loja nunca pede a senha da sua conta.</p></div>
+  </div>
+  <div class="conf-item">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>
+    <div><b>Entrega automática</b><p>Caiu o Pix, o item aparece no jogo. Offline? Chega quando você entrar.</p></div>
+  </div>
+</section>
+
+<main>
+  <section class="vitrine" aria-labelledby="produtos-titulo">
+    <div class="vitrine-topo">
+      <h2 id="produtos-titulo">Escolha o seu</h2>
+      <div class="abas" role="tablist" aria-label="Categorias">
+        <button class="aba ativa" data-cat="vip" role="tab" aria-selected="true">VIPs</button>
+        <button class="aba" data-cat="coronas" role="tab" aria-selected="false">Coronas</button>
+        <button class="aba" data-cat="extras" role="tab" aria-selected="false">Minigames</button>
+        <button class="aba" data-cat="historico" role="tab" aria-selected="false">Minhas compras</button>
+      </div>
+    </div>
+    <p class="cat-explica" id="catExplica"></p>
+    <div id="produtos" class="grade"></div>
+
+    <section id="historico" class="historico escondido" aria-label="Minhas compras">
+      <p>Digite o seu nick para ver o que você já comprou e se já foi entregue.</p>
+      <form id="formHistorico" class="linha">
+        <label class="sr" for="nickHistorico">Seu nick no jogo</label>
+        <input id="nickHistorico" placeholder="Seu nick no jogo" maxlength="20" autocomplete="off" required>
+        <button class="botao">Ver compras</button>
+      </form>
+      <div id="listaHistorico" class="lista"></div>
+      <form id="formCodigo" class="linha codigo">
+        <label class="sr" for="codigoPedido">Código do pedido</label>
+        <input id="codigoPedido" placeholder="Tem um código? Ex.: CS-AB12CD" maxlength="12" autocomplete="off" required>
+        <button class="botao">Abrir o Pix</button>
+      </form>
+      <p class="miudo">Comprou num totem do spawn? Digite aqui o código que apareceu no jogo para copiar o Pix.</p>
+    </section>
+  </section>
+
+  <section class="entrar" aria-labelledby="entrar-titulo">
+    <div>
+      <h2 id="entrar-titulo">Ainda não joga? Entre agora</h2>
+      <p>Funciona no PC (Java) e no celular, console e Windows (Bedrock). Toque para copiar.</p>
+    </div>
+    <div class="ips">
+      <button class="ip" data-copiar="java" type="button"><span class="ip-tipo">Java</span><b id="ipJava">…</b><span class="ip-copiar">Copiar</span></button>
+      <button class="ip" data-copiar="bedrock" type="button"><span class="ip-tipo">Bedrock e celular</span><b id="ipBedrock">…</b><span class="ip-copiar">Copiar</span></button>
+    </div>
+  </section>
+
+  <section class="passos" aria-labelledby="passos-titulo">
+    <h2 id="passos-titulo">Como funciona</h2>
+    <ol>
+      <li><b>Escolha e digite o seu nick</b><p>Exatamente como aparece no jogo. No Bedrock, use o seu gamertag.</p></li>
+      <li><b>Pague o Pix</b><p>Pelo app do seu banco, com o QR code ou o copia e cola.</p></li>
+      <li><b>Receba no jogo</b><p>Em segundos aparece um aviso na sua tela e o item já está com você.</p></li>
+    </ol>
+  </section>
+
+  <section class="duvidas" aria-labelledby="duvidas-titulo">
+    <h2 id="duvidas-titulo">Perguntas frequentes</h2>
+    <details>
+      <summary>É seguro comprar aqui?</summary>
+      <p>Sim. O pagamento é um Pix comum, feito no app do seu banco e processado pelo Mercado Pago. O site tem cadeado (HTTPS) e nunca pede senha, nem a do jogo nem a do banco.</p>
+    </details>
+    <details>
+      <summary>Quanto tempo demora para chegar?</summary>
+      <p>Alguns segundos depois que o Pix é confirmado. Se você não estiver no servidor, a compra fica guardada e chega assim que você entrar.</p>
+    </details>
+    <details>
+      <summary>Digitei o nick errado. E agora?</summary>
+      <p>Guarde o código do pedido (começa com CS-) e chame a equipe dentro do servidor. A gente confere e passa para o nick certo.</p>
+    </details>
+    <details>
+      <summary>O VIP renova sozinho?</summary>
+      <p>Não. Cada VIP vale 30 dias e não existe cobrança automática. Quando acabar, você compra de novo se quiser.</p>
+    </details>
+    <details>
+      <summary>Tem reembolso?</summary>
+      <p>Compras já entregues não são reembolsáveis. Se você pagou e nada chegou, chame a equipe com o código do pedido.</p>
+    </details>
+  </section>
+</main>
+
+<footer class="rodape">
+  <svg class="selo pequeno" viewBox="0 0 19 13" aria-hidden="true" shape-rendering="crispEdges"><use href="#coroa"/></svg>
+  <p><b>Corona Server</b>, servidor do coronadooscar. Coronas e benefícios só valem dentro do servidor e não podem ser trocados por dinheiro.</p>
+  <p class="miudo">Não somos afiliados à Mojang Studios nem à Microsoft. Minecraft é marca da Mojang/Microsoft.</p>
+</footer>
+
+<div class="fundo escondido" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitulo">
+  <div class="caixa">
+    <button class="fechar" id="fechar" aria-label="Fechar">×</button>
+
+    <div id="passo1">
+      <p class="etapa">Etapa 1 de 2</p>
+      <h3 id="mTitulo">Comprar</h3>
+      <p class="preco-grande" id="mPreco"></p>
+      <form id="formCompra">
+        <label>Seu nick no jogo
+          <input id="nick" maxlength="20" autocomplete="off" placeholder="ex.: coronadooscar" required>
+        </label>
+        <label id="campoEmail">E-mail para o comprovante do Mercado Pago
+          <input id="email" type="email" maxlength="100" placeholder="voce@email.com">
+        </label>
+        <label class="check"><input type="checkbox" id="aceito" required> Conferi o nick e li as perguntas frequentes</label>
+        <button class="botao grande" id="btnPagar">Gerar Pix</button>
+        <p class="erro" id="erro" role="alert"></p>
+      </form>
+    </div>
+
+    <div id="passo2" class="escondido">
+      <p class="etapa">Etapa 2 de 2</p>
+      <h3>Pague com Pix</h3>
+      <p class="preco-grande" id="pPreco"></p>
+      <div id="pixAuto">
+        <img id="qrImg" alt="QR code do Pix" class="qr">
+        <p class="miudo">Abra o app do banco, entre em Pix e leia o QR code. Ou copie o código:</p>
+        <div class="copia"><input id="qrTexto" readonly aria-label="Código Pix copia e cola"><button class="botao" id="copiarQr">Copiar</button></div>
+      </div>
+      <div id="pixManual" class="escondido">
+        <p>Faça um Pix de <b id="mvValor"></b> para a chave:</p>
+        <div class="copia"><input id="chave" readonly aria-label="Chave Pix"><button class="botao" id="copiarChave">Copiar</button></div>
+        <p class="miudo" id="recebedor"></p>
+        <p>Na mensagem do Pix escreva o código do pedido: <b id="mvCodigo"></b></p>
+        <p class="miudo">Assim que a equipe confirmar o pagamento, a compra cai no jogo.</p>
+      </div>
+      <p class="espera"><span class="girando"></span> Esperando o pagamento <span id="contador"></span></p>
+      <p class="miudo">Pedido <b id="codigo"></b>. Guarde este código.</p>
+    </div>
+
+    <div id="passo3" class="escondido centro">
+      <div class="ok" aria-hidden="true">✓</div>
+      <h3 id="okTitulo">Pagamento confirmado!</h3>
+      <p id="okTexto"></p>
+      <button class="botao" id="okFechar">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div class="aviso escondido" id="aviso" role="status"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="coroa">
+      <rect x="0" y="0" width="19" height="13" fill="#000"/>
+      <path fill="#C8102E" d="M2 2h1v1h-1zM9 2h1v1h-1zM16 2h1v1h-1zM2 3h2v1h-2zM8 3h3v1h-3zM15 3h2v1h-2zM2 4h3v1h-3zM7 4h5v1h-5zM14 4h3v1h-3zM2 5h4v1h-4zM7 5h5v1h-5zM13 5h4v1h-4zM2 6h15v1h-15zM2 7h3v1h-3zM6 7h3v1h-3zM10 7h3v1h-3zM14 7h3v1h-3zM2 9h15v1h-15zM2 10h15v1h-15z"/>
+      <path fill="#fff" d="M5 7h1v1h-1zM9 7h1v1h-1zM13 7h1v1h-1z"/>
+    </g>
+  </defs>
+</svg>
+<script src="/app.js"></script>
+</body>
+</html>

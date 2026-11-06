@@ -1,0 +1,105 @@
+# Minigame Casa da Vovo
+# Jogadores: /vovo (menu), /vovo entrar, /vovo sair
+# Admin: /vovo admin <iniciar|parar|construir [limpar]|status|itens|item <id>|abrir|vovo|tp|lobby|modo <normal|dificil>|recarregar>
+# Fugas: porta da frente (4 trancas), carro (3 pecas) ou esgoto (Chave Inglesa na tampa do bueiro + Serra na grade)
+
+min-jogadores: 1           # quantos na fila para comecar a contagem (1 = da para jogar sozinho)
+max-jogadores: 6           # com essa quantidade na fila a contagem cai para 8 segundos (nao e limite: entra quem quiser)
+contagem-segundos: 20
+dias: 5                    # (usado so se faltar em "modos") quantas vezes cada um pode ser pego (cada captura = um dia)
+tempo-limite-minutos: 30   # 0 = sem limite
+tabuas-que-rangem: 30
+armadilhas: 4
+besta-volta-segundos: 90   # depois do tiro, a besta reaparece em algum lugar da casa
+claridade: 9               # luz extra invisivel dentro da casa (0 = so as lanternas, 15 = bem claro). Vale na proxima partida.
+claridade-esgoto: 7        # a mesma coisa no esgoto
+
+vovo:
+  velocidade: 0.25         # velocidade base (atributo do Minecraft)
+  ritmo-ronda: 0.65        # multiplicadores da velocidade base. A velocidade real cresce com o quadrado do ritmo:
+  ritmo-investigar: 0.9    #   ronda ~1,2 blocos/s | indo ver um barulho ~2,2 blocos/s
+  ritmo-caca: 1.0          #   correndo atras de alguem ~2,8 blocos/s (jogador andando faz 4,3 e correndo 5,6)
+  dorme-segundos: 20       # no comeco ela dorme (um barulho alto acorda antes)
+  dardo-segundos: 25       # quanto tempo ela dorme com o dardo da besta
+  bonus-por-captura: 0.02  # fica um pouco mais rapida a cada captura
+  bonus-maximo: 0.10       # no maximo ~3,3 blocos/s correndo atras
+
+aranha:
+  ativa: true              # a aranha gigante do esgoto
+  tamanho: 1.8             # escala (1 = aranha normal). Grande demais para as passagens estreitas
+  ritmo-ronda: 0.95        # (usado so se faltar em "modos") ~2,5 blocos/s rondando o esgoto
+  ritmo-procura: 1.15      # indo ate onde viu alguem por ultimo
+  ritmo-caca: 1.3          # ~4,6 blocos/s correndo atras (jogador andando faz 4,3)
+
+# ---------------------------------------------------------------- dificuldade
+# Os jogadores escolhem no menu (/vovo) ou com /vovo modo <normal|dificil>, antes da partida comecar.
+# Velocidade real ~ 2,75 x ritmo x ritmo blocos/s (jogador andando faz 4,3 e correndo 5,6).
+modo-padrao: normal
+modos:
+  normal:
+    dias: 5
+    ritmo-ronda: 0.75          # ~1,5 b/s
+    ritmo-investigar: 1.0      # ~2,7 b/s
+    ritmo-caca: 1.12           # ~3,4 b/s
+    audicao: 1.25              # multiplica a distancia que ela ouve os barulhos
+    visao: 18                  # alcance da visao (blocos)
+    visao-agachado: 9          # alcance da visao se voce estiver agachado
+    angulo: 70                 # abertura da visao para os lados (graus)
+    memoria: 5                 # segundos que ela continua atras de voce depois de perder de vista
+    visto-ao-esconder: 1.8     # se ela te viu ate X segundos antes de entrar no armario, ela sabe que voce esta la
+    chance-armario: 0.3        # chance de abrir o armario perto de onde ela ouviu um barulho
+    tabuas-que-rangem: 40
+    armadilhas: 6
+    dorme-segundos: 15
+    primeira-visita: 60
+    visita-segundos: 40        # de tempos em tempos ela vai ate perto de alguem (+ ate 30 s)
+    chance-perto: 0.45
+    dardo-segundos: 20
+    bonus-por-captura: 0.03
+    bonus-maximo: 0.12
+    aranha-ritmo-ronda: 0.95      # ~2,5 b/s
+    aranha-ritmo-procura: 1.15
+    aranha-ritmo-caca: 1.3        # ~4,6 b/s: mais rapida que voce andando
+    aranha-visao: 22
+    aranha-visao-caca: 28
+    aranha-angulo: 45
+  dificil:
+    dias: 3
+    ritmo-ronda: 0.85          # ~2 b/s
+    ritmo-investigar: 1.12     # ~3,4 b/s
+    ritmo-caca: 1.25           # ~4,3 b/s: igual a voce andando, so correndo da para fugir
+    audicao: 1.6
+    visao: 22
+    visao-agachado: 11
+    angulo: 80
+    memoria: 7
+    visto-ao-esconder: 3
+    chance-armario: 0.6
+    tabuas-que-rangem: 55
+    armadilhas: 10
+    dorme-segundos: 8
+    primeira-visita: 40
+    visita-segundos: 28
+    chance-perto: 0.6
+    dardo-segundos: 12
+    bonus-por-captura: 0.04
+    bonus-maximo: 0.16
+    aranha-ritmo-ronda: 1.05      # ~3 b/s
+    aranha-ritmo-procura: 1.3
+    aranha-ritmo-caca: 1.42       # ~5,5 b/s: quase igual a voce correndo
+    aranha-visao: 26
+    aranha-visao-caca: 32
+    aranha-angulo: 55
+
+# Comandos dados a quem fugir. %jogador% vira o nome. Exemplo: "give %jogador% diamond 3"
+recompensa-comandos: []
+
+# Skin da vovo (senhora de cabelo grisalho, da galeria publica do MineSkin). Nao precisa mexer.
+skin:
+  nome: Vovo
+  uuid: 7d1f3c2a-5b4e-4a6f-9c8d-2e1b0a9f8c7d
+  valor: "ewogICJ0aW1lc3RhbXAiIDogMTYxMjg0NTI2ODU1MSwKICAicHJvZmlsZUlkIiA6ICJiMGQ0YjI4YmMxZDc0ODg5YWYwZTg2NjFjZWU5NmFhYiIsCiAgInByb2ZpbGVOYW1lIiA6ICJNaW5lU2tpbl9vcmciLAogICJzaWduYXR1cmVSZXF1aXJlZCIgOiB0cnVlLAogICJ0ZXh0dXJlcyIgOiB7CiAgICAiU0tJTiIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOThiMDI4N2MxMTQ3MWU0NjJiZjQxNjkwMTQ3ZTNlZTdhMGRmMzE0ZjAwMGM1NDY5ZTc3MzA3ZWZmN2MwOWUiLAogICAgICAibWV0YWRhdGEiIDogewogICAgICAgICJtb2RlbCIgOiAic2xpbSIKICAgICAgfQogICAgfQogIH0KfQ=="
+  assinatura: "gVDJbl/zxpZiygvRQGzCZcgT8ZEPMkHvvA8P2XspkqOJZb5zXu9i6XWKXjytE7HZoozQrDqyTppaEqj4NEBrG74+UzJe1fFJuEDL0XaMJ0mk6V2AGDOKnUubiWSWJhBr4fE9gEuAJMng0hjFoXDZfBMcul9v/hr74IRVd9oguWqmF4pxyMeEKAdjF14+7zqUIKpdDVPwiwI/OxkUaXb3MGMVWLpZkGojiuFkK2wtDpsvAzb1cu48SsBRNb9jFAYAJlnZ1deHDJ9D6EynrkXdtcak01SOF79PTIstjDbxSWRarWSAGJqe7fujIKcz6/YcX3MnypdXrrrQwLquPK7O0AebAb/+JNCOPmvoE8SoTTLiyPyLs3T/3DbQB595Z6Pt8tTTdnaWCGQwqQrux9mPay4lwIhAZH43TP3WqRQFuOvUZQ+lSrXTjp5eKFrUfGSY626Vz3HxLajH7du2qDNyKw/iHOxBRhr7YY4iEYbqepurV8LGQKPJxyLVTmxImE3RgBGgasyWfjNfo7WQuBHRUbYXZEgbuQDAJy5+Wfp/ZrJxU9Su6tl30Toyyumd32V0fiBpCWo+i+qz0xppF6mm9yUUwoqzP11KP0UgT0ThLxOyoBOunj8PLGG54wt+/jvV5LTDySJHLX4r+6mhwAT7bQWEC9pDks6Tmk0YpZHFcGk="
+
+# O plugin preenche sozinho:
+mapa-versao: 0

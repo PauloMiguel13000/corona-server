@@ -1,0 +1,3911 @@
+{
+ "format_version": 2,
+ "items": {
+  "minecraft:wooden_sword": [
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cripta",
+    "bedrock_identifier": "corona:espada_cripta_wooden",
+    "display_name": "Espada do Rei Esqueleto",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cripta",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_ninho",
+    "bedrock_identifier": "corona:espada_ninho_wooden",
+    "display_name": "Espada da Rainha Aranha",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_ninho",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_mina",
+    "bedrock_identifier": "corona:espada_mina_wooden",
+    "display_name": "Espada do Mineiro Gigante",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_mina",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_pantano",
+    "bedrock_identifier": "corona:espada_pantano_wooden",
+    "display_name": "Espada da Bruxa Anciã",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_pantano",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_gelo",
+    "bedrock_identifier": "corona:espada_gelo_wooden",
+    "display_name": "Espada do Rei do Gelo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_gelo",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_deserto",
+    "bedrock_identifier": "corona:espada_deserto_wooden",
+    "display_name": "Espada do Faraó",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_deserto",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_afogada",
+    "bedrock_identifier": "corona:espada_afogada_wooden",
+    "display_name": "Espada do Rei Afogado",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_afogada",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_torre",
+    "bedrock_identifier": "corona:espada_torre_wooden",
+    "display_name": "Espada do Arquimago",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_torre",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_quartel",
+    "bedrock_identifier": "corona:espada_quartel_wooden",
+    "display_name": "Espada do Devastador",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_quartel",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_selva",
+    "bedrock_identifier": "corona:espada_selva_wooden",
+    "display_name": "Espada do Xamã da Selva",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_selva",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_ventos",
+    "bedrock_identifier": "corona:espada_ventos_wooden",
+    "display_name": "Espada do Senhor dos Ventos",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_ventos",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_castelo",
+    "bedrock_identifier": "corona:espada_castelo_wooden",
+    "display_name": "Espada do Carrasco",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_castelo",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_forja",
+    "bedrock_identifier": "corona:espada_forja_wooden",
+    "display_name": "Espada do Senhor das Chamas",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_forja",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_bastiao",
+    "bedrock_identifier": "corona:espada_bastiao_wooden",
+    "display_name": "Espada do Chefe Piglin",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_bastiao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_wither",
+    "bedrock_identifier": "corona:espada_wither_wooden",
+    "display_name": "Espada do General Wither",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_wither",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_covil",
+    "bedrock_identifier": "corona:espada_covil_wooden",
+    "display_name": "Espada da Besta Zoglin",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_covil",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cidadela",
+    "bedrock_identifier": "corona:espada_cidadela_wooden",
+    "display_name": "Espada do Senhor do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cidadela",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_prisao",
+    "bedrock_identifier": "corona:espada_prisao_wooden",
+    "display_name": "Espada do Carcereiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_prisao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_secreta",
+    "bedrock_identifier": "corona:espada_secreta_wooden",
+    "display_name": "Espada de Herobrine",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_secreta",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cemiterio",
+    "bedrock_identifier": "corona:espada_cemiterio_wooden",
+    "display_name": "Espada do Coveiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cemiterio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_esgoto",
+    "bedrock_identifier": "corona:espada_esgoto_wooden",
+    "display_name": "Espada da Gosma Primordial",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_esgoto",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_acampamento",
+    "bedrock_identifier": "corona:espada_acampamento_wooden",
+    "display_name": "Espada do Capitão Saqueador",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_acampamento",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_moinho",
+    "bedrock_identifier": "corona:espada_moinho_wooden",
+    "display_name": "Espada do Espantalho",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_moinho",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_fungos",
+    "bedrock_identifier": "corona:espada_fungos_wooden",
+    "display_name": "Espada do Rei Fungo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_fungos",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_covil_lobos",
+    "bedrock_identifier": "corona:espada_covil_lobos_wooden",
+    "display_name": "Espada do Lobo Alfa",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_covil_lobos",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_urso",
+    "bedrock_identifier": "corona:espada_urso_wooden",
+    "display_name": "Espada do Urso Ancestral",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_urso",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_bosque_palido",
+    "bedrock_identifier": "corona:espada_bosque_palido_wooden",
+    "display_name": "Espada do Rangedor",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_bosque_palido",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_farol",
+    "bedrock_identifier": "corona:espada_farol_wooden",
+    "display_name": "Espada da Capitã Fantasma",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_farol",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_laboratorio",
+    "bedrock_identifier": "corona:espada_laboratorio_wooden",
+    "display_name": "Espada da Alquimista Louca",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_laboratorio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_camara_testes",
+    "bedrock_identifier": "corona:espada_camara_testes_wooden",
+    "display_name": "Espada da Sentinela de Cobre",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_camara_testes",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_fazenda",
+    "bedrock_identifier": "corona:espada_fazenda_wooden",
+    "display_name": "Espada do Fazendeiro Zumbi",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_fazenda",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cratera",
+    "bedrock_identifier": "corona:espada_cratera_wooden",
+    "display_name": "Espada do Caído",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cratera",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_jardim",
+    "bedrock_identifier": "corona:espada_jardim_wooden",
+    "display_name": "Espada do Ronin Espectral",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_jardim",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_catedral",
+    "bedrock_identifier": "corona:espada_catedral_wooden",
+    "display_name": "Espada do Bispo Corrompido",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_catedral",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_tesouro",
+    "bedrock_identifier": "corona:espada_tesouro_wooden",
+    "display_name": "Espada do Rei Dourado",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_tesouro",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_coliseu",
+    "bedrock_identifier": "corona:espada_coliseu_wooden",
+    "display_name": "Espada do Gladiador Imortal",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_coliseu",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_trovao",
+    "bedrock_identifier": "corona:espada_trovao_wooden",
+    "display_name": "Espada do Arauto do Trovão",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_trovao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_observatorio",
+    "bedrock_identifier": "corona:espada_observatorio_wooden",
+    "display_name": "Espada do Astrólogo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_observatorio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_viuva",
+    "bedrock_identifier": "corona:espada_viuva_wooden",
+    "display_name": "Espada da Viúva Negra",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_viuva",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_naufragio",
+    "bedrock_identifier": "corona:espada_naufragio_wooden",
+    "display_name": "Espada do Capitão Caveira",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_naufragio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_mausoleu",
+    "bedrock_identifier": "corona:espada_mausoleu_wooden",
+    "display_name": "Espada da Rainha Múmia",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_mausoleu",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_biblioteca",
+    "bedrock_identifier": "corona:espada_biblioteca_wooden",
+    "display_name": "Espada do Bibliotecário",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_biblioteca",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_vulcao",
+    "bedrock_identifier": "corona:espada_vulcao_wooden",
+    "display_name": "Espada do Titã de Magma",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_vulcao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cidade_antiga",
+    "bedrock_identifier": "corona:espada_cidade_antiga_wooden",
+    "display_name": "Espada do Eco Sombrio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cidade_antiga",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_geleira",
+    "bedrock_identifier": "corona:espada_geleira_wooden",
+    "display_name": "Espada do Gigante de Gelo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_geleira",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_sangue",
+    "bedrock_identifier": "corona:espada_sangue_wooden",
+    "display_name": "Espada do Lorde Vampiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_sangue",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_relogio",
+    "bedrock_identifier": "corona:espada_relogio_wooden",
+    "display_name": "Espada do Relojoeiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_relogio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_labirinto",
+    "bedrock_identifier": "corona:espada_labirinto_wooden",
+    "display_name": "Espada do Minotauro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_labirinto",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cripta_real",
+    "bedrock_identifier": "corona:espada_cripta_real_wooden",
+    "display_name": "Espada do Rei Lich",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cripta_real",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_delta",
+    "bedrock_identifier": "corona:espada_delta_wooden",
+    "display_name": "Espada do Centurião Zumbi",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_delta",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_carmesim",
+    "bedrock_identifier": "corona:espada_carmesim_wooden",
+    "display_name": "Espada do Rei dos Hoglins",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_carmesim",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_distorcido",
+    "bedrock_identifier": "corona:espada_distorcido_wooden",
+    "display_name": "Espada do Senhor dos Esporos",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_distorcido",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_almas",
+    "bedrock_identifier": "corona:espada_almas_wooden",
+    "display_name": "Espada do Ceifador de Almas",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_almas",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_obsidiana",
+    "bedrock_identifier": "corona:espada_obsidiana_wooden",
+    "display_name": "Espada do Arquidemônio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_obsidiana",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_ilhas",
+    "bedrock_identifier": "corona:espada_ilhas_wooden",
+    "display_name": "Espada do Arauto do Fim",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_ilhas",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_nave",
+    "bedrock_identifier": "corona:espada_nave_wooden",
+    "display_name": "Espada do Capitão Shulker",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_nave",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_trono",
+    "bedrock_identifier": "corona:espada_trono_wooden",
+    "display_name": "Espada da Fera do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_trono",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_coro",
+    "bedrock_identifier": "corona:espada_coro_wooden",
+    "display_name": "Espada da Jardineira do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_coro",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_abismo",
+    "bedrock_identifier": "corona:espada_abismo_wooden",
+    "display_name": "Espada do Arqueiro do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_abismo",
+     "allow_offhand": true
+    }
+   }
+  ],
+  "minecraft:stone_sword": [
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cripta",
+    "bedrock_identifier": "corona:espada_cripta_stone",
+    "display_name": "Espada do Rei Esqueleto",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cripta",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_ninho",
+    "bedrock_identifier": "corona:espada_ninho_stone",
+    "display_name": "Espada da Rainha Aranha",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_ninho",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_mina",
+    "bedrock_identifier": "corona:espada_mina_stone",
+    "display_name": "Espada do Mineiro Gigante",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_mina",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_pantano",
+    "bedrock_identifier": "corona:espada_pantano_stone",
+    "display_name": "Espada da Bruxa Anciã",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_pantano",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_gelo",
+    "bedrock_identifier": "corona:espada_gelo_stone",
+    "display_name": "Espada do Rei do Gelo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_gelo",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_deserto",
+    "bedrock_identifier": "corona:espada_deserto_stone",
+    "display_name": "Espada do Faraó",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_deserto",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_afogada",
+    "bedrock_identifier": "corona:espada_afogada_stone",
+    "display_name": "Espada do Rei Afogado",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_afogada",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_torre",
+    "bedrock_identifier": "corona:espada_torre_stone",
+    "display_name": "Espada do Arquimago",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_torre",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_quartel",
+    "bedrock_identifier": "corona:espada_quartel_stone",
+    "display_name": "Espada do Devastador",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_quartel",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_selva",
+    "bedrock_identifier": "corona:espada_selva_stone",
+    "display_name": "Espada do Xamã da Selva",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_selva",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_ventos",
+    "bedrock_identifier": "corona:espada_ventos_stone",
+    "display_name": "Espada do Senhor dos Ventos",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_ventos",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_castelo",
+    "bedrock_identifier": "corona:espada_castelo_stone",
+    "display_name": "Espada do Carrasco",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_castelo",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_forja",
+    "bedrock_identifier": "corona:espada_forja_stone",
+    "display_name": "Espada do Senhor das Chamas",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_forja",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_bastiao",
+    "bedrock_identifier": "corona:espada_bastiao_stone",
+    "display_name": "Espada do Chefe Piglin",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_bastiao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_wither",
+    "bedrock_identifier": "corona:espada_wither_stone",
+    "display_name": "Espada do General Wither",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_wither",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_covil",
+    "bedrock_identifier": "corona:espada_covil_stone",
+    "display_name": "Espada da Besta Zoglin",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_covil",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cidadela",
+    "bedrock_identifier": "corona:espada_cidadela_stone",
+    "display_name": "Espada do Senhor do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cidadela",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_prisao",
+    "bedrock_identifier": "corona:espada_prisao_stone",
+    "display_name": "Espada do Carcereiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_prisao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_secreta",
+    "bedrock_identifier": "corona:espada_secreta_stone",
+    "display_name": "Espada de Herobrine",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_secreta",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cemiterio",
+    "bedrock_identifier": "corona:espada_cemiterio_stone",
+    "display_name": "Espada do Coveiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cemiterio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_esgoto",
+    "bedrock_identifier": "corona:espada_esgoto_stone",
+    "display_name": "Espada da Gosma Primordial",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_esgoto",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_acampamento",
+    "bedrock_identifier": "corona:espada_acampamento_stone",
+    "display_name": "Espada do Capitão Saqueador",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_acampamento",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_moinho",
+    "bedrock_identifier": "corona:espada_moinho_stone",
+    "display_name": "Espada do Espantalho",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_moinho",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_fungos",
+    "bedrock_identifier": "corona:espada_fungos_stone",
+    "display_name": "Espada do Rei Fungo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_fungos",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_covil_lobos",
+    "bedrock_identifier": "corona:espada_covil_lobos_stone",
+    "display_name": "Espada do Lobo Alfa",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_covil_lobos",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_urso",
+    "bedrock_identifier": "corona:espada_urso_stone",
+    "display_name": "Espada do Urso Ancestral",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_urso",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_bosque_palido",
+    "bedrock_identifier": "corona:espada_bosque_palido_stone",
+    "display_name": "Espada do Rangedor",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_bosque_palido",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_farol",
+    "bedrock_identifier": "corona:espada_farol_stone",
+    "display_name": "Espada da Capitã Fantasma",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_farol",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_laboratorio",
+    "bedrock_identifier": "corona:espada_laboratorio_stone",
+    "display_name": "Espada da Alquimista Louca",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_laboratorio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_camara_testes",
+    "bedrock_identifier": "corona:espada_camara_testes_stone",
+    "display_name": "Espada da Sentinela de Cobre",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_camara_testes",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_fazenda",
+    "bedrock_identifier": "corona:espada_fazenda_stone",
+    "display_name": "Espada do Fazendeiro Zumbi",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_fazenda",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cratera",
+    "bedrock_identifier": "corona:espada_cratera_stone",
+    "display_name": "Espada do Caído",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cratera",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_jardim",
+    "bedrock_identifier": "corona:espada_jardim_stone",
+    "display_name": "Espada do Ronin Espectral",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_jardim",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_catedral",
+    "bedrock_identifier": "corona:espada_catedral_stone",
+    "display_name": "Espada do Bispo Corrompido",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_catedral",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_tesouro",
+    "bedrock_identifier": "corona:espada_tesouro_stone",
+    "display_name": "Espada do Rei Dourado",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_tesouro",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_coliseu",
+    "bedrock_identifier": "corona:espada_coliseu_stone",
+    "display_name": "Espada do Gladiador Imortal",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_coliseu",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_trovao",
+    "bedrock_identifier": "corona:espada_trovao_stone",
+    "display_name": "Espada do Arauto do Trovão",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_trovao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_observatorio",
+    "bedrock_identifier": "corona:espada_observatorio_stone",
+    "display_name": "Espada do Astrólogo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_observatorio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_viuva",
+    "bedrock_identifier": "corona:espada_viuva_stone",
+    "display_name": "Espada da Viúva Negra",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_viuva",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_naufragio",
+    "bedrock_identifier": "corona:espada_naufragio_stone",
+    "display_name": "Espada do Capitão Caveira",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_naufragio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_mausoleu",
+    "bedrock_identifier": "corona:espada_mausoleu_stone",
+    "display_name": "Espada da Rainha Múmia",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_mausoleu",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_biblioteca",
+    "bedrock_identifier": "corona:espada_biblioteca_stone",
+    "display_name": "Espada do Bibliotecário",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_biblioteca",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_vulcao",
+    "bedrock_identifier": "corona:espada_vulcao_stone",
+    "display_name": "Espada do Titã de Magma",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_vulcao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cidade_antiga",
+    "bedrock_identifier": "corona:espada_cidade_antiga_stone",
+    "display_name": "Espada do Eco Sombrio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cidade_antiga",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_geleira",
+    "bedrock_identifier": "corona:espada_geleira_stone",
+    "display_name": "Espada do Gigante de Gelo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_geleira",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_sangue",
+    "bedrock_identifier": "corona:espada_sangue_stone",
+    "display_name": "Espada do Lorde Vampiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_sangue",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_relogio",
+    "bedrock_identifier": "corona:espada_relogio_stone",
+    "display_name": "Espada do Relojoeiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_relogio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_labirinto",
+    "bedrock_identifier": "corona:espada_labirinto_stone",
+    "display_name": "Espada do Minotauro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_labirinto",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cripta_real",
+    "bedrock_identifier": "corona:espada_cripta_real_stone",
+    "display_name": "Espada do Rei Lich",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cripta_real",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_delta",
+    "bedrock_identifier": "corona:espada_delta_stone",
+    "display_name": "Espada do Centurião Zumbi",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_delta",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_carmesim",
+    "bedrock_identifier": "corona:espada_carmesim_stone",
+    "display_name": "Espada do Rei dos Hoglins",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_carmesim",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_distorcido",
+    "bedrock_identifier": "corona:espada_distorcido_stone",
+    "display_name": "Espada do Senhor dos Esporos",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_distorcido",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_almas",
+    "bedrock_identifier": "corona:espada_almas_stone",
+    "display_name": "Espada do Ceifador de Almas",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_almas",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_obsidiana",
+    "bedrock_identifier": "corona:espada_obsidiana_stone",
+    "display_name": "Espada do Arquidemônio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_obsidiana",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_ilhas",
+    "bedrock_identifier": "corona:espada_ilhas_stone",
+    "display_name": "Espada do Arauto do Fim",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_ilhas",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_nave",
+    "bedrock_identifier": "corona:espada_nave_stone",
+    "display_name": "Espada do Capitão Shulker",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_nave",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_trono",
+    "bedrock_identifier": "corona:espada_trono_stone",
+    "display_name": "Espada da Fera do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_trono",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_coro",
+    "bedrock_identifier": "corona:espada_coro_stone",
+    "display_name": "Espada da Jardineira do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_coro",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_abismo",
+    "bedrock_identifier": "corona:espada_abismo_stone",
+    "display_name": "Espada do Arqueiro do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_abismo",
+     "allow_offhand": true
+    }
+   }
+  ],
+  "minecraft:iron_sword": [
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cripta",
+    "bedrock_identifier": "corona:espada_cripta_iron",
+    "display_name": "Espada do Rei Esqueleto",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cripta",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_ninho",
+    "bedrock_identifier": "corona:espada_ninho_iron",
+    "display_name": "Espada da Rainha Aranha",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_ninho",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_mina",
+    "bedrock_identifier": "corona:espada_mina_iron",
+    "display_name": "Espada do Mineiro Gigante",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_mina",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_pantano",
+    "bedrock_identifier": "corona:espada_pantano_iron",
+    "display_name": "Espada da Bruxa Anciã",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_pantano",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_gelo",
+    "bedrock_identifier": "corona:espada_gelo_iron",
+    "display_name": "Espada do Rei do Gelo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_gelo",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_deserto",
+    "bedrock_identifier": "corona:espada_deserto_iron",
+    "display_name": "Espada do Faraó",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_deserto",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_afogada",
+    "bedrock_identifier": "corona:espada_afogada_iron",
+    "display_name": "Espada do Rei Afogado",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_afogada",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_torre",
+    "bedrock_identifier": "corona:espada_torre_iron",
+    "display_name": "Espada do Arquimago",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_torre",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_quartel",
+    "bedrock_identifier": "corona:espada_quartel_iron",
+    "display_name": "Espada do Devastador",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_quartel",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_selva",
+    "bedrock_identifier": "corona:espada_selva_iron",
+    "display_name": "Espada do Xamã da Selva",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_selva",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_ventos",
+    "bedrock_identifier": "corona:espada_ventos_iron",
+    "display_name": "Espada do Senhor dos Ventos",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_ventos",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_castelo",
+    "bedrock_identifier": "corona:espada_castelo_iron",
+    "display_name": "Espada do Carrasco",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_castelo",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_forja",
+    "bedrock_identifier": "corona:espada_forja_iron",
+    "display_name": "Espada do Senhor das Chamas",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_forja",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_bastiao",
+    "bedrock_identifier": "corona:espada_bastiao_iron",
+    "display_name": "Espada do Chefe Piglin",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_bastiao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_wither",
+    "bedrock_identifier": "corona:espada_wither_iron",
+    "display_name": "Espada do General Wither",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_wither",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_covil",
+    "bedrock_identifier": "corona:espada_covil_iron",
+    "display_name": "Espada da Besta Zoglin",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_covil",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cidadela",
+    "bedrock_identifier": "corona:espada_cidadela_iron",
+    "display_name": "Espada do Senhor do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cidadela",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_prisao",
+    "bedrock_identifier": "corona:espada_prisao_iron",
+    "display_name": "Espada do Carcereiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_prisao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_secreta",
+    "bedrock_identifier": "corona:espada_secreta_iron",
+    "display_name": "Espada de Herobrine",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_secreta",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cemiterio",
+    "bedrock_identifier": "corona:espada_cemiterio_iron",
+    "display_name": "Espada do Coveiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cemiterio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_esgoto",
+    "bedrock_identifier": "corona:espada_esgoto_iron",
+    "display_name": "Espada da Gosma Primordial",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_esgoto",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_acampamento",
+    "bedrock_identifier": "corona:espada_acampamento_iron",
+    "display_name": "Espada do Capitão Saqueador",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_acampamento",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_moinho",
+    "bedrock_identifier": "corona:espada_moinho_iron",
+    "display_name": "Espada do Espantalho",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_moinho",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_fungos",
+    "bedrock_identifier": "corona:espada_fungos_iron",
+    "display_name": "Espada do Rei Fungo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_fungos",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_covil_lobos",
+    "bedrock_identifier": "corona:espada_covil_lobos_iron",
+    "display_name": "Espada do Lobo Alfa",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_covil_lobos",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_urso",
+    "bedrock_identifier": "corona:espada_urso_iron",
+    "display_name": "Espada do Urso Ancestral",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_urso",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_bosque_palido",
+    "bedrock_identifier": "corona:espada_bosque_palido_iron",
+    "display_name": "Espada do Rangedor",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_bosque_palido",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_farol",
+    "bedrock_identifier": "corona:espada_farol_iron",
+    "display_name": "Espada da Capitã Fantasma",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_farol",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_laboratorio",
+    "bedrock_identifier": "corona:espada_laboratorio_iron",
+    "display_name": "Espada da Alquimista Louca",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_laboratorio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_camara_testes",
+    "bedrock_identifier": "corona:espada_camara_testes_iron",
+    "display_name": "Espada da Sentinela de Cobre",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_camara_testes",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_fazenda",
+    "bedrock_identifier": "corona:espada_fazenda_iron",
+    "display_name": "Espada do Fazendeiro Zumbi",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_fazenda",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cratera",
+    "bedrock_identifier": "corona:espada_cratera_iron",
+    "display_name": "Espada do Caído",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cratera",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_jardim",
+    "bedrock_identifier": "corona:espada_jardim_iron",
+    "display_name": "Espada do Ronin Espectral",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_jardim",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_catedral",
+    "bedrock_identifier": "corona:espada_catedral_iron",
+    "display_name": "Espada do Bispo Corrompido",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_catedral",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_tesouro",
+    "bedrock_identifier": "corona:espada_tesouro_iron",
+    "display_name": "Espada do Rei Dourado",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_tesouro",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_coliseu",
+    "bedrock_identifier": "corona:espada_coliseu_iron",
+    "display_name": "Espada do Gladiador Imortal",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_coliseu",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_trovao",
+    "bedrock_identifier": "corona:espada_trovao_iron",
+    "display_name": "Espada do Arauto do Trovão",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_trovao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_observatorio",
+    "bedrock_identifier": "corona:espada_observatorio_iron",
+    "display_name": "Espada do Astrólogo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_observatorio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_viuva",
+    "bedrock_identifier": "corona:espada_viuva_iron",
+    "display_name": "Espada da Viúva Negra",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_viuva",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_naufragio",
+    "bedrock_identifier": "corona:espada_naufragio_iron",
+    "display_name": "Espada do Capitão Caveira",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_naufragio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_mausoleu",
+    "bedrock_identifier": "corona:espada_mausoleu_iron",
+    "display_name": "Espada da Rainha Múmia",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_mausoleu",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_biblioteca",
+    "bedrock_identifier": "corona:espada_biblioteca_iron",
+    "display_name": "Espada do Bibliotecário",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_biblioteca",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_vulcao",
+    "bedrock_identifier": "corona:espada_vulcao_iron",
+    "display_name": "Espada do Titã de Magma",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_vulcao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cidade_antiga",
+    "bedrock_identifier": "corona:espada_cidade_antiga_iron",
+    "display_name": "Espada do Eco Sombrio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cidade_antiga",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_geleira",
+    "bedrock_identifier": "corona:espada_geleira_iron",
+    "display_name": "Espada do Gigante de Gelo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_geleira",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_sangue",
+    "bedrock_identifier": "corona:espada_sangue_iron",
+    "display_name": "Espada do Lorde Vampiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_sangue",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_relogio",
+    "bedrock_identifier": "corona:espada_relogio_iron",
+    "display_name": "Espada do Relojoeiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_relogio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_labirinto",
+    "bedrock_identifier": "corona:espada_labirinto_iron",
+    "display_name": "Espada do Minotauro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_labirinto",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cripta_real",
+    "bedrock_identifier": "corona:espada_cripta_real_iron",
+    "display_name": "Espada do Rei Lich",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cripta_real",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_delta",
+    "bedrock_identifier": "corona:espada_delta_iron",
+    "display_name": "Espada do Centurião Zumbi",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_delta",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_carmesim",
+    "bedrock_identifier": "corona:espada_carmesim_iron",
+    "display_name": "Espada do Rei dos Hoglins",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_carmesim",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_distorcido",
+    "bedrock_identifier": "corona:espada_distorcido_iron",
+    "display_name": "Espada do Senhor dos Esporos",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_distorcido",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_almas",
+    "bedrock_identifier": "corona:espada_almas_iron",
+    "display_name": "Espada do Ceifador de Almas",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_almas",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_obsidiana",
+    "bedrock_identifier": "corona:espada_obsidiana_iron",
+    "display_name": "Espada do Arquidemônio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_obsidiana",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_ilhas",
+    "bedrock_identifier": "corona:espada_ilhas_iron",
+    "display_name": "Espada do Arauto do Fim",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_ilhas",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_nave",
+    "bedrock_identifier": "corona:espada_nave_iron",
+    "display_name": "Espada do Capitão Shulker",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_nave",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_trono",
+    "bedrock_identifier": "corona:espada_trono_iron",
+    "display_name": "Espada da Fera do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_trono",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_coro",
+    "bedrock_identifier": "corona:espada_coro_iron",
+    "display_name": "Espada da Jardineira do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_coro",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_abismo",
+    "bedrock_identifier": "corona:espada_abismo_iron",
+    "display_name": "Espada do Arqueiro do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_abismo",
+     "allow_offhand": true
+    }
+   }
+  ],
+  "minecraft:golden_sword": [
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cripta",
+    "bedrock_identifier": "corona:espada_cripta_golden",
+    "display_name": "Espada do Rei Esqueleto",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cripta",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_ninho",
+    "bedrock_identifier": "corona:espada_ninho_golden",
+    "display_name": "Espada da Rainha Aranha",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_ninho",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_mina",
+    "bedrock_identifier": "corona:espada_mina_golden",
+    "display_name": "Espada do Mineiro Gigante",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_mina",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_pantano",
+    "bedrock_identifier": "corona:espada_pantano_golden",
+    "display_name": "Espada da Bruxa Anciã",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_pantano",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_gelo",
+    "bedrock_identifier": "corona:espada_gelo_golden",
+    "display_name": "Espada do Rei do Gelo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_gelo",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_deserto",
+    "bedrock_identifier": "corona:espada_deserto_golden",
+    "display_name": "Espada do Faraó",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_deserto",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_afogada",
+    "bedrock_identifier": "corona:espada_afogada_golden",
+    "display_name": "Espada do Rei Afogado",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_afogada",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_torre",
+    "bedrock_identifier": "corona:espada_torre_golden",
+    "display_name": "Espada do Arquimago",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_torre",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_quartel",
+    "bedrock_identifier": "corona:espada_quartel_golden",
+    "display_name": "Espada do Devastador",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_quartel",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_selva",
+    "bedrock_identifier": "corona:espada_selva_golden",
+    "display_name": "Espada do Xamã da Selva",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_selva",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_ventos",
+    "bedrock_identifier": "corona:espada_ventos_golden",
+    "display_name": "Espada do Senhor dos Ventos",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_ventos",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_castelo",
+    "bedrock_identifier": "corona:espada_castelo_golden",
+    "display_name": "Espada do Carrasco",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_castelo",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_forja",
+    "bedrock_identifier": "corona:espada_forja_golden",
+    "display_name": "Espada do Senhor das Chamas",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_forja",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_bastiao",
+    "bedrock_identifier": "corona:espada_bastiao_golden",
+    "display_name": "Espada do Chefe Piglin",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_bastiao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_wither",
+    "bedrock_identifier": "corona:espada_wither_golden",
+    "display_name": "Espada do General Wither",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_wither",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_covil",
+    "bedrock_identifier": "corona:espada_covil_golden",
+    "display_name": "Espada da Besta Zoglin",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_covil",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cidadela",
+    "bedrock_identifier": "corona:espada_cidadela_golden",
+    "display_name": "Espada do Senhor do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cidadela",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_prisao",
+    "bedrock_identifier": "corona:espada_prisao_golden",
+    "display_name": "Espada do Carcereiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_prisao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_secreta",
+    "bedrock_identifier": "corona:espada_secreta_golden",
+    "display_name": "Espada de Herobrine",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_secreta",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cemiterio",
+    "bedrock_identifier": "corona:espada_cemiterio_golden",
+    "display_name": "Espada do Coveiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cemiterio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_esgoto",
+    "bedrock_identifier": "corona:espada_esgoto_golden",
+    "display_name": "Espada da Gosma Primordial",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_esgoto",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_acampamento",
+    "bedrock_identifier": "corona:espada_acampamento_golden",
+    "display_name": "Espada do Capitão Saqueador",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_acampamento",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_moinho",
+    "bedrock_identifier": "corona:espada_moinho_golden",
+    "display_name": "Espada do Espantalho",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_moinho",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_fungos",
+    "bedrock_identifier": "corona:espada_fungos_golden",
+    "display_name": "Espada do Rei Fungo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_fungos",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_covil_lobos",
+    "bedrock_identifier": "corona:espada_covil_lobos_golden",
+    "display_name": "Espada do Lobo Alfa",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_covil_lobos",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_urso",
+    "bedrock_identifier": "corona:espada_urso_golden",
+    "display_name": "Espada do Urso Ancestral",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_urso",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_bosque_palido",
+    "bedrock_identifier": "corona:espada_bosque_palido_golden",
+    "display_name": "Espada do Rangedor",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_bosque_palido",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_farol",
+    "bedrock_identifier": "corona:espada_farol_golden",
+    "display_name": "Espada da Capitã Fantasma",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_farol",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_laboratorio",
+    "bedrock_identifier": "corona:espada_laboratorio_golden",
+    "display_name": "Espada da Alquimista Louca",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_laboratorio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_camara_testes",
+    "bedrock_identifier": "corona:espada_camara_testes_golden",
+    "display_name": "Espada da Sentinela de Cobre",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_camara_testes",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_fazenda",
+    "bedrock_identifier": "corona:espada_fazenda_golden",
+    "display_name": "Espada do Fazendeiro Zumbi",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_fazenda",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cratera",
+    "bedrock_identifier": "corona:espada_cratera_golden",
+    "display_name": "Espada do Caído",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cratera",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_jardim",
+    "bedrock_identifier": "corona:espada_jardim_golden",
+    "display_name": "Espada do Ronin Espectral",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_jardim",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_catedral",
+    "bedrock_identifier": "corona:espada_catedral_golden",
+    "display_name": "Espada do Bispo Corrompido",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_catedral",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_tesouro",
+    "bedrock_identifier": "corona:espada_tesouro_golden",
+    "display_name": "Espada do Rei Dourado",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_tesouro",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_coliseu",
+    "bedrock_identifier": "corona:espada_coliseu_golden",
+    "display_name": "Espada do Gladiador Imortal",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_coliseu",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_trovao",
+    "bedrock_identifier": "corona:espada_trovao_golden",
+    "display_name": "Espada do Arauto do Trovão",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_trovao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_observatorio",
+    "bedrock_identifier": "corona:espada_observatorio_golden",
+    "display_name": "Espada do Astrólogo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_observatorio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_viuva",
+    "bedrock_identifier": "corona:espada_viuva_golden",
+    "display_name": "Espada da Viúva Negra",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_viuva",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_naufragio",
+    "bedrock_identifier": "corona:espada_naufragio_golden",
+    "display_name": "Espada do Capitão Caveira",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_naufragio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_mausoleu",
+    "bedrock_identifier": "corona:espada_mausoleu_golden",
+    "display_name": "Espada da Rainha Múmia",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_mausoleu",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_biblioteca",
+    "bedrock_identifier": "corona:espada_biblioteca_golden",
+    "display_name": "Espada do Bibliotecário",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_biblioteca",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_vulcao",
+    "bedrock_identifier": "corona:espada_vulcao_golden",
+    "display_name": "Espada do Titã de Magma",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_vulcao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cidade_antiga",
+    "bedrock_identifier": "corona:espada_cidade_antiga_golden",
+    "display_name": "Espada do Eco Sombrio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cidade_antiga",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_geleira",
+    "bedrock_identifier": "corona:espada_geleira_golden",
+    "display_name": "Espada do Gigante de Gelo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_geleira",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_sangue",
+    "bedrock_identifier": "corona:espada_sangue_golden",
+    "display_name": "Espada do Lorde Vampiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_sangue",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_relogio",
+    "bedrock_identifier": "corona:espada_relogio_golden",
+    "display_name": "Espada do Relojoeiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_relogio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_labirinto",
+    "bedrock_identifier": "corona:espada_labirinto_golden",
+    "display_name": "Espada do Minotauro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_labirinto",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cripta_real",
+    "bedrock_identifier": "corona:espada_cripta_real_golden",
+    "display_name": "Espada do Rei Lich",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cripta_real",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_delta",
+    "bedrock_identifier": "corona:espada_delta_golden",
+    "display_name": "Espada do Centurião Zumbi",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_delta",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_carmesim",
+    "bedrock_identifier": "corona:espada_carmesim_golden",
+    "display_name": "Espada do Rei dos Hoglins",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_carmesim",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_distorcido",
+    "bedrock_identifier": "corona:espada_distorcido_golden",
+    "display_name": "Espada do Senhor dos Esporos",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_distorcido",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_almas",
+    "bedrock_identifier": "corona:espada_almas_golden",
+    "display_name": "Espada do Ceifador de Almas",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_almas",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_obsidiana",
+    "bedrock_identifier": "corona:espada_obsidiana_golden",
+    "display_name": "Espada do Arquidemônio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_obsidiana",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_ilhas",
+    "bedrock_identifier": "corona:espada_ilhas_golden",
+    "display_name": "Espada do Arauto do Fim",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_ilhas",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_nave",
+    "bedrock_identifier": "corona:espada_nave_golden",
+    "display_name": "Espada do Capitão Shulker",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_nave",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_trono",
+    "bedrock_identifier": "corona:espada_trono_golden",
+    "display_name": "Espada da Fera do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_trono",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_coro",
+    "bedrock_identifier": "corona:espada_coro_golden",
+    "display_name": "Espada da Jardineira do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_coro",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_abismo",
+    "bedrock_identifier": "corona:espada_abismo_golden",
+    "display_name": "Espada do Arqueiro do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_abismo",
+     "allow_offhand": true
+    }
+   }
+  ],
+  "minecraft:diamond_sword": [
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cripta",
+    "bedrock_identifier": "corona:espada_cripta_diamond",
+    "display_name": "Espada do Rei Esqueleto",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cripta",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_ninho",
+    "bedrock_identifier": "corona:espada_ninho_diamond",
+    "display_name": "Espada da Rainha Aranha",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_ninho",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_mina",
+    "bedrock_identifier": "corona:espada_mina_diamond",
+    "display_name": "Espada do Mineiro Gigante",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_mina",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_pantano",
+    "bedrock_identifier": "corona:espada_pantano_diamond",
+    "display_name": "Espada da Bruxa Anciã",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_pantano",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_gelo",
+    "bedrock_identifier": "corona:espada_gelo_diamond",
+    "display_name": "Espada do Rei do Gelo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_gelo",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_deserto",
+    "bedrock_identifier": "corona:espada_deserto_diamond",
+    "display_name": "Espada do Faraó",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_deserto",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_afogada",
+    "bedrock_identifier": "corona:espada_afogada_diamond",
+    "display_name": "Espada do Rei Afogado",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_afogada",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_torre",
+    "bedrock_identifier": "corona:espada_torre_diamond",
+    "display_name": "Espada do Arquimago",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_torre",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_quartel",
+    "bedrock_identifier": "corona:espada_quartel_diamond",
+    "display_name": "Espada do Devastador",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_quartel",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_selva",
+    "bedrock_identifier": "corona:espada_selva_diamond",
+    "display_name": "Espada do Xamã da Selva",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_selva",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_ventos",
+    "bedrock_identifier": "corona:espada_ventos_diamond",
+    "display_name": "Espada do Senhor dos Ventos",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_ventos",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_castelo",
+    "bedrock_identifier": "corona:espada_castelo_diamond",
+    "display_name": "Espada do Carrasco",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_castelo",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_forja",
+    "bedrock_identifier": "corona:espada_forja_diamond",
+    "display_name": "Espada do Senhor das Chamas",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_forja",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_bastiao",
+    "bedrock_identifier": "corona:espada_bastiao_diamond",
+    "display_name": "Espada do Chefe Piglin",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_bastiao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_wither",
+    "bedrock_identifier": "corona:espada_wither_diamond",
+    "display_name": "Espada do General Wither",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_wither",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_covil",
+    "bedrock_identifier": "corona:espada_covil_diamond",
+    "display_name": "Espada da Besta Zoglin",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_covil",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cidadela",
+    "bedrock_identifier": "corona:espada_cidadela_diamond",
+    "display_name": "Espada do Senhor do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cidadela",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_prisao",
+    "bedrock_identifier": "corona:espada_prisao_diamond",
+    "display_name": "Espada do Carcereiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_prisao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_secreta",
+    "bedrock_identifier": "corona:espada_secreta_diamond",
+    "display_name": "Espada de Herobrine",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_secreta",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cemiterio",
+    "bedrock_identifier": "corona:espada_cemiterio_diamond",
+    "display_name": "Espada do Coveiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cemiterio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_esgoto",
+    "bedrock_identifier": "corona:espada_esgoto_diamond",
+    "display_name": "Espada da Gosma Primordial",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_esgoto",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_acampamento",
+    "bedrock_identifier": "corona:espada_acampamento_diamond",
+    "display_name": "Espada do Capitão Saqueador",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_acampamento",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_moinho",
+    "bedrock_identifier": "corona:espada_moinho_diamond",
+    "display_name": "Espada do Espantalho",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_moinho",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_fungos",
+    "bedrock_identifier": "corona:espada_fungos_diamond",
+    "display_name": "Espada do Rei Fungo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_fungos",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_covil_lobos",
+    "bedrock_identifier": "corona:espada_covil_lobos_diamond",
+    "display_name": "Espada do Lobo Alfa",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_covil_lobos",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_urso",
+    "bedrock_identifier": "corona:espada_urso_diamond",
+    "display_name": "Espada do Urso Ancestral",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_urso",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_bosque_palido",
+    "bedrock_identifier": "corona:espada_bosque_palido_diamond",
+    "display_name": "Espada do Rangedor",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_bosque_palido",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_farol",
+    "bedrock_identifier": "corona:espada_farol_diamond",
+    "display_name": "Espada da Capitã Fantasma",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_farol",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_laboratorio",
+    "bedrock_identifier": "corona:espada_laboratorio_diamond",
+    "display_name": "Espada da Alquimista Louca",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_laboratorio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_camara_testes",
+    "bedrock_identifier": "corona:espada_camara_testes_diamond",
+    "display_name": "Espada da Sentinela de Cobre",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_camara_testes",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_fazenda",
+    "bedrock_identifier": "corona:espada_fazenda_diamond",
+    "display_name": "Espada do Fazendeiro Zumbi",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_fazenda",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cratera",
+    "bedrock_identifier": "corona:espada_cratera_diamond",
+    "display_name": "Espada do Caído",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cratera",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_jardim",
+    "bedrock_identifier": "corona:espada_jardim_diamond",
+    "display_name": "Espada do Ronin Espectral",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_jardim",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_catedral",
+    "bedrock_identifier": "corona:espada_catedral_diamond",
+    "display_name": "Espada do Bispo Corrompido",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_catedral",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_tesouro",
+    "bedrock_identifier": "corona:espada_tesouro_diamond",
+    "display_name": "Espada do Rei Dourado",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_tesouro",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_coliseu",
+    "bedrock_identifier": "corona:espada_coliseu_diamond",
+    "display_name": "Espada do Gladiador Imortal",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_coliseu",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_trovao",
+    "bedrock_identifier": "corona:espada_trovao_diamond",
+    "display_name": "Espada do Arauto do Trovão",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_trovao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_observatorio",
+    "bedrock_identifier": "corona:espada_observatorio_diamond",
+    "display_name": "Espada do Astrólogo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_observatorio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_viuva",
+    "bedrock_identifier": "corona:espada_viuva_diamond",
+    "display_name": "Espada da Viúva Negra",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_viuva",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_naufragio",
+    "bedrock_identifier": "corona:espada_naufragio_diamond",
+    "display_name": "Espada do Capitão Caveira",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_naufragio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_mausoleu",
+    "bedrock_identifier": "corona:espada_mausoleu_diamond",
+    "display_name": "Espada da Rainha Múmia",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_mausoleu",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_biblioteca",
+    "bedrock_identifier": "corona:espada_biblioteca_diamond",
+    "display_name": "Espada do Bibliotecário",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_biblioteca",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_vulcao",
+    "bedrock_identifier": "corona:espada_vulcao_diamond",
+    "display_name": "Espada do Titã de Magma",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_vulcao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cidade_antiga",
+    "bedrock_identifier": "corona:espada_cidade_antiga_diamond",
+    "display_name": "Espada do Eco Sombrio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cidade_antiga",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_geleira",
+    "bedrock_identifier": "corona:espada_geleira_diamond",
+    "display_name": "Espada do Gigante de Gelo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_geleira",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_sangue",
+    "bedrock_identifier": "corona:espada_sangue_diamond",
+    "display_name": "Espada do Lorde Vampiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_sangue",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_relogio",
+    "bedrock_identifier": "corona:espada_relogio_diamond",
+    "display_name": "Espada do Relojoeiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_relogio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_labirinto",
+    "bedrock_identifier": "corona:espada_labirinto_diamond",
+    "display_name": "Espada do Minotauro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_labirinto",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cripta_real",
+    "bedrock_identifier": "corona:espada_cripta_real_diamond",
+    "display_name": "Espada do Rei Lich",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cripta_real",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_delta",
+    "bedrock_identifier": "corona:espada_delta_diamond",
+    "display_name": "Espada do Centurião Zumbi",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_delta",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_carmesim",
+    "bedrock_identifier": "corona:espada_carmesim_diamond",
+    "display_name": "Espada do Rei dos Hoglins",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_carmesim",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_distorcido",
+    "bedrock_identifier": "corona:espada_distorcido_diamond",
+    "display_name": "Espada do Senhor dos Esporos",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_distorcido",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_almas",
+    "bedrock_identifier": "corona:espada_almas_diamond",
+    "display_name": "Espada do Ceifador de Almas",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_almas",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_obsidiana",
+    "bedrock_identifier": "corona:espada_obsidiana_diamond",
+    "display_name": "Espada do Arquidemônio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_obsidiana",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_ilhas",
+    "bedrock_identifier": "corona:espada_ilhas_diamond",
+    "display_name": "Espada do Arauto do Fim",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_ilhas",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_nave",
+    "bedrock_identifier": "corona:espada_nave_diamond",
+    "display_name": "Espada do Capitão Shulker",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_nave",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_trono",
+    "bedrock_identifier": "corona:espada_trono_diamond",
+    "display_name": "Espada da Fera do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_trono",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_coro",
+    "bedrock_identifier": "corona:espada_coro_diamond",
+    "display_name": "Espada da Jardineira do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_coro",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_abismo",
+    "bedrock_identifier": "corona:espada_abismo_diamond",
+    "display_name": "Espada do Arqueiro do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_abismo",
+     "allow_offhand": true
+    }
+   }
+  ],
+  "minecraft:netherite_sword": [
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cripta",
+    "bedrock_identifier": "corona:espada_cripta_netherite",
+    "display_name": "Espada do Rei Esqueleto",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cripta",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_ninho",
+    "bedrock_identifier": "corona:espada_ninho_netherite",
+    "display_name": "Espada da Rainha Aranha",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_ninho",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_mina",
+    "bedrock_identifier": "corona:espada_mina_netherite",
+    "display_name": "Espada do Mineiro Gigante",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_mina",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_pantano",
+    "bedrock_identifier": "corona:espada_pantano_netherite",
+    "display_name": "Espada da Bruxa Anciã",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_pantano",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_gelo",
+    "bedrock_identifier": "corona:espada_gelo_netherite",
+    "display_name": "Espada do Rei do Gelo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_gelo",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_deserto",
+    "bedrock_identifier": "corona:espada_deserto_netherite",
+    "display_name": "Espada do Faraó",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_deserto",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_afogada",
+    "bedrock_identifier": "corona:espada_afogada_netherite",
+    "display_name": "Espada do Rei Afogado",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_afogada",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_torre",
+    "bedrock_identifier": "corona:espada_torre_netherite",
+    "display_name": "Espada do Arquimago",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_torre",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_quartel",
+    "bedrock_identifier": "corona:espada_quartel_netherite",
+    "display_name": "Espada do Devastador",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_quartel",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_selva",
+    "bedrock_identifier": "corona:espada_selva_netherite",
+    "display_name": "Espada do Xamã da Selva",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_selva",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_ventos",
+    "bedrock_identifier": "corona:espada_ventos_netherite",
+    "display_name": "Espada do Senhor dos Ventos",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_ventos",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_castelo",
+    "bedrock_identifier": "corona:espada_castelo_netherite",
+    "display_name": "Espada do Carrasco",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_castelo",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_forja",
+    "bedrock_identifier": "corona:espada_forja_netherite",
+    "display_name": "Espada do Senhor das Chamas",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_forja",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_bastiao",
+    "bedrock_identifier": "corona:espada_bastiao_netherite",
+    "display_name": "Espada do Chefe Piglin",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_bastiao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_wither",
+    "bedrock_identifier": "corona:espada_wither_netherite",
+    "display_name": "Espada do General Wither",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_wither",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_covil",
+    "bedrock_identifier": "corona:espada_covil_netherite",
+    "display_name": "Espada da Besta Zoglin",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_covil",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cidadela",
+    "bedrock_identifier": "corona:espada_cidadela_netherite",
+    "display_name": "Espada do Senhor do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cidadela",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_prisao",
+    "bedrock_identifier": "corona:espada_prisao_netherite",
+    "display_name": "Espada do Carcereiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_prisao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_secreta",
+    "bedrock_identifier": "corona:espada_secreta_netherite",
+    "display_name": "Espada de Herobrine",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_secreta",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cemiterio",
+    "bedrock_identifier": "corona:espada_cemiterio_netherite",
+    "display_name": "Espada do Coveiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cemiterio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_esgoto",
+    "bedrock_identifier": "corona:espada_esgoto_netherite",
+    "display_name": "Espada da Gosma Primordial",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_esgoto",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_acampamento",
+    "bedrock_identifier": "corona:espada_acampamento_netherite",
+    "display_name": "Espada do Capitão Saqueador",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_acampamento",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_moinho",
+    "bedrock_identifier": "corona:espada_moinho_netherite",
+    "display_name": "Espada do Espantalho",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_moinho",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_fungos",
+    "bedrock_identifier": "corona:espada_fungos_netherite",
+    "display_name": "Espada do Rei Fungo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_fungos",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_covil_lobos",
+    "bedrock_identifier": "corona:espada_covil_lobos_netherite",
+    "display_name": "Espada do Lobo Alfa",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_covil_lobos",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_urso",
+    "bedrock_identifier": "corona:espada_urso_netherite",
+    "display_name": "Espada do Urso Ancestral",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_urso",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_bosque_palido",
+    "bedrock_identifier": "corona:espada_bosque_palido_netherite",
+    "display_name": "Espada do Rangedor",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_bosque_palido",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_farol",
+    "bedrock_identifier": "corona:espada_farol_netherite",
+    "display_name": "Espada da Capitã Fantasma",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_farol",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_laboratorio",
+    "bedrock_identifier": "corona:espada_laboratorio_netherite",
+    "display_name": "Espada da Alquimista Louca",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_laboratorio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_camara_testes",
+    "bedrock_identifier": "corona:espada_camara_testes_netherite",
+    "display_name": "Espada da Sentinela de Cobre",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_camara_testes",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_fazenda",
+    "bedrock_identifier": "corona:espada_fazenda_netherite",
+    "display_name": "Espada do Fazendeiro Zumbi",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_fazenda",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cratera",
+    "bedrock_identifier": "corona:espada_cratera_netherite",
+    "display_name": "Espada do Caído",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cratera",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_jardim",
+    "bedrock_identifier": "corona:espada_jardim_netherite",
+    "display_name": "Espada do Ronin Espectral",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_jardim",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_catedral",
+    "bedrock_identifier": "corona:espada_catedral_netherite",
+    "display_name": "Espada do Bispo Corrompido",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_catedral",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_tesouro",
+    "bedrock_identifier": "corona:espada_tesouro_netherite",
+    "display_name": "Espada do Rei Dourado",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_tesouro",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_coliseu",
+    "bedrock_identifier": "corona:espada_coliseu_netherite",
+    "display_name": "Espada do Gladiador Imortal",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_coliseu",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_trovao",
+    "bedrock_identifier": "corona:espada_trovao_netherite",
+    "display_name": "Espada do Arauto do Trovão",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_trovao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_observatorio",
+    "bedrock_identifier": "corona:espada_observatorio_netherite",
+    "display_name": "Espada do Astrólogo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_observatorio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_viuva",
+    "bedrock_identifier": "corona:espada_viuva_netherite",
+    "display_name": "Espada da Viúva Negra",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_viuva",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_naufragio",
+    "bedrock_identifier": "corona:espada_naufragio_netherite",
+    "display_name": "Espada do Capitão Caveira",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_naufragio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_mausoleu",
+    "bedrock_identifier": "corona:espada_mausoleu_netherite",
+    "display_name": "Espada da Rainha Múmia",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_mausoleu",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_biblioteca",
+    "bedrock_identifier": "corona:espada_biblioteca_netherite",
+    "display_name": "Espada do Bibliotecário",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_biblioteca",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_vulcao",
+    "bedrock_identifier": "corona:espada_vulcao_netherite",
+    "display_name": "Espada do Titã de Magma",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_vulcao",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cidade_antiga",
+    "bedrock_identifier": "corona:espada_cidade_antiga_netherite",
+    "display_name": "Espada do Eco Sombrio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cidade_antiga",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_geleira",
+    "bedrock_identifier": "corona:espada_geleira_netherite",
+    "display_name": "Espada do Gigante de Gelo",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_geleira",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_sangue",
+    "bedrock_identifier": "corona:espada_sangue_netherite",
+    "display_name": "Espada do Lorde Vampiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_sangue",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_relogio",
+    "bedrock_identifier": "corona:espada_relogio_netherite",
+    "display_name": "Espada do Relojoeiro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_relogio",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_labirinto",
+    "bedrock_identifier": "corona:espada_labirinto_netherite",
+    "display_name": "Espada do Minotauro",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_labirinto",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_cripta_real",
+    "bedrock_identifier": "corona:espada_cripta_real_netherite",
+    "display_name": "Espada do Rei Lich",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_cripta_real",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_delta",
+    "bedrock_identifier": "corona:espada_delta_netherite",
+    "display_name": "Espada do Centurião Zumbi",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_delta",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_carmesim",
+    "bedrock_identifier": "corona:espada_carmesim_netherite",
+    "display_name": "Espada do Rei dos Hoglins",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_carmesim",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_distorcido",
+    "bedrock_identifier": "corona:espada_distorcido_netherite",
+    "display_name": "Espada do Senhor dos Esporos",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_distorcido",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_almas",
+    "bedrock_identifier": "corona:espada_almas_netherite",
+    "display_name": "Espada do Ceifador de Almas",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_almas",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_obsidiana",
+    "bedrock_identifier": "corona:espada_obsidiana_netherite",
+    "display_name": "Espada do Arquidemônio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_obsidiana",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_ilhas",
+    "bedrock_identifier": "corona:espada_ilhas_netherite",
+    "display_name": "Espada do Arauto do Fim",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_ilhas",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_nave",
+    "bedrock_identifier": "corona:espada_nave_netherite",
+    "display_name": "Espada do Capitão Shulker",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_nave",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_trono",
+    "bedrock_identifier": "corona:espada_trono_netherite",
+    "display_name": "Espada da Fera do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_trono",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_coro",
+    "bedrock_identifier": "corona:espada_coro_netherite",
+    "display_name": "Espada da Jardineira do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_coro",
+     "allow_offhand": true
+    }
+   },
+   {
+    "type": "definition",
+    "model": "corona:item/reliquias/espada_abismo",
+    "bedrock_identifier": "corona:espada_abismo_netherite",
+    "display_name": "Espada do Arqueiro do Vazio",
+    "bedrock_options": {
+     "display_handheld": true,
+     "icon": "corona_espada_abismo",
+     "allow_offhand": true
+    }
+   }
+  ]
+ }
+}

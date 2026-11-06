@@ -1,0 +1,142 @@
+# ============================================================================
+# Loja do Corona Server - o site roda dentro do proprio servidor.
+# ============================================================================
+# Porta e endereco local do site (o tunel do playit aponta para ca).
+host: 127.0.0.1
+porta: 8085
+# Endereco publico do site (o que aparece no /loja). Ex.: https://corona.playit.plus
+endereco-publico: ''
+
+# ---------------------------------------------------------------------------
+# PAGAMENTO AUTOMATICO (Pix pelo Mercado Pago)
+# Cole aqui o "Access Token" de PRODUCAO da sua conta Mercado Pago
+# (mercadopago.com.br/developers > Suas integracoes > sua aplicacao > Credenciais de producao).
+# Depois de colar, use /loja recarregar (ou reinicie). Vazio = modo manual (abaixo).
+# NUNCA mostre esse token para ninguem.
+# ---------------------------------------------------------------------------
+mercadopago:
+  access-token: ''
+
+# ---------------------------------------------------------------------------
+# PAGAMENTO MANUAL (usado quando nao ha token): o site mostra a sua chave Pix e o codigo do pedido;
+# quando o dinheiro cair, aprove no jogo/console com: /loja aprovar <codigo>
+# ---------------------------------------------------------------------------
+pix-manual:
+  chave: ''
+  nome-recebedor: ''
+
+# Minutos para pagar o Pix antes do pedido expirar.
+expira-minutos: 30
+
+# Mostrado no site.
+servidor:
+  nome: Corona Server
+  ip-java: signaling-valerie.tun.ply.gg
+  ip-bedrock: prettyshore.wdn.gg
+  porta-bedrock: '443'
+
+# ---------------------------------------------------------------------------
+# Produtos. preco em reais. comandos rodam no console quando o pagamento e confirmado e o jogador esta online.
+# {jogador} = nome do jogador no servidor, {uuid} = UUID dele (use no LuckPerms). categoria: vip | coronas | outros
+# ---------------------------------------------------------------------------
+produtos:
+  vip:
+    nome: VIP
+    categoria: vip
+    preco: 9.90
+    cor: '#55ff55'
+    destaque: ''
+    descricao: 30 dias de VIP
+    beneficios:
+      - Tag VIP no chat e no TAB
+      - 3.000 coronas na hora
+      - Kit do dia com 150 coronas
+      - +10% de coronas nas masmorras
+      - 'Kit Pet VIP: ovo incomum a cada 3 dias'
+    comandos:
+      - vip dar {jogador} 1 30
+      - lp user {uuid} permission settemp playerkits.kit.petvip true 30d accumulate
+  vipmais:
+    nome: VIP+
+    categoria: vip
+    preco: 19.90
+    cor: '#55ffff'
+    destaque: ''
+    descricao: 30 dias de VIP+
+    beneficios:
+      - Tudo do VIP
+      - 8.000 coronas na hora
+      - Kit do dia com 400 coronas
+      - +25% de coronas nas masmorras
+      - Partículas (/vip particulas)
+      - 'Kit Pet VIP+: ovo raro e 3 penas de voo a cada 3 dias'
+    comandos:
+      - vip dar {jogador} 2 30
+      - lp user {uuid} permission settemp playerkits.kit.petvipmais true 30d accumulate
+  mvp:
+    nome: MVP
+    categoria: vip
+    preco: 29.90
+    cor: '#ffaa00'
+    destaque: Mais vendido
+    descricao: 30 dias de MVP
+    beneficios:
+      - Tudo do VIP+
+      - 12.000 coronas na hora
+      - Kit do dia com 600 coronas
+      - +35% de coronas nas masmorras
+      - Chapéu (/vip chapeu) e anúncio quando entra
+      - 'Kit Pet MVP: ovo épico, ovo raro e 5 penas a cada 3 dias'
+    comandos:
+      - vip dar {jogador} 3 30
+      - lp user {uuid} permission settemp playerkits.kit.petmvp true 30d accumulate
+  lenda:
+    nome: LENDA
+    categoria: vip
+    preco: 49.90
+    cor: '#ff55ff'
+    destaque: ''
+    descricao: 30 dias de LENDA
+    beneficios:
+      - Tudo do MVP
+      - 25.000 coronas na hora
+      - Kit do dia com 1.200 coronas
+      - +50% de coronas nas masmorras
+      - Voar no spawn e nos lobbies (/vip voar)
+      - 'Kit Pet LENDA, o maior: ovos lendário, épico e raro, elytra e foguetes a cada 3 dias'
+    comandos:
+      - vip dar {jogador} 4 30
+      - lp user {uuid} permission settemp playerkits.kit.lendario true 30d accumulate
+  coronas5k:
+    nome: 5.000 Coronas
+    categoria: coronas
+    preco: 4.90
+    cor: '#ffd700'
+    destaque: ''
+    descricao: Moeda do servidor (lojas e masmorras)
+    beneficios:
+      - 5.000 coronas na sua conta
+    comandos:
+      - coronas dar {jogador} 5000
+  coronas15k:
+    nome: 15.000 Coronas
+    categoria: coronas
+    preco: 12.90
+    cor: '#ffd700'
+    destaque: '+ barato'
+    descricao: Moeda do servidor (lojas e masmorras)
+    beneficios:
+      - 15.000 coronas na sua conta
+    comandos:
+      - coronas dar {jogador} 15000
+  coronas40k:
+    nome: 40.000 Coronas
+    categoria: coronas
+    preco: 29.90
+    cor: '#ffd700'
+    destaque: ''
+    descricao: Moeda do servidor (lojas e masmorras)
+    beneficios:
+      - 40.000 coronas na sua conta
+    comandos:
+      - coronas dar {jogador} 40000

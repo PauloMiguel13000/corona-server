@@ -1,0 +1,26 @@
+# Nivel de poder do AuraSkills (soma de todas as skills) necessario para cada poder.
+niveis:
+  fogo: 0
+  gelo: 10
+  golem: 15
+  dash: 20
+  torreta: 25
+  teleporte: 30
+  cura: 35
+  voo: 40
+  guardiao: 45
+  raio: 50
+  kamehameha: 60
+
+# Quanto tempo a Pena de Voo deixa voar.
+pena:
+  duracao-segundos: 30
+
+# Pet (BabyPets) ataca junto quando voce bate num monstro ou quando um monstro te bate.
+pets:
+  ajudar-em-combate: true
+  recarga-ms: 1500
+
+# Maximo de lobos guerreiros por jogador (dados pelo kit de pets).
+lobos:
+  maximo-por-jogador: 4

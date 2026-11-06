@@ -1,0 +1,17 @@
+name: Vovo
+version: '1.0'
+main: br.servidor.vovo.Vovo
+api-version: '1.21'
+softdepend: [AuthMe, Multiverse-Core, BabyPets, Geyser-Spigot]
+description: Minigame de terror - fuja da casa da vovo em 5 dias sem fazer barulho.
+commands:
+  vovo:
+    description: Minigame Casa da Vovo (/vovo, /vovo entrar, /vovo sair)
+    aliases: [casadavovo, avo]
+permissions:
+  vovo.jogar:
+    description: Jogar na casa da vovo
+    default: true
+  vovo.admin:
+    description: Administrar o minigame da vovo
+    default: op

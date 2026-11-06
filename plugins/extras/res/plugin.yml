@@ -1,0 +1,52 @@
+name: Extras
+version: '1.0'
+main: br.servidor.extras.Extras
+api-version: '1.21'
+softdepend: [GriefPrevention, WorldGuard]
+description: Teleporte aleatorio (/rtp) e queda segura no spawn alto.
+commands:
+  rtp:
+    description: Teleporta para um lugar aleatorio e seguro do mapa
+    aliases: [wild, tpr, aleatorio, randomtp]
+  ec:
+    description: Abre o seu bau do Ender de qualquer lugar
+    aliases: [enderchest, echest, bauender]
+  votar:
+    description: Links para votar no servidor e pegar o premio (/votar pegar)
+    aliases: [vote, votos]
+  ip:
+    description: Endereco do servidor (Java e Bedrock) para chamar os amigos
+    aliases: [endereco, convidar]
+  indicar:
+    description: Diz quem te chamou para o servidor (os dois ganham premio)
+    aliases: [indicacao, quemmechamou]
+  minigames:
+    description: Abre o menu de minigames
+    aliases: [minijogos, jogos]
+  vip:
+    description: 'VIPs do servidor (beneficios, kit do dia, particulas, chapeu, voar). Console - vip dar <jogador> <nivel> <dias>'
+    aliases: [vips]
+  extras:
+    description: Administracao do plugin Extras
+permissions:
+  extras.rtp:
+    description: Usar o /rtp
+    default: true
+  extras.rtp.semrecarga:
+    description: Usar o /rtp sem esperar a recarga
+    default: op
+  extras.rtp.semespera:
+    description: Teleportar na hora, sem ficar parado
+    default: op
+  extras.ec:
+    description: Abrir o proprio bau do Ender com /ec
+    default: true
+  extras.ec.outros:
+    description: Ver o bau do Ender de outro jogador (/ec <jogador>)
+    default: op
+  extras.vip.admin:
+    description: Dar e tirar VIP (vip dar|tirar|ver|lista)
+    default: op
+  extras.admin:
+    description: Recarregar a config
+    default: op

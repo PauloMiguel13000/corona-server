@@ -1,0 +1,17 @@
+name: DefesaTorre
+version: '1.0'
+main: br.servidor.defesa.DefesaTorre
+api-version: '1.21'
+softdepend: [BabyPets]
+description: Minigame Defesa da Torre - varios mapas, dificuldades, torres, ondas de monstros e boss a cada 5 ondas.
+commands:
+  defesa:
+    description: Minigame Defesa da Torre (/defesa mapas, iniciar, loja, sair)
+    aliases: [td, torres, towerdefense]
+permissions:
+  defesa.jogar:
+    description: Jogar o Defesa da Torre
+    default: true
+  defesa.admin:
+    description: Comandos de administracao do minigame
+    default: op

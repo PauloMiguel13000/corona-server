@@ -1,0 +1,24 @@
+name: Clas
+version: '1.0'
+main: br.servidor.clas.Clas
+api-version: '1.21'
+softdepend: [Poderes, AuthMe]
+description: Grupos (para jogar junto) e clas. Quem e do mesmo grupo ou cla nao se machuca.
+commands:
+  grupo:
+    description: Grupo para jogar junto (/grupo convidar, aceitar, sair...)
+    aliases: [party, grupos]
+  clan:
+    description: Clas (/clan criar, convidar, aceitar, sair, base...)
+    aliases: [cla, clans, guilda]
+  gc:
+    description: Fala so com o seu grupo (/gc mensagem)
+  cc:
+    description: Fala so com o seu cla (/cc mensagem)
+permissions:
+  clas.usar:
+    description: Usar grupos e clas
+    default: true
+  clas.admin:
+    description: Administrar clas (desfazer o cla de outro)
+    default: op

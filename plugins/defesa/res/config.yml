@@ -1,0 +1,6 @@
+# Defesa da Torre
+# As dificuldades (ondas para vencer, limite de torres, vida dos monstros etc.) ficam no codigo (Dificuldade.java).
+# Recordes e vitorias por mapa e dificuldade sao salvos aqui automaticamente.
+recordes: {}
+recordes-jogadores: {}
+vitorias: {}

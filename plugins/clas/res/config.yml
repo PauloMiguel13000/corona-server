@@ -1,0 +1,25 @@
+# Grupos (temporarios, para jogar junto) e clas (permanentes, com tag no chat).
+# Quem e do mesmo grupo nunca se machuca; do mesmo cla tambem (a nao ser que o dono ligue /clan fogoamigo).
+
+grupo:
+  maximo: 8                 # jogadores por grupo
+  convite-segundos: 120     # tempo para aceitar o convite
+  offline-minutos: 5        # quem sai do jogo fica no grupo por esse tempo
+
+cla:
+  maximo: 20                # membros por cla
+  tag-min: 2                # letras da tag (ex.: [ABC])
+  tag-max: 5
+  nome-max: 24
+  convite-segundos: 300
+  tag-no-chat: true         # mostra [TAG] antes do nome no chat
+  tag-na-cabeca: true       # mostra [TAG] em cima da cabeca (time do placar)
+
+# Base do cla (/clan setbase e /clan base): so nestes mundos (nunca dentro dos minigames).
+base:
+  mundos: [world, world_nether, world_the_end, plots]
+  espera-segundos: 5        # parado antes de teleportar (cancela se mexer ou levar dano)
+  recarga-segundos: 120
+
+# Mundos onde o cla e o grupo NAO protegem (todo mundo pode lutar): a Arena PvP.
+pvp-livre: [arena]

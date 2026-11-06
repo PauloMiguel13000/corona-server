@@ -1,0 +1,50 @@
+# Classes: cada uma tem 5 habilidades. Nivel de poder do AuraSkills (soma das skills)
+# para liberar a 1a, 2a, 3a, 4a e 5a habilidade da classe.
+classes:
+  niveis: [0, 15, 30, 45, 60]
+  # Depois da primeira escolha, de quanto em quanto tempo pode trocar de classe (0 = a qualquer hora).
+  troca-recarga-minutos: 60
+  # Mostra a classe na lista de jogadores (TAB), ex: [Mago] Paulo
+  mostrar-no-tab: true
+
+# Mundos onde as habilidades das classes nao funcionam (ex.: o minigame Defesa da Torre,
+# para as torres do Engenheiro nao furarem o limite de torres). Tire 'defesa' da lista para liberar.
+mundos-sem-poderes:
+  - defesa
+
+# Quanto tempo a Pena de Voo deixa voar.
+pena:
+  duracao-segundos: 30
+
+# Pet (BabyPets) ataca junto quando voce bate num monstro ou quando um monstro te bate.
+pets:
+  ajudar-em-combate: true
+  recarga-ms: 1500
+  atacar-sozinho: true       # o pet ataca sozinho os monstros perto do dono
+  raio-ataque: 10
+  poder-recarga-ms: 8000     # de quanto em quanto tempo o pet usa o poder escolhido (/petpoder); supremo: 4 s
+  xp-masmorras: true         # monstros e chefes das masmorras dao XP para o pet
+  xp-monstro-por-vida: 0.3
+  xp-chefe-por-vida: 0.8
+  mundos-sem-ajuda: [defesa, backrooms, slender, vovo, login]   # minigames/login: o pet nao luta
+  supremos: []               # ids dos Pets Supremos (admin: /petpoder supremo [jogador])
+
+# Forca das habilidades das classes (1.3 = 30% mais dano).
+habilidades:
+  dano-multiplicador: 1.3
+
+# Maximo de lobos guerreiros por jogador (dados pelo kit de pets).
+lobos:
+  maximo-por-jogador: 4
+
+# Celular (Bedrock). extensao-itens: auto = se a extensao GeyserDisplayEntity estiver no Geyser, o celular ve os
+# itens do PC (laminas, folhas, estrela, tridente) e as copias de item do celular sao desligadas. sim / nao forca.
+celular:
+  extensao-itens: auto
+
+# Lutador: passiva "Punhos de Aco". Soco de mao vazia da dano a mais, que cresce com o nivel de poder:
+# soco-bonus-min no nivel 0 ate soco-bonus-max no nivel da 5a habilidade (o ultimo de classes.niveis). 2 = 1 coracao.
+lutador:
+  soco-bonus-min: 3.0
+  soco-bonus-max: 14.0   # nivel maximo: soco carregado = 15 (espada de diamante afiacao IV = 9,5; netherite afiacao V = 11)
+# Mudou aqui? Use /poderes recarregar (admin), sem reiniciar.

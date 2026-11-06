@@ -1,0 +1,38 @@
+name: Poderes
+version: '1.0'
+main: br.servidor.poderes.Poderes
+api-version: '1.21'
+softdepend: [PlaceholderAPI, BabyPets, AuraSkills, GriefPrevention, AuthMe, MaoDeFogo]
+description: Classes com habilidades por nivel, pets que lutam, duelo de pets, pena de voo e lobos.
+commands:
+  classe:
+    description: Escolhe ou troca a sua classe
+    aliases: [classes]
+  poderes:
+    description: Abre o menu das habilidades da sua classe (ou /poderes <nome> para escolher)
+    aliases: [poder, magia, habilidades]
+  duelopet:
+    description: Desafia o pet de outro jogador para um duelo
+    aliases: [duelo]
+  petpoder:
+    description: Escolhe o poder do seu pet (admin - /petpoder supremo [jogador])
+    aliases: [petpoderes, poderpet]
+  voar:
+    description: Liga/desliga o voo dentro do seu terreno
+    aliases: [cfly, claimfly]
+permissions:
+  poderes.usar:
+    description: Usar poderes
+    default: true
+  poderes.duelo:
+    description: Duelar pets
+    default: true
+  poderes.voar:
+    description: Voar dentro do proprio terreno
+    default: true
+  poderes.todos:
+    description: Usar todos os poderes sem precisar de nivel
+    default: op
+  poderes.admin:
+    description: Dar penas e lobos, definir/resetar classe e trocar de classe sem esperar
+    default: op

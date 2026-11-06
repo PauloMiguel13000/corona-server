@@ -1,0 +1,14 @@
+name: CoronaLoja
+version: '1.0'
+main: br.servidor.loja.CoronaLoja
+api-version: '1.21'
+softdepend: [Extras, Masmorras, Geyser-Spigot]
+description: Loja do Corona Server (site no proprio servidor, Pix e entrega automatica)
+commands:
+  loja:
+    description: Link da loja do servidor. Admin - /loja aprovar|cancelar|pedidos|recarregar
+    aliases: [site, store, comprar]
+permissions:
+  loja.admin:
+    description: Aprovar e cancelar pedidos da loja
+    default: op

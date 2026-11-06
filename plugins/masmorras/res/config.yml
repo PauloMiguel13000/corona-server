@@ -1,0 +1,131 @@
+# Masmorras (dungeons) com um chefe no fim, espalhadas pelo mundo normal, Nether e End.
+# Jogadores: /masmorras (as mais perto), /masmorras todas, /masmorras mapa
+# Admin: masmorras admin <lista|status|construir|reset <id>|tp <id>|bordas|editar>
+#   editar = liga/desliga o modo de edicao (so assim um admin quebra ou coloca blocos nas masmorras)
+
+construir: true            # constroi sozinho as que faltam (aos poucos, sem travar o servidor)
+refazer-antigas: true      # desmancha as masmorras da versao antiga (pequenas), o terreno volta, e faz as novas
+aproximar: true # masmorras longe demais (de antes das distancias menores) sao desmanchadas e refeitas mais perto (a secreta fica)
+mundos:
+  normal: world
+  nether: world_nether
+  end: world_the_end
+
+# Quantas de cada tipo. No maximo 2 de cada (pedido do Paulo, 04/11): as que passarem disso sao desmanchadas sozinhas
+# (o terreno volta) e as 40 novas enchem o mapa. Nivel 1 fica a 250-1500 blocos do spawn, nivel 2 a 1000-2600, nivel 3 e 4 de 2200 ate a borda.
+quantidade:
+  CRIPTA: 2 # nivel 1 - Rei Esqueleto
+  NINHO: 2 # nivel 1 - Rainha Aranha
+  MINA: 2 # nivel 2 - Mineiro Gigante
+  PANTANO: 2 # nivel 2 - Bruxa Ancia (de preferencia em pantano)
+  GELO: 2 # nivel 2 - Rei do Gelo (de preferencia na neve)
+  DESERTO: 2 # nivel 2 - Farao (de preferencia no deserto)
+  TORRE: 2 # nivel 3 - Arquimago
+  QUARTEL: 2 # nivel 3 - Devastador
+  VENTOS: 2 # nivel 4 - Senhor dos Ventos
+  SECRETA: 1 # ??? (nao aparece no mapa nem no menu)
+  AFOGADA: 2 # nivel 2 - Rei Afogado (escudo de guardas)
+  SELVA: 2 # nivel 3 - Xama Ilusionista (clones; de preferencia na selva)
+  CASTELO: 2 # nivel 4 - Carrasco (fica mais forte com o tempo)
+  FORJA: 2 # Nether, nivel 3 - Senhor das Chamas
+  BASTIAO: 2 # Nether, nivel 4 - Chefe Piglin
+  WITHER: 2 # Nether, nivel 4 - General Wither
+  COVIL: 2 # Nether, nivel 4 - Besta Zoglin (zonas que explodem)
+  CIDADELA: 2 # End, nivel 5 - Senhor do Vazio
+  PRISAO: 2 # End, nivel 5 - O Carcereiro
+  CEMITERIO: 2 # nivel 1 - O Coveiro (Cemitério Esquecido)
+  ESGOTO: 2 # nivel 1 - Gosma Primordial (Esgoto Gosmento)
+  ACAMPAMENTO: 2 # nivel 1 - Capitão Saqueador (Acampamento Saqueador)
+  MOINHO: 2 # nivel 1 - O Espantalho (Moinho Assombrado)
+  FUNGOS: 2 # nivel 1 - Rei Fungo (Gruta dos Cogumelos)
+  COVIL_LOBOS: 2 # nivel 1 - Lobo Alfa (Covil dos Lobos)
+  URSO: 2 # nivel 2 - Urso Ancestral (Caverna do Urso Polar)
+  BOSQUE_PALIDO: 2 # nivel 2 - O Rangedor (Bosque Pálido)
+  FAROL: 2 # nivel 2 - Capitã Fantasma (Farol Naufragado)
+  LABORATORIO: 2 # nivel 2 - Alquimista Louca (Laboratório Alquímico)
+  CAMARA_TESTES: 2 # nivel 2 - Sentinela de Cobre (Câmara dos Testes)
+  FAZENDA: 2 # nivel 2 - Fazendeiro Zumbi (Fazenda Maldita)
+  CRATERA: 2 # nivel 2 - O Caído (Cratera do Meteoro)
+  JARDIM: 2 # nivel 2 - Ronin Espectral (Jardim das Cerejeiras)
+  CATEDRAL: 2 # nivel 3 - Bispo Corrompido (Catedral Profana)
+  TESOURO: 2 # nivel 3 - Rei Dourado (Câmara do Tesouro)
+  COLISEU: 2 # nivel 3 - Gladiador Imortal (Coliseu Perdido)
+  TROVAO: 2 # nivel 3 - Arauto do Trovão (Templo do Trovão)
+  OBSERVATORIO: 2 # nivel 3 - O Astrólogo (Observatório Estelar)
+  VIUVA: 2 # nivel 3 - Viúva Negra (Ninho Profundo)
+  NAUFRAGIO: 2 # nivel 3 - Capitão Caveira (Navio Fantasma)
+  MAUSOLEU: 2 # nivel 3 - Rainha Múmia (Mausoléu Real)
+  BIBLIOTECA: 2 # nivel 3 - O Bibliotecário (Biblioteca Proibida)
+  VULCAO: 2 # nivel 4 - Titã de Magma (Coração do Vulcão)
+  CIDADE_ANTIGA: 2 # nivel 4 - Eco Sombrio (Cidade Ancestral)
+  GELEIRA: 2 # nivel 4 - Gigante de Gelo (Geleira Eterna)
+  SANGUE: 2 # nivel 4 - Lorde Vampiro (Santuário de Sangue)
+  RELOGIO: 2 # nivel 4 - O Relojoeiro (Torre do Relógio)
+  LABIRINTO: 2 # nivel 4 - Minotauro (Labirinto do Minotauro)
+  CRIPTA_REAL: 2 # nivel 4 - Rei Lich (Cripta dos Reis)
+  DELTA: 2 # Nether, nivel 3 - Centurião Zumbi (Delta de Basalto)
+  CARMESIM: 2 # Nether, nivel 4 - Rei dos Hoglins (Floresta Carmesim)
+  DISTORCIDO: 2 # Nether, nivel 4 - Senhor dos Esporos (Floresta Distorcida)
+  ALMAS: 2 # Nether, nivel 4 - Ceifador de Almas (Vale das Almas)
+  OBSIDIANA: 2 # Nether, nivel 4 - Arquidemônio (Fortaleza de Obsidiana)
+  ILHAS: 2 # End, nivel 5 - Arauto do Fim (Ilhas Quebradas)
+  NAVE: 2 # End, nivel 5 - Capitão Shulker (Nave do Fim)
+  TRONO: 2 # End, nivel 5 - Fera do Vazio (Trono de Obsidiana)
+  CORO: 2 # End, nivel 4 - Jardineira do Vazio (Jardim do Coro)
+  ABISMO: 2 # End, nivel 4 - Arqueiro do Vazio (Abismo do Vazio)
+
+# Dentro das masmorras os monstros nao deixam os drops normais (so as reliquias e o premio do chefe).
+sem-drops-normais: true
+
+chefe-volta-minutos: 60
+
+# Coronas (dinheiro do servidor): por monstro (x nivel da masmorra) e por chefe (x nivel); a secreta da um valor fixo.
+coronas:
+  monstro: 3
+  chefe: 250
+  secreta: 5000
+
+# Mercadores perto de cada masmorra (itens do nivel dela) e o Spawn das Masmorras (praca protegida com o Mercador Lendario).
+loja:
+  mercadores: true
+  multiplicador: 3.0     # precos dos Mercadores das masmorras (nivel 1 a 5) x este numero
+  moeda-reviver: 40000   # Moeda de Reviver no Mercador Lendario (coronas)
+hub:
+  ativo: true
+  guia: ''          # onde fica o Guia das Masmorras no spawn principal (mundo,x,y,z,yaw). Admin: /masmorras admin guia
+
+# Luz a mais nas salas e na arena (blocos de luz invisiveis, 0 = desliga). 15 = maximo.
+luz-extra:
+  sala: 12
+  arena: 15
+    # depois de derrotado, o chefe (e os baus e monstros das salas) volta nesse tempo
+habitado-maximo-minutos: 5 # nao constroi onde jogadores ja ficaram mais tempo que isso (bases, construcoes)
+semente: 1234567
+
+# Dentro das masmorras ninguem machuca outro jogador (espada, flecha, pocao, fogo, lobo...).
+sem-pvp: true
+
+# XP de habilidade do AuraSkills (sobe o nivel de poder, que libera as habilidades das classes).
+xp-classes:
+  ativo: true
+  chefe: [3000, 6000, 10000, 15000, 22000]  # para cada jogador que lutou, pelo nivel do chefe (1 a 5); a secreta da o dobro
+  monstro: 15                               # por monstro da masmorra, vezes o nivel da masmorra
+  skills:                                   # como divide a XP (varias skills = o poder sobe mais rapido)
+    FIGHTING: 0.3
+    DEFENSE: 0.25
+    ENDURANCE: 0.15
+    AGILITY: 0.15
+    ARCHERY: 0.15
+
+# Borda do mundo (lado do quadrado, centro no 0 0). O padrao de servidor pequeno e 10.000 no mundo normal;
+# o Nether e 8 vezes menor (1 bloco la = 8 aqui).
+borda:
+  aplicar: true
+  normal: 10000
+  nether: 1250
+  end: 10000
+
+# Reliquias: o equipamento do chefe e dos baus vira reliquia da masmorra (nome, brilho, poder). Monstros comuns
+# soltam uma reliquia de vez em quando (0.025 = 2,5% por monstro morto por jogador).
+reliquias:
+  chance-monstro: 0.025

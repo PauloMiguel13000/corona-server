@@ -1,0 +1,21 @@
+# Pacote de recursos do Corona Server (sons originais dos minigames).
+# Java: o servidor entrega o pacote pela mesma porta do Minecraft. O endereco usado e o mesmo que o jogador
+# digitou para entrar. Se precisar, escreva aqui o endereco publico completo de um tunel TCP, ex.: "http://exemplo.ply.gg:12345"
+url-base: ''
+# Link publico do pacote (o mesmo arquivo de dentro do jar). Preenchido = todos do Java recebem por esse link.
+url-pacote: ''
+# Sem url-pacote: o plugin sobe sozinho o pacote num servico gratis (catbox, x0.at...) e confere a cada 6 horas.
+link-automatico: true
+# Bedrock: o pacote vai por um link https (catbox...) que o celular baixa direto, sem passar pelo tunel do jogo
+# (pelos dados moveis o download pelo tunel travava em 0 MB). false = volta a ir pela pasta de pacotes do Geyser.
+bedrock-por-link: true
+# Onde ficam os links do Bedrock: o site da loja (https, pelo playit) serve os pacotes de plugins/CoronaPack/pacotes-site/.
+# Vazio = sobe em servicos gratis (catbox...). O celular nao conseguiu baixar do catbox (06/11), por isso o site.
+bedrock-link-site: 'https://coronaserver.playit.plus/pacotes/'
+# Enderecos que so deixam passar Minecraft (tunel "Minecraft Java" do playit). Quem entra por eles so recebe
+# o pacote se url-base estiver preenchido (com um tunel TCP); sem isso o download sempre falharia.
+sem-http: ['.ply.gg', '.joinmc.link']
+enviar-java: true
+obrigatorio: false        # true = quem recusar o pacote nao entra (nao recomendado)
+atraso-ticks: 60          # espera um pouco depois de entrar (deixa o login acontecer)
+mensagem: "§e§lCorona Server§r\n§fSons dos minigames (Backrooms e outros). §aRecomendado!"

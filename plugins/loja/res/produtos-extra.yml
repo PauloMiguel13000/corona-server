@@ -1,0 +1,30 @@
+# Produtos a mais da loja do site. Fica separado da config.yml (que tem o token do Mercado Pago).
+# Depois de mudar: /loja recarregar
+# {jogador} = nick do jogador no jogo.
+produtos:
+  reviver1:
+    nome: Moeda de Reviver
+    categoria: extras
+    preco: 4.90
+    cor: '#ffd23f'
+    destaque: ''
+    descricao: Volte para a partida quando for eliminado
+    beneficios:
+      - 1 Moeda de Reviver
+      - Eliminado num minigame? Gaste e volte com 1 vida
+      - Fica guardada até você usar (/reviver)
+    comandos:
+      - reviver dar {jogador} 1
+  reviver5:
+    nome: 5 Moedas de Reviver
+    categoria: extras
+    preco: 19.90
+    cor: '#ffd23f'
+    destaque: '+ barato'
+    descricao: Pacote com 5 moedas
+    beneficios:
+      - 5 Moedas de Reviver
+      - Sai R$ 3,98 cada
+      - Fica guardada até você usar (/reviver)
+    comandos:
+      - reviver dar {jogador} 5

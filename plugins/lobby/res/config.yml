@@ -1,0 +1,14 @@
+# Lobby de login: quem entra no servidor espera aqui (mundo leve, sem lag) ate fazer /login.
+# Depois do login a pessoa vai para o lobby principal (ou volta para onde estava, ver abaixo).
+ativo: true
+mundo: login
+# Para onde vai quem entra pela primeira vez (ou se o lugar antigo nao existir mais).
+# Vazio = usa o spawn do plugin Spawn (plugins/Spawn/location.yml) ou o spawn do mundo principal.
+spawn-novatos: ''
+# true = depois do login volta para onde estava. false = todo mundo que entra vai para o spawn (lobby principal).
+voltar-para-onde-estava: false
+# Enfeitar o spawn do mundo principal (caminhos, jardins, parapeito e totens dos minigames). So roda uma vez.
+enfeitar-spawn: true
+# O plugin preenche sozinho (nao precisa mexer):
+spawn-enfeite-versao: 0
+versao-lobby: 0

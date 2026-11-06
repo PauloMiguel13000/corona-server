@@ -1,0 +1,26 @@
+# O Hotel - minigame de terror (100 portas)
+portas: 100
+vidas: 3
+livros: 8
+min-jogadores: 1
+max-jogadores: 8
+contagem-segundos: 20
+# segundos que da para ficar no armario antes de algo te empurrar para fora
+armario-segundos: 22
+# chance (0 a 1) de cada porta aberta trazer o Estrondo / o Retorno (o Retorno so depois da porta 15)
+chance-estrondo: 0.17
+chance-retorno: 0.08
+chance-trancada: 0.2
+chance-olhos: 0.08
+# a Campainha (o Gerente, depois da porta 20): quando ela para de tocar, quem se mexer leva dano
+chance-campainha: 0.07
+campainha-dano: 6
+# o Perseguidor (corrida no meio do hotel)
+perseguicao: true
+perseguidor-velocidade: 0.29
+sussurro-segundos: 2.6
+sussurro-dano: 7
+dica-armario: true
+distancia-visao: 6
+# comandos rodados para cada vencedor ({jogador} = nome)
+recompensa-comandos: []

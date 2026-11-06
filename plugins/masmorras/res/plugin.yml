@@ -1,0 +1,23 @@
+name: Masmorras
+version: '1.0'
+main: br.servidor.masmorras.Masmorras
+api-version: '1.21'
+softdepend: [Multiverse-Core, LevelledMobs, EliteMobs, AuraSkills]
+description: Masmorras (dungeons) com chefes no mundo normal, Nether e End, e borda do mundo.
+commands:
+  masmorras:
+    description: Mostra as masmorras mais perto (/masmorras, /masmorras todas)
+    aliases: [masmorra, dungeons, dungeon]
+  coronas:
+    description: Seu saldo de coronas (/coronas pagar <jogador> <valor>)
+    aliases: [corona, moedas, dinheiro, saldo]
+  reviver:
+    description: Suas Moedas de Reviver (voltar para a partida quando for eliminado num minigame)
+    aliases: [moedareviver, revive, moeda, moedas]
+permissions:
+  masmorras.usar:
+    description: Ver as masmorras
+    default: true
+  masmorras.admin:
+    description: Administrar as masmorras
+    default: op

@@ -1,0 +1,119 @@
+{
+ "arqueira": {
+  "arquivo": "archer_1",
+  "slim": false,
+  "valor": "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZWVhNGE5NmU1ZTMyMTllYzliY2Y4ZWQyOGRkMzUwMzJlMzM2YjhhZGQwNWNiMWIwYzY4ZDU4OTgxMTE3YTc3ZiJ9fX0=",
+  "size": [
+   64,
+   32
+  ]
+ },
+ "canhao": {
+  "arquivo": "pirate_1",
+  "slim": false,
+  "valor": "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTMyMTkwYjczYzlmYTVkYzE5ZjA0ZWZkZWJlZWEzZTc3YzVjZDU4N2YwNDUwZDFkNGNhN2M5NjcwNDllYjQ0NCJ9fX0=",
+  "size": [
+   64,
+   64
+  ]
+ },
+ "gelo": {
+  "arquivo": "frost_1",
+  "slim": true,
+  "valor": "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNDA2MWNhMTNiZjk0NzQzZmZhMjEzODAwMzQwNDkxN2ZmNDY2OGQwYjAwMjc5YWJkNTQyOTEwMWViOWI5NWUyYiIsIm1ldGFkYXRhIjp7Im1vZGVsIjoic2xpbSJ9fX19",
+  "size": [
+   64,
+   64
+  ]
+ },
+ "veneno": {
+  "arquivo": "plague_2",
+  "slim": false,
+  "valor": "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvODZlN2RhYTAyNWExM2FjNTg2ZDFkZjEyMmYzNmZmODNiODA0Y2NlOWFiZDQzZjcwZWY3Yjc1OWMzNGFlYWIzNiJ9fX0=",
+  "size": [
+   64,
+   64
+  ]
+ },
+ "mina": {
+  "arquivo": "miner_2",
+  "slim": false,
+  "valor": "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmE0YjUxYmY4NTNiZWY3ZTg4YzBkMTg4YThjYTFhNmRlMGZhYTIyMmY3YWJiNTJlN2I4Y2FmN2JjZjcwYWU2MiJ9fX0=",
+  "size": [
+   64,
+   64
+  ]
+ },
+ "morteiro": {
+  "arquivo": "soldier_2",
+  "slim": false,
+  "valor": "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNzUwNTkwZjRiMDhiOTIxZTUxNWY3ZTJiZWE2NGUzYTM1ZGFjYjZiNTkzNzdhY2RlZWU0YTNkZmQ4YmY2ODQ3ZiJ9fX0=",
+  "size": [
+   64,
+   64
+  ]
+ },
+ "tesla": {
+  "arquivo": "scientist_1",
+  "slim": false,
+  "valor": "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOWYzZTFlYjA4NTY1NzVkNjFkMmQwNGM0ZDUyODcxN2U1NzYxYjhlMDBmMzhkNDk2MWU2OTkwMTM2ZjlkMjFkNCJ9fX0=",
+  "size": [
+   64,
+   64
+  ]
+ },
+ "farol": {
+  "arquivo": "knight_7",
+  "slim": false,
+  "valor": "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZmI4YjJmMmEzZTBlNzgyZDY3ZGE1M2VkMDEzMWIxNDI4MDc3OTM5NmJiY2UwOWU1ZjcxMjY2ZDc0NTQ0ZGVlOCJ9fX0=",
+  "size": [
+   64,
+   64
+  ]
+ },
+ "balista": {
+  "arquivo": "knight_6",
+  "slim": false,
+  "valor": "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNDAyNjBmZjBmN2FjMzU3YjdlYzIyYmQyMjAyZGI3YjY3ZGRjODk5ZWM2NmM4Y2I3MTZjZjYwMWRiNDY5NWZlNiJ9fX0=",
+  "size": [
+   64,
+   64
+  ]
+ },
+ "laser": {
+  "arquivo": "robot_1",
+  "slim": false,
+  "valor": "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvM2U0YjE3NGQ0ZWY0MTQwNGExMmVmMzA5ZTQ3Yzk1MWFmMDM3Y2I5ZmI2ODg5ZTIzZjJmNDgyODEwYWE2OTA5MiJ9fX0=",
+  "size": [
+   64,
+   64
+  ]
+ },
+ "bacteria": {
+  "arquivo": "bacteria_9",
+  "slim": false,
+  "valor": "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZTMyNGVlYzMxNGFjNTBhMGYwN2M2MjgyYjcyMWQ0MjBlYmRhNDc3NmU1NmI5NTVhOGZhNGM2MDYzYzFlMmNmIn19fQ==",
+  "size": [
+   64,
+   64
+  ]
+ },
+ "uivador": {
+  "arquivo": "howler_1",
+  "slim": true,
+  "valor": "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNDE4YTNiODU4YzIwYTBjYWZiYmExNTUwMmQ1YTIxOGQ2ZDg5YjRlMmIxZjNhODMwYjY4YzJhNGM0Njg3MjkzNiIsIm1ldGFkYXRhIjp7Im1vZGVsIjoic2xpbSJ9fX19",
+  "size": [
+   64,
+   64
+  ]
+ },
+ "corredor": {
+  "arquivo": "backrooms_4",
+  "slim": false,
+  "valor": "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNTlhMzc4YjMwN2VhNDYzYzBkYjVlNzEzZWQwYTMyZTc2ZGRhNWYxZGNlODc1Njk2OWFkOTM2OWFkZTc5ZGY0NSJ9fX0=",
+  "size": [
+   64,
+   64
+  ]
+ }
+}

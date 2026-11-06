@@ -1,0 +1,533 @@
+{
+"CRIPTA": {
+"de": "do Rei Esqueleto",
+"rgb": [
+225,
+225,
+235
+],
+"golpe": "OSSOS"
+},
+"NINHO": {
+"de": "da Rainha Aranha",
+"rgb": [
+70,
+170,
+60
+],
+"golpe": "VENENO"
+},
+"MINA": {
+"de": "do Mineiro Gigante",
+"rgb": [
+255,
+170,
+50
+],
+"golpe": "ESMAGAR"
+},
+"PANTANO": {
+"de": "da Bruxa Anciã",
+"rgb": [
+160,
+70,
+210
+],
+"golpe": "MALDICAO"
+},
+"GELO": {
+"de": "do Rei do Gelo",
+"rgb": [
+150,
+220,
+255
+],
+"golpe": "CONGELAR"
+},
+"DESERTO": {
+"de": "do Faraó",
+"rgb": [
+255,
+215,
+90
+],
+"golpe": "AREIA"
+},
+"AFOGADA": {
+"de": "do Rei Afogado",
+"rgb": [
+40,
+170,
+200
+],
+"golpe": "CORRENTEZA"
+},
+"TORRE": {
+"de": "do Arquimago",
+"rgb": [
+220,
+120,
+255
+],
+"golpe": "ARCANO"
+},
+"QUARTEL": {
+"de": "do Devastador",
+"rgb": [
+170,
+170,
+170
+],
+"golpe": "INVESTIDA"
+},
+"SELVA": {
+"de": "do Xamã da Selva",
+"rgb": [
+100,
+220,
+80
+],
+"golpe": "ILUSAO"
+},
+"VENTOS": {
+"de": "do Senhor dos Ventos",
+"rgb": [
+230,
+240,
+255
+],
+"golpe": "VENTANIA"
+},
+"CASTELO": {
+"de": "do Carrasco",
+"rgb": [
+190,
+25,
+25
+],
+"golpe": "SANGRAR"
+},
+"FORJA": {
+"de": "do Senhor das Chamas",
+"rgb": [
+255,
+110,
+30
+],
+"golpe": "CHAMAS"
+},
+"BASTIAO": {
+"de": "do Chefe Piglin",
+"rgb": [
+255,
+185,
+20
+],
+"golpe": "GANANCIA"
+},
+"WITHER": {
+"de": "do General Wither",
+"rgb": [
+70,
+70,
+70
+],
+"golpe": "MURCHAR"
+},
+"COVIL": {
+"de": "da Besta Zoglin",
+"rgb": [
+220,
+90,
+90
+],
+"golpe": "ESTOURO"
+},
+"CIDADELA": {
+"de": "do Senhor do Vazio",
+"rgb": [
+150,
+60,
+220
+],
+"golpe": "VAZIO"
+},
+"PRISAO": {
+"de": "do Carcereiro",
+"rgb": [
+30,
+110,
+120
+],
+"golpe": "SONICO"
+},
+"SECRETA": {
+"de": "de Herobrine",
+"rgb": [
+255,
+255,
+255
+],
+"golpe": "HEROBRINE"
+},
+"CEMITERIO": {
+"de": "do Coveiro",
+"rgb": [
+154,
+154,
+154
+],
+"golpe": "OSSOS"
+},
+"ESGOTO": {
+"de": "da Gosma Primordial",
+"rgb": [
+124,
+203,
+91
+],
+"golpe": "VENENO"
+},
+"ACAMPAMENTO": {
+"de": "do Capitão Saqueador",
+"rgb": [
+107,
+107,
+107
+],
+"golpe": "INVESTIDA"
+},
+"MOINHO": {
+"de": "do Espantalho",
+"rgb": [
+224,
+160,
+48
+],
+"golpe": "ILUSAO"
+},
+"FUNGOS": {
+"de": "do Rei Fungo",
+"rgb": [
+192,
+64,
+64
+],
+"golpe": "VENENO"
+},
+"COVIL_LOBOS": {
+"de": "do Lobo Alfa",
+"rgb": [
+221,
+221,
+221
+],
+"golpe": "SANGRAR"
+},
+"URSO": {
+"de": "do Urso Ancestral",
+"rgb": [
+191,
+230,
+255
+],
+"golpe": "CONGELAR"
+},
+"BOSQUE_PALIDO": {
+"de": "do Rangedor",
+"rgb": [
+187,
+187,
+170
+],
+"golpe": "MALDICAO"
+},
+"FAROL": {
+"de": "da Capitã Fantasma",
+"rgb": [
+47,
+166,
+181
+],
+"golpe": "CORRENTEZA"
+},
+"LABORATORIO": {
+"de": "da Alquimista Louca",
+"rgb": [
+154,
+79,
+208
+],
+"golpe": "MALDICAO"
+},
+"CAMARA_TESTES": {
+"de": "da Sentinela de Cobre",
+"rgb": [
+200,
+117,
+51
+],
+"golpe": "ESMAGAR"
+},
+"FAZENDA": {
+"de": "do Fazendeiro Zumbi",
+"rgb": [
+110,
+139,
+61
+],
+"golpe": "SANGRAR"
+},
+"CRATERA": {
+"de": "do Caído",
+"rgb": [
+255,
+106,
+42
+],
+"golpe": "CHAMAS"
+},
+"JARDIM": {
+"de": "do Ronin Espectral",
+"rgb": [
+244,
+167,
+198
+],
+"golpe": "SANGRAR"
+},
+"CATEDRAL": {
+"de": "do Bispo Corrompido",
+"rgb": [
+255,
+247,
+214
+],
+"golpe": "ARCANO"
+},
+"TESOURO": {
+"de": "do Rei Dourado",
+"rgb": [
+255,
+211,
+74
+],
+"golpe": "GANANCIA"
+},
+"COLISEU": {
+"de": "do Gladiador Imortal",
+"rgb": [
+184,
+58,
+43
+],
+"golpe": "ESTOURO"
+},
+"TROVAO": {
+"de": "do Arauto do Trovão",
+"rgb": [
+245,
+240,
+90
+],
+"golpe": "ARCANO"
+},
+"OBSERVATORIO": {
+"de": "do Astrólogo",
+"rgb": [
+185,
+140,
+255
+],
+"golpe": "VAZIO"
+},
+"VIUVA": {
+"de": "da Viúva Negra",
+"rgb": [
+58,
+31,
+31
+],
+"golpe": "VENENO"
+},
+"NAUFRAGIO": {
+"de": "do Capitão Caveira",
+"rgb": [
+61,
+110,
+122
+],
+"golpe": "CORRENTEZA"
+},
+"MAUSOLEU": {
+"de": "da Rainha Múmia",
+"rgb": [
+232,
+212,
+154
+],
+"golpe": "AREIA"
+},
+"BIBLIOTECA": {
+"de": "do Bibliotecário",
+"rgb": [
+122,
+79,
+176
+],
+"golpe": "ARCANO"
+},
+"VULCAO": {
+"de": "do Titã de Magma",
+"rgb": [
+255,
+122,
+0
+],
+"golpe": "CHAMAS"
+},
+"CIDADE_ANTIGA": {
+"de": "do Eco Sombrio",
+"rgb": [
+30,
+90,
+102
+],
+"golpe": "SONICO"
+},
+"GELEIRA": {
+"de": "do Gigante de Gelo",
+"rgb": [
+143,
+216,
+255
+],
+"golpe": "CONGELAR"
+},
+"SANGUE": {
+"de": "do Lorde Vampiro",
+"rgb": [
+139,
+0,
+0
+],
+"golpe": "SANGRAR"
+},
+"RELOGIO": {
+"de": "do Relojoeiro",
+"rgb": [
+217,
+164,
+65
+],
+"golpe": "ILUSAO"
+},
+"LABIRINTO": {
+"de": "do Minotauro",
+"rgb": [
+160,
+82,
+45
+],
+"golpe": "INVESTIDA"
+},
+"CRIPTA_REAL": {
+"de": "do Rei Lich",
+"rgb": [
+64,
+96,
+192
+],
+"golpe": "MURCHAR"
+},
+"DELTA": {
+"de": "do Centurião Zumbi",
+"rgb": [
+176,
+112,
+60
+],
+"golpe": "CHAMAS"
+},
+"CARMESIM": {
+"de": "do Rei dos Hoglins",
+"rgb": [
+192,
+48,
+58
+],
+"golpe": "ESTOURO"
+},
+"DISTORCIDO": {
+"de": "do Senhor dos Esporos",
+"rgb": [
+31,
+165,
+154
+],
+"golpe": "VAZIO"
+},
+"ALMAS": {
+"de": "do Ceifador de Almas",
+"rgb": [
+79,
+214,
+224
+],
+"golpe": "MURCHAR"
+},
+"OBSIDIANA": {
+"de": "do Arquidemônio",
+"rgb": [
+90,
+30,
+140
+],
+"golpe": "CHAMAS"
+},
+"ILHAS": {
+"de": "do Arauto do Fim",
+"rgb": [
+208,
+124,
+255
+],
+"golpe": "VAZIO"
+},
+"NAVE": {
+"de": "do Capitão Shulker",
+"rgb": [
+155,
+107,
+176
+],
+"golpe": "VAZIO"
+},
+"TRONO": {
+"de": "da Fera do Vazio",
+"rgb": [
+106,
+31,
+160
+],
+"golpe": "SONICO"
+},
+"CORO": {
+"de": "da Jardineira do Vazio",
+"rgb": [
+201,
+160,
+220
+],
+"golpe": "MALDICAO"
+},
+"ABISMO": {
+"de": "do Arqueiro do Vazio",
+"rgb": [
+43,
+43,
+64
+],
+"golpe": "VAZIO"
+}
+}

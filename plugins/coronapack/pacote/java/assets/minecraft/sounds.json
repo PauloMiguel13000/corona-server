@@ -1,0 +1,398 @@
+{
+ "backrooms.bacteria_estalo": {
+  "subtitle": "Bactéria estala",
+  "sounds": [
+   {
+    "name": "backrooms/bacteria_estalo",
+    "attenuation_distance": 20
+   }
+  ]
+ },
+ "backrooms.bacteria_grito": {
+  "subtitle": "Bactéria grita",
+  "sounds": [
+   {
+    "name": "backrooms/bacteria_grito",
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "backrooms.batidas": {
+  "subtitle": "Batidas nas paredes",
+  "sounds": [
+   {
+    "name": "backrooms/batidas",
+    "attenuation_distance": 40
+   }
+  ]
+ },
+ "backrooms.corrida_alarme": {
+  "subtitle": "Alarme",
+  "sounds": [
+   {
+    "name": "backrooms/corrida_alarme",
+    "attenuation_distance": 48
+   }
+  ]
+ },
+ "backrooms.corrida_rugido": {
+  "subtitle": "Algo ruge atrás de você",
+  "sounds": [
+   {
+    "name": "backrooms/corrida_rugido",
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "backrooms.distante": {
+  "subtitle": "Grito distante",
+  "sounds": [
+   {
+    "name": "backrooms/distante",
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "backrooms.lampada": {
+  "subtitle": "Lâmpada piscando",
+  "sounds": [
+   {
+    "name": "backrooms/lampada",
+    "attenuation_distance": 16
+   }
+  ]
+ },
+ "backrooms.pego": {
+  "subtitle": "Pego!",
+  "sounds": [
+   {
+    "name": "backrooms/pego",
+    "attenuation_distance": 16
+   }
+  ]
+ },
+ "backrooms.saida": {
+  "subtitle": "A saída abriu",
+  "sounds": [
+   {
+    "name": "backrooms/saida",
+    "attenuation_distance": 48
+   }
+  ]
+ },
+ "backrooms.sorridente_grito": {
+  "subtitle": "Sorridente grita",
+  "sounds": [
+   {
+    "name": "backrooms/sorridente_grito",
+    "attenuation_distance": 40
+   }
+  ]
+ },
+ "backrooms.sorridente_risada": {
+  "subtitle": "Risada no escuro",
+  "sounds": [
+   {
+    "name": "backrooms/sorridente_risada",
+    "attenuation_distance": 16
+   }
+  ]
+ },
+ "backrooms.sussurros": {
+  "subtitle": "Sussurros",
+  "sounds": [
+   {
+    "name": "backrooms/sussurros",
+    "attenuation_distance": 8
+   }
+  ]
+ },
+ "backrooms.uivador_estalo": {
+  "subtitle": "Uivador escuta",
+  "sounds": [
+   {
+    "name": "backrooms/uivador_estalo",
+    "attenuation_distance": 16
+   }
+  ]
+ },
+ "backrooms.uivador_uivo": {
+  "subtitle": "Uivador uiva",
+  "sounds": [
+   {
+    "name": "backrooms/uivador_uivo",
+    "attenuation_distance": 48
+   }
+  ]
+ },
+ "backrooms.zumbido": {
+  "subtitle": "Lâmpadas zumbindo",
+  "sounds": [
+   {
+    "name": "backrooms/zumbido",
+    "attenuation_distance": 10
+   }
+  ]
+ },
+ "hotel.estrondo": {
+  "subtitle": "O Estrondo se aproxima",
+  "sounds": [
+   {
+    "name": "hotel/estrondo",
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "hotel.retorno": {
+  "subtitle": "O Retorno grita",
+  "sounds": [
+   {
+    "name": "hotel/retorno",
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "hotel.figura": {
+  "subtitle": "A Figura respira",
+  "sounds": [
+   {
+    "name": "hotel/figura",
+    "attenuation_distance": 40
+   }
+  ]
+ },
+ "hotel.perseguidor": {
+  "subtitle": "O Perseguidor borbulha",
+  "sounds": [
+   {
+    "name": "hotel/perseguidor",
+    "attenuation_distance": 56
+   }
+  ]
+ },
+ "hotel.psst": {
+  "subtitle": "Psst!",
+  "sounds": [
+   {
+    "name": "hotel/psst",
+    "attenuation_distance": 8
+   }
+  ]
+ },
+ "hotel.sussurro_ataque": {
+  "subtitle": "O Sussurro morde",
+  "sounds": [
+   {
+    "name": "hotel/sussurro_ataque",
+    "attenuation_distance": 16
+   }
+  ]
+ },
+ "hotel.passos": {
+  "subtitle": "Passos no corredor",
+  "sounds": [
+   {
+    "name": "hotel/passos",
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "backrooms.cao_rosnado": {
+  "subtitle": "Cão rosna",
+  "sounds": [
+   {
+    "name": "backrooms/cao_rosnado",
+    "attenuation_distance": 40
+   }
+  ]
+ },
+ "backrooms.cao_ataque": {
+  "subtitle": "Cão ataca",
+  "sounds": [
+   {
+    "name": "backrooms/cao_ataque",
+    "attenuation_distance": 56
+   }
+  ]
+ },
+ "backrooms.festeiro_risada": {
+  "subtitle": "Festeiro ri",
+  "sounds": [
+   {
+    "name": "backrooms/festeiro_risada",
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "naochore.respiracao": {
+  "subtitle": "Respiração atrás de você",
+  "sounds": [
+   {
+    "name": "naochore/respiracao",
+    "attenuation_distance": 12
+   }
+  ]
+ },
+ "naochore.choro": {
+  "subtitle": "Alguém chora ao longe",
+  "sounds": [
+   {
+    "name": "naochore/choro",
+    "attenuation_distance": 48
+   }
+  ]
+ },
+ "naochore.grito_vigia": {
+  "subtitle": "O Vigia grita",
+  "sounds": [
+   {
+    "name": "naochore/grito_vigia",
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "naochore.grito_chorona": {
+  "subtitle": "A Chorona berra",
+  "sounds": [
+   {
+    "name": "naochore/grito_chorona",
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "naochore.rosnado": {
+  "subtitle": "O Faminto rosna",
+  "sounds": [
+   {
+    "name": "naochore/rosnado",
+    "attenuation_distance": 48
+   }
+  ]
+ },
+ "naochore.arranhao": {
+  "subtitle": "Arranhões",
+  "sounds": [
+   {
+    "name": "naochore/arranhao",
+    "attenuation_distance": 16
+   }
+  ]
+ },
+ "naochore.risada": {
+  "subtitle": "Uma risada de criança",
+  "sounds": [
+   {
+    "name": "naochore/risada",
+    "attenuation_distance": 48
+   }
+  ]
+ },
+ "naochore.batida_porta": {
+  "subtitle": "Batidas na porta",
+  "sounds": [
+   {
+    "name": "naochore/batida_porta",
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "naochore.sussurro_nome": {
+  "subtitle": "Um sussurro",
+  "sounds": [
+   {
+    "name": "naochore/sussurro_nome",
+    "attenuation_distance": 8
+   }
+  ]
+ },
+ "naochore.correndo": {
+  "subtitle": "Passos correndo",
+  "sounds": [
+   {
+    "name": "naochore/correndo",
+    "attenuation_distance": 32
+   }
+  ]
+ },
+ "naochore.batimento": {
+  "subtitle": "Seu coração",
+  "sounds": [
+   {
+    "name": "naochore/batimento",
+    "attenuation_distance": 4
+   }
+  ]
+ },
+ "naochore.zumbido_noite": {
+  "subtitle": "Zumbido",
+  "sounds": [
+   {
+    "name": "naochore/zumbido_noite",
+    "attenuation_distance": 6
+   }
+  ]
+ },
+ "naochore.nina": {
+  "subtitle": "Uma caixinha de música",
+  "sounds": [
+   {
+    "name": "naochore/nina",
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "naochore.estatica": {
+  "subtitle": "Estática",
+  "sounds": [
+   {
+    "name": "naochore/estatica",
+    "attenuation_distance": 8
+   }
+  ]
+ },
+ "naochore.maos": {
+  "subtitle": "Mãos saem do chão",
+  "sounds": [
+   {
+    "name": "naochore/maos",
+    "attenuation_distance": 12
+   }
+  ]
+ },
+ "naochore.porta_rangendo": {
+  "subtitle": "A porta range",
+  "sounds": [
+   {
+    "name": "naochore/porta_rangendo",
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "naochore.voce_chorou": {
+  "subtitle": "Você chorou",
+  "sounds": [
+   {
+    "name": "naochore/voce_chorou",
+    "attenuation_distance": 8
+   }
+  ]
+ },
+ "naochore.grito_duplo": {
+  "subtitle": "O Duplo grita",
+  "sounds": [
+   {
+    "name": "naochore/grito_duplo",
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "backrooms.bacteria_urro_curto": {
+  "subtitle": "A Bactéria urra",
+  "sounds": [
+   {
+    "name": "backrooms/bacteria_urro_curto",
+    "attenuation_distance": 48
+   }
+  ]
+ }
+}

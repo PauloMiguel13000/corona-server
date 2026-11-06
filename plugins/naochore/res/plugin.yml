@@ -1,0 +1,16 @@
+name: NaoChore
+version: '1.0'
+main: br.servidor.naochore.NaoChore
+api-version: '1.21'
+author: Corona Server
+description: Minigame de terror - sobreviva 5 dias num mundo pequeno. Eles estao olhando.
+softdepend: [AuthMe, Multiverse-Core, BabyPets, Poderes, Geyser-Spigot, floodgate]
+commands:
+  naochore:
+    description: Minigame Nao Chore (/naochore entrar, /naochore sair)
+    aliases: [dontcry, naochora]
+permissions:
+  naochore.jogar:
+    default: true
+  naochore.admin:
+    default: op

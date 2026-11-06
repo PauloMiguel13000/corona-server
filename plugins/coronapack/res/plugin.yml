@@ -1,0 +1,14 @@
+name: CoronaPack
+version: '1.0'
+main: br.servidor.coronapack.CoronaPack
+api-version: '1.21'
+loadbefore: [Geyser-Spigot]
+description: Pacote de recursos do Corona Server (sons dos minigames) para Java e Bedrock.
+commands:
+  coronapack:
+    description: Pacote de recursos (status, recarregar a config, atualizar o pacote sem reiniciar)
+    permission: coronapack.admin
+permissions:
+  coronapack.admin:
+    description: Ver e recarregar a config do pacote de sons
+    default: op

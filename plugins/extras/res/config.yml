@@ -1,0 +1,105 @@
+# Teleporte aleatorio (/rtp)
+rtp:
+  # Mundos onde o /rtp funciona. Se usar em outro mundo, vai para o mundo-padrao.
+  mundos: [world]
+  mundo-padrao: world
+  # Distancia do spawn (em blocos) para onde pode cair.
+  raio-minimo: 500
+  raio-maximo: 5000
+  # Tempo parado antes de teleportar (cancela se mexer ou levar dano) e recarga entre usos.
+  espera-segundos: 3
+  recarga-segundos: 300
+  tentativas: 12
+
+# Area do spawn (a protecao de construcao/PvP/monstros fica na regiao "spawn" do WorldGuard).
+# Aqui: sem dano nenhum dentro da area, e sem dano de queda por alguns segundos depois de pular para fora.
+spawn:
+  mundo: world
+  min: [-43, -64, -56]
+  max: [57, 319, 44]
+  sem-dano: true
+  sem-queda-segundos: 15
+  # Na ilha do spawn o servidor manda menos chunks (fica mais leve para o jogo de quem esta la). 0 = desliga.
+  distancia-visao: 5
+
+# Itens de menu (bussola Minigames, estrela Classes, osso Pets, livro Habilidades).
+# Todo mundo ganha uma vez; o kit "itens" do /kit da de novo (comando: extras daritens <jogador>).
+itens-menu:
+  dar-na-primeira-vez: true
+
+# Log do servidor: o NetherNet do Geyser escreve "STUN discovery ..." a cada 15 segundos.
+# Com silenciar-stun ligado, so uma dessas mensagens aparece a cada X minutos (0 = nenhuma). Avisos e erros aparecem sempre.
+log:
+  silenciar-stun: true
+  stun-a-cada-minutos: 30
+
+# Plots: monstros nao miram nem machucam jogadores nestes mundos.
+plots:
+  mundos-sem-ataque-de-monstro: [plots]
+  mundos-pet-livre: [plots]          # o pet do BabyPets sempre nasce aqui (o PlotMe bloqueava fora dos terrenos)
+
+# Ilha do spawn flutuante: tira (uma vez) o terreno embaixo e em volta dela, ate o vazio.
+# Quem pula da ilha cai no vazio e vai para o chao fora do buraco, na direcao em que pulou (sem dano).
+# So faz se a copia de seguranca das regioes existir (o instalador faz a copia antes de ligar o servidor).
+vazio:
+  ativo: true
+  centro-x: 6.5
+  centro-z: -5.5
+  raio: 72                  # buraco redondo (a borda varia uns 6 blocos para parecer natural)
+  ate-y: 118                # a ilha comeca no y 121
+  resgate-abaixo-de-y: 40   # caiu abaixo disso dentro do buraco: vai para o chao
+  copia-necessaria: 'otimizacao/antes-ajustes10/spawn-regioes/r.0.0.mca'
+
+# Votos nos sites de lista (sem Votifier: o servidor pergunta ao site se a pessoa votou e resgata o voto).
+# Para ligar um site: cadastre o servidor nele, pegue a "chave da API" no painel do site e o link de votar,
+# e coloque em chave e link. Sem chave, o /votar so mostra o link (sem premio). Depois: /extras recarregar.
+votos:
+  ativo: true
+  conferir-a-cada-minutos: 5
+  anunciar: true
+  premio:
+    descricao: '2 diamantes, 1 maçã dourada e 8 frascos de XP'
+    itens: ['DIAMOND 2', 'GOLDEN_APPLE 1', 'EXPERIENCE_BOTTLE 8']
+    xp: 0
+  sites:
+    minecraft-mp:
+      nome: 'Minecraft-MP'
+      link: ''
+      chave: ''
+      formato: numero
+      checar: 'https://minecraft-mp.com/api/?object=votes&element=claim&key={chave}&username={nick}'
+      resgatar: 'https://minecraft-mp.com/api/?action=post&object=votes&element=claim&key={chave}&username={nick}'
+    minecraftlist:
+      nome: 'MinecraftList'
+      link: ''
+      chave: ''
+      formato: json
+      checar: 'https://minecraftlist.org/api/v1/check/{chave}/{nick}'
+      resgatar: 'https://minecraftlist.org/api/v1/claim/{chave}/{nick}'
+
+# Divulgacao pelos proprios jogadores: /ip, dicas no chat e premio por indicar amigos (/indicar).
+divulgacao:
+  ativo: true
+  ip-java: 'signaling-valerie.tun.ply.gg:21318'
+  ip-bedrock: 'prettyshore.wdn.gg'
+  porta-bedrock: '443'
+  dica-a-cada-minutos: 20
+  dicas:
+    - '&6&l>> &eChame os amigos! &f/ip &7mostra o endereço (Java e Bedrock). Indicou? Os dois ganham prêmio: &f/indicar'
+    - '&6&l>> &eVote no servidor e ganhe itens: &f/votar &7(1 vez por dia em cada site)'
+    - '&6&l>> &eMasmorras com chefes pelo mundo: &f/masmorras mapa &7| jogue em grupo: &f/grupo'
+    - '&6&l>> &eNovo por aqui? Leia as placas na ilha do spawn &7(&f/spawn&7) e pegue os kits: &f/kit'
+  indicacao:
+    ativo: true
+    minutos-jogando: 30         # o novo precisa jogar isso para os dois ganharem
+    so-ate-minutos-jogados: 180 # so quem tem ate 3 horas de jogo pode dizer quem chamou
+    maximo-por-dia: 5           # indicacoes por dia de uma mesma pessoa
+    premio: ['DIAMOND 3', 'GOLDEN_APPLE 2', 'EXPERIENCE_BOTTLE 16']
+
+# VIPs: link do site de vendas que aparece no /vip (vazio = 'em breve'). O site da o VIP pelo console: vip dar <jogador> <nivel> <dias>
+vip:
+  site: ''
+
+# Quem joga pelo celular/Bedrock (Geyser) recebe menos mapa em volta (em chunks): o celular trava menos. 0 = desliga.
+celular:
+  distancia-visao: 4

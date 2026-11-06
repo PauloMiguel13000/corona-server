@@ -1,0 +1,7 @@
+# Arena PvP do Corona Server. Os poderes das classes funcionam aqui e NINGUEM perde itens nem XP ao morrer.
+# Jogadores: /arena (entrar), /arena sair, /arena top. Admin: /arena admin <reconstruir|tp>
+mundo: arena
+protecao-segundos: 3        # depois de entrar ou renascer, ninguem te acerta por esse tempo
+anunciar-sequencia: [3, 5, 10, 15, 20]   # sequencias de abates anunciadas para o servidor todo
+# O plugin preenche sozinho:
+construida: 0

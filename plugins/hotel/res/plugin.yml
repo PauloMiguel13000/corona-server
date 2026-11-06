@@ -1,0 +1,16 @@
+name: Hotel
+version: '1.0'
+main: br.servidor.hotel.Hotel
+api-version: '1.21'
+author: Corona Server
+description: Minigame de terror - 50 portas num hotel cheio de criaturas.
+softdepend: [AuthMe, Multiverse-Core, BabyPets, Geyser-Spigot, floodgate]
+commands:
+  hotel:
+    description: Minigame O Hotel
+    aliases: [portas, doors]
+permissions:
+  hotel.jogar:
+    default: true
+  hotel.admin:
+    default: op

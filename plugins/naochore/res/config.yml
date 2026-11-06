@@ -1,0 +1,23 @@
+# Minigame "Nao Chore": sobrevivencia de terror num mundo pequeno (gerado de novo a cada partida).
+# Jogadores: /naochore entrar, /naochore sair. Admin: /naochore admin <iniciar|parar|status|dia <1-5>|susto|cacadores>
+min-jogadores: 1
+max-jogadores: 8
+contagem-segundos: 25
+dias: 5                  # quantos dias para vencer
+dia-minutos: 8           # duracao de um dia inteiro (dia + noite) em minutos de verdade
+borda: 620               # lado do mundo em blocos (~1500 chunks)
+vidas: 1                 # quem morre vira espectador
+cacadores-base: 2        # dia 5: cacadores = base + jogadores (maximo 8)
+cacador-dano: 6.0        # 6 = 3 coracoes
+cacador-vida: 80
+# Comandos dados a quem sobreviver os 5 dias ({jogador} = nome). Ex.: "give {jogador} diamond 5"
+recompensa-comandos: []
+
+# Monstros 3D do pacote de recursos (quem esta no Java com o pacote ve os modelos; Bedrock e Java sem pacote veem o manequim).
+modelos-3d: true
+modelo-giro: 0           # se os modelos aparecerem de costas, troque para 180
+bedrock-3d: true         # Bedrock ve os monstros 3D (zumbi-cavalo, mula e farejador redesenhados pelo pacote). false = boneco com skin
+brilho-corpo: 7          # 0 (so com a luz do lugar) a 15 (sempre aceso)
+brilho-olhos: 15
+monstros-normais-limite: 6
+monstros-normais-cortar: 0.7

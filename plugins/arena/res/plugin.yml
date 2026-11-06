@@ -1,0 +1,16 @@
+name: CoronaArena
+version: '1.0'
+main: br.servidor.arena.Arena
+api-version: '1.21'
+author: Corona Server
+description: Arena PvP com os poderes das classes. Ninguem perde itens.
+softdepend: [AuthMe, Multiverse-Core, BabyPets, Poderes, Geyser-Spigot, floodgate]
+commands:
+  arena:
+    description: Arena PvP (/arena entrar, /arena sair, /arena top)
+    aliases: [pvp]
+permissions:
+  arena.usar:
+    default: true
+  arena.admin:
+    default: op

@@ -1,0 +1,14 @@
+# HTTPS do site da loja: certificado gratis do Let's Encrypt, pedido e renovado sozinho pelo plugin.
+# O tunel do playit "loja-site" manda a porta 443 para a porta abaixo.
+# Ver como esta: /loja https    Pedir de novo agora: /loja https renovar
+ativo: true
+dominio: coronaserver.playit.plus
+porta: 8443
+# Mandar quem abre http:// para https://
+#   auto = so depois que o https publico responder de verdade (recomendado)
+#   sim / nao
+redirecionar: auto
+# Renova quando faltar menos que estes dias (o certificado vale 90).
+renovar-dias: 30
+# Antes do primeiro certificado, ensaia no ambiente de teste do Let's Encrypt (nao gasta limite).
+ensaio-antes: true
