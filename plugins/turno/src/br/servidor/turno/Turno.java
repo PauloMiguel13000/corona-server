@@ -200,7 +200,7 @@ public final class Turno extends JavaPlugin implements Listener {
         Mapa m = mapa(inst);
         Noite n = new Noite(this, m, inst, p, noite, ia);
         noites.put(p.getUniqueId(), n);
-        p.sendMessage(txt("§e§lTURNO DA NOITE §7— noite " + (noite == 6 ? "personalizada" : noite) + ". Agache a qualquer momento nas câmeras para largar o tablet; /turno sair para desistir."));
+        p.sendMessage(txt("§e§lTURNO DA NOITE §7— noite " + (noite == 6 ? "personalizada" : noite) + ". Para sair das câmeras: agache (Shift), pule (Espaço) ou aperte Q; no celular, toque em SAIR na barra. /turno sair para desistir."));
         n.comecar();
     }
 
@@ -460,6 +460,24 @@ public final class Turno extends JavaPlugin implements Listener {
         if (n.camera >= 0) n.fecharCameras(e.getPlayer());
     }
 
+    /** Sair das cameras tambem com pulo (espaco) ou andar para tras (S), alem de agachar: qualquer tecla "de sair". */
+    @EventHandler
+    public void teclas(org.bukkit.event.player.PlayerInputEvent e) {
+        Noite n = noiteDe(e.getPlayer());
+        if (n == null || n.camera < 0 || n.ticks - n.cameraDesde < 6) return;
+        org.bukkit.Input i = e.getInput();
+        if (i.isSneak() || i.isJump() || i.isBackward()) n.fecharCameras(e.getPlayer());
+    }
+
+    /** O tablet fica sempre na mao; escolher outro espaco da barra (no celular: tocar no botao SAIR) larga as cameras. */
+    @EventHandler
+    public void trocouEspaco(org.bukkit.event.player.PlayerItemHeldEvent e) {
+        Noite n = noiteDe(e.getPlayer());
+        if (n == null || e.getNewSlot() == 0) return;
+        e.setCancelled(true);
+        if (n.camera >= 0) n.fecharCameras(e.getPlayer());
+    }
+
     @EventHandler
     public void trocouMao(PlayerSwapHandItemsEvent e) {
         Noite n = noiteDe(e.getPlayer());
@@ -471,7 +489,11 @@ public final class Turno extends JavaPlugin implements Listener {
 
     @EventHandler
     public void soltou(PlayerDropItemEvent e) {
-        if (noiteDe(e.getPlayer()) != null) e.setCancelled(true);
+        Noite n = noiteDe(e.getPlayer());
+        if (n == null) return;
+        e.setCancelled(true);
+        // Q nas cameras = largar o tablet (sair)
+        if (n.camera >= 0 && n.ticks - n.cameraDesde >= 6) n.fecharCameras(e.getPlayer());
     }
 
     @EventHandler

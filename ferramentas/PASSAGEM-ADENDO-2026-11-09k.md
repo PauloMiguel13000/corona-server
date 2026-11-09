@@ -17,6 +17,9 @@
   Bedrock continua com `/login` porque é a conta admin; o resto do Bedrock entra direto; Java sempre com `/login`. Pedido do
   Paulo às 19:03. Testado no contêiner com o stub (B1 entra direto, B2 da lista fica no lobby de login). Com o AuthMe de
   verdade só dá para confirmar quando o próximo jogador de Bedrock entrar: procurar `entrou sem senha` no log.
+- **ajustes127** (19:4x): Turno da Noite - o Paulo ficou preso nas câmeras (só saía agachando e isso só aparecia no texto do
+  tablet). Agora sai com Shift, Espaço, S (para trás), Q ou escolhendo outro espaço da barra (botão SAIR no espaço 9, para o
+  celular); aviso fixo na barra de ação. `PlayerInputEvent` + `PlayerItemHeldEvent`. TesteBot ganhou `agachar`, `slot N`, `tecla`.
 
 ## Discord (servidor Corona Server, conta coronadooscar no Chrome)
 - Convite permanente: https://discord.gg/uhEaWb9sJA

@@ -127,7 +127,7 @@ final class Noite {
         ItemMeta m = it.getItemMeta();
         m.displayName(Turno.txt("§b§lTablet das Câmeras"));
         m.lore(List.of(Turno.txt("§7Clique direito: abrir as câmeras"), Turno.txt("§7Nas câmeras: direito = próxima, esquerdo = anterior"),
-                Turno.txt("§7Agache para largar o tablet e voltar"), Turno.txt("§8Olhar as câmeras gasta energia")));
+                Turno.txt("§7Sair: agache (Shift), pule (Espaço) ou Q"), Turno.txt("§7No celular: toque em SAIR na barra"), Turno.txt("§8Olhar as câmeras gasta energia")));
         m.getPersistentDataContainer().set(pl.kTablet, PersistentDataType.BYTE, (byte) 1);
         it.setItemMeta(m);
         return it;
@@ -206,6 +206,13 @@ final class Noite {
             return;
         }
         if (ticks % 10 == 0) for (Animatronico a : bichos) a.rever();
+        // nas cameras: lembra o tempo todo como sair (era so no texto do tablet e muita gente ficava presa)
+        if (camera >= 0 && (ticks - cameraDesde) % 40 == 20) {
+            boolean aviso = false;
+            for (Animatronico a : bichos) if (a.noEscritorio) aviso = true;
+            if (!aviso) dicaDeSaida(p);
+            if (p.getInventory().getItem(8) == null) p.getInventory().setItem(8, botaoSair());
+        }
         // luzes apagam sozinhas
         if (luzOeste && ticks > luzOesteAte) {
             luzOeste = false;
@@ -450,9 +457,28 @@ final class Noite {
         barra();
     }
 
+    /** Tick em que as cameras abriram (as teclas de sair so valem um instante depois, para nao fechar sem querer). */
+    int cameraDesde;
+
+    private ItemStack botaoSair() {
+        ItemStack it = new ItemStack(Material.BARRIER);
+        ItemMeta m = it.getItemMeta();
+        m.displayName(Turno.txt("§c§lSAIR DAS CÂMERAS"));
+        m.lore(List.of(Turno.txt("§7Toque aqui (ou agache, pule ou ande para trás)"), Turno.txt("§7para largar o tablet e voltar para a cadeira")));
+        it.setItemMeta(m);
+        return it;
+    }
+
+    private void dicaDeSaida(Player p) {
+        p.sendActionBar(Turno.txt("§e§lSHIFT§7, §e§lESPAÇO §7ou §e§lQ §f= sair das câmeras  §8|  §7clique = trocar de câmera"));
+    }
+
     void abrirCameras(Player p) {
         if (acabou || semEnergia || camera >= 0) return;
+        cameraDesde = ticks;
         mostrarCamera(p, 0);
+        p.getInventory().setItem(8, botaoSair());
+        dicaDeSaida(p);
         p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.8f, 0.6f);
         p.playSound(p.getLocation(), Sound.BLOCK_BEACON_AMBIENT, 0.4f, 1.8f);
     }
@@ -494,6 +520,9 @@ final class Noite {
         camera = -1;
         if (p != null) {
             p.teleport(mapa.loc(Mapa.CADEIRA));
+            p.getInventory().setItem(8, null);
+            p.getInventory().setHeldItemSlot(0);
+            p.sendActionBar(Turno.txt(""));
             p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.8f, 0.4f);
         }
         barra();

@@ -347,6 +347,31 @@ public final class TesteBot extends JavaPlugin implements org.bukkit.event.Liste
                 Bukkit.getPluginManager().callEvent(ev);
                 log("CLIQUEAR " + ac + " com " + mao.getType() + " cancelado=" + ev.isCancelled() + " mao depois=" + p.getInventory().getItemInMainHand().getType());
             }
+            case "agachar" -> {
+                Bukkit.getPluginManager().callEvent(new org.bukkit.event.player.PlayerToggleSneakEvent(p, true));
+                log("AGACHOU em " + fmt(p.getLocation()));
+            }
+            case "slot" -> {
+                var ev = new org.bukkit.event.player.PlayerItemHeldEvent(p, p.getInventory().getHeldItemSlot(), Integer.parseInt(a[2]));
+                Bukkit.getPluginManager().callEvent(ev);
+                if (!ev.isCancelled()) p.getInventory().setHeldItemSlot(Integer.parseInt(a[2]));
+                log("SLOT " + a[2] + " cancelado=" + ev.isCancelled() + " mao=" + p.getInventory().getHeldItemSlot() + " em " + fmt(p.getLocation()));
+            }
+            case "tecla" -> {
+                // tecla <nome> pular|tras|frente : PlayerInputEvent como o cliente manda
+                String t = a[2];
+                org.bukkit.Input in = new org.bukkit.Input() {
+                    public boolean isForward() { return t.equals("frente"); }
+                    public boolean isBackward() { return t.equals("tras"); }
+                    public boolean isLeft() { return false; }
+                    public boolean isRight() { return false; }
+                    public boolean isJump() { return t.equals("pular"); }
+                    public boolean isSneak() { return t.equals("agachar"); }
+                    public boolean isSprint() { return false; }
+                };
+                Bukkit.getPluginManager().callEvent(new org.bukkit.event.player.PlayerInputEvent(p, in));
+                log("TECLA " + t + " em " + fmt(p.getLocation()));
+            }
             case "mao" -> log("MAO slot=" + p.getInventory().getHeldItemSlot() + " item=" + p.getInventory().getItemInMainHand().getType()
                     + " nome=" + (p.getInventory().getItemInMainHand().hasItemMeta() ? net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(p.getInventory().getItemInMainHand().getItemMeta().displayName()) : "-"));
             case "inv" -> {
