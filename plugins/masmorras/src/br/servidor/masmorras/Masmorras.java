@@ -112,6 +112,8 @@ public final class Masmorras extends JavaPlugin implements Listener {
     final List<Masmorra> todas = new ArrayList<>();
     Coronas coronas;
     Loja loja;
+    Skins skins;
+    Chocadeiras chocadeiras;
     Hub hub;
     final Map<Integer, Masmorra> porId = new HashMap<>();
     private final Map<String, BlockData> dados = new HashMap<>();
@@ -119,6 +121,15 @@ public final class Masmorras extends JavaPlugin implements Listener {
     private YamlConfiguration banco;
     NamespacedKey kDe, kChefe;
     Reliquias reliquias;
+    Galeria galeria;
+    MundoMasmorras mundoNovo;
+    LobbyMundo lobby;
+    Ranking ranking;
+    Missoes missoes;
+    VendaClasses vendaClasses;
+    Campos campos;
+    Coroas coroas;
+    Portoes portoes;
 
     /** A masmorra que tem esse bloco dentro (ou null). */
     Masmorra masmorraEm(World w, int x, int y, int z) {
@@ -160,6 +171,14 @@ public final class Masmorras extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        mundoNovo = new MundoMasmorras(this);
+        try {
+            mundoNovo.criar();
+        } catch (Throwable ex) {
+            getLogger().warning("Mundo das Masmorras nao foi criado: " + ex);
+            ex.printStackTrace();
+        }
+        getServer().getPluginManager().registerEvents(mundoNovo, this);
         kDe = new NamespacedKey(this, "masmorra");
         kChefe = new NamespacedKey(this, "chefe");
         kSemNivel = NamespacedKey.fromString("levelledmobs:nolevel");
@@ -183,6 +202,9 @@ public final class Masmorras extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
         coronas = new Coronas(this);
         loja = new Loja(this);
+        skins = new Skins(this);
+        chocadeiras = new Chocadeiras(this);
+        Bukkit.getPluginManager().registerEvents(chocadeiras, this);
         // efeitos do conjunto cosmetico de Herobrine (so visual)
         getServer().getPluginManager().registerEvents(new HerobrineEfeitos(this), this);
         hub = new Hub(this);
@@ -190,16 +212,48 @@ public final class Masmorras extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(hub, this);
         reliquias = new Reliquias(this);
         getServer().getPluginManager().registerEvents(reliquias, this);
+        galeria = new Galeria(this);
+        getServer().getPluginManager().registerEvents(galeria, this);
         BedrockSeguro bedrockSeguro = new BedrockSeguro(this);
         getServer().getPluginManager().registerEvents(bedrockSeguro, this);
         bedrockSeguro.iniciar();
         reliquias.iniciar();
+        try {
+            galeria.iniciar();
+        } catch (Throwable ex) {
+            getLogger().warning("Galeria das Reliquias nao iniciou: " + ex);
+        }
         try {
             hub.iniciar();
         } catch (Throwable ex) {
             getLogger().warning("Spawn das Masmorras nao iniciou: " + ex);
         }
         loja.iniciar();
+        ranking = new Ranking(this);
+        ranking.iniciar();
+        missoes = new Missoes(this);
+        getServer().getPluginManager().registerEvents(missoes, this);
+        missoes.iniciar();
+        vendaClasses = new VendaClasses(this);
+        getServer().getPluginManager().registerEvents(vendaClasses, this);
+        coroas = new Coroas(this);
+        campos = new Campos(this, mundoNovo);
+        getServer().getPluginManager().registerEvents(campos, this);
+        campos.iniciar();
+        lobby = new LobbyMundo(this, mundoNovo);
+        getServer().getPluginManager().registerEvents(lobby, this);
+        try {
+            lobby.iniciar();
+        } catch (Throwable ex) {
+            getLogger().warning("Lobby do Mundo das Masmorras nao iniciou: " + ex);
+        }
+        portoes = new Portoes(this, mundoNovo);
+        getServer().getPluginManager().registerEvents(portoes, this);
+        try {
+            portoes.iniciar();
+        } catch (Throwable ex) {
+            getLogger().warning("Portoes do Nether/End nao iniciaram: " + ex);
+        }
         ConfigurationSection ms = banco.getConfigurationSection("mapas");
         if (ms != null)
             for (String k : ms.getKeys(false)) {
@@ -218,6 +272,10 @@ public final class Masmorras extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if (ranking != null) ranking.salvar();
+        if (missoes != null) missoes.salvarAgora();
+        if (campos != null) campos.parar();
+        if (coroas != null) coroas.parar();
         for (Masmorra m : todas) limpar(m);
         if (atual != null) soltarChunks(atual);
         if (demolindoAgora != null) {
@@ -290,6 +348,40 @@ public final class Masmorras extends JavaPlugin implements Listener {
         };
     }
 
+    /** Spawn das Masmorras antigo (masmorras_spawn): quem aparece la vai para o lobby novo (pedido do Paulo, 08/11 09:45). */
+    @EventHandler
+    public void caiuNoHubAntigo(org.bukkit.event.player.PlayerChangedWorldEvent e) {
+        Player p = e.getPlayer();
+        if (hub != null && hub.ehHub(p.getWorld()) && mundoNovo != null && mundoNovo.normal != null) depois(1, () -> {
+            if (p.isOnline() && hub.ehHub(p.getWorld())) mundoNovo.irParaLobby(p);
+        });
+    }
+
+    @EventHandler
+    public void entrouNoHubAntigo(org.bukkit.event.player.PlayerJoinEvent e) {
+        Player p = e.getPlayer();
+        if (hub != null && hub.ehHub(p.getWorld()) && mundoNovo != null && mundoNovo.normal != null) depois(30, () -> {
+            if (p.isOnline() && hub.ehHub(p.getWorld())) mundoNovo.irParaLobby(p);
+        });
+    }
+
+    /** Mundo do spawn principal / survival (para "voltar ao spawn"). */
+    String mundoSpawnPrincipal() {
+        return getConfig().getString("mundos.survival", "world");
+    }
+
+    /** Spawn das masmorras: o lobby do mundo novo, ou o Spawn das Masmorras antigo se o mundo novo estiver desligado. */
+    void irParaSpawnMasmorras(Player p) {
+        if (mundoNovo != null && mundoNovo.normal != null) mundoNovo.irParaLobby(p);
+        else hub.teleportar(p);
+    }
+
+    /** Limites dos aneis de nivel do mundo novo (ou null quando o mundo e o antigo). */
+    int[] zonasDe(World w) {
+        if (mundoNovo == null || mundoNovo.normal == null || !w.equals(mundoNovo.normal)) return null;
+        return mundoNovo.zonas();
+    }
+
     int borda(Tipo.Onde o) {
         return switch (o) {
             case NORMAL -> getConfig().getInt("borda.normal", 10000);
@@ -325,7 +417,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         for (Tipo.Onde o : Tipo.Onde.values()) {
             World w = Bukkit.getWorld(nomeMundo(o));
             if (w == null) continue;
-            Locais loc = new Locais(o, borda(o) / 2, semente(w, o.ordinal()));
+            Locais loc = new Locais(o, borda(o) / 2, semente(w, o.ordinal()), zonasDe(w));
             for (Masmorra m : todas) if (m.mundo.equals(w.getName())) loc.aceitar(new int[] {m.tudo.cx(), m.tudo.cz()});
             locais.put(w.getName(), loc);
             for (Tipo t : Tipo.de(o)) {
@@ -535,6 +627,14 @@ public final class Masmorras extends JavaPlugin implements Listener {
         if (!getConfig().getBoolean("refazer-antigas", true)) return false;
         if (demolindoAgora != null || atual != null) return true;
         for (Masmorra m : todas) if ((m.versao < Planta.VERSAO || longeDemais(m)) && !demolir.contains(m)) demolir.add(m);
+        // FASE 7 (08/11): mundos que deixaram de ser de masmorras (o survival): tudo que sobrou la e desmanchado, o terreno volta
+        List<String> velhos = getConfig().getStringList("desmanchar-mundos");
+        int antigos = 0;
+        for (Masmorra m : todas) if (velhos.contains(m.mundo) && !demolir.contains(m)) {
+            demolir.add(m);
+            antigos++;
+        }
+        if (antigos > 0) getLogger().info(antigos + " masmorras do survival antigo vao ser desmanchadas (desmanchar-mundos).");
         // tipos repetidos demais (ex.: 3 do mesmo e o limite e 2): desmancha as que sobram (as mais longe do spawn)
         Map<String, List<Masmorra>> porTipo = new HashMap<>();
         for (Masmorra m : todas) if (!m.tipo.secreta && !demolir.contains(m)) porTipo.computeIfAbsent(m.mundo + "|" + m.tipo.id, k -> new ArrayList<>()).add(m);
@@ -558,7 +658,8 @@ public final class Masmorras extends JavaPlugin implements Listener {
     /** Ficou longe demais depois que as distancias diminuiram: vai ser refeita mais perto. A secreta e as do Nether ficam. */
     boolean longeDemais(Masmorra m) {
         if (!getConfig().getBoolean("aproximar", true) || m.tipo.secreta || m.tudo == null || m.tipo.onde == Tipo.Onde.NETHER) return false;
-        int[] f = new Locais(m.tipo.onde, borda(m.tipo.onde) / 2, 0).faixa(m.tipo);
+        World wm = Bukkit.getWorld(m.mundo);
+        int[] f = new Locais(m.tipo.onde, borda(m.tipo.onde) / 2, 0, wm == null ? null : zonasDe(wm)).faixa(m.tipo);
         return Math.hypot(m.tudo.cx(), m.tudo.cz()) > f[1] + 200;
     }
 
@@ -798,11 +899,13 @@ public final class Masmorras extends JavaPlugin implements Listener {
             x.remove();
             return;
         }
-        double vida = Math.min(1024, t.vida * (1 + 0.4 * (ps.size() - 1)));
+        List<Double> fv = getConfig().getDoubleList("dificuldade.vida-chefe"), fd = getConfig().getDoubleList("dificuldade.dano-chefe");
+        double multVida = fv.size() >= t.nivel ? fv.get(t.nivel - 1) : 1.0, multDano = fd.size() >= t.nivel ? fd.get(t.nivel - 1) : 1.0;
+        double vida = Math.min(1024, t.vida * multVida * (1 + 0.4 * (ps.size() - 1)));
         Chefe.atributo(e, Attribute.MAX_HEALTH, vida);
         e.setHealth(vida);
         if (t.escala != 1) Chefe.atributo(e, Attribute.SCALE, t.escala);
-        if (t.dano > 0) Chefe.atributo(e, Attribute.ATTACK_DAMAGE, t.dano);
+        if (t.dano > 0) Chefe.atributo(e, Attribute.ATTACK_DAMAGE, t.dano * multDano);
         Chefe.atributo(e, Attribute.KNOCKBACK_RESISTANCE, 0.7);
         Chefe.atributo(e, Attribute.FOLLOW_RANGE, 48);
         AttributeInstance arm = e.getAttribute(Attribute.ARMOR);
@@ -827,6 +930,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         if (e instanceof org.bukkit.entity.Zombie zb) zb.setShouldBurnInDay(false);
         if (e instanceof org.bukkit.entity.AbstractSkeleton sk) sk.setShouldBurnInDay(false);
         m.chefe = new Chefe(this, m, e, vida);
+        if (coroas != null && !t.secreta) coroas.vestir(e, t);
         // chegada do chefe: raio (so efeito) e explosao de particulas
         w.strikeLightningEffect(l);
         w.spawnParticle(org.bukkit.Particle.EXPLOSION, l.clone().add(0, 1, 0), 6, 1, 0.6, 1);
@@ -1273,6 +1377,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
                     }
                 }
                 darXpClasses(k, getConfig().getDouble("xp-classes.monstro", 12) * de.tipo.nivel, false);
+                if (missoes != null) missoes.monstroMorto(k, de.tipo.nivel);
                 coronas.dar(k, coronas.comVip(k, getConfig().getLong("coronas.monstro", 3) * de.tipo.nivel + rnd.nextInt(de.tipo.nivel + 1)), true);
             }
             return;
@@ -1301,6 +1406,8 @@ public final class Masmorras extends JavaPlugin implements Listener {
         if (k != null) lutaram.add(k);
         double xp = xpChefe(t.nivel) * (t.secreta ? 2 : 1);
         for (Player p : lutaram) darXpClasses(p, xp, true);
+        if (ranking != null) for (Player p : lutaram) ranking.chefeDerrotado(p);
+        if (missoes != null) for (Player p : lutaram) missoes.chefeMorto(p, t.nivel);
         long cor = t.secreta ? getConfig().getLong("coronas.secreta", 5000) : getConfig().getLong("coronas.chefe", 250) * t.nivel;
         for (Player p : lutaram) {
             coronas.dar(p, coronas.comVip(p, cor), false);
@@ -1915,9 +2022,10 @@ public final class Masmorras extends JavaPlugin implements Listener {
     public boolean onCommand(CommandSender s, Command cmd, String label, String[] a) {
         if (cmd.getName().equalsIgnoreCase("coronas")) return coronas.comando(s, a);
         if (cmd.getName().equalsIgnoreCase("reviver")) return MoedaReviver.comando(s, a);
+        if (cmd.getName().equalsIgnoreCase("galeria")) return galeria.comando(s, a);
         if (a.length > 0 && a[0].equalsIgnoreCase("admin")) return admin(s, a);
         if (a.length > 0 && a[0].equalsIgnoreCase("spawn") && s instanceof Player pp) {
-            hub.teleportar(pp);
+            irParaSpawnMasmorras(pp);
             return true;
         }
         if (!(s instanceof Player p)) {
@@ -1987,6 +2095,81 @@ public final class Masmorras extends JavaPlugin implements Listener {
         }
         String op = a.length > 1 ? a[1].toLowerCase(Locale.ROOT) : "";
         switch (op) {
+            case "mundo-mapa" -> {
+                // desenha o mapa do mundo novo (altura e bioma, sem carregar chunks) em mundo-mapa.png
+                if (mundoNovo == null || mundoNovo.gerador == null) {
+                    s.sendMessage("mundo novo desligado");
+                    return true;
+                }
+                int raio = a.length > 2 ? Integer.parseInt(a[2]) : borda(Tipo.Onde.NORMAL) / 2, passo = a.length > 3 ? Integer.parseInt(a[3]) : 8;
+                s.sendMessage("desenhando " + (raio * 2 / passo) + "x" + (raio * 2 / passo) + "...");
+                Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
+                    try {
+                        File f = new File(getDataFolder(), "mundo-mapa.png");
+                        MapaMundo.desenhar(mundoNovo.gerador, raio, passo, f, todas);
+                        s.sendMessage("mapa em " + f.getPath());
+                    } catch (Throwable t) {
+                        s.sendMessage("falhou: " + t);
+                    }
+                });
+            }
+            case "foto" -> {
+                // foto de cima dos blocos carregados: masmorras admin foto <mundo> <x> <z> <raio> [escala]
+                World fw = Bukkit.getWorld(a[2]);
+                int fx = Integer.parseInt(a[3]), fz = Integer.parseInt(a[4]), fr = Integer.parseInt(a[5]), esc = a.length > 6 ? Integer.parseInt(a[6]) : 4;
+                if (fw == null) {
+                    s.sendMessage("mundo?");
+                    return true;
+                }
+                try {
+                    File f = new File(getDataFolder(), "foto.png");
+                    MapaMundo.foto(fw, fx, fz, fr, esc, f);
+                    s.sendMessage("foto em " + f.getPath());
+                } catch (Throwable t) {
+                    s.sendMessage("falhou: " + t);
+                }
+            }
+            case "testequebra" -> {
+                // /masmorras admin testequebra <mundo> <x> <y> <z>: dispara uma quebra de verdade (todos os plugins) e diz se deixou
+                if (!(s instanceof Player tp) || a.length < 6) {
+                    s.sendMessage("uso: /masmorras admin testequebra <mundo> <x> <y> <z>");
+                    return true;
+                }
+                World tw = Bukkit.getWorld(a[2]);
+                if (tw == null) {
+                    s.sendMessage("mundo nao existe");
+                    return true;
+                }
+                org.bukkit.block.Block tb = tw.getBlockAt(Integer.parseInt(a[3]), Integer.parseInt(a[4]), Integer.parseInt(a[5]));
+                BlockBreakEvent ev = new BlockBreakEvent(tb, tp);
+                Bukkit.getPluginManager().callEvent(ev);
+                String r = "[testequebra] " + a[2] + " " + a[3] + " " + a[4] + " " + a[5] + " (" + tb.getType() + "): " + (ev.isCancelled() ? "PROTEGIDO" : "QUEBRA")
+                        + " | mundo=" + mundoNovo.protegidoMundo(tb) + " masmorra=" + protegido(tb);
+                getLogger().info(r);
+                s.sendMessage(r);
+            }
+            case "skins" -> {
+                s.sendMessage(skins.resumo());
+                skins.gerarFaltando();
+                return true;
+            }
+            case "coroa" -> {
+                // teste visual: masmorras admin coroa <tema> -> um zumbi com a coroa do chefe daquele tema, na sua frente
+                if (!(s instanceof Player pj)) return true;
+                Tipo tt = Tipo.TODOS.get(a.length > 2 ? a[2].toUpperCase(Locale.ROOT) : "CRIPTA");
+                if (tt == null) {
+                    s.sendMessage("tema? ex.: CRIPTA, GELO, FORJA");
+                    return true;
+                }
+                Location lc = pj.getLocation().add(pj.getLocation().getDirection().setY(0).normalize().multiply(3));
+                LivingEntity zb = (LivingEntity) pj.getWorld().spawnEntity(lc, EntityType.valueOf(tt.chefe.equals("WARDEN") ? "ZOMBIE" : tt.chefe), CreatureSpawnEvent.SpawnReason.CUSTOM);
+                if (zb instanceof Mob mb) mb.setAI(false);
+                zb.customName(Chefe.nome(tt));
+                zb.setCustomNameVisible(true);
+                if (tt.escala != 1) Chefe.atributo(zb, Attribute.SCALE, tt.escala);
+                coroas.vestir(zb, tt);
+                s.sendMessage("coroa de " + tt.chefeNome + " (" + tt.chefe + ")");
+            }
             case "lista" -> {
                 for (Masmorra m : todas)
                     s.sendMessage("#" + m.id + " " + m.tipo.nome + " (" + m.tipo.nivel + ", v" + m.versao + ") " + m.mundo + " " + m.saidaX + " " + m.saidaY + " " + m.saidaZ
@@ -2009,6 +2192,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
                     for (ItemStack sobra : alvo.getInventory().addItem(it).values()) alvo.getWorld().dropItem(alvo.getLocation(), sobra);
                 s.sendMessage(PREFIXO + "Conjunto de Herobrine dado a " + alvo.getName() + ".");
             }
+            case "galeria" -> galeria.refazer(s);
             case "reliquia" -> {
                 // masmorras admin reliquia <jogador> <tema> [item] - da uma reliquia pronta (para testar o visual)
                 if (a.length < 4) {

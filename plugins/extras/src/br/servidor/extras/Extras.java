@@ -50,6 +50,7 @@ public final class Extras extends JavaPlugin implements Listener {
     Vazio vazio;
     Vip vip;
     LobbyMinigames lobby;
+    LobbyTerror terror;
     SpawnPrincipal spawnNovo;
     Votos votos;
     Divulgacao divulgacao;
@@ -79,6 +80,13 @@ public final class Extras extends JavaPlugin implements Listener {
         } catch (Throwable ex) {
             getLogger().warning("Lobby dos Minigames nao iniciou: " + ex);
         }
+        terror = new LobbyTerror(this);
+        Bukkit.getPluginManager().registerEvents(terror, this);
+        try {
+            terror.iniciar();
+        } catch (Throwable ex) {
+            getLogger().warning("Lobby do Terror nao iniciou: " + ex);
+        }
         spawnNovo = new SpawnPrincipal(this);
         Bukkit.getPluginManager().registerEvents(spawnNovo, this);
         spawnNovo.iniciar();
@@ -93,6 +101,33 @@ public final class Extras extends JavaPlugin implements Listener {
             getLogger().warning("Asas do Traje do Rei (Java) nao ligaram: " + ex);
         }
         vip.iniciar();
+        try {
+            mochilas = new Mochilas(this);
+            Bukkit.getPluginManager().registerEvents(mochilas, this);
+            for (Player pj : Bukkit.getOnlinePlayers()) mochilas.conferir(pj);
+        } catch (Throwable ex) {
+            getLogger().warning("Mochilas separadas nao ligaram: " + ex);
+        }
+        try {
+            entradas = new Entradas(this);
+            Bukkit.getPluginManager().registerEvents(entradas, this);
+            entradas.iniciar();
+        } catch (Throwable ex) {
+            getLogger().warning("Entradas (boas-vindas e efeito de VIP) nao ligaram: " + ex);
+        }
+        try {
+            rede = new RedeBedrock(this);
+            Bukkit.getPluginManager().registerEvents(rede, this);
+        } catch (Throwable ex) {
+            getLogger().warning("Rede do Bedrock (distancia e medidor) nao ligou: " + ex);
+        }
+        try {
+            avisoLogin = new AvisoLogin(this);
+            Bukkit.getPluginManager().registerEvents(avisoLogin, this);
+            avisoLogin.iniciar();
+        } catch (Throwable ex) {
+            getLogger().warning("Aviso de login na tela nao ligou: " + ex);
+        }
         Bukkit.getScheduler().runTaskLater(this, () -> {
             try {
                 placas.atualizarArquivo();
@@ -131,9 +166,14 @@ public final class Extras extends JavaPlugin implements Listener {
     /** Filtro das mensagens "STUN discovery" do NetherNet (fica como Object para nao depender do log4j aqui). */
     private Object filtroStun;
     AsasRei asas;
+    RedeBedrock rede;
+    AvisoLogin avisoLogin;
+    Entradas entradas;
+    Mochilas mochilas;
 
     @Override
     public void onDisable() {
+        if (entradas != null) entradas.parar();
         if (filtroStun != null) {
             try {
                 FiltroStun.remover(filtroStun);
@@ -145,6 +185,8 @@ public final class Extras extends JavaPlugin implements Listener {
         esperando.clear();
         if (vazio != null) vazio.parar();
         if (asas != null) asas.parar();
+        if (rede != null) rede.parar();
+        if (avisoLogin != null) avisoLogin.parar();
     }
 
     /** Sem dano de queda por um tempo (resgate de quem pula da ilha do spawn). */
@@ -472,10 +514,10 @@ public final class Extras extends JavaPlugin implements Listener {
 
     /** Os 4 itens: id, material, nome, descricao, comando que o item executa. */
     private enum ItemMenu {
-        MINIGAMES("minigames", Material.COMPASS, "§6§lMinigames", "§7Defesa, Slender, Vovó, Backrooms, Hotel, Não Chore e Arena PvP", "minigames"),
+        MINIGAMES("minigames", Material.COMPASS, "§6§lMinigames", "§7Defesa, Porcelana, Vovó, Backrooms, Hotel, Não Chore, Arena PvP, Turno e Fábrica", "minigames"),
         CLASSES("classes", Material.NETHER_STAR, "§d§lClasses", "§7Escolha ou troque a sua classe", "classe"),
         PETS("pets", Material.BONE, "§a§lPets", "§7Veja e chame os seus pets", "pets"),
-        HABILIDADES("habilidades", Material.BOOK, "§b§lHabilidades", "§7Veja as habilidades da sua classe", "poderes"),
+        HABILIDADES("habilidades", Material.BOOK, "§b§lHabilidades", "§7Liga/desliga a barra de habilidades (slots 1 a 5)", "poderes"),
         MASMORRAS("masmorras", Material.RECOVERY_COMPASS, "§4§lMasmorras", "§7Veja as masmorras e ganhe uma bússola até ela", "masmorras menu");
 
         final String id;
@@ -606,6 +648,20 @@ public final class Extras extends JavaPlugin implements Listener {
     @EventHandler
     public void aoEntrar(org.bukkit.event.player.PlayerJoinEvent e) {
         darItensNaPrimeiraVez(e.getPlayer());
+        Bukkit.getScheduler().runTaskLater(this, () -> atualizarItensMenu(e.getPlayer()), 30L);
+    }
+
+    /** Troca os itens de menu que o jogador ja tem por copias novas (nome/descricao atualizados), no mesmo slot. */
+    void atualizarItensMenu(Player p) {
+        if (!p.isOnline()) return;
+        org.bukkit.inventory.PlayerInventory inv = p.getInventory();
+        for (int i = 0; i < inv.getSize(); i++) {
+            org.bukkit.inventory.ItemStack it = inv.getItem(i);
+            ItemMenu m = itemMenu(it);
+            if (m == null) continue;
+            org.bukkit.inventory.ItemStack novo = criarItem(m);
+            if (!novo.isSimilar(it)) inv.setItem(i, novo);
+        }
     }
 
     @EventHandler(priority = EventPriority.LOW)
@@ -704,11 +760,20 @@ public final class Extras extends JavaPlugin implements Listener {
         boolean hotel = Bukkit.getPluginManager().isPluginEnabled("Hotel");
         boolean naochore = Bukkit.getPluginManager().isPluginEnabled("NaoChore");
         boolean arena = Bukkit.getPluginManager().isPluginEnabled("CoronaArena");
+        boolean turno = Bukkit.getPluginManager().isPluginEnabled("TurnoNoite");
+        boolean fabrica = Bukkit.getPluginManager().isPluginEnabled("FabricaAlegria");
+        h.inv.setItem(26, icone(Material.CARROT_ON_A_STICK, "§6§lFábrica Alegria",
+                "§7Uma fábrica de brinquedos abandonada.", "§7Use a §9Luva de Gancho §7para puxar,", "§7ligar a energia e abrir caminho...",
+                "§7e fuja do §cTamanduá Tutu §7nos dutos.", "§aCo-op: 1 a 4 jogadores.", "",
+                fabrica ? "§eClique para entrar na fila" : "§cIndisponível agora"));
+        h.inv.setItem(18, icone(Material.CLOCK, "§e§lTurno da Noite",
+                "§7Você é o vigia de um zoo de bichos", "§7mecânicos. Portas, luzes e câmeras", "§7gastam energia. Sobreviva até as 6.", "§75 noites + noite personalizada.", "",
+                turno ? "§eClique para escolher a noite" : "§cIndisponível agora"));
         h.inv.setItem(10, icone(Material.BOW, "§6§lDefesa da Torre",
                 "§7Construa torres e defenda o Núcleo", "§7das ondas de monstros.", "§7Vários mapas e dificuldades.", "",
                 defesa ? "§eClique para escolher o mapa" : "§cIndisponível agora"));
-        h.inv.setItem(12, icone(Material.WITHER_SKELETON_SKULL, "§4§lSlenderman",
-                "§7Terror na floresta escura:", "§7colete as §f8 folhas §7antes que", "§7o Slenderman te pegue.", "",
+        h.inv.setItem(12, icone(Material.WITHER_SKELETON_SKULL, "§4§lO Porcelana",
+                "§7Terror na floresta escura:", "§7colete as §f8 folhas §7antes que", "§7o Porcelana te pegue.", "",
                 slender ? "§eClique para jogar" : "§cIndisponível agora"));
         h.inv.setItem(14, icone(Material.IRON_DOOR, "§5§lCasa da Vovó",
                 "§7Você acordou trancado na casa", "§7da vovó. Ache chaves e ferramentas", "§7e fuja sem fazer barulho.", "§7Modos §aNormal §7e §cDifícil§7.", "",
@@ -742,6 +807,8 @@ public final class Extras extends JavaPlugin implements Listener {
             case 22 -> "hotel entrar";
             case 20 -> "naochore entrar";
             case 24 -> "arena entrar";
+            case 18 -> "turno";
+            case 26 -> "fabrica";
             default -> null;
         };
         if (comando == null) return;
@@ -807,6 +874,10 @@ public final class Extras extends JavaPlugin implements Listener {
             else s.sendMessage("Java: " + getConfig().getString("divulgacao.ip-java") + " | Bedrock: " + getConfig().getString("divulgacao.ip-bedrock") + " porta " + getConfig().getString("divulgacao.porta-bedrock"));
             return true;
         }
+        if (cmd.getName().equalsIgnoreCase("discord")) {
+            divulgacao.discord(s);
+            return true;
+        }
         if (cmd.getName().equalsIgnoreCase("indicar")) {
             if (!(s instanceof Player p)) {
                 s.sendMessage("Somente jogadores.");
@@ -817,6 +888,16 @@ public final class Extras extends JavaPlugin implements Listener {
                 return true;
             }
             divulgacao.indicar(p, args[0]);
+            return true;
+        }
+        if (cmd.getName().equalsIgnoreCase("terror")) {
+            if (!(s instanceof Player p)) {
+                s.sendMessage("Somente jogadores.");
+                return true;
+            }
+            if (terror == null || terror.mundo == null) p.sendMessage(txt("§cO Lobby do Terror não está ligado."));
+            else if (terror.ehTerror(p.getWorld())) abrirMinigames(p);
+            else terror.teleportar(p);
             return true;
         }
         if (cmd.getName().equalsIgnoreCase("minigames")) {
@@ -841,6 +922,21 @@ public final class Extras extends JavaPlugin implements Listener {
             }
             if (args.length > 0 && args[0].equalsIgnoreCase("asas")) {
                 s.sendMessage("§6Asas do Traje do Rei (Java): §f" + (asas == null ? "desligadas" : asas.resumo()));
+                return true;
+            }
+            if (args.length > 0 && args[0].equalsIgnoreCase("rede")) {
+                if (rede == null) s.sendMessage("§cMedidor de rede desligado.");
+                else rede.comando(s);
+                return true;
+            }
+            if (args.length > 0 && args[0].equalsIgnoreCase("refazerterror")) {
+                if (terror == null) s.sendMessage("§cLobby do Terror desligado.");
+                else terror.refazer(s);
+                return true;
+            }
+            if (args.length > 0 && args[0].equalsIgnoreCase("conferirterror")) {
+                if (terror == null) s.sendMessage("§cLobby do Terror desligado.");
+                else terror.conferir(s);
                 return true;
             }
             if (args.length > 0 && args[0].equalsIgnoreCase("refazerspawn")) {

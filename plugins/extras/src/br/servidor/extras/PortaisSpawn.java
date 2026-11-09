@@ -41,13 +41,13 @@ import org.joml.Vector3f;
 final class PortaisSpawn implements Listener {
 
     static final int PISO = 122, X1 = -9, X2 = 21, Z1 = -64, Z2 = -40, CX = 6, CZ = -52;
-    static final int VERSAO = 2;
+    static final int VERSAO = 3;
 
     record Portal(String nome, String sub, int x, int z, boolean eixoX, String moldura, String detalhe, String acao) {}
 
     static final Portal[] PORTAIS = {
             new Portal("§6§lLOBBY DOS MINIGAMES", LobbyMinigames.SUB_NOVO, X1 + 1, CZ, false, "minecraft:waxed_cut_copper", "minecraft:orange_glazed_terracotta", "minigames"),
-            new Portal("§4§lSPAWN DAS MASMORRAS", "§7Mercador Lendário • Treino • Chefes", X2 - 1, CZ, false, "minecraft:deepslate_bricks", "minecraft:gold_block", "masmorras")};
+            new Portal("§4§lMUNDO DAS MASMORRAS", "§7Lobby • níveis 1 a 4 • NPCs e rankings", X2 - 1, CZ, false, "minecraft:deepslate_bricks", "minecraft:gold_block", "masmorras")};
 
     private final Extras pl;
     private final Map<UUID, Long> espera = new HashMap<>();
@@ -70,10 +70,14 @@ final class PortaisSpawn implements Listener {
         File feito = new File(pl.getDataFolder(), "portais-spawn-v" + VERSAO + ".txt");
         if (feito.exists()) return;
         boolean v1 = new File(pl.getDataFolder(), "portais-spawn-v1.txt").exists();
+        boolean v2 = new File(pl.getDataFolder(), "portais-spawn-v2.txt").exists();
         Bukkit.getScheduler().runTaskLater(pl, () -> {
             try {
-                if (v1) tirarPortaisDeMasmorra(w);
-                else construir(w);
+                if (v2) atualizarTextos(w);
+                else if (v1) {
+                    tirarPortaisDeMasmorra(w);
+                    atualizarTextos(w);
+                } else construir(w);
                 Files.writeString(feito.toPath(), "construido em " + new java.util.Date() + "\n");
             } catch (Throwable t) {
                 pl.getLogger().warning("Praca dos Portais nao terminou: " + t);
@@ -208,6 +212,23 @@ final class PortaisSpawn implements Listener {
 
     private org.bukkit.NamespacedKey chave() {
         return new org.bukkit.NamespacedKey(pl, "portais_spawn");
+    }
+
+    /** v3: o portal leste agora leva ao Mundo das Masmorras (lobby novo); troca os letreiros que falavam do Spawn das Masmorras. */
+    private void atualizarTextos(World w) {
+        int n = 0;
+        for (org.bukkit.entity.Entity e : w.getEntities()) {
+            if (!(e instanceof TextDisplay t) || !naPraca(e.getLocation()) || !t.getPersistentDataContainer().has(chave())) continue;
+            String plano = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(t.text());
+            if (plano.contains("SPAWN DAS MASMORRAS")) {
+                t.text(Extras.txt(PORTAIS[1].nome() + "\n" + PORTAIS[1].sub()));
+                n++;
+            } else if (plano.contains("PRAÇA DOS PORTAIS")) {
+                t.text(Extras.txt("§d§lPRAÇA DOS PORTAIS\n§6Minigames §7a oeste • §4Mundo das Masmorras §7a leste\n§8Nível 1 perto do lobby; mais longe = mais forte"));
+                n++;
+            }
+        }
+        pl.getLogger().info("Praca dos Portais: " + n + " letreiro(s) atualizado(s) para o Mundo das Masmorras.");
     }
 
     private void texto(World w, Location l, String t, float escala) {

@@ -18,19 +18,33 @@ final class Locais {
     final Tipo.Onde onde;
     final int borda;
     final Random r;
+    /** Aneis do mundo novo (raio de cada nivel), ou null no mundo antigo. */
+    final int[] zonas;
     final List<int[]> aceitos = new ArrayList<>();
     /** Lugares recusados na conferencia (agua, morro, area muito usada): bloqueiam so um pedaco pequeno, nao o espaco todo. */
     final List<int[]> recusados = new ArrayList<>();
     static final int RAIO_RECUSADO = 40;
 
     Locais(Tipo.Onde onde, int borda, long semente) {
+        this(onde, borda, semente, null);
+    }
+
+    Locais(Tipo.Onde onde, int borda, long semente, int[] zonas) {
         this.onde = onde;
         this.borda = borda;
         this.r = new Random(semente);
+        this.zonas = zonas;
     }
 
     /** Distancia do spawn (minima, maxima) para o nivel. */
     int[] faixa(Tipo t) {
+        if (zonas != null && onde == Tipo.Onde.NORMAL) {
+            // mundo novo: cada nivel e um anel (com folga de 120 nas divisas); o nivel 1 comeca depois do planalto do lobby
+            int n = Math.max(1, Math.min(4, t.nivel));
+            int de = n == 1 ? 250 : zonas[n - 2] + 120;
+            int ate = n == 4 ? borda - 260 : zonas[n - 1] - 120;
+            return new int[] {de, Math.max(de + 100, ate)};
+        }
         return switch (onde) {
             // mais perto do spawn que antes (antes: 250-1500, 1000-2600, 2200-4740; End 1100-4740); 01/11: 2 a 4 um pouco mais largas (faltou lugar)
             case NORMAL -> switch (t.nivel) {

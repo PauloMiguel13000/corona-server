@@ -2,7 +2,7 @@ name: Extras
 version: '1.0'
 main: br.servidor.extras.Extras
 api-version: '1.21'
-softdepend: [GriefPrevention, WorldGuard]
+softdepend: [GriefPrevention, WorldGuard, Geyser-Spigot, floodgate, AuthMe]
 description: Teleporte aleatorio (/rtp) e queda segura no spawn alto.
 commands:
   rtp:
@@ -17,12 +17,18 @@ commands:
   ip:
     description: Endereco do servidor (Java e Bedrock) para chamar os amigos
     aliases: [endereco, convidar]
+  discord:
+    description: Link do Discord do servidor
+    aliases: [dc, disc, discorde]
   indicar:
     description: Diz quem te chamou para o servidor (os dois ganham premio)
     aliases: [indicacao, quemmechamou]
   minigames:
     description: Abre o menu de minigames
     aliases: [minijogos, jogos]
+  terror:
+    description: Vai para o Lobby do Terror (jogos de terror)
+    aliases: [lobbyterror]
   vip:
     description: 'VIPs do servidor (beneficios, kit do dia, particulas, chapeu, voar). Console - vip dar <jogador> <nivel> <dias>'
     aliases: [vips]

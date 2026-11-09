@@ -1,0 +1,12 @@
+name: FabricaAlegria
+version: '1.0'
+main: br.servidor.fabrica.Fabrica
+api-version: '1.21'
+description: Fabrica Alegria - minigame original de fabrica de brinquedos (Java e Bedrock)
+commands:
+  fabrica:
+    description: Fabrica Alegria
+    usage: /fabrica [comecar|sair|recorde]
+permissions:
+  fabrica.admin:
+    default: op

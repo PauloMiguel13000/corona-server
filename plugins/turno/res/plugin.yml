@@ -1,0 +1,12 @@
+name: TurnoNoite
+version: '1.0'
+main: br.servidor.turno.Turno
+api-version: '1.21'
+description: Turno da Noite - minigame original de vigia noturno (Java e Bedrock)
+commands:
+  turno:
+    description: Turno da Noite
+    usage: /turno [sair|noite <n>|custom <tuca> <jaca> <capi> <boto>]
+permissions:
+  turno.admin:
+    default: op

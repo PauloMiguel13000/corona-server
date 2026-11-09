@@ -1,0 +1,9 @@
+# Casas (08/11): cada plot do PlotMe ganha uma casa pronta. Dentro dela tem uma placa de pressao: o dono pisa com
+# nivel de poder suficiente e a casa e trocada por uma maior e mais bonita. Niveis: 0 (cabana), 10, 20, 30, 40, 50, 60.
+mundo: plots
+banco: plugins/PlotMe/plots.db     # plots.db do PlotMe (so leitura): quem e dono de qual plot
+conferir-segundos: 30              # de quanto em quanto tempo confere plots novos / donos que mudaram
+niveis: [0, 10, 20, 30, 40, 50, 60]
+placeholder-nivel: "%auraskills_power%"
+# true = os baus da casa antiga sao esvaziados para os baus da casa nova ao evoluir (o que nao couber cai no chao)
+guardar-itens: true

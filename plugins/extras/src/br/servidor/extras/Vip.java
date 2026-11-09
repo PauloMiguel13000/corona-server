@@ -238,11 +238,8 @@ final class Vip implements Listener {
                 salvar();
                 p.sendMessage(Extras.txt("§6§l✦ §fSuas §6" + pend + " coronas §fdo " + nv.tag() + " §fchegaram!"));
             }
-            if (nv.n() >= 3) {
-                Bukkit.broadcast(Extras.txt(nv.tag() + " §f" + p.getName() + " §7entrou no servidor!"));
-                fogos(p.getLocation());
-                trajePrimeiraVez(p, c);
-            }
+            // o anuncio e o efeito de entrada ficam no Entradas (depois do login, um efeito por nivel)
+            if (nv.n() >= 3) trajePrimeiraVez(p, c);
             p.sendMessage(Extras.txt(nv.tag() + " §7ativo até §f" + data(c.getLong("ate")) + "§7. Kit do dia: §e/vip kit"));
         }, 60L);
     }
@@ -278,6 +275,8 @@ final class Vip implements Listener {
 
     // ------------------------------------------------------------------ particulas e voo
 
+    private static final java.util.Set<String> SEM_AURA = java.util.Set.of("backrooms", "fabrica", "hotel", "naochore", "slender", "turno_noite", "vovo");
+
     private void efeitos() {
         for (Player p : Bukkit.getOnlinePlayers()) {
             Integer n = p.getPersistentDataContainer().get(kNivel, PersistentDataType.INTEGER);
@@ -290,6 +289,8 @@ final class Vip implements Listener {
                 p.sendActionBar(Extras.txt("§7Voo do LENDA só no spawn e nos lobbies."));
             }
             if (n < 2 || !c.getBoolean("particulas", false) || p.isInvisible() || p.getGameMode() == org.bukkit.GameMode.SPECTATOR) continue;
+            // nos jogos de terror a aura atrapalha o escuro e entrega onde o jogador esta: fica desligada la dentro
+            if (SEM_AURA.contains(p.getWorld().getName())) continue;
             Location l = p.getLocation().add(0, 0.1, 0);
             switch (n) {
                 case 2 -> p.getWorld().spawnParticle(Particle.END_ROD, l, 2, 0.25, 0.05, 0.25, 0.01);
@@ -304,7 +305,9 @@ final class Vip implements Listener {
 
     private boolean podeVoarAqui(Player p) {
         String w = p.getWorld().getName();
-        return pl.naAreaDoSpawn(p.getLocation()) || w.equals("masmorras_spawn") || w.equals("minigames");
+        Location l = p.getLocation();
+        boolean lobbyMasmorras = w.equals("masmorras_mundo") && l.getX() * l.getX() + l.getZ() * l.getZ() <= 60 * 60;
+        return pl.naAreaDoSpawn(l) || w.equals("masmorras_spawn") || w.equals("minigames") || w.equals("terror") || lobbyMasmorras;
     }
 
     private void pararVoo(Player p) {

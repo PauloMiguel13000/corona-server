@@ -64,44 +64,68 @@ import org.joml.Vector3f;
 final class LobbyMinigames implements Listener {
 
     static final String MUNDO = "minigames";
-    static final int Y = 100, R = 34, PORTAL = 22, VERSAO = 2, VAGAS = 12;
+    /** v3 (09/11): este lobby fica so com os minigames normais; os de terror foram para o Lobby do Terror (mundo "terror"). */
+    static final int Y = 100, R = 34, PORTAL = 22, VERSAO = 3, VAGAS = 8;
 
-    record Portal(String id, String nome, String sub, String cor, String comando, int dx, int dz, String[] moldura, Material icone, Color brilho) {}
+    /** terror = vai para o Lobby do Terror (e nao para este). */
+    record Portal(String id, String nome, String sub, String cor, String comando, int dx, int dz, String[] moldura, Material icone, Color brilho, boolean terror) {}
 
+    /** Todos os minigames (os totens do spawn usam esta lista; cada lobby pega os seus). */
     static final Portal[] PORTAIS = {
             new Portal("defesa", "§6§lDEFESA DA TORRE", "§7Torres contra ondas de monstros", "§6", "defesa mapas", 0, -1,
-                    new String[] {"minecraft:stone_bricks", "minecraft:mossy_stone_bricks", "minecraft:chiseled_stone_bricks"}, Material.BOW, Color.ORANGE),
-            new Portal("slender", "§8§lSLENDERMAN", "§7Ache as 8 folhas no escuro", "§8", "slender", 1, 0,
-                    new String[] {"minecraft:stripped_dark_oak_wood", "minecraft:dark_oak_wood", "minecraft:blackstone"}, Material.ENDER_EYE, Color.fromRGB(60, 60, 60)),
+                    new String[] {"minecraft:stone_bricks", "minecraft:mossy_stone_bricks", "minecraft:chiseled_stone_bricks"}, Material.BOW, Color.ORANGE, false),
+            new Portal("slender", "§8§lO PORCELANA", "§7Ache as 8 folhas no escuro", "§8", "slender", 1, 0,
+                    new String[] {"minecraft:stripped_dark_oak_wood", "minecraft:dark_oak_wood", "minecraft:blackstone"}, Material.ENDER_EYE, Color.fromRGB(60, 60, 60), true),
             new Portal("vovo", "§5§lCASA DA VOVÓ", "§7Fuja da vovó sem fazer barulho", "§5", "vovo", -1, 0,
-                    new String[] {"minecraft:bricks", "minecraft:spruce_planks", "minecraft:stripped_spruce_wood"}, Material.IRON_DOOR, Color.PURPLE),
+                    new String[] {"minecraft:bricks", "minecraft:spruce_planks", "minecraft:stripped_spruce_wood"}, Material.IRON_DOOR, Color.PURPLE, true),
             new Portal("backrooms", "§e§lBACKROOMS", "§7Saia da realidade e ache a saída", "§e", "backrooms", 0, 1,
-                    new String[] {"minecraft:yellow_terracotta", "minecraft:smooth_sandstone", "minecraft:ochre_froglight"}, Material.YELLOW_GLAZED_TERRACOTTA, Color.YELLOW),
-            // diagonal (noroeste), entre a arvore e o parapeito
+                    new String[] {"minecraft:yellow_terracotta", "minecraft:smooth_sandstone", "minecraft:ochre_froglight"}, Material.YELLOW_GLAZED_TERRACOTTA, Color.YELLOW, true),
             new Portal("hotel", "§4§lO HOTEL", "§7Abra 100 portas. Esconda-se nos armários!", "§4", "hotel entrar", -1, -1,
-                    new String[] {"minecraft:dark_oak_planks", "minecraft:stripped_dark_oak_wood", "minecraft:red_nether_bricks"}, Material.DARK_OAK_DOOR, Color.RED),
-            // diagonal nordeste
+                    new String[] {"minecraft:dark_oak_planks", "minecraft:stripped_dark_oak_wood", "minecraft:red_nether_bricks"}, Material.DARK_OAK_DOOR, Color.RED, true),
             new Portal("naochore", "§9§lNÃO CHORE", "§75 dias. Eles estão te observando...", "§9", "naochore entrar", 1, -1,
-                    new String[] {"minecraft:polished_deepslate", "minecraft:deepslate_bricks", "minecraft:crying_obsidian"}, Material.GHAST_TEAR, Color.fromRGB(80, 120, 255)),
-            // diagonal sudeste
+                    new String[] {"minecraft:polished_deepslate", "minecraft:deepslate_bricks", "minecraft:crying_obsidian"}, Material.GHAST_TEAR, Color.fromRGB(80, 120, 255), true),
             new Portal("arena", "§c§lARENA PvP", "§7Lute com seus poderes sem perder itens", "§c", "arena entrar", 1, 1,
-                    new String[] {"minecraft:polished_blackstone_bricks", "minecraft:polished_blackstone", "minecraft:gold_block"}, Material.NETHERITE_SWORD, Color.fromRGB(255, 190, 0))};
+                    new String[] {"minecraft:polished_blackstone_bricks", "minecraft:polished_blackstone", "minecraft:gold_block"}, Material.NETHERITE_SWORD, Color.fromRGB(255, 190, 0), false),
+            new Portal("turno", "§e§lTURNO DA NOITE", "§7Vigia noturno: sobreviva até as 6h!\n§7Portas, luzes, câmeras e energia", "§e", "turno", 1, 0,
+                    new String[] {"minecraft:stripped_spruce_wood", "minecraft:dark_oak_planks", "minecraft:deepslate_bricks"}, Material.CLOCK, Color.fromRGB(255, 220, 60), true),
+            new Portal("fabrica", "§6§lFÁBRICA ALEGRIA", "§7Luva de gancho, energia e o Tutu nos dutos (co-op)", "§6", "fabrica", 1, 1,
+                    new String[] {"minecraft:orange_terracotta", "minecraft:yellow_terracotta", "minecraft:light_blue_concrete"}, Material.CARROT_ON_A_STICK, Color.fromRGB(255, 150, 40), true)};
+
+    /** Portal deste lobby que leva ao Lobby do Terror. */
+    static final Portal PORTAL_TERROR = new Portal("terror", "§4§lLOBBY DO TERROR", "§7Hotel • Porcelana • Vovó • Backrooms\n§7Não Chore • Turno • Fábrica", "§4", "terror", 0, 0,
+            new String[] {"minecraft:polished_blackstone_bricks", "minecraft:cracked_polished_blackstone_bricks", "minecraft:crying_obsidian"}, Material.WITHER_SKELETON_SKULL, Color.RED, false);
+
+    /** Portais que ficam neste lobby: os minigames normais e a passagem para o terror. */
+    static Portal[] doLobby() {
+        List<Portal> l = new ArrayList<>();
+        for (Portal p : PORTAIS) if (!p.terror()) l.add(p);
+        l.add(PORTAL_TERROR);
+        return l.toArray(new Portal[0]);
+    }
+
+    static Portal[] deTerror() {
+        List<Portal> l = new ArrayList<>();
+        for (Portal p : PORTAIS) if (p.terror()) l.add(p);
+        return l.toArray(new Portal[0]);
+    }
 
     /** Subtitulo antigo das placas do spawn (atualizado quando a placa carrega). */
-    static final String SUB_ANTIGO = "§7Defesa • Slender • Vovó • Backrooms", SUB_NOVO = "§7Defesa • Slender • Vovó • Backrooms\n§7Hotel • Não Chore • Arena PvP";
+    static final String SUB_ANTIGO = "§7Defesa • Slender • Vovó • Backrooms", SUB_NOVO = "§7Defesa • Slender • Vovó • Backrooms\n§7Hotel • Não Chore • Arena PvP • Turno • Fábrica";
 
     /**
-     * v2: 12 vagas em circulo (a cada 30 graus, vaga 0 ao norte). Os jogos de hoje ficam perto de onde estavam;
-     * jogo novo entra sozinho na primeira vaga livre. Vaga sem jogo vira um arco "Em breve".
+     * v3: 8 vagas em circulo (a cada 45 graus, vaga 0 ao norte, de frente para quem chega). Defesa ao norte, Arena a
+     * nordeste, Lobby do Terror a noroeste; leste e oeste "Em breve"; sul com arvores. Jogo novo (normal) entra
+     * sozinho na primeira vaga livre.
      */
-    static final Map<String, Integer> VAGA_PREFERIDA = Map.of("defesa", 0, "naochore", 1, "slender", 3, "arena", 4, "backrooms", 6, "vovo", 9, "hotel", 10);
+    static final Map<String, Integer> VAGA_PREFERIDA = Map.of("defesa", 0, "arena", 1, "terror", 7);
+    static final java.util.Set<Integer> VAGAS_JARDIM = java.util.Set.of(3, 4, 5);
 
     static int vaga(Portal p) {
         Integer v = VAGA_PREFERIDA.get(p.id());
         if (v != null) return v;
         java.util.Set<Integer> usadas = new java.util.HashSet<>(VAGA_PREFERIDA.values());
         int i = 0;
-        for (Portal o : PORTAIS) {
+        for (Portal o : doLobby()) {
             if (VAGA_PREFERIDA.containsKey(o.id())) continue;
             for (int k = 0; k < VAGAS; k++) {
                 int cand = (2 + k * 5) % VAGAS;
@@ -177,6 +201,11 @@ final class LobbyMinigames implements Listener {
         return w != null && w.getName().equals(MUNDO);
     }
 
+    /** Lobbies protegidos (este e o do terror): ninguem quebra, se machuca, sente fome; so nasce pet e enfeite. */
+    static boolean protegido(World w) {
+        return w != null && (w.getName().equals(MUNDO) || w.getName().equals(LobbyTerror.MUNDO));
+    }
+
     Location spawn() {
         return new Location(mundo, 0.5, Y + 1, 8.5, 180f, 0f);
     }
@@ -199,6 +228,7 @@ final class LobbyMinigames implements Listener {
         for (int cx = -2; cx <= 1; cx++) for (int cz = -2; cz <= 1; cz++) mundo.getChunkAt(cx, cz).load(true);
         File feitoHotel = new File(pl.getDataFolder(), "lobby-minigames-hotel.txt");
         File feitoNovos = new File(pl.getDataFolder(), "lobby-minigames-naochore-arena.txt");
+        boolean feitoAntes = feito.exists();
         if (!feito.exists()) {
             construir();
             try {
@@ -225,6 +255,7 @@ final class LobbyMinigames implements Listener {
             } catch (IOException ignored) {
             }
         }
+        // (v2 tinha aqui a colocacao dos portais do Turno e da Fabrica num lobby ja feito; o v3 refaz tudo de uma vez)
         for (World w : Bukkit.getWorlds()) for (Entity en : w.getEntities()) atualizarPlaca(en);
         icones.clear();
         for (Entity e : mundo.getEntities())
@@ -330,16 +361,22 @@ final class LobbyMinigames implements Listener {
         }
         // portais dos jogos e arcos "Em breve" nas vagas livres
         boolean[] ocupada = new boolean[VAGAS];
-        for (Portal p : PORTAIS) {
+        int jogos = 0;
+        for (Portal p : doLobby()) {
             portal(p);
             ocupada[vaga(p)] = true;
+            if (p != PORTAL_TERROR) jogos++;
         }
-        for (int k = 0; k < VAGAS; k++) if (!ocupada[k]) emBreve(k);
+        for (int k = 0; k < VAGAS; k++) {
+            if (ocupada[k]) continue;
+            if (VAGAS_JARDIM.contains(k)) jardim(k);
+            else emBreve(k);
+        }
         // volta ao spawn principal: esmeralda com borda de quartzo, logo atras de quem chega
         for (int x = -6; x <= -4; x++) for (int z = 5; z <= 7; z++) por(x, Y, z, "minecraft:quartz_bricks");
         por(-5, Y, 6, "minecraft:emerald_block");
         texto(new Location(mundo, -4.5, Y + 2.2, 6.5), "§a§lVOLTAR AO SPAWN\n§7pise na esmeralda", 1.0f);
-        texto(new Location(mundo, 0.5, Y + 7.0, 0.5), "§c§lLOBBY DOS MINIGAMES\n§fEntre num portal para jogar!\n§7" + PORTAIS.length + " jogos  §8|  §7mais chegando  §8|  §7/minigames menu", 1.5f);
+        texto(new Location(mundo, 0.5, Y + 7.0, 0.5), "§c§lLOBBY DOS MINIGAMES\n§fEntre num portal para jogar!\n§7" + jogos + " jogos  §8|  §4terror: portal a noroeste  §8|  §7/minigames menu", 1.5f);
         // luz invisivel
         org.bukkit.block.data.type.Light luz = (org.bukkit.block.data.type.Light) Bukkit.createBlockData(Material.LIGHT);
         luz.setLevel(15);
@@ -351,7 +388,20 @@ final class LobbyMinigames implements Listener {
             }
         for (Entity en : mundo.getEntities())
             if (en.getPersistentDataContainer().has(chave(), PersistentDataType.BYTE)) en.getPersistentDataContainer().set(chaveVersao(), PersistentDataType.INTEGER, VERSAO);
-        pl.getLogger().info("Lobby dos Minigames v2 construido (" + PORTAIS.length + " jogos, " + (VAGAS - PORTAIS.length) + " vagas livres).");
+        pl.getLogger().info("Lobby dos Minigames v3 construido (" + jogos + " jogos normais + portal do terror).");
+    }
+
+    /** Vaga sem jogo do lado de tras: jardim com arvore e dois bancos. */
+    private void jardim(int vaga) {
+        int cx = cxVaga(vaga), cz = czVaga(vaga);
+        for (int dx = -2; dx <= 2; dx++)
+            for (int dz = -2; dz <= 2; dz++)
+                if (dx * dx + dz * dz <= 5) por(cx + dx, Y, cz + dz, (dx * dx + dz * dz <= 1) ? "minecraft:moss_block" : "minecraft:grass_block");
+        arvore(cx, cz);
+        por(cx + 2, Y + 1, cz, "minecraft:flowering_azalea");
+        por(cx - 2, Y + 1, cz, "minecraft:azalea");
+        por(cx, Y + 1, cz + 2, "minecraft:poppy");
+        por(cx, Y + 1, cz - 2, "minecraft:white_tulip");
     }
 
     /** Arco vazio numa vaga livre: lugar guardado para o proximo minigame. */
@@ -412,6 +462,7 @@ final class LobbyMinigames implements Listener {
             x.setGlowColorOverride(p.brilho());
             x.setPersistent(true);
             x.getPersistentDataContainer().set(chave(), PersistentDataType.BYTE, (byte) 1);
+            x.getPersistentDataContainer().set(chaveVersao(), PersistentDataType.INTEGER, VERSAO);
             x.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(1.6f), new AxisAngle4f()));
         });
         icones.add(d);
@@ -425,6 +476,7 @@ final class LobbyMinigames implements Listener {
             x.setBackgroundColor(Color.fromARGB(90, 0, 0, 0));
             x.setPersistent(true);
             x.getPersistentDataContainer().set(chave(), PersistentDataType.BYTE, (byte) 2);
+            x.getPersistentDataContainer().set(chaveVersao(), PersistentDataType.INTEGER, VERSAO);
             x.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(escala), new AxisAngle4f()));
         });
     }
@@ -464,19 +516,22 @@ final class LobbyMinigames implements Listener {
     private static void atualizarPlaca(Entity en) {
         if (!(en instanceof TextDisplay t)) return;
         String s = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().serialize(t.text());
-        if (!s.contains("Vovó • Backrooms") || s.contains("Não Chore")) return;
+        if (!s.contains("Vovó • Backrooms") || s.contains("Fábrica")) return;
         String limpo = s.replace("§r", "");
         int i = limpo.indexOf("Defesa • Slender • Vovó • Backrooms");
         if (i < 0) return;
         String antes = limpo.substring(0, i).replaceAll("(§7)+$", "");
-        t.text(Extras.txt(antes + SUB_NOVO + limpo.substring(i + "Defesa • Slender • Vovó • Backrooms".length())));
+        String resto = limpo.substring(i + "Defesa • Slender • Vovó • Backrooms".length());
+        // placa da versao anterior: tira a segunda linha antiga ("Hotel • Nao Chore • Arena PvP") antes de por a nova
+        resto = resto.replaceFirst("^(\\n)?(§7)?Hotel • Não Chore • Arena PvP( • Turno da Noite)?", "");
+        t.text(Extras.txt(antes + SUB_NOVO + resto));
     }
 
     /** Portal em que o bloco esta (ou null). */
     private Portal portalEm(Location l) {
         int y = l.getBlockY() - Y;
         if (y < 0 || y > 6) return null;
-        for (Portal p : PORTAIS) {
+        for (Portal p : doLobby()) {
             int cx = cx(p), cz = cz(p);
             boolean eixoX = eixoX(vaga(p));
             int ox = l.getBlockX() - cx, oz = l.getBlockZ() - cz;
@@ -501,6 +556,11 @@ final class LobbyMinigames implements Listener {
         }
         Portal po = portalEm(to);
         if (po == null) return;
+        // ja estava dentro do portal (voltou de um jogo e caiu ali): so empurra para fora, sem entrar de novo
+        if (portalEm(e.getFrom()) != null) {
+            p.teleport(fora(po, to));
+            return;
+        }
         long agora = System.currentTimeMillis();
         Long ate = espera.get(p.getUniqueId());
         if (ate != null && agora < ate) return;
@@ -513,14 +573,28 @@ final class LobbyMinigames implements Listener {
         if (!p.performCommand(po.comando())) p.sendMessage(Extras.txt("§cEsse minigame não está disponível agora."));
     }
 
+    private Location fora(Portal po, Location olhar) {
+        double ang = Math.toRadians(angulo(vaga(po)));
+        return new Location(mundo, cx(po) - Math.round(Math.cos(ang) * 3) + 0.5, Y + 1, cz(po) - Math.round(Math.sin(ang) * 3) + 0.5, olhar.getYaw(), olhar.getPitch());
+    }
+
+    /** Quem volta de um jogo para dentro de um portal (lugar guardado) aparece na frente dele. */
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    public void chegou(PlayerTeleportEvent e) {
+        Location to = e.getTo();
+        if (to == null || !ehLobby(to.getWorld())) return;
+        Portal po = portalEm(to);
+        if (po != null) e.setTo(fora(po, to));
+    }
+
     @EventHandler(priority = EventPriority.LOWEST)
     public void semNether(PlayerPortalEvent e) {
-        if (ehLobby(e.getFrom().getWorld())) e.setCancelled(true);
+        if (protegido(e.getFrom().getWorld())) e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void semNether2(EntityPortalEvent e) {
-        if (ehLobby(e.getFrom().getWorld())) e.setCancelled(true);
+        if (protegido(e.getFrom().getWorld())) e.setCancelled(true);
     }
 
     // ------------------------------------------------------------------ protecao
@@ -531,79 +605,90 @@ final class LobbyMinigames implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void quebrar(BlockBreakEvent e) {
-        if (ehLobby(e.getBlock().getWorld()) && !livre(e.getPlayer())) e.setCancelled(true);
+        if (protegido(e.getBlock().getWorld()) && !livre(e.getPlayer())) e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void colocar(BlockPlaceEvent e) {
-        if (ehLobby(e.getBlock().getWorld()) && !livre(e.getPlayer())) e.setCancelled(true);
+        if (protegido(e.getBlock().getWorld()) && !livre(e.getPlayer())) e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void balde(PlayerBucketEmptyEvent e) {
-        if (ehLobby(e.getBlock().getWorld()) && !livre(e.getPlayer())) e.setCancelled(true);
+        if (protegido(e.getBlock().getWorld()) && !livre(e.getPlayer())) e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void balde2(PlayerBucketFillEvent e) {
-        if (ehLobby(e.getBlock().getWorld()) && !livre(e.getPlayer())) e.setCancelled(true);
+        if (protegido(e.getBlock().getWorld()) && !livre(e.getPlayer())) e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void usar(PlayerInteractEvent e) {
-        if (e.getClickedBlock() == null || !ehLobby(e.getClickedBlock().getWorld()) || livre(e.getPlayer())) return;
+        if (e.getClickedBlock() == null || !protegido(e.getClickedBlock().getWorld()) || livre(e.getPlayer())) return;
         Material m = e.getClickedBlock().getType();
-        if (m == Material.BEACON || m.name().endsWith("_TRAPDOOR") || m.name().endsWith("_DOOR") || m == Material.FLOWER_POT || m.name().startsWith("POTTED_"))
-            e.setCancelled(true);
+        if (e.getAction() == org.bukkit.event.block.Action.PHYSICAL) {
+            e.setCancelled(true);   // pisar em planta, plantacao etc.
+            return;
+        }
+        // nenhum bloco reage ao clique (vela apagando, abobora, sino, porta, farol...), mas o item da mao ainda funciona (bussola do menu)
+        if (m == Material.BEACON || m.name().endsWith("_TRAPDOOR") || m.name().endsWith("_DOOR") || m == Material.FLOWER_POT || m.name().startsWith("POTTED_")
+                || m.name().endsWith("CANDLE") || m.name().endsWith("_CANDLE_CAKE") || m == Material.PUMPKIN || m == Material.BELL || m.name().endsWith("CAMPFIRE")
+                || m == Material.LECTERN || m == Material.CAULDRON || m.name().endsWith("_CAULDRON") || m.name().endsWith("_SIGN") || m == Material.COMPOSTER
+                || m.name().endsWith("CHEST") || m == Material.BARREL || m.name().endsWith("_BUTTON") || m == Material.LEVER || m.name().endsWith("FENCE_GATE"))
+            e.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void quadro(HangingBreakByEntityEvent e) {
-        if (ehLobby(e.getEntity().getWorld()) && !(e.getRemover() instanceof Player p && livre(p))) e.setCancelled(true);
+        if (protegido(e.getEntity().getWorld()) && !(e.getRemover() instanceof Player p && livre(p))) e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void explodir(EntityExplodeEvent e) {
-        if (ehLobby(e.getLocation().getWorld())) e.blockList().clear();
+        if (protegido(e.getLocation().getWorld())) e.blockList().clear();
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void fogo(BlockIgniteEvent e) {
-        if (ehLobby(e.getBlock().getWorld())) e.setCancelled(true);
+        if (protegido(e.getBlock().getWorld())) e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void queimar(BlockBurnEvent e) {
-        if (ehLobby(e.getBlock().getWorld())) e.setCancelled(true);
+        if (protegido(e.getBlock().getWorld())) e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void folhas(LeavesDecayEvent e) {
-        if (ehLobby(e.getBlock().getWorld())) e.setCancelled(true);
+        if (protegido(e.getBlock().getWorld())) e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void mudarBloco(EntityChangeBlockEvent e) {
-        if (ehLobby(e.getBlock().getWorld()) && !(e.getEntity() instanceof Player p && livre(p))) e.setCancelled(true);
+        if (protegido(e.getBlock().getWorld()) && !(e.getEntity() instanceof Player p && livre(p))) e.setCancelled(true);
     }
 
     /** Ninguem se machuca aqui (nem queda, nem PvP, nem nada). Pet tambem nao. */
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void dano(EntityDamageEvent e) {
-        if (!ehLobby(e.getEntity().getWorld())) return;
+        if (!protegido(e.getEntity().getWorld())) return;
         e.setCancelled(true);
-        if (e.getCause() == EntityDamageEvent.DamageCause.VOID && e.getEntity() instanceof Player p) teleportar(p);
+        if (e.getCause() == EntityDamageEvent.DamageCause.VOID && e.getEntity() instanceof Player p) {
+            if (ehLobby(p.getWorld())) teleportar(p);
+            else if (pl.terror != null) pl.terror.teleportar(p);
+        }
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void fome(FoodLevelChangeEvent e) {
-        if (ehLobby(e.getEntity().getWorld()) && e.getFoodLevel() < e.getEntity().getFoodLevel()) e.setCancelled(true);
+        if (protegido(e.getEntity().getWorld()) && e.getFoodLevel() < e.getEntity().getFoodLevel()) e.setCancelled(true);
     }
 
     /** So nasce o que um plugin pediu (pet do BabyPets, enfeites). Nada de monstro. */
     @EventHandler(priority = EventPriority.HIGHEST)
     public void nascer(CreatureSpawnEvent e) {
-        if (!ehLobby(e.getLocation().getWorld())) return;
+        if (!protegido(e.getLocation().getWorld())) return;
         if (e.getSpawnReason() == CreatureSpawnEvent.SpawnReason.CUSTOM || Extras.vemDoBabyPets()) {
             if (e.isCancelled() && Extras.vemDoBabyPets()) e.setCancelled(false);
             return;

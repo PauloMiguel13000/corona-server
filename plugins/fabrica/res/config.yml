@@ -1,0 +1,13 @@
+# Fabrica Alegria
+instancias: 3          # fabricas ao mesmo tempo (cada uma a 320 blocos da outra, no mundo 'fabrica')
+jogadores-max: 4       # por partida (co-op)
+espera-segundos: 20    # fila antes de comecar (para juntar amigos); /fabrica comecar comeca na hora
+recompensa:
+  comando: "coronas dar %jogador% %valor%"
+  vitoria: 150
+skins:
+  ligado: true
+  api: https://api.mineskin.org
+  api-key: ""
+  intervalo-segundos: 12
+  user-agent: CoronaServer-FabricaAlegria/1.0

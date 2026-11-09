@@ -196,15 +196,15 @@ final class Lutador implements Listener {
         if (d.lengthSquared() < 0.01) d = p.getLocation().getDirection();
         d.normalize();
         Location impacto = c.clone().subtract(d.clone().multiply(Math.min(0.6, alvo.getWidth() * 0.5)));
-        w.spawnParticle(Particle.CRIT, impacto, forte ? 7 : 2, 0.12, 0.12, 0.12, 0.25);
+        Fx.p(w, Particle.CRIT, impacto, forte ? 7 : 2, 0.12, 0.12, 0.12, 0.25);
         if (!forte) return;
         double t = Math.min(1.0, Math.max(0, nivel(p)) / (double) Math.max(1, nivelMaximo()));
         Color cor = furiosa(p) ? VERMELHO : (t >= 0.66 ? AMARELO : LARANJA);
-        w.spawnParticle(Particle.DUST, impacto, 5, 0.15, 0.15, 0.15, 0, new Particle.DustOptions(cor, 1.1f));
+        Fx.p(w, Particle.DUST, impacto, 5, 0.15, 0.15, 0.15, 0, new Particle.DustOptions(cor, 1.1f));
         anelParticulas(w, impacto, d, 0.45 + t * 0.35, 10, new Particle.DustOptions(BRANCO, 0.8f));
         w.playSound(impacto, Sound.ENTITY_PLAYER_ATTACK_STRONG, 0.55f, 0.75f);
         if (critico) {
-            w.spawnParticle(Particle.ELECTRIC_SPARK, impacto, 10, 0.2, 0.2, 0.2, 0.35);
+            Fx.p(w, Particle.ELECTRIC_SPARK, impacto, 10, 0.2, 0.2, 0.2, 0.35);
             w.playSound(impacto, Sound.ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR, 0.3f, 1.8f);
             pulsoPc(impacto, b(Material.WHITE_STAINED_GLASS), 0.12f, 0.8f + (float) t * 0.5f, 3, cor);
         }
@@ -216,7 +216,7 @@ final class Lutador implements Listener {
         for (int i = 0; i < pontos; i++) {
             double a = Math.PI * 2 * i / pontos;
             Location pt = c.clone().add(u.clone().multiply(Math.cos(a) * raio)).add(v.clone().multiply(Math.sin(a) * raio));
-            w.spawnParticle(Particle.DUST, pt, 1, 0, 0, 0, 0, dado);
+            Fx.p(w, Particle.DUST, pt, 1, 0, 0, 0, 0, dado);
         }
     }
 
@@ -365,12 +365,12 @@ final class Lutador implements Listener {
             if (!ultimo) ponta.add(lado(dir).multiply(rnd().nextDouble(-0.45, 0.45))).add(0, rnd().nextDouble(-0.3, 0.3), 0);
             socoPc(m, ponta, ultimo, ultimo ? LARANJA : AMARELO);
             pl.cena.lutSoco(m, ponta, ultimo);
-            w.spawnParticle(Particle.CRIT, ponta, ultimo ? 14 : 4, 0.15, 0.15, 0.15, 0.3);
+            Fx.p(w, Particle.CRIT, ponta, ultimo ? 14 : 4, 0.15, 0.15, 0.15, 0.3);
             w.playSound(ponta, ultimo ? Sound.ENTITY_PLAYER_ATTACK_KNOCKBACK : Sound.ENTITY_PLAYER_ATTACK_STRONG, 0.8f,
                     ultimo ? 0.7f : 1.2f + n[0] * 0.08f);
             if (ultimo) {
                 w.playSound(ponta, Sound.ENTITY_GENERIC_EXPLODE, 0.45f, 1.8f);
-                w.spawnParticle(Particle.EXPLOSION, ponta, 1, 0, 0, 0, 0);
+                Fx.p(w, Particle.EXPLOSION, ponta, 1, 0, 0, 0, 0);
             }
             Vector empurra = dir.clone().setY(0);
             if (empurra.lengthSquared() > 0.01) empurra.normalize();
@@ -406,7 +406,7 @@ final class Lutador implements Listener {
         Poderes.barra(p, "§c§lGANCHO DO DRAGAO!");
         pl.fx.texto(p.getEyeLocation().add(frente.clone().multiply(1.3)).add(0, 0.5, 0), "§c§lGANCHO DO DRAGAO!", 1.2f, 22);
         pl.fx.anel(ini.clone().add(0, 0.15, 0), b(Material.ORANGE_STAINED_GLASS), RAIO_GANCHO, 6, 16, 0.36f, LARANJA);
-        w.spawnParticle(Particle.FLAME, ini.clone().add(0, 0.3, 0), 50, RAIO_GANCHO * 0.5, 0.2, RAIO_GANCHO * 0.5, 0.02);
+        Fx.p(w, Particle.FLAME, ini.clone().add(0, 0.3, 0), 50, RAIO_GANCHO * 0.5, 0.2, RAIO_GANCHO * 0.5, 0.02);
         pl.fx.colunaDeLuz(ini, b(Material.ORANGE_STAINED_GLASS), 3.2, 0.9, 10, LARANJA);
         pl.cena.lutGancho(p);
         Set<UUID> atingidos = new HashSet<>();
@@ -429,7 +429,7 @@ final class Lutador implements Listener {
                 float s = (float) (0.42 - t[0] * 0.012);
                 Visuais.escala(d, s, (float) a, 0);
                 depois(4, () -> Visuais.escala(d, 0.001f, (float) a + 1.2f, 5));
-                w.spawnParticle(Particle.FLAME, pt, 2, 0.08, 0.08, 0.08, 0.02);
+                Fx.p(w, Particle.FLAME, pt, 2, 0.08, 0.08, 0.08, 0.02);
             }
             if (t[0] <= 9) ganchoAcerta(p, p.getLocation(), f, frente, atingidos);
             if (t[0] == 9) {
@@ -438,7 +438,7 @@ final class Lutador implements Listener {
                 pulsoPc(topo, b(Material.ORANGE_STAINED_GLASS), 0.3f, 2.4f, 5, VERMELHO);
                 pulsoPc(topo, b(Material.SHROOMLIGHT), 0.15f, 1.1f, 4, null);
                 pl.fx.estilhacos(topo, fogo, 10, 2.6, 14, 0.3f);
-                w.spawnParticle(Particle.FLAME, topo, 30, 0.6, 0.6, 0.6, 0.08);
+                Fx.p(w, Particle.FLAME, topo, 30, 0.6, 0.6, 0.6, 0.08);
                 w.playSound(topo, Sound.ENTITY_BLAZE_SHOOT, 1f, 0.5f);
             }
             t[0]++;
@@ -462,7 +462,7 @@ final class Lutador implements Listener {
             le.setVelocity(fora.setY(1.15));
             Location em = el.clone().add(0, le.getHeight() * 0.6, 0);
             pulsoPc(em, b(Material.ORANGE_STAINED_GLASS), 0.2f, 1.4f, 4, LARANJA);
-            w.spawnParticle(Particle.LAVA, em, 4, 0.2, 0.2, 0.2, 0);
+            Fx.p(w, Particle.LAVA, em, 4, 0.2, 0.2, 0.2, 0);
             w.playSound(em, Sound.ENTITY_PLAYER_ATTACK_KNOCKBACK, 1f, 0.6f);
             pl.cena.lutGanchoAcerto(em);
         }
@@ -487,7 +487,7 @@ final class Lutador implements Listener {
         pl.fx.pulso(golpe, b(Material.WHITE_STAINED_GLASS), null, 0.3f, 2.2f, 4, QUENTE);
         pl.fx.anel(ini.clone().add(0, 0.1, 0), chao0, 2.6, 5, 12, 0.4f, null);
         pl.fx.estilhacos(golpe, new BlockData[] {chao0, b(Material.COBBLESTONE), b(Material.GRAVEL)}, 10, 2.5, 14, 0.35f);
-        w.spawnParticle(Particle.EXPLOSION, golpe, 1, 0, 0, 0, 0);
+        Fx.p(w, Particle.EXPLOSION, golpe, 1, 0, 0, 0, 0);
         Set<UUID> atingidos = new HashSet<>();
         final int passos = 14;
         final int[] k = {0};
@@ -524,7 +524,7 @@ final class Lutador implements Listener {
                 Location base = g.clone().add(l.clone().multiply(rnd().nextDouble(-0.8, 0.8))).add(dir.clone().multiply(rnd().nextDouble(-0.3, 0.3)));
                 pl.fx.pilar(base.add(0, -0.3, 0), terra, rnd().nextDouble(0.9, 1.6), rnd().nextDouble(0.5, 0.8), rnd().nextDouble(0.15, 0.5), 3, 6, null);
             }
-            w.spawnParticle(Particle.BLOCK, g.clone().add(0, 0.3, 0), 12, 0.4, 0.2, 0.4, 0, terra);
+            Fx.p(w, Particle.BLOCK, g.clone().add(0, 0.3, 0), 12, 0.4, 0.2, 0.4, 0, terra);
             if (k[0] % 3 == 0) w.playSound(g, Sound.BLOCK_DEEPSLATE_BREAK, 0.9f, 0.6f);
             pl.cena.lutSismico(g, terra);
             for (Entity e : w.getNearbyEntities(g.clone().add(0, 1, 0), 1.8, 2.0, 1.8)) {
@@ -545,7 +545,7 @@ final class Lutador implements Listener {
         Location c = g.clone().add(0, 0.4, 0);
         pl.fx.pulso(c, b(Material.WHITE_STAINED_GLASS), null, 0.4f, 3.0f, 4, QUENTE);
         pl.fx.estilhacos(c, new BlockData[] {terra, terra, b(Material.COBBLESTONE)}, 12, 3.5, 16, 0.4f);
-        w.spawnParticle(Particle.EXPLOSION, c, 2, 0.3, 0.1, 0.3, 0);
+        Fx.p(w, Particle.EXPLOSION, c, 2, 0.3, 0.1, 0.3, 0);
         w.playSound(c, Sound.ENTITY_GENERIC_EXPLODE, 0.8f, 0.6f);
     }
 
@@ -574,7 +574,7 @@ final class Lutador implements Listener {
         pl.fx.texto(p.getEyeLocation().add(0, 0.7, 0), "§4§lFURIA!", 1.7f, 24);
         pl.fx.pulso(p.getLocation().add(0, 1, 0), b(Material.ORANGE_STAINED_GLASS), b(Material.SHROOMLIGHT), 0.4f, 3.2f, 5, VERMELHO);
         pl.fx.anel(p.getLocation().add(0, 0.15, 0), b(Material.MAGMA_BLOCK), 3.2, 6, 14, 0.38f, LARANJA);
-        w.spawnParticle(Particle.FLAME, p.getLocation().add(0, 1, 0), 40, 0.5, 0.8, 0.5, 0.08);
+        Fx.p(w, Particle.FLAME, p.getLocation().add(0, 1, 0), 40, 0.5, 0.8, 0.5, 0.08);
         pl.cena.lutFuria(p, FURIA_TICKS);
         // os punhos pegando fogo (PC): miolo brilhante + casca de fogo em cada mao
         List<BlockDisplay> maos = new ArrayList<>();
@@ -602,10 +602,10 @@ final class Lutador implements Listener {
             }
             World mw = p.getWorld();
             if (t[0] % 2 == 0) {
-                mw.spawnParticle(Particle.FLAME, md, 1, 0.06, 0.06, 0.06, 0.01);
-                mw.spawnParticle(Particle.FLAME, me, 1, 0.06, 0.06, 0.06, 0.01);
+                Fx.p(mw, Particle.FLAME, md, 1, 0.06, 0.06, 0.06, 0.01);
+                Fx.p(mw, Particle.FLAME, me, 1, 0.06, 0.06, 0.06, 0.01);
             }
-            if (t[0] % 6 == 0) mw.spawnParticle(Particle.SMALL_FLAME, p.getLocation().add(0, 0.1, 0), 6, 0.4, 0.02, 0.4, 0.01);
+            if (t[0] % 6 == 0) Fx.p(mw, Particle.SMALL_FLAME, p.getLocation().add(0, 0.1, 0), 6, 0.4, 0.02, 0.4, 0.01);
             if (t[0] % 30 == 0) mw.playSound(p.getLocation(), Sound.BLOCK_FIRE_AMBIENT, 0.6f, 1.2f);
             if (t[0] % 20 == 0 && t[0] < FURIA_TICKS) Poderes.barra(p, "§4§lPUNHOS EM CHAMAS §7" + (FURIA_TICKS - t[0]) / 20 + "s");
         }, 1L, 1L);
@@ -624,7 +624,7 @@ final class Lutador implements Listener {
             Player p = Bukkit.getPlayer(id);
             if (p != null) {
                 Poderes.barra(p, "§7Os punhos em chamas apagaram.");
-                p.getWorld().spawnParticle(Particle.SMOKE, p.getLocation().add(0, 1, 0), 15, 0.3, 0.4, 0.3, 0.02);
+                Fx.p(p.getWorld(), Particle.SMOKE, p.getLocation().add(0, 1, 0), 15, 0.3, 0.4, 0.3, 0.02);
             }
         }
     }
@@ -634,8 +634,8 @@ final class Lutador implements Listener {
         if (!p.isOnline() || !alvo.isValid() || !alvo.getWorld().equals(p.getWorld())) return;
         Location c = alvo.getLocation().add(0, alvo.getHeight() * 0.5, 0);
         World w = c.getWorld();
-        w.spawnParticle(Particle.FLAME, c, 18, 0.4, 0.4, 0.4, 0.08);
-        w.spawnParticle(Particle.LAVA, c, 3, 0.2, 0.2, 0.2, 0);
+        Fx.p(w, Particle.FLAME, c, 18, 0.4, 0.4, 0.4, 0.08);
+        Fx.p(w, Particle.LAVA, c, 3, 0.2, 0.2, 0.2, 0);
         w.playSound(c, Sound.ENTITY_BLAZE_SHOOT, 0.6f, 1.4f);
         pulsoPc(c, b(Material.ORANGE_STAINED_GLASS), 0.3f, 2.0f, 4, LARANJA);
         pulsoPc(c, b(Material.SHROOMLIGHT), 0.15f, 1.0f, 3, null);
@@ -686,10 +686,10 @@ final class Lutador implements Listener {
                 Vector off = new Vector(Math.cos(a) * Math.cos(bb), Math.sin(bb), Math.sin(a) * Math.cos(bb)).multiply(r);
                 Location de = m.clone().add(off);
                 Vector para = off.clone().multiply(-1);
-                mw.spawnParticle(i % 2 == 0 ? Particle.FLAME : Particle.END_ROD, de, 0, para.getX(), para.getY(), para.getZ(), 0.09);
+                Fx.p(mw, i % 2 == 0 ? Particle.FLAME : Particle.END_ROD, de, 0, para.getX(), para.getY(), para.getZ(), 0.09);
             }
             BlockData terra = Poderes.chaoDe(p.getLocation());
-            mw.spawnParticle(Particle.DUST_PILLAR, p.getLocation().add(0, 0.1, 0), 4, 1.2, 0.05, 1.2, 0, terra);
+            Fx.p(mw, Particle.DUST_PILLAR, p.getLocation().add(0, 0.1, 0), 4, 1.2, 0.05, 1.2, 0, terra);
             if (t[0] % 8 == 0) {
                 pl.fx.anel(p.getLocation().add(0, 0.1, 0), terra, 1.6 + t[0] * 0.05, 5, 10, 0.3f, null);
                 mw.playSound(m, Sound.BLOCK_BEACON_POWER_SELECT, 0.7f, 0.6f + t[0] * 0.03f);
@@ -750,7 +750,7 @@ final class Lutador implements Listener {
         w.playSound(olho, Sound.ENTITY_WARDEN_SONIC_BOOM, 1f, 1.2f);
         w.playSound(olho, Sound.ITEM_MACE_SMASH_AIR, 1f, 0.6f);
         w.playSound(olho, Sound.ENTITY_GENERIC_EXPLODE, 0.7f, 1.5f);
-        w.spawnParticle(Particle.SONIC_BOOM, olho.clone().add(dir.clone().multiply(1.3)), 1);
+        Fx.p(w, Particle.SONIC_BOOM, olho.clone().add(dir.clone().multiply(1.3)), 1);
         p.swingMainHand();
         p.setVelocity(dir.clone().multiply(-0.35).setY(0.1));
         double dist = alcance(olho, dir, 18.0);
@@ -788,9 +788,9 @@ final class Lutador implements Listener {
                 if (k[0] % 2 == 0) Props3D.quadro(punho3d, "punho_f" + ((k[0] / 2) % 2));
             }
             pl.cena.lutMeteoroMover(cel, pos);
-            w.spawnParticle(Particle.FLAME, pos, 10, 0.6, 0.6, 0.6, 0.04);
-            w.spawnParticle(Particle.DUST, pos, 6, 0.8, 0.8, 0.8, 0, new Particle.DustOptions(LARANJA, 2.0f));
-            w.spawnParticle(Particle.CLOUD, pos.clone().subtract(dir.clone().multiply(1.4)), 4, 0.4, 0.4, 0.4, 0.02);
+            Fx.p(w, Particle.FLAME, pos, 10, 0.6, 0.6, 0.6, 0.04);
+            Fx.p(w, Particle.DUST, pos, 6, 0.8, 0.8, 0.8, 0, new Particle.DustOptions(LARANJA, 2.0f));
+            Fx.p(w, Particle.CLOUD, pos.clone().subtract(dir.clone().multiply(1.4)), 4, 0.4, 0.4, 0.4, 0.02);
             if (k[0] % 2 == 0) {
                 anelVerticalPc(pos.clone().subtract(dir.clone().multiply(0.8)), dir, 2.0, 14, 0.34f, 4, AMARELO, b(Material.YELLOW_STAINED_GLASS));
                 pl.cena.lutAnel(pos.clone().subtract(dir.clone().multiply(0.8)), dir, 2.0, AMARELO);
@@ -831,9 +831,9 @@ final class Lutador implements Listener {
         pl.fx.estilhacos(c, new BlockData[] {terra, b(Material.MAGMA_BLOCK), b(Material.ORANGE_STAINED_GLASS), b(Material.COBBLESTONE)}, 18, 5.0, 18, 0.45f);
         Location ch = Cenas.chao(c.clone().add(0, 0.5, 0));
         if (Math.abs(ch.getY() - c.getY()) < 3) pl.fx.anel(ch.add(0, 0.15, 0), terra, 5.5, 7, 18, 0.45f, LARANJA);
-        w.spawnParticle(Particle.EXPLOSION_EMITTER, c, 1, 0, 0, 0, 0);
-        w.spawnParticle(Particle.FLAME, c, 60, 1.5, 1.2, 1.5, 0.12);
-        w.spawnParticle(Particle.LAVA, c, 10, 1.0, 0.6, 1.0, 0);
+        Fx.p(w, Particle.EXPLOSION_EMITTER, c, 1, 0, 0, 0, 0);
+        Fx.p(w, Particle.FLAME, c, 60, 1.5, 1.2, 1.5, 0.12);
+        Fx.p(w, Particle.LAVA, c, 10, 1.0, 0.6, 1.0, 0);
         w.playSound(c, Sound.ENTITY_GENERIC_EXPLODE, 1.2f, 0.6f);
         w.playSound(c, Sound.ENTITY_DRAGON_FIREBALL_EXPLODE, 1f, 0.8f);
         w.playSound(c, Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.5f, 1.6f);

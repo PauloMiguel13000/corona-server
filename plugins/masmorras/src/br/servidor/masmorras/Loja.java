@@ -105,7 +105,7 @@ final class Loja implements Listener {
         im.lore(tema.equals("herobrine")
                 ? List.of(Masmorras.txt("§5✦ Cosmético Lendário"), Masmorras.txt("§7Visual exclusivo do Corona Server"), Masmorras.txt("§8Java e Bedrock"))
                 : List.of(Masmorras.txt("§5✦ Cosmético Lendário"), Masmorras.txt("§7Visual exclusivo do pacote do servidor"),
-                        Masmorras.txt("§8(no Java; no Bedrock aparece o item normal)")));
+                        Masmorras.txt("§8Java e Bedrock (pacote v2)")));
         im.getPersistentDataContainer().set(new NamespacedKey(pl, "cosmetico"), PersistentDataType.STRING, tema);
         s.setItemMeta(im);
         Reliquias.visualDoPacote(s, tema, pl.getLogger());
@@ -136,64 +136,64 @@ final class Loja implements Listener {
 
     private void montarCatalogo() {
         // nivel 1
-        add(1, it(Material.IRON_HELMET, 1), 250);
-        add(1, it(Material.IRON_CHESTPLATE, 1), 400);
-        add(1, it(Material.IRON_LEGGINGS, 1), 350);
-        add(1, it(Material.IRON_BOOTS, 1), 200);
-        add(1, it(Material.IRON_SWORD, 1), 300);
-        add(1, it(Material.IRON_AXE, 1), 300);
-        add(1, it(Material.BOW, 1), 250);
-        add(1, it(Material.ARROW, 32), 100);
+        // 08/11 (pedido do Paulo): os Mercadores vendem itens INFERIORES aos que caem nas masmorras daquele nivel
+        // nivel 1 (cai: espada de pedra afiada, cota de malha, elmo de couro protegido)
+        add(1, it(Material.LEATHER_HELMET, 1), 120);
+        add(1, it(Material.LEATHER_CHESTPLATE, 1), 200);
+        add(1, it(Material.LEATHER_LEGGINGS, 1), 170);
+        add(1, it(Material.LEATHER_BOOTS, 1), 100);
+        add(1, it(Material.STONE_SWORD, 1), 120);
+        add(1, it(Material.STONE_AXE, 1), 120);
+        add(1, it(Material.BOW, 1), 220);
+        add(1, it(Material.ARROW, 16), 80);
         add(1, it(Material.SHIELD, 1), 200);
         add(1, it(Material.COOKED_BEEF, 16), 120);
         add(1, pocao(PotionType.HEALING), 150);
         add(1, it(Material.TORCH, 32), 50);
-        // nivel 2
-        add(2, it(Material.IRON_HELMET, 1, "protection:1"), 600);
-        add(2, it(Material.IRON_CHESTPLATE, 1, "protection:1"), 900);
-        add(2, it(Material.IRON_LEGGINGS, 1, "protection:1"), 800);
-        add(2, it(Material.IRON_BOOTS, 1, "protection:1"), 500);
-        add(2, it(Material.IRON_SWORD, 1, "sharpness:2"), 700);
-        add(2, it(Material.IRON_PICKAXE, 1, "efficiency:2"), 500);
+        // nivel 2 (cai: armadura de ferro protegida, espada de ferro afiacao II)
+        add(2, it(Material.CHAINMAIL_HELMET, 1), 450);
+        add(2, it(Material.CHAINMAIL_CHESTPLATE, 1), 700);
+        add(2, it(Material.CHAINMAIL_LEGGINGS, 1), 600);
+        add(2, it(Material.CHAINMAIL_BOOTS, 1), 380);
+        add(2, it(Material.IRON_SWORD, 1), 550);
+        add(2, it(Material.IRON_PICKAXE, 1), 450);
         add(2, it(Material.CROSSBOW, 1), 500);
-        add(2, it(Material.GOLDEN_APPLE, 1), 400);
+        add(2, it(Material.GOLDEN_CARROT, 8), 300);
         add(2, pocao(PotionType.STRENGTH), 400);
         add(2, pocao(PotionType.SWIFTNESS), 300);
-        add(2, it(Material.ENDER_PEARL, 2), 300);
-        add(2, it(Material.ARROW, 64), 180);
-        // nivel 3
-        add(3, it(Material.DIAMOND_HELMET, 1), 1500);
-        add(3, it(Material.DIAMOND_CHESTPLATE, 1), 2400);
-        add(3, it(Material.DIAMOND_LEGGINGS, 1), 2100);
-        add(3, it(Material.DIAMOND_BOOTS, 1), 1300);
-        add(3, it(Material.DIAMOND_SWORD, 1), 1800);
-        add(3, it(Material.DIAMOND_PICKAXE, 1, "efficiency:3"), 2000);
-        add(3, it(Material.BOW, 1, "power:3"), 1200);
-        add(3, it(Material.GOLDEN_APPLE, 2), 700);
-        add(3, it(Material.ENDER_PEARL, 4), 600);
+        add(2, it(Material.ENDER_PEARL, 1), 250);
+        add(2, it(Material.ARROW, 48), 180);
+        // nivel 3 (cai: diamante protegido, espada de diamante afiacao II)
+        add(3, it(Material.IRON_HELMET, 1), 1200);
+        add(3, it(Material.IRON_CHESTPLATE, 1), 1900);
+        add(3, it(Material.IRON_LEGGINGS, 1), 1700);
+        add(3, it(Material.IRON_BOOTS, 1), 1000);
+        add(3, it(Material.IRON_SWORD, 1, "sharpness:1"), 1500);
+        add(3, it(Material.IRON_PICKAXE, 1, "efficiency:1"), 1400);
+        add(3, it(Material.BOW, 1, "power:1"), 1100);
+        add(3, it(Material.GOLDEN_APPLE, 1), 700);
+        add(3, it(Material.ENDER_PEARL, 2), 600);
         add(3, pocao(PotionType.REGENERATION), 600);
-        // nivel 4
-        add(4, it(Material.DIAMOND_HELMET, 1, "protection:2", "unbreaking:2"), 2600);
-        add(4, it(Material.DIAMOND_CHESTPLATE, 1, "protection:2", "unbreaking:2"), 4000);
-        add(4, it(Material.DIAMOND_LEGGINGS, 1, "protection:2", "unbreaking:2"), 3600);
-        add(4, it(Material.DIAMOND_BOOTS, 1, "protection:2", "unbreaking:2"), 2200);
-        add(4, it(Material.DIAMOND_SWORD, 1, "sharpness:3", "unbreaking:2"), 3500);
-        add(4, it(Material.BOW, 1, "power:4", "unbreaking:2"), 2500);
-        add(4, it(Material.TOTEM_OF_UNDYING, 1), 6000);
+        // nivel 4 (cai: diamante protecao III, espada afiacao IV, totem)
+        add(4, it(Material.DIAMOND_HELMET, 1), 2600);
+        add(4, it(Material.DIAMOND_CHESTPLATE, 1), 4000);
+        add(4, it(Material.DIAMOND_LEGGINGS, 1), 3600);
+        add(4, it(Material.DIAMOND_BOOTS, 1), 2200);
+        add(4, it(Material.DIAMOND_SWORD, 1), 3500);
+        add(4, it(Material.BOW, 1, "power:2"), 2200);
         add(4, pocao(PotionType.FIRE_RESISTANCE), 800);
-        add(4, it(Material.EXPERIENCE_BOTTLE, 16), 1500);
-        add(4, it(Material.GOLDEN_APPLE, 4), 1300);
-        // nivel 5
-        add(5, it(Material.NETHERITE_HELMET, 1), 7000);
-        add(5, it(Material.NETHERITE_CHESTPLATE, 1), 10000);
-        add(5, it(Material.NETHERITE_LEGGINGS, 1), 9000);
-        add(5, it(Material.NETHERITE_BOOTS, 1), 6000);
-        add(5, it(Material.NETHERITE_SWORD, 1), 8000);
-        add(5, it(Material.ELYTRA, 1), 15000);
-        add(5, it(Material.ENCHANTED_GOLDEN_APPLE, 1), 9000);
-        add(5, it(Material.TOTEM_OF_UNDYING, 1), 5500);
+        add(4, it(Material.EXPERIENCE_BOTTLE, 8), 1500);
+        add(4, it(Material.GOLDEN_APPLE, 2), 1300);
+        // nivel 5 (cai: netherite, elytra, maca dourada encantada)
+        add(5, it(Material.DIAMOND_HELMET, 1, "protection:2", "unbreaking:1"), 6000);
+        add(5, it(Material.DIAMOND_CHESTPLATE, 1, "protection:2", "unbreaking:1"), 9000);
+        add(5, it(Material.DIAMOND_LEGGINGS, 1, "protection:2", "unbreaking:1"), 8000);
+        add(5, it(Material.DIAMOND_BOOTS, 1, "protection:2", "unbreaking:1"), 5500);
+        add(5, it(Material.DIAMOND_SWORD, 1, "sharpness:3", "unbreaking:1"), 7500);
+        add(5, it(Material.NETHERITE_SCRAP, 1), 9000);
+        add(5, it(Material.TOTEM_OF_UNDYING, 1), 8000);
         add(5, it(Material.SHULKER_BOX, 1), 6000);
-        add(5, it(Material.EXPERIENCE_BOTTLE, 32), 2500);
+        add(5, it(Material.EXPERIENCE_BOTTLE, 24), 2500);
         // Mercador Lendario (Spawn das Masmorras): o melhor que existe, bem mais caro (05/11), com o visual do pacote.
         // 4 conjuntos cosmeticos (fileiras 1 a 4 do menu) e, na ultima coluna, os itens uteis e a Moeda de Reviver.
         conjunto("herobrine", "de Herobrine", "§4", 1.5);
@@ -425,7 +425,7 @@ final class Loja implements Listener {
         if (n == null && !guia) return;
         e.setCancelled(true);
         if (e.getHand() != org.bukkit.inventory.EquipmentSlot.HAND) return;
-        if (guia) pl.hub.teleportar(e.getPlayer());
+        if (guia) pl.irParaSpawnMasmorras(e.getPlayer());
         else abrir(e.getPlayer(), Math.max(1, Math.min(6, n)));
     }
 

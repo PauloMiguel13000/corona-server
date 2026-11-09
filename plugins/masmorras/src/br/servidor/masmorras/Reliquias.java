@@ -131,7 +131,7 @@ final class Reliquias implements Listener {
     }
 
     /** Mundos de minigame/lobby: sem poder de reliquia (so o visual). */
-    private static final Set<String> SEM_PODER = Set.of("defesa", "slender", "vovo", "backrooms", "hotel", "login", "minigames");
+    private static final Set<String> SEM_PODER = Set.of("defesa", "slender", "vovo", "backrooms", "hotel", "login", "minigames", "terror", "naochore", "turno_noite", "fabrica", "galeria");
 
     private final Masmorras pl;
     final NamespacedKey kRel;
@@ -143,6 +143,7 @@ final class Reliquias implements Listener {
     Reliquias(Masmorras pl) {
         this.pl = pl;
         this.kRel = new NamespacedKey(pl, "reliquia");
+        elmo3d = pl.getConfig().getBoolean("reliquias.elmo-3d", true);
         this.kProj = new NamespacedKey(pl, "reliquia_tiro");
         this.kBoneco = new NamespacedKey(pl, "boneco_treino");
     }
@@ -289,6 +290,9 @@ final class Reliquias implements Listener {
         return null;
     }
 
+    /** reliquias.elmo-3d (padrao true): elmo das armaduras tematicas em 3D (sem asset_id). false = volta ao elmo plano. */
+    static volatile boolean elmo3d = true;
+
     static void visualDoPacote(ItemStack it, String tema, java.util.logging.Logger log) {
         String id = tema.toLowerCase(java.util.Locale.ROOT);
         String n = it.getType().name();
@@ -299,8 +303,10 @@ final class Reliquias implements Listener {
                 if (peca != null) it.setData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL, net.kyori.adventure.key.Key.key("corona", "item/herobrine/" + peca));
                 if (peca != null && !peca.equals("espada")) {
                     io.papermc.paper.datacomponent.item.Equippable atual = it.getData(io.papermc.paper.datacomponent.DataComponentTypes.EQUIPPABLE);
-                    io.papermc.paper.datacomponent.item.Equippable.Builder b = io.papermc.paper.datacomponent.item.Equippable.equippable(it.getType().getEquipmentSlot())
-                            .assetId(net.kyori.adventure.key.Key.key("corona", "herobrine"));
+                    EquipmentSlot slotHb = it.getType().getEquipmentSlot();
+                    io.papermc.paper.datacomponent.item.Equippable.Builder b = io.papermc.paper.datacomponent.item.Equippable.equippable(slotHb);
+                    // elmo 3D (coroa de estilhacos, olhos de luz): sem asset_id o Java desenha o modelo do item na cabeca
+                    if (slotHb != EquipmentSlot.HEAD || !elmo3d) b.assetId(net.kyori.adventure.key.Key.key("corona", "herobrine"));
                     if (atual != null) b.equipSound(atual.equipSound()).dispensable(atual.dispensable()).swappable(atual.swappable()).damageOnHurt(atual.damageOnHurt());
                     it.setData(io.papermc.paper.datacomponent.DataComponentTypes.EQUIPPABLE, b.build());
                 }
@@ -314,10 +320,15 @@ final class Reliquias implements Listener {
             if (arma != null) {
                 it.setData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL, net.kyori.adventure.key.Key.key("corona", "item/reliquias/" + arma + "_" + id));
             } else if (n.endsWith("_HELMET") || n.endsWith("_CHESTPLATE") || n.endsWith("_LEGGINGS") || n.endsWith("_BOOTS")) {
+                // icone proprio do tema (Java) e chave que o Geyser usa para mostrar a armadura no Bedrock (pacote v2)
+                String pecaId = n.endsWith("_HELMET") ? "elmo" : n.endsWith("_CHESTPLATE") ? "peitoral" : n.endsWith("_LEGGINGS") ? "calca" : "botas";
+                it.setData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL, net.kyori.adventure.key.Key.key("corona", "item/armaduras/" + id + "_" + pecaId));
                 io.papermc.paper.datacomponent.item.Equippable atual = it.getData(io.papermc.paper.datacomponent.DataComponentTypes.EQUIPPABLE);
                 EquipmentSlot slot = it.getType().getEquipmentSlot();
-                io.papermc.paper.datacomponent.item.Equippable.Builder b = io.papermc.paper.datacomponent.item.Equippable.equippable(slot)
-                        .assetId(net.kyori.adventure.key.Key.key("corona", id));
+                io.papermc.paper.datacomponent.item.Equippable.Builder b = io.papermc.paper.datacomponent.item.Equippable.equippable(slot);
+                // elmo 3D: sem asset_id o Java desenha o modelo do item na cabeca (chifres, coroa, cristas...);
+                // o Bedrock usa o attachable 3D do pacote (casa pelo item_model). Demais pecas: textura do tema no corpo.
+                if (slot != EquipmentSlot.HEAD || !elmo3d) b.assetId(net.kyori.adventure.key.Key.key("corona", id));
                 if (atual != null) {
                     b.equipSound(atual.equipSound()).dispensable(atual.dispensable()).swappable(atual.swappable()).damageOnHurt(atual.damageOnHurt())
                             .equipOnInteract(atual.equipOnInteract());
@@ -328,6 +339,88 @@ final class Reliquias implements Listener {
             }
         } catch (Throwable ex) {
             log.warning("Visual da reliquia " + tema + " em " + n + ": " + ex);
+        }
+    }
+
+    // ------------------------------------------------------------------ itens antigos (de antes do pacote v2)
+
+    /**
+     * Reliquia ou cosmetico feito antes do pacote v2 (sem o item_model): reaplica o visual, para o Bedrock mostrar a
+     * armadura/espada do tema (o Geyser casa o item pelo item_model) e o Java ganhar o icone proprio.
+     */
+    @SuppressWarnings("UnstableApiUsage")
+    boolean atualizar(ItemStack it) {
+        if (it == null || it.getType().isAir() || !it.hasItemMeta()) return false;
+        String tema = de(it);
+        if (tema == null) tema = it.getItemMeta().getPersistentDataContainer().get(new NamespacedKey(pl, "cosmetico"), PersistentDataType.STRING);
+        if (tema == null) return false;
+        String n = it.getType().name();
+        boolean armadura = n.endsWith("_HELMET") || n.endsWith("_CHESTPLATE") || n.endsWith("_LEGGINGS") || n.endsWith("_BOOTS");
+        if (!armadura && modelo(n) == null && !(tema.equalsIgnoreCase("herobrine") && pecaHerobrine(n) != null)) return false;
+        try {
+            if (it.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL)) return n.endsWith("_HELMET") && acertarElmo(it, tema);
+        } catch (Throwable ex) {
+            return false;
+        }
+        visualDoPacote(it, tema, pl.getLogger());
+        return true;
+    }
+
+    /** Elmo ja com o visual do pacote: tira (elmo 3D) ou repoe (elmo plano) o asset_id conforme reliquias.elmo-3d. */
+    @SuppressWarnings("UnstableApiUsage")
+    static boolean acertarElmo(ItemStack it, String tema) {
+        String id = tema.toLowerCase(java.util.Locale.ROOT);
+        if (id.equals("coroa")) return false;   // Traje do Rei: cuidado pelo plugin Extras
+        io.papermc.paper.datacomponent.item.Equippable atual = it.getData(io.papermc.paper.datacomponent.DataComponentTypes.EQUIPPABLE);
+        if (atual == null || atual.slot() != EquipmentSlot.HEAD) return false;
+        net.kyori.adventure.key.Key asset = atual.assetId();
+        boolean temAsset = asset != null && asset.namespace().equals("corona");
+        if (elmo3d == !temAsset) return false;
+        io.papermc.paper.datacomponent.item.Equippable.Builder b = io.papermc.paper.datacomponent.item.Equippable.equippable(EquipmentSlot.HEAD)
+                .equipSound(atual.equipSound()).dispensable(atual.dispensable()).swappable(atual.swappable())
+                .damageOnHurt(atual.damageOnHurt()).equipOnInteract(atual.equipOnInteract());
+        if (atual.allowedEntities() != null) b.allowedEntities(atual.allowedEntities());
+        if (atual.cameraOverlay() != null) b.cameraOverlay(atual.cameraOverlay());
+        if (!elmo3d) b.assetId(net.kyori.adventure.key.Key.key("corona", id));
+        it.setData(io.papermc.paper.datacomponent.DataComponentTypes.EQUIPPABLE, b.build());
+        return true;
+    }
+
+    /** Passa pelo inventario inteiro (armadura e mao secundaria inclusas) e atualiza o que for antigo. */
+    int atualizar(Player p) {
+        int n = 0;
+        ItemStack[] itens = p.getInventory().getContents();
+        for (int i = 0; i < itens.length; i++) {
+            if (atualizar(itens[i])) {
+                p.getInventory().setItem(i, itens[i]);
+                n++;
+            }
+        }
+        return n;
+    }
+
+    @EventHandler
+    public void entrou(org.bukkit.event.player.PlayerJoinEvent e) {
+        Player p = e.getPlayer();
+        Bukkit.getScheduler().runTaskLater(pl, () -> {
+            if (p.isOnline()) {
+                int n = atualizar(p);
+                if (n > 0) pl.getLogger().info("Reliquias de " + p.getName() + ": " + n + " item(ns) antigos ganharam o visual do pacote v2.");
+            }
+        }, 40L);
+    }
+
+    @EventHandler
+    public void abriu(org.bukkit.event.inventory.InventoryOpenEvent e) {
+        if (e.getPlayer() instanceof Player p) atualizar(p);
+    }
+
+    @EventHandler
+    public void fechou(org.bukkit.event.inventory.InventoryCloseEvent e) {
+        if (e.getPlayer() instanceof Player p) {
+            atualizar(p);
+            // o que estiver em baus e mochilas abertos
+            for (ItemStack it : e.getInventory().getContents()) atualizar(it);
         }
     }
 

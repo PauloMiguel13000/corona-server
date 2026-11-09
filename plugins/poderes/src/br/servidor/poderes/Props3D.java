@@ -59,7 +59,8 @@ final class Props3D implements Listener {
 
     /** Java com o pacote carregado (o Bedrock nao entra: la os props nao existem ainda). */
     static boolean temPacote(Player p) {
-        return !Cenas.ehBedrock(p) && PACOTE.contains(p.getUniqueId());
+        // Bedrock: o pacote vai por link (Geyser) e os props viram itens 3D (pacote v2) - entra na plateia sempre
+        return Cenas.ehBedrock(p) || PACOTE.contains(p.getUniqueId());
     }
 
     /** Quem vai ver o prop (Java com pacote, perto). */
@@ -73,7 +74,9 @@ final class Props3D implements Listener {
 
     @SuppressWarnings("UnstableApiUsage")
     static ItemStack item(String modelo) {
-        ItemStack it = new ItemStack(Material.PAPER);
+        // leather_helmet: no Bedrock o Geyser (pacote v2) mapeia props/<modelo> para um item custom 3D que a extensao
+        // GeyserDisplayEntity veste no display; no Java o item_model manda e o tipo nao aparece
+        ItemStack it = new ItemStack(Material.LEATHER_HELMET);
         it.setData(DataComponentTypes.ITEM_MODEL, Key.key("corona", "props/" + modelo));
         return it;
     }

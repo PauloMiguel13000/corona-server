@@ -9,32 +9,32 @@ import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 import org.bukkit.map.MinecraftFont;
 
-/** As 8 folhas: mapas desenhados a mao (papel rasgado, frases e rabiscos do Slenderman). */
+/** As 8 folhas: mapas desenhados a mao (papel rasgado, frases e rabiscos do Porcelana). */
 final class Folhas {
     private Folhas() {}
 
     /** Frases das folhas (sem acento: a fonte do mapa nao tem todas as letras). */
     static final String[][] TEXTOS = {
-            {"SEMPRE OBSERVA", "SEM OLHOS"},
-            {"NAO DA PRA", "CORRER"},
-            {"NAO OLHE", "OU ELE TE LEVA"},
-            {"ELE SEGUE"},
-            {"SOCORRO", "SOCORRO", "SOCORRO"},
-            {"ME DEIXE", "EM PAZ"},
-            {"NAO NAO NAO", "NAO NAO NAO", "NAO NAO"},
-            {"IGNORADO", "MAS NAO", "ESQUECIDO"},
+            {"SETE OLHOS", "E NENHUM", "PISCA"},
+            {"NAO CORRA", "ELE OUVE", "SEUS PASSOS"},
+            {"NAO ENCARE", "A MASCARA"},
+            {"A PORCELANA", "RACHOU", "ELE VOLTOU"},
+            {"A MATA", "TEM OLHOS"},
+            {"ELE GUARDA", "OS ROSTOS", "QUE PEGA"},
+            {"LUZ FRACA", "OLHO ABERTO"},
+            {"OITO FOLHAS", "E VOCE", "SAI DAQUI"},
     };
 
     /** Frase da folha para o chat (com acentos). */
     static final String[] FRASES = {
-            "Sempre observa. Sem olhos.",
-            "Não dá pra correr.",
-            "Não olhe... ou ele te leva.",
-            "Ele segue.",
-            "Socorro. Socorro. Socorro.",
-            "Me deixe em paz.",
-            "NÃO NÃO NÃO NÃO NÃO",
-            "Ignorado, mas não esquecido.",
+            "Sete olhos, e nenhum pisca.",
+            "Não corra. Ele ouve seus passos.",
+            "Não encare a máscara.",
+            "A porcelana rachou. Ele voltou.",
+            "A mata tem olhos.",
+            "Ele guarda os rostos que pega.",
+            "Luz fraca, olho aberto.",
+            "Oito folhas e você sai daqui.",
     };
 
     static final class Desenho extends MapRenderer {

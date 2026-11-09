@@ -338,7 +338,8 @@ public final class LoginLobby extends JavaPlugin implements Listener {
     /** Mundos de minigame: quem saiu de dentro deles volta para o spawn (o proprio minigame devolve as coisas). */
     private static boolean mundoDeMinigame(World w) {
         String n = w.getName().toLowerCase();
-        return n.equals("vovo") || n.equals("slender") || n.equals("defesa") || n.equals("backrooms") || n.equals("hotel") || n.equals("naochore") || n.equals("arena");
+        return n.equals("vovo") || n.equals("slender") || n.equals("defesa") || n.equals("backrooms") || n.equals("hotel") || n.equals("naochore") || n.equals("arena")
+                || n.equals("turno_noite") || n.equals("fabrica");
     }
 
     Location spawnNovatos() {
@@ -526,7 +527,7 @@ public final class LoginLobby extends JavaPlugin implements Listener {
         if (w == null) return false;
         String n = w.getName().toLowerCase(java.util.Locale.ROOT);
         return n.equals("vovo") || n.equals("slender") || n.equals("backrooms") || n.equals("hotel") || n.equals("defesa") || n.equals("login")
-                || n.equals("naochore") || n.equals("arena");
+                || n.equals("naochore") || n.equals("arena") || n.equals("turno_noite") || n.equals("fabrica");
     }
 
     private boolean vigiaMarcada;

@@ -271,7 +271,7 @@ public final class Arena extends JavaPlugin implements Listener {
             return;
         }
         String w = p.getWorld().getName().toLowerCase(Locale.ROOT);
-        if (Set.of("vovo", "slender", "backrooms", "hotel", "defesa", "login", "naochore").contains(w)) {
+        if (Set.of("vovo", "slender", "backrooms", "hotel", "defesa", "login", "naochore", "turno_noite", "fabrica").contains(w)) {
             p.sendMessage(PREFIXO + "§cSaia do minigame primeiro.");
             return;
         }

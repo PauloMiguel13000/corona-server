@@ -85,12 +85,7 @@ final class HerobrineEfeitos implements Listener {
                         Location l = pe.clone().add(Math.cos(ang) * 0.65, 0.3 + (tick % 10) * 0.15, Math.sin(ang) * 0.65);
                         w.spawnParticle(Particle.DUST, l, 1, 0, 0, 0, 0, AZUL);
                     }
-                    // brilho saindo dos olhos de vez em quando
-                    if (tick % 10 == 0) {
-                        Location olhos = p.getEyeLocation().add(p.getEyeLocation().getDirection().multiply(0.3));
-                        w.spawnParticle(Particle.DUST, olhos.clone().add(direita.clone().multiply(0.12)), 1, 0, 0, 0, 0, BRANCO);
-                        w.spawnParticle(Particle.DUST, olhos.clone().add(direita.clone().multiply(-0.12)), 1, 0, 0, 0, 0, BRANCO);
-                    }
+                    // (os olhos agora brilham de verdade no elmo 3D: sem particula nos olhos = menos pacotes no celular)
                 }
             } catch (Throwable ex) {
                 if (!avisou) {

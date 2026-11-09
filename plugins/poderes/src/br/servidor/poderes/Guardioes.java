@@ -61,7 +61,7 @@ final class Guardioes implements Listener {
         });
         UUID dono = p.getUniqueId();
         guardiaoDoDono.put(dono, g.getUniqueId());
-        g.getWorld().spawnParticle(Particle.CLOUD, g.getLocation().add(0, 1, 0), 40, 0.6, 1.0, 0.6, 0.05);
+        Fx.p(g.getWorld(), Particle.CLOUD, g.getLocation().add(0, 1, 0), 40, 0.6, 1.0, 0.6, 0.05);
         g.getWorld().playSound(g.getLocation(), Sound.ENTITY_IRON_GOLEM_REPAIR, 1f, 0.8f);
         g.getWorld().playSound(g.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.6f, 1.4f);
         org.bukkit.Color ferro = org.bukkit.Color.fromRGB(230, 230, 240);
@@ -152,7 +152,7 @@ final class Guardioes implements Listener {
         if (id == null) return;
         Entity e = Bukkit.getEntity(id);
         if (e != null && e.isValid()) {
-            e.getWorld().spawnParticle(Particle.CLOUD, e.getLocation().add(0, 1, 0), 30, 0.5, 0.8, 0.5, 0.05);
+            Fx.p(e.getWorld(), Particle.CLOUD, e.getLocation().add(0, 1, 0), 30, 0.5, 0.8, 0.5, 0.05);
             e.getWorld().playSound(e.getLocation(), Sound.ENTITY_IRON_GOLEM_DEATH, 0.6f, 1.4f);
             e.remove();
         }

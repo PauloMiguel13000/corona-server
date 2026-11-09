@@ -4,10 +4,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Statistic;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -47,6 +51,10 @@ final class Divulgacao implements Listener {
         long min = pl.getConfig().getLong("divulgacao.dica-a-cada-minutos", 20);
         if (pl.getConfig().getBoolean("divulgacao.ativo", true) && min > 0)
             Bukkit.getScheduler().runTaskTimer(pl, this::dica, 20L * 60 * min, 20L * 60 * min);
+        // Discord do servidor: convite no chat de tempos em tempos (so se tiver alguem online)
+        long dc = pl.getConfig().getLong("divulgacao.discord.a-cada-minutos", 50);
+        if (pl.getConfig().getBoolean("divulgacao.discord.ativo", true) && dc > 0 && !linkDiscord().isBlank())
+            Bukkit.getScheduler().runTaskTimer(pl, this::avisoDiscord, 20L * 60 * dc, 20L * 60 * dc);
         // indicacoes: confere o tempo de jogo de quem foi indicado
         Bukkit.getScheduler().runTaskTimer(pl, this::conferirIndicados, 20L * 60, 20L * 60);
     }
@@ -58,6 +66,33 @@ final class Divulgacao implements Listener {
         Bukkit.broadcast(Extras.txt(Placas.cor(m)));
     }
 
+    String linkDiscord() {
+        return pl.getConfig().getString("divulgacao.discord.link", "https://discord.gg/uhEaWb9sJA").trim();
+    }
+
+    /** Linha com o link clicavel (Java abre o navegador; no Bedrock o link aparece escrito). */
+    private Component linhaLink() {
+        String link = linkDiscord();
+        return Extras.txt("§9§l>> §e§n" + link)
+                .clickEvent(ClickEvent.openUrl(link))
+                .hoverEvent(HoverEvent.showText(Extras.txt("§aClique para abrir o Discord")))
+                .append(Extras.txt(" §7(clique ou digite §f/discord§7)"));
+    }
+
+    private void avisoDiscord() {
+        if (Bukkit.getOnlinePlayers().isEmpty()) return;
+        String m = pl.getConfig().getString("divulgacao.discord.mensagem",
+                "&9&l>> &bEntre no nosso Discord! &fNovidades, call com música, grupos para masmorra e suporte.");
+        Bukkit.broadcast(Extras.txt(Placas.cor(m)));
+        Bukkit.broadcast(linhaLink());
+    }
+
+    void discord(CommandSender s) {
+        s.sendMessage(Extras.txt("§9§l--- DISCORD DO CORONA SERVER ---"));
+        s.sendMessage(Extras.txt("§fNovidades todo dia, call com música, grupos para masmorra e suporte."));
+        s.sendMessage(linhaLink());
+    }
+
     void ip(Player p) {
         p.sendMessage(Extras.txt("§6§l--- CHAME OS AMIGOS ---"));
         p.sendMessage(Extras.txt("§fJava: §e" + pl.getConfig().getString("divulgacao.ip-java", "")));
@@ -65,6 +100,7 @@ final class Divulgacao implements Listener {
                 + " §fporta §e" + pl.getConfig().getString("divulgacao.porta-bedrock", "")));
         p.sendMessage(Extras.txt("§7Quando o amigo entrar, ele digita §e/indicar " + p.getName() + " §7e vocês dois ganham prêmio"
                 + " §7(quando ele jogar " + pl.getConfig().getInt("divulgacao.indicacao.minutos-jogando", 30) + " min)."));
+        if (!linkDiscord().isBlank()) p.sendMessage(linhaLink());
     }
 
     static int minutosJogados(Player p) {

@@ -146,7 +146,7 @@ def glifos():
 
 
 # entidade vanilla que o Bedrock "empresta" para cada monstro (nunca nascem sozinhas nos mundos do servidor)
-EMPRESTADAS = {'vigia': 'zombie_horse', 'chorona': 'mule', 'faminto': 'sniffer', 'duplo': 'skeleton_horse', 'bacteria': 'happy_ghast', 'uivador': 'zoglin',
+EMPRESTADAS = {'vigia': 'zombie_horse', 'chorona': 'piglin_brute', 'faminto': 'sniffer', 'duplo': 'skeleton_horse', 'bacteria': 'happy_ghast', 'uivador': 'zoglin',
                'cao': 'panda', 'festeiro': 'ocelot', 'sombra': 'mooshroom', 'corredor': 'camel', 'afogado': 'axolotl'}
 
 

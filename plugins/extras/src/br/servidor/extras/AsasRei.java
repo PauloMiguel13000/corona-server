@@ -68,6 +68,10 @@ final class AsasRei implements Listener {
     private final Set<UUID> comPacote = new HashSet<>();
     private final Map<UUID, Estado> estados = new HashMap<>();
     private boolean falhou;
+    /** id da entidade do dono -> ids das duas asas (lido na thread da rede pelo filtro de passageiros). */
+    private final Map<Integer, int[]> montadas = new java.util.concurrent.ConcurrentHashMap<>();
+    private int ticks;
+    private static final String FILTRO = "corona_asas_passageiros";
 
     private static final class Estado {
         final int[] ids = new int[2];
@@ -88,6 +92,93 @@ final class AsasRei implements Listener {
         m.setItemModel(new NamespacedKey("corona", "item/coroa/asa"));
         item.setItemMeta(m);
         Bukkit.getScheduler().runTaskTimer(pl, this::tick, 40L, 1L);
+        for (Player p : Bukkit.getOnlinePlayers()) filtrar(p);
+    }
+
+    // ------------------------------------------------------------------ filtro de passageiros
+
+    /**
+     * Outro plugin (pet que monta, etc.) ou o proprio servidor manda a lista de passageiros do jogador sem as asas:
+     * no cliente as asas desmontavam e ficavam paradas no lugar (longe do jogador). O filtro poe as asas de volta
+     * em toda lista de passageiros do dono que sai para o cliente.
+     */
+    private void filtrar(Player v) {
+        if (bedrock(v)) return;
+        try {
+            io.netty.channel.Channel ch = ((CraftPlayer) v).getHandle().connection.connection.channel;
+            ch.eventLoop().execute(() -> {
+                try {
+                    io.netty.channel.ChannelPipeline pp = ch.pipeline();
+                    if (pp.get(FILTRO) != null) return;
+                    if (pp.get("packet_handler") != null) pp.addBefore("packet_handler", FILTRO, new Filtro());
+                    else pp.addFirst(FILTRO, new Filtro());   // jogador falso de teste (sem codificador)
+                } catch (Throwable ignored) {
+                }
+            });
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private void tirarFiltro(Player v) {
+        try {
+            io.netty.channel.Channel ch = ((CraftPlayer) v).getHandle().connection.connection.channel;
+            ch.eventLoop().execute(() -> {
+                try {
+                    if (ch.pipeline().get(FILTRO) != null) ch.pipeline().remove(FILTRO);
+                } catch (Throwable ignored) {
+                }
+            });
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private final class Filtro extends io.netty.channel.ChannelOutboundHandlerAdapter {
+        @Override
+        public void write(io.netty.channel.ChannelHandlerContext ctx, Object msg, io.netty.channel.ChannelPromise promise) throws Exception {
+            Object novo = msg;
+            try {
+                novo = ajustar(msg);
+            } catch (Throwable ignored) {
+            }
+            super.write(ctx, novo, promise);
+        }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private Object ajustar(Object msg) {
+        if (montadas.isEmpty()) return msg;
+        if (msg instanceof ClientboundSetPassengersPacket sp) {
+            int[] asas = montadas.get(sp.getVehicle());
+            if (asas == null) return msg;
+            int[] atuais = sp.getPassengers();
+            for (int id : atuais) if (id == asas[0]) return msg;   // ja tem as asas (pacote nosso)
+            int[] ids = java.util.Arrays.copyOf(atuais, atuais.length + 2);
+            ids[atuais.length] = asas[0];
+            ids[atuais.length + 1] = asas[1];
+            return pacotePassageiros(sp.getVehicle(), ids);
+        }
+        if (msg instanceof ClientboundBundlePacket b) {
+            List lista = new ArrayList<>();
+            boolean mudou = false;
+            for (Object sub : b.subPackets()) {
+                Object n = ajustar(sub);
+                if (n != sub) mudou = true;
+                lista.add(n);
+            }
+            return mudou ? new ClientboundBundlePacket(lista) : msg;
+        }
+        return msg;
+    }
+
+    private static ClientboundSetPassengersPacket pacotePassageiros(int veiculo, int[] ids) {
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        try {
+            buf.writeVarInt(veiculo);
+            buf.writeVarIntArray(ids);
+            return ClientboundSetPassengersPacket.STREAM_CODEC.decode(buf);
+        } finally {
+            buf.release();
+        }
     }
 
     // ------------------------------------------------------------------ quem ve
@@ -174,14 +265,7 @@ final class AsasRei implements Listener {
         for (int i = 0; i < reais.size(); i++) ids[i] = reais.get(i).getId();
         ids[reais.size()] = e.ids[0];
         ids[reais.size() + 1] = e.ids[1];
-        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-        try {
-            buf.writeVarInt(h.getId());
-            buf.writeVarIntArray(ids);
-            return ClientboundSetPassengersPacket.STREAM_CODEC.decode(buf);
-        } finally {
-            buf.release();
-        }
+        return pacotePassageiros(h.getId(), ids);
     }
 
     private Packet<?> criarPacote(Player dono, Estado e) {
@@ -203,6 +287,7 @@ final class AsasRei implements Listener {
 
     private void tick() {
         if (falhou) return;
+        ticks++;
         try {
             for (Player dono : Bukkit.getOnlinePlayers()) {
                 Estado e = estados.get(dono.getUniqueId());
@@ -224,6 +309,7 @@ final class AsasRei implements Listener {
                 Player p = Bukkit.getPlayer(id);
                 if (p != null && p.isOnline()) return false;
                 Estado e = estados.get(id);
+                if (e != null) montadas.values().removeIf(v -> v[0] == e.ids[0]);
                 tirarDeTodos(e);
                 return true;
             });
@@ -259,8 +345,9 @@ final class AsasRei implements Listener {
         boolean girou = giro != e.giro;
         e.giro = giro;
         int passageiros = dono.getPassengers().size();
-        boolean remontar = passageiros != e.passageiros && e.passageiros >= 0;
+        boolean remontar = (passageiros != e.passageiros && e.passageiros >= 0) || ticks % 40 == 0;
         e.passageiros = passageiros;
+        montadas.put(((CraftPlayer) dono).getHandle().getId(), new int[] {e.ids[0], e.ids[1]});
 
         // quem deve ver
         Set<Player> querem = new HashSet<>();
@@ -307,12 +394,16 @@ final class AsasRei implements Listener {
     }
 
     private void apagar(UUID dono) {
-        tirarDeTodos(estados.remove(dono));
+        Estado e = estados.remove(dono);
+        if (e != null) montadas.values().removeIf(v -> v[0] == e.ids[0]);
+        tirarDeTodos(e);
     }
 
     void parar() {
         for (Estado e : estados.values()) tirarDeTodos(e);
         estados.clear();
+        montadas.clear();
+        for (Player p : Bukkit.getOnlinePlayers()) tirarFiltro(p);
     }
 
     /** Para o comando de admin: quantos estao com asas e para quantos jogadores elas aparecem. */
@@ -359,6 +450,11 @@ final class AsasRei implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void morreu(PlayerDeathEvent e) {
         apagar(e.getEntity().getUniqueId());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void entrou(org.bukkit.event.player.PlayerJoinEvent e) {
+        filtrar(e.getPlayer());
     }
 
     @EventHandler

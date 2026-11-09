@@ -57,8 +57,8 @@ final class Cipo {
         BlockData vinha = b(Material.VINE);
         for (double k = 0; k < len; k += 0.45) {
             Location p = a.clone().add(u.clone().multiply(k));
-            w.spawnParticle(Particle.DUST, p, 1, 0.02, 0.02, 0.02, 0, VERDE);
-            if (rnd().nextInt(3) == 0) w.spawnParticle(Particle.BLOCK, p, 1, 0.05, 0.05, 0.05, 0, vinha);
+            Fx.p(w, Particle.DUST, p, 1, 0.02, 0.02, 0.02, 0, VERDE);
+            if (rnd().nextInt(3) == 0) Fx.p(w, Particle.BLOCK, p, 1, 0.05, 0.05, 0.05, 0, vinha);
         }
         pl.fx.corte(a, c, b(Material.MOSS_BLOCK), 0.09, vida, BRILHO);
     }
@@ -87,7 +87,7 @@ final class Cipo {
             if (pl.causarDano(alvo, DANO_CHICOTE * f, p)) {
                 Vector puxa = p.getLocation().toVector().subtract(alvo.getLocation().toVector());
                 if (puxa.lengthSquared() > 0.01) alvo.setVelocity(puxa.normalize().multiply(1.15).setY(0.38));
-                w.spawnParticle(Particle.BLOCK, alvo.getLocation().add(0, alvo.getHeight() / 2, 0), 20, 0.3, 0.4, 0.3, 0, b(Material.VINE));
+                Fx.p(w, Particle.BLOCK, alvo.getLocation().add(0, alvo.getHeight() / 2, 0), 20, 0.3, 0.4, 0.3, 0, b(Material.VINE));
                 w.playSound(alvo.getLocation(), Sound.BLOCK_VINE_BREAK, 1.2f, 0.6f);
                 Poderes.barra(p, "§a§lCHICOTE! §7Puxou o alvo para você.");
             }
@@ -109,7 +109,7 @@ final class Cipo {
         pl.semQueda(p, 6000L);
         w.playSound(p.getLocation(), Sound.ENTITY_FISHING_BOBBER_THROW, 1f, 0.6f);
         w.playSound(ancora, Sound.BLOCK_VINE_PLACE, 1.2f, 0.7f);
-        w.spawnParticle(Particle.BLOCK, ancora, 25, 0.3, 0.3, 0.3, 0, b(Material.VINE));
+        Fx.p(w, Particle.BLOCK, ancora, 25, 0.3, 0.3, 0.3, 0, b(Material.VINE));
         final int[] t = {0};
         Bukkit.getScheduler().runTaskTimer(pl, tarefa -> {
             if (!p.isOnline() || p.isDead() || !p.getWorld().equals(w) || t[0] > 18) {
@@ -128,7 +128,7 @@ final class Cipo {
             v.setY(v.getY() + 0.12);
             p.setVelocity(v);
             if (t[0] % 2 == 0) cipo(mao(p), ancora, 3);
-            if (t[0] % 4 == 0) w.spawnParticle(Particle.FALLING_SPORE_BLOSSOM, p.getLocation().add(0, 1, 0), 4, 0.3, 0.3, 0.3, 0);
+            if (t[0] % 4 == 0) Fx.p(w, Particle.FALLING_SPORE_BLOSSOM, p.getLocation().add(0, 1, 0), 4, 0.3, 0.3, 0.3, 0);
             t[0]++;
         }, 0L, 1L);
         Poderes.barra(p, "§2§lBALANÇO! §7Lá vai você no cipó.");
@@ -145,7 +145,7 @@ final class Cipo {
         pl.fx.anel(c.clone().add(0, 0.2, 0), b(Material.MOSS_BLOCK), 3.6, 6, 16, 0.3f, BRILHO);
         for (int i = 0; i < 28; i++) {
             double a = Math.PI * 2 * i / 28;
-            w.spawnParticle(Particle.BLOCK, c.clone().add(Math.cos(a) * 3.6, 0.4, Math.sin(a) * 3.6), 3, 0.1, 0.2, 0.1, 0, b(Material.VINE));
+            Fx.p(w, Particle.BLOCK, c.clone().add(Math.cos(a) * 3.6, 0.4, Math.sin(a) * 3.6), 3, 0.1, 0.2, 0.1, 0, b(Material.VINE));
         }
         w.playSound(c, Sound.BLOCK_VINE_STEP, 1.4f, 0.5f);
         w.playSound(c, Sound.ENTITY_EVOKER_FANGS_ATTACK, 1f, 0.8f);
@@ -194,7 +194,7 @@ final class Cipo {
         }
         w.playSound(c, Sound.BLOCK_BIG_DRIPLEAF_PLACE, 1.4f, 0.5f);
         w.playSound(c, Sound.BLOCK_ROOTED_DIRT_PLACE, 1.2f, 0.6f);
-        w.spawnParticle(Particle.BLOCK, c.clone().add(0, 0.3, 0), 40, 0.8, 0.2, 0.8, 0, b(Material.ROOTED_DIRT));
+        Fx.p(w, Particle.BLOCK, c.clone().add(0, 0.3, 0), 40, 0.8, 0.2, 0.8, 0, b(Material.ROOTED_DIRT));
         // prop 3D: a flor com mandibula (f0 fechada, f1 aberta); quem a ve nao ve a planta de vidro
         java.util.List<Player> plateia3d = pl.props.plateia(c);
         final org.bukkit.entity.ItemDisplay flor3d = pl.props.prop(c.clone().add(0, 1.0, 0), "flor_f1", 210, plateia3d);
@@ -209,14 +209,14 @@ final class Cipo {
             if (t[0] > 200 || !p.isOnline()) {
                 tarefa.cancel();
                 pl.props.remover(flor3d);
-                w.spawnParticle(Particle.COMPOSTER, c.clone().add(0, 1, 0), 30, 0.8, 0.8, 0.8, 0);
+                Fx.p(w, Particle.COMPOSTER, c.clone().add(0, 1, 0), 30, 0.8, 0.8, 0.8, 0);
                 return;
             }
             if (flor3d != null && flor3d.isValid()) {
                 // vira devagar procurando; a boca fica aberta (f1) e so fecha na mordida
                 Props3D.escala(flor3d, 2.2f + 0.05f * (float) Math.sin(t[0] * 0.3), t[0] * 0.03f, 1);
             }
-            if (t[0] % 5 == 0) w.spawnParticle(Particle.SPORE_BLOSSOM_AIR, c.clone().add(0, 1.5, 0), 6, 1.2, 0.8, 1.2, 0);
+            if (t[0] % 5 == 0) Fx.p(w, Particle.SPORE_BLOSSOM_AIR, c.clone().add(0, 1.5, 0), 6, 1.2, 0.8, 1.2, 0);
             if (t[0] % 20 == 0) {
                 boolean mordeu = false;
                 for (LivingEntity le : pl.hab.inimigosPerto(c, 6, 3, p)) {
@@ -226,7 +226,7 @@ final class Cipo {
                     else if (pl.causarDano(le, DANO_FLOR * f, p)) {
                         mordeu = true;
                         le.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 40, 0));
-                        w.spawnParticle(Particle.BLOCK, le.getLocation().add(0, 1, 0), 15, 0.3, 0.3, 0.3, 0, b(Material.MOSS_BLOCK));
+                        Fx.p(w, Particle.BLOCK, le.getLocation().add(0, 1, 0), 15, 0.3, 0.3, 0.3, 0, b(Material.MOSS_BLOCK));
                     }
                 }
                 if (mordeu) {
@@ -277,7 +277,7 @@ final class Cipo {
                 tarefa.cancel();
                 return;
             }
-            if (t[0] % 6 == 0) w.spawnParticle(Particle.FALLING_SPORE_BLOSSOM, c.clone().add(0, 3, 0), 20, raio * 0.6, 1, raio * 0.6, 0);
+            if (t[0] % 6 == 0) Fx.p(w, Particle.FALLING_SPORE_BLOSSOM, c.clone().add(0, 3, 0), 20, raio * 0.6, 1, raio * 0.6, 0);
             for (LivingEntity le : pegos) {
                 if (!le.isValid() || le.isDead()) continue;
                 // pendurado pelos cipos, estrangulado no ar
@@ -285,7 +285,7 @@ final class Cipo {
                 if (t[0] % 3 == 0) cipo(le.getLocation().add(0, le.getHeight() * 0.6, 0), le.getLocation().add(0, 4.5, 0), 4);
                 if (t[0] % 20 == 15) {
                     if (pl.causarDano(le, DANO_SELVA * f, p)) le.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 2));
-                    w.spawnParticle(Particle.BLOCK, le.getLocation().add(0, 1, 0), 12, 0.3, 0.4, 0.3, 0, b(Material.VINE));
+                    Fx.p(w, Particle.BLOCK, le.getLocation().add(0, 1, 0), 12, 0.3, 0.4, 0.3, 0, b(Material.VINE));
                 }
             }
             t[0]++;

@@ -56,7 +56,41 @@ final class MoedaReviver {
     }
 
     static boolean comando(CommandSender s, String[] a) {
-        if (a.length >= 3 && (a[0].equalsIgnoreCase("dar") || a[0].equalsIgnoreCase("tirar")) && s.hasPermission("masmorras.admin")) {
+        boolean pode = s.hasPermission("masmorras.admin") || s.hasPermission("masmorras.reviver.dar");
+        if (a.length >= 1 && (a[0].equalsIgnoreCase("dar") || a[0].equalsIgnoreCase("tirar") || a[0].equalsIgnoreCase("ver")) && pode && a.length < 3
+                && !(a[0].equalsIgnoreCase("ver") && a.length == 2)) {
+            s.sendMessage(Masmorras.txt("§e/reviver dar <jogador|todos> <quantidade> §7- dá moedas de reviver"));
+            s.sendMessage(Masmorras.txt("§e/reviver tirar <jogador> <quantidade> §7- tira moedas"));
+            s.sendMessage(Masmorras.txt("§e/reviver ver <jogador> §7- quantas o jogador tem"));
+            return true;
+        }
+        if (a.length == 2 && a[0].equalsIgnoreCase("ver") && pode) {
+            Player alvo = Bukkit.getPlayerExact(a[1]);
+            s.sendMessage(alvo == null ? Masmorras.txt("§cJogador não está online.") : Masmorras.txt("§e" + alvo.getName() + " §7tem §e" + moedas(alvo) + " moeda(s) de reviver§7."));
+            return true;
+        }
+        if (a.length >= 3 && a[0].equalsIgnoreCase("dar") && a[1].equalsIgnoreCase("todos") && pode) {
+            int n;
+            try {
+                n = Integer.parseInt(a[2]);
+            } catch (NumberFormatException e) {
+                n = -1;
+            }
+            if (n <= 0 || n > 1000) {
+                s.sendMessage(Masmorras.txt("§cUse: /reviver dar todos <quantidade> §7(1 a 1000)"));
+                return true;
+            }
+            int c = 0;
+            for (Player alvo : Bukkit.getOnlinePlayers()) {
+                dar(alvo, n);
+                alvo.sendMessage(Masmorras.txt("§6" + s.getName() + " §edeu §f" + n + " Moeda" + (n > 1 ? "s" : "") + " de Reviver §epara todo mundo online!"));
+                c++;
+            }
+            s.sendMessage(Masmorras.txt("§a" + n + " moeda(s) de reviver para " + c + " jogador(es) online."));
+            Bukkit.getLogger().info("[Masmorras] moedas de reviver: dar " + n + " para todos (" + c + ") por " + s.getName());
+            return true;
+        }
+        if (a.length >= 3 && (a[0].equalsIgnoreCase("dar") || a[0].equalsIgnoreCase("tirar")) && pode) {
             Player alvo = Bukkit.getPlayerExact(a[1]);
             int n;
             try {
@@ -78,8 +112,14 @@ final class MoedaReviver {
                 s.sendMessage(Masmorras.txt("§cUse: /reviver " + a[0] + " <jogador> <quantidade>"));
                 return true;
             }
-            if (a[0].equalsIgnoreCase("dar")) dar(alvo, n);
-            else definir(alvo, moedas(alvo) - n);
+            if (n > 1000) {
+                s.sendMessage(Masmorras.txt("§cNo máximo 1000 por vez."));
+                return true;
+            }
+            if (a[0].equalsIgnoreCase("dar")) {
+                dar(alvo, n);
+                if (!alvo.equals(s)) alvo.sendMessage(Masmorras.txt("§6" + s.getName() + " §ete deu §f" + n + " Moeda" + (n > 1 ? "s" : "") + " de Reviver§e!"));
+            } else definir(alvo, moedas(alvo) - n);
             s.sendMessage(Masmorras.txt("§a" + alvo.getName() + " tem §e" + moedas(alvo) + " moeda(s) de reviver§a."));
             Bukkit.getLogger().info("[Masmorras] moedas de reviver: " + a[0] + " " + n + " para " + alvo.getName() + " por " + s.getName() + " (agora " + moedas(alvo) + ")");
             return true;

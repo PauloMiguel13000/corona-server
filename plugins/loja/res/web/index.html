@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Loja oficial do Corona Server</title>
+<title>Corona Server: loja oficial e como entrar</title>
 <meta name="description" content="Loja oficial do Corona Server, do coronadooscar. VIP, coronas e Moedas de Reviver com Pix pelo Mercado Pago e entrega automática no jogo.">
 <meta name="theme-color" content="#C8102E">
 <link rel="icon" href="/coroa.svg" type="image/svg+xml">
@@ -19,6 +19,11 @@
       <svg class="selo" viewBox="0 0 19 13" aria-hidden="true" shape-rendering="crispEdges"><use href="#coroa"/></svg>
       <span>Loja oficial</span>
     </a>
+    <nav class="topo-links" aria-label="Atalhos">
+      <a href="#produtos-titulo">Produtos</a>
+      <a href="#jogar-titulo">O que tem</a>
+      <a href="https://discord.gg/uhEaWb9sJA" data-discord target="_blank" rel="noopener">Discord</a>
+    </nav>
     <p class="status" id="status" aria-live="polite"><span class="ponto"></span><span id="online">conectando…</span></p>
   </div>
 
@@ -29,6 +34,7 @@
       <div class="hero-acoes">
         <a class="botao claro" href="#produtos-titulo">Ver produtos</a>
         <button class="botao vazado" type="button" data-ir="historico">Minhas compras</button>
+        <a class="botao vazado" href="https://discord.gg/uhEaWb9sJA" data-discord target="_blank" rel="noopener">Entrar no Discord</a>
       </div>
     </div>
     <div class="coroa-grande" aria-hidden="true" id="coroaGrande"></div>
@@ -81,6 +87,46 @@
     </section>
   </section>
 
+  <section class="passos" aria-labelledby="passos-titulo">
+    <h2 id="passos-titulo">Como funciona</h2>
+    <ol>
+      <li><b>Escolha e digite o seu nick</b><p>Exatamente como aparece no jogo. No Bedrock, use o seu gamertag.</p></li>
+      <li><b>Pague o Pix</b><p>Pelo app do seu banco, com o QR code ou o copia e cola.</p></li>
+      <li><b>Receba no jogo</b><p>Em segundos aparece um aviso na sua tela e o item já está com você.</p></li>
+    </ol>
+  </section>
+
+  <section class="jogar" aria-labelledby="jogar-titulo">
+    <h2 id="jogar-titulo">O que tem no servidor</h2>
+    <p class="jogar-sub">Tudo feito aqui, com monstros e armaduras em 3D que aparecem igual no PC e no celular. Você entra de graça e joga tudo.</p>
+    <div class="fotos">
+      <figure class="foto larga">
+        <img src="/foto-turno.jpg" alt="Quatro animatrônicos do Turno da Noite: capivara, tucano, onça e boto" width="960" height="400" loading="lazy">
+        <figcaption><b>O Turno da Noite</b><span>Vigie as câmeras até as 6h. Quatro animatrônicos andam pela lanchonete.</span><code>/turno</code></figcaption>
+      </figure>
+      <figure class="foto alta">
+        <img src="/foto-traje.jpg" alt="Jogador com o Traje do Rei: coroa, manto vermelho e ombreiras douradas" width="480" height="540" loading="lazy">
+        <figcaption><b>Traje do Rei</b><span>A armadura 3D dos VIPs MVP e LENDA, com coroa, manto e asas.</span><code>/vip</code></figcaption>
+      </figure>
+      <figure class="foto">
+        <img src="/foto-criatura.jpg" alt="A Criatura da Floresta: alta, magra, rosto pálido com dois olhos vermelhos" width="720" height="480" loading="lazy">
+        <figcaption><b>A Criatura da Floresta</b><span>Ache as 8 páginas antes que ela ache você.</span><code>/slender</code></figcaption>
+      </figure>
+      <figure class="foto">
+        <img src="/foto-vovo.jpg" alt="A Vovó, com avental manchado e uma frigideira na mão" width="720" height="480" loading="lazy">
+        <figcaption><b>A Casa da Vovó</b><span>Fuja da casa em 5 dias. Pelo carro, pela porta ou pelo esgoto.</span><code>/vovo</code></figcaption>
+      </figure>
+    </div>
+    <dl class="modos">
+      <div><dt>Masmorras com chefes</dt><dd>Entre em grupo, derrote o chefe e gaste as coronas nos mercadores. <code>/masmorras</code></dd></div>
+      <div><dt>Classes e poderes</dt><dd>Escolha a sua classe e solte os poderes pela barra de atalhos. <code>/classe</code></dd></div>
+      <div><dt>Terreno e casa</dt><dd>Pegue o seu terreno, proteja e construa sem ninguém mexer. <code>/plot</code></dd></div>
+      <div><dt>Mais terror</dt><dd>Backrooms, Hotel, Fábrica e Não Chore, com monstros próprios. <code>/terror</code></dd></div>
+      <div><dt>Minigames</dt><dd>Arena, defesa de torre e outros jogos rápidos para jogar com amigos. <code>/minigames</code></dd></div>
+      <div><dt>Pets</dt><dd>Um bichinho que anda com você pelo mundo. <code>/pets</code></dd></div>
+    </dl>
+  </section>
+
   <section class="entrar" aria-labelledby="entrar-titulo">
     <div>
       <h2 id="entrar-titulo">Ainda não joga? Entre agora</h2>
@@ -92,13 +138,18 @@
     </div>
   </section>
 
-  <section class="passos" aria-labelledby="passos-titulo">
-    <h2 id="passos-titulo">Como funciona</h2>
-    <ol>
-      <li><b>Escolha e digite o seu nick</b><p>Exatamente como aparece no jogo. No Bedrock, use o seu gamertag.</p></li>
-      <li><b>Pague o Pix</b><p>Pelo app do seu banco, com o QR code ou o copia e cola.</p></li>
-      <li><b>Receba no jogo</b><p>Em segundos aparece um aviso na sua tela e o item já está com você.</p></li>
-    </ol>
+  <section class="discord" aria-labelledby="discord-titulo">
+    <div>
+      <h2 id="discord-titulo">Novidade todo dia, às 18h, no Discord</h2>
+      <p>É lá que a gente avisa o que mudou no servidor, mostra os monstros novos e combina as partidas.</p>
+      <a class="botao" href="https://discord.gg/uhEaWb9sJA" data-discord target="_blank" rel="noopener">Entrar no Discord</a>
+    </div>
+    <ul>
+      <li><b>Atualizações do dia</b><span>Tudo o que entrou no servidor, com imagem.</span></li>
+      <li><b>Call com música</b><span>Entre na sala de voz e peça a música pelo chat.</span></li>
+      <li><b>Grupo para masmorra</b><span>Ache gente para jogar agora.</span></li>
+      <li><b>Ajuda e bugs</b><span>Achou um problema? Avise lá e a gente corrige.</span></li>
+    </ul>
   </section>
 
   <section class="duvidas" aria-labelledby="duvidas-titulo">
@@ -129,6 +180,7 @@
 <footer class="rodape">
   <svg class="selo pequeno" viewBox="0 0 19 13" aria-hidden="true" shape-rendering="crispEdges"><use href="#coroa"/></svg>
   <p><b>Corona Server</b>, servidor do coronadooscar. Coronas e benefícios só valem dentro do servidor e não podem ser trocados por dinheiro.</p>
+  <p><a href="https://discord.gg/uhEaWb9sJA" data-discord target="_blank" rel="noopener">Discord do servidor</a></p>
   <p class="miudo">Não somos afiliados à Mojang Studios nem à Microsoft. Minecraft é marca da Mojang/Microsoft.</p>
 </footer>
 

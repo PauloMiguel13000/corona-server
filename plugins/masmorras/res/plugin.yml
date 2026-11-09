@@ -14,10 +14,16 @@ commands:
   reviver:
     description: Suas Moedas de Reviver (voltar para a partida quando for eliminado num minigame)
     aliases: [moedareviver, revive, moeda, moedas]
+  galeria:
+    description: Galeria das Reliquias - os conjuntos de todas as masmorras (armadura + arma)
+    aliases: [armaduras, museu]
 permissions:
   masmorras.usar:
     description: Ver as masmorras
     default: true
   masmorras.admin:
     description: Administrar as masmorras
+    default: op
+  masmorras.reviver.dar:
+    description: Dar/tirar moedas de reviver (/reviver dar <jogador|todos> <quantidade>)
     default: op

@@ -42,13 +42,14 @@ final class Premios {
     }
 
     private static Opcao[] garantidos(int nivel) {
+        // 08/11 (pedido do Paulo): tudo um pouco mais fraco, equilibrado: da para passar com um pouco de dificuldade
         return switch (nivel) {
-            case 1 -> new Opcao[] {o("IRON_INGOT", 5, 10), o("GOLD_INGOT", 2, 5), o("EXPERIENCE_BOTTLE", 3, 6)};
-            case 2 -> new Opcao[] {o("DIAMOND", 1, 4), o("IRON_INGOT", 6, 12), o("GOLDEN_APPLE", 1, 1), o("EXPERIENCE_BOTTLE", 6, 10)};
-            case 3 -> new Opcao[] {o("DIAMOND", 3, 6), o("GOLDEN_APPLE", 1, 2), o("EXPERIENCE_BOTTLE", 10, 16)};
-            case 4 -> new Opcao[] {o("DIAMOND", 4, 8), o("NETHERITE_SCRAP", 1, 2), o("GOLDEN_APPLE", 2, 3), o("EXPERIENCE_BOTTLE", 12, 20)};
-            default -> new Opcao[] {o("NETHERITE_INGOT", 1, 1, 0.6), o("NETHERITE_UPGRADE_SMITHING_TEMPLATE", 1, 1), o("DIAMOND", 6, 10),
-                    o("TOTEM_OF_UNDYING", 1, 1, 0.6), o("EXPERIENCE_BOTTLE", 20, 28)};
+            case 1 -> new Opcao[] {o("IRON_INGOT", 4, 7), o("GOLD_INGOT", 1, 3), o("EXPERIENCE_BOTTLE", 2, 4)};
+            case 2 -> new Opcao[] {o("DIAMOND", 1, 2), o("IRON_INGOT", 5, 9), o("GOLDEN_APPLE", 1, 1, 0.6), o("EXPERIENCE_BOTTLE", 4, 7)};
+            case 3 -> new Opcao[] {o("DIAMOND", 2, 4), o("GOLDEN_APPLE", 1, 1), o("EXPERIENCE_BOTTLE", 8, 12)};
+            case 4 -> new Opcao[] {o("DIAMOND", 3, 6), o("NETHERITE_SCRAP", 1, 1, 0.7), o("GOLDEN_APPLE", 1, 2), o("EXPERIENCE_BOTTLE", 10, 16)};
+            default -> new Opcao[] {o("NETHERITE_INGOT", 1, 1, 0.5), o("NETHERITE_UPGRADE_SMITHING_TEMPLATE", 1, 1, 0.7), o("DIAMOND", 5, 8),
+                    o("TOTEM_OF_UNDYING", 1, 1, 0.5), o("EXPERIENCE_BOTTLE", 16, 24)};
         };
     }
 
@@ -89,7 +90,7 @@ final class Premios {
     }
 
     static int sorteios(int nivel) {
-        return nivel >= 2 ? 3 : 2;
+        return nivel >= 3 ? 3 : 2;
     }
 
     /** Sorteia o premio do chefe. */
@@ -101,7 +102,7 @@ final class Premios {
         for (int i = 0; i < sorteios(nivel); i++) {
             Opcao op = s[r.nextInt(s.length)];
             if (r.nextDouble() < op.chance()) l.add(fazer(op, r));
-            else l.add(new Item("EXPERIENCE_BOTTLE", 4 + r.nextInt(5 * nivel), List.of(), false));
+            else l.add(new Item("EXPERIENCE_BOTTLE", 3 + r.nextInt(4 * nivel), List.of(), false));
         }
         return l;
     }

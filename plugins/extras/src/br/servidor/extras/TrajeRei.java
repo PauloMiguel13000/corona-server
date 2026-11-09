@@ -105,11 +105,25 @@ final class TrajeRei implements Listener {
             it.setData(DataComponentTypes.ITEM_MODEL, Key.key("corona", "item/coroa/" + PECAS[i]));
             Equippable atual = it.getData(DataComponentTypes.EQUIPPABLE);
             EquipmentSlot slot = it.getType().getEquipmentSlot();
-            Equippable.Builder b = Equippable.equippable(slot).assetId(Key.key("corona", TEMA));
+            Equippable.Builder b = Equippable.equippable(slot);
+            // coroa 3D (arcos, pontas, asas de ouro): sem asset_id o Java desenha o modelo do item na cabeca;
+            // o resto usa a armadura do pacote (e o manto pela camada "wings" do peitoral)
+            if (slot != EquipmentSlot.HEAD) b.assetId(Key.key("corona", TEMA));
             if (atual != null) b.equipSound(atual.equipSound()).dispensable(atual.dispensable()).swappable(atual.swappable()).damageOnHurt(atual.damageOnHurt());
             it.setData(DataComponentTypes.EQUIPPABLE, b.build());
         } catch (Throwable ex) {
             pl.getLogger().warning("Visual do Traje do Rei: " + ex);
+        }
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
+    private boolean precisaVisual(ItemStack it) {
+        try {
+            if (indice(it) != 0) return false;
+            Equippable e = it.getData(DataComponentTypes.EQUIPPABLE);
+            return e == null || e.assetId() != null;
+        } catch (Throwable t) {
+            return false;
         }
     }
 
@@ -184,7 +198,13 @@ final class TrajeRei implements Listener {
             boolean mudou = false;
             for (int k = 0; k < c.length; k++) {
                 if (!eh(c[k])) continue;
-                if (pode && eu.equals(dono(c[k]))) continue;
+                if (pode && eu.equals(dono(c[k]))) {
+                    if (precisaVisual(c[k])) {        // traje antigo (coroa plana): passa para a coroa 3D
+                        visual(c[k], indice(c[k]));
+                        mudou = true;
+                    }
+                    continue;
+                }
                 c[k] = null;
                 mudou = true;
                 tirou++;
@@ -226,6 +246,7 @@ final class TrajeRei implements Listener {
      * ouro ao andar. So particulas do jogo (Java e Bedrock), poucas por vez. */
     private void aura() {
         giro++;
+        boolean leve = pl.getConfig().getBoolean("bedrock.aura-leve", true);
         for (Player p : Bukkit.getOnlinePlayers()) {
             try {
                 if (p.isInvisible() || p.getGameMode() == org.bukkit.GameMode.SPECTATOR || !completo(p)) {
@@ -234,40 +255,42 @@ final class TrajeRei implements Listener {
                 }
                 org.bukkit.World w = p.getWorld();
                 Location pe = p.getLocation();
-                // coroa: 8 pontos girando, as pontas mais altas com um rubi
-                double a0 = giro * 0.18;
-                double yc = pe.getY() + (p.isSneaking() ? 1.95 : 2.28);
-                for (int k = 0; k < 8; k++) {
-                    double a = a0 + k * Math.PI / 4;
-                    double x = pe.getX() + Math.cos(a) * 0.36, z = pe.getZ() + Math.sin(a) * 0.36;
-                    w.spawnParticle(Particle.DUST, x, yc, z, 1, 0, 0, 0, 0, OURO);
-                    if (k % 2 == 0) w.spawnParticle(Particle.DUST, x, yc + 0.16, z, 1, 0, 0, 0, 0, giro % 4 < 2 ? RUBI : OURO_CLARO);
+                // quem ve: Java recebe a aura inteira; Bedrock (celular) so uma coroa leve (cada particula vira um pacote
+                // no celular: a aura inteira eram ~120 pacotes por segundo para cada um perto, pelo 4G/5G)
+                List<Player> java = new ArrayList<>(), cel = new ArrayList<>();
+                for (Player o : w.getPlayers()) {
+                    if (o.getLocation().distanceSquared(pe) > 32 * 32) continue;
+                    if (leve && RedeBedrock.bedrock(o)) cel.add(o);
+                    else java.add(o);
                 }
-                // manto: cortina vermelha atras das costas, balancando
-                org.bukkit.util.Vector frente = pe.getDirection().setY(0);
-                if (frente.lengthSquared() < 1e-4) frente = new org.bukkit.util.Vector(0, 0, 1);
-                frente.normalize();
-                org.bukkit.util.Vector lado = new org.bukkit.util.Vector(-frente.getZ(), 0, frente.getX());
-                double balanco = Math.sin(giro * 0.2) * 0.06;
-                for (int k = 0; k < 7; k++) {
-                    double u = -0.28 + 0.56 * Math.random(), v = Math.random();
-                    double atras = 0.32 + v * 0.18 + balanco;
-                    Location l = pe.clone().add(lado.clone().multiply(u)).add(frente.clone().multiply(-atras)).add(0, 1.45 - v * 1.15, 0);
-                    w.spawnParticle(Particle.DUST, l, 1, 0, 0, 0, 0, Math.random() < 0.65 ? MANTO : MANTO2);
+                // a coroa, as asas e o manto agora sao 3D de verdade (Java e Bedrock): aqui so um brilho leve de ouro
+                // de vez em quando em volta da coroa (Bedrock/celular recebe metade)
+                if (giro % 3 == 0) {
+                    double a = giro * 0.35;
+                    double yc = pe.getY() + (p.isSneaking() ? 1.95 : 2.3);
+                    Location l = new Location(w, pe.getX() + Math.cos(a) * 0.42, yc, pe.getZ() + Math.sin(a) * 0.42);
+                    mostrar(java, Particle.DUST, l, 1, 0, 0, 0, 0, giro % 6 == 0 ? OURO_CLARO : OURO);
+                    if (giro % 6 == 0) mostrar(cel, Particle.DUST, l, 1, 0, 0, 0, 0, OURO);
                 }
-                if (giro % 2 == 0) {   // barra de ouro no ombro do manto
-                    Location o = pe.clone().add(frente.clone().multiply(-0.3)).add(0, 1.45, 0);
-                    w.spawnParticle(Particle.DUST, o.clone().add(lado.clone().multiply(0.25)), 1, 0, 0, 0, 0, OURO);
-                    w.spawnParticle(Particle.DUST, o.clone().add(lado.clone().multiply(-0.25)), 1, 0, 0, 0, 0, OURO);
+                if (java.isEmpty()) {
+                    ultimoLugar.put(p.getUniqueId(), pe.clone());
+                    continue;
                 }
                 // rastro de ouro quando anda
                 Location antes = ultimoLugar.put(p.getUniqueId(), pe.clone());
                 if (antes != null && antes.getWorld() == w && antes.distanceSquared(pe) > 0.04 && p.isOnGround()) {
-                    w.spawnParticle(Particle.DUST, pe.clone().add(0, 0.05, 0), 3, 0.18, 0.0, 0.18, 0, OURO_CLARO);
-                    if (Math.random() < 0.5) w.spawnParticle(Particle.WAX_ON, pe.clone().add(0, 0.1, 0), 1, 0.2, 0.0, 0.2, 0);
+                    mostrar(java, Particle.DUST, pe.clone().add(0, 0.05, 0), 3, 0.18, 0.0, 0.18, 0, OURO_CLARO);
+                    if (Math.random() < 0.5) mostrar(java, Particle.WAX_ON, pe.clone().add(0, 0.1, 0), 1, 0.2, 0.0, 0.2, 0, null);
                 }
             } catch (Throwable ignored) {
             }
+        }
+    }
+
+    private static <T> void mostrar(List<Player> quem, Particle tipo, Location l, int n, double ox, double oy, double oz, double vel, T dados) {
+        for (Player o : quem) {
+            if (dados == null) o.spawnParticle(tipo, l, n, ox, oy, oz, vel);
+            else o.spawnParticle(tipo, l, n, ox, oy, oz, vel, dados);
         }
     }
 

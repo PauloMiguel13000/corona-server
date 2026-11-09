@@ -102,6 +102,8 @@ final class Partida {
     // ---------------------------------------------------------------- a vovo
     private Zombie motor;
     private Mannequin corpo;
+    /** Modelo 3D do pacote que acompanha o boneco (null = desligado no config). */
+    private Modelo modelo;
     private TextDisplay zzz;
     private Ia ia = Ia.DORMINDO;
     private UUID alvo;
@@ -978,6 +980,11 @@ final class Partida {
         mundo.spawnParticle(Particle.CRIT, c, 40, 0.3, 1.2, 1.5, 0.1);
         consumir(p, "serrou a §8grade do esgoto§7: a saída está livre!", 22);
         for (Player o : online(true)) titulo(o, "§a§lA GRADE CAIU!", "§fFujam pelo esgoto!", 3);
+        // a grade caindo faz um barulhao: a aranha vem conferir a saida
+        if (aranha.viva()) {
+            aranha.investigar(new Location(mundo, 54.5, 52, 86.5), true);
+            avisar("§8A aranha ouviu a grade cair...");
+        }
     }
 
     boolean ehTranca(Block b) {
@@ -1191,6 +1198,10 @@ final class Partida {
             // com um efeito ativo o Paper nunca deixa o zumbi "inativo" quando os jogadores estao longe
             // (a casa e grande: sem isso ela congelava parada a mais de 32 blocos de todo mundo)
             z.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, PotionEffect.INFINITE_DURATION, 0, false, false, false));
+            // o ClearLag apaga bichos a mais de 64 blocos de todo mundo (a casa e grande) e o LevelledMobs mexe na velocidade
+            z.addScoreboardTag("clearlag_exclude");
+            org.bukkit.NamespacedKey semNivel = org.bukkit.NamespacedKey.fromString("levelledmobs:nolevel");
+            if (semNivel != null) z.getPersistentDataContainer().set(semNivel, PersistentDataType.STRING, "vovo");
             AttributeInstance a = z.getAttribute(Attribute.FOLLOW_RANGE);
             if (a != null) a.setBaseValue(64);
             a = z.getAttribute(Attribute.KNOCKBACK_RESISTANCE);
@@ -1217,6 +1228,9 @@ final class Partida {
             m.setGravity(false);
             m.getEquipment().setItemInMainHand(new ItemStack(Material.IRON_SHOVEL));
         });
+        if (modelo != null) modelo.remover();
+        modelo = pl.getConfig().getBoolean("modelo-3d", true) ? new Modelo(pl, l, pl.kVovo) : null;
+        if (modelo != null) Pacote.repartir(pl, corpo, modelo.entidade());
         ia = Ia.RONDA;
         alvo = null;
         destino = null;
@@ -1229,6 +1243,8 @@ final class Partida {
     void removerVovo() {
         if (zzz != null) zzz.remove();
         zzz = null;
+        if (modelo != null) modelo.remover();
+        modelo = null;
         if (corpo != null) corpo.remove();
         if (motor != null) motor.remove();
         corpo = null;
@@ -1258,6 +1274,10 @@ final class Partida {
         l.setPitch(0);
         corpo.teleport(l, TeleportFlag.EntityState.RETAIN_PASSENGERS);
         corpo.setRotation(yaw, 0);
+        if (modelo != null) {
+            modelo.seguir(l, yaw);
+            if (Bukkit.getCurrentTick() % 10 == 0) Pacote.repartir(pl, corpo, modelo.entidade());
+        }
     }
 
     /** Anda ate "para" passando pelas portas e escadas do caminho (o buscador do Minecraft so faz trechos curtos). */
@@ -1665,6 +1685,7 @@ final class Partida {
         pararVovo();
         j.graca = tick + seg(12);
         corpo.swingMainHand();
+        if (modelo != null) modelo.gritar(36);
         soltarNoChao(p, false);
         p.setWalkSpeed(0f);
         p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 50, 0, false, false, false));

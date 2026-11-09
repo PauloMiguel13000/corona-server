@@ -41,7 +41,10 @@ button, input { font: inherit; }
 .faixa { background: var(--vermelho); color: var(--branco); overflow: hidden; }
 .faixa-topo { max-width: var(--largura); margin: 0 auto; padding: 18px 20px 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .marca { display: flex; align-items: center; gap: 12px; text-decoration: none; font-weight: 700; font-size: 16px; }
-.status { display: inline-flex; align-items: center; gap: 8px; background: rgba(0, 0, 0, .28); padding: 7px 14px; border-radius: 999px; font-size: 15px; font-weight: 700; }
+.topo-links { display: flex; gap: 4px; margin-left: auto; }
+.topo-links a { text-decoration: none; font-weight: 700; font-size: 15px; padding: 7px 12px; border-radius: 999px; white-space: nowrap; }
+.topo-links a:hover { background: rgba(0, 0, 0, .28); }
+.status { white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; background: rgba(0, 0, 0, .28); padding: 7px 14px; border-radius: 999px; font-size: 15px; font-weight: 700; }
 .ponto { width: 9px; height: 9px; border-radius: 50%; background: #5BF08A; box-shadow: 0 0 0 3px rgba(91, 240, 138, .25); }
 .status.off .ponto { background: #FFD0D6; box-shadow: none; }
 
@@ -127,6 +130,34 @@ input:focus { border-color: var(--preto); outline: none; box-shadow: 0 0 0 3px r
 .ip b { font-size: 17px; overflow-wrap: anywhere; }
 .ip-copiar { font-size: 14px; font-weight: 700; color: var(--branco); background: var(--vermelho); padding: 5px 11px; border-radius: 8px; }
 
+/* ---------------------------------------------------------------- o que tem no servidor (fotos do jogo) */
+.jogar { padding: 56px 0 6px; }
+.jogar-sub { margin-top: 12px; color: var(--apagado); max-width: 62ch; }
+.fotos { margin-top: 24px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
+.foto { position: relative; margin: 0; grid-column: span 2; border-radius: 16px; overflow: hidden; background: var(--preto); min-height: 230px; }
+.foto.larga { grid-column: span 4; }
+.foto.alta { grid-row: span 2; }
+.foto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .35s ease; }
+.foto:hover img { transform: scale(1.04); }
+.foto figcaption { position: absolute; inset: auto 0 0 0; padding: 46px 18px 16px; color: #E6E6E6; font-size: 15px; line-height: 1.35; background: linear-gradient(to top, rgba(0, 0, 0, .92) 30%, rgba(0, 0, 0, 0)); display: grid; gap: 4px; justify-items: start; }
+.foto figcaption b { font-family: var(--titulo); font-weight: 900; font-size: 30px; line-height: 1; color: var(--branco); }
+code { font: 700 14px/1 ui-monospace, "Cascadia Mono", Consolas, monospace; background: var(--vermelho); color: var(--branco); padding: 4px 8px; border-radius: 6px; white-space: nowrap; }
+.foto code { margin-top: 4px; }
+.modos { margin: 26px 0 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 28px; }
+.modos div { border-top: 1px solid var(--borda); padding: 14px 0; }
+.modos dt { font-weight: 700; color: var(--preto); font-size: 18px; }
+.modos dd { margin: 4px 0 0; color: var(--apagado); font-size: 15.5px; }
+.modos code { background: var(--cinza); color: var(--preto); }
+
+/* ---------------------------------------------------------------- Discord */
+.discord { margin-top: 48px; background: var(--cinza); border-radius: 20px; padding: 36px; display: grid; grid-template-columns: 1fr 1.1fr; gap: 32px; align-items: center; }
+.discord > div p { margin: 12px 0 22px; max-width: 40ch; }
+.discord ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.discord li { background: var(--branco); border-radius: 12px; padding: 14px 16px; border-left: 5px solid var(--vermelho); }
+.discord li b { display: block; color: var(--preto); }
+.discord li span { font-size: 15px; color: var(--apagado); }
+.rodape a { color: var(--preto); font-weight: 700; }
+
 /* ---------------------------------------------------------------- como funciona (3 passos em ordem) */
 .passos { padding: 56px 0 10px; }
 .passos ol { list-style: none; margin: 24px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; counter-reset: p; }
@@ -184,11 +215,22 @@ details p { padding: 0 0 18px; color: var(--texto); max-width: 65ch; }
   .entrar { grid-template-columns: 1fr; }
   .passos ol { grid-template-columns: 1fr; }
   .ip { grid-template-columns: 1fr auto; }
+  .fotos { grid-template-columns: 1fr 1fr; }
+  .foto, .foto.larga { grid-column: span 2; }
+  .foto.alta { grid-column: span 2; grid-row: auto; min-height: 380px; }
+  .modos { grid-template-columns: 1fr 1fr; }
+  .discord { grid-template-columns: 1fr; padding: 26px 20px; }
   .ip-tipo { grid-column: 1 / -1; min-width: 0; }
 }
 @media (max-width: 520px) {
   body { font-size: 16px; }
   .faixa-topo .marca span { display: none; }
+  .topo-links a { padding: 7px 8px; font-size: 14px; }
+  .topo-links a:first-child { display: none; }
+  .faixa-topo { gap: 6px; }
+  .status { font-size: 13px; padding: 6px 10px; }
+  .modos { grid-template-columns: 1fr; }
+  .discord ul { grid-template-columns: 1fr; }
   .vitrine-topo { align-items: start; }
   .abas { width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
   .aba { flex: 1 0 auto; padding: 9px 12px; white-space: nowrap; }

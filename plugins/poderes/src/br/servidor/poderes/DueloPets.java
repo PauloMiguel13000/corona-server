@@ -244,7 +244,7 @@ final class DueloPets implements Listener {
         }
 
         if (rnd.nextDouble() < 0.10) {
-            w.spawnParticle(Particle.CLOUD, ld, 10, 0.3, 0.3, 0.3, 0.02);
+            Fx.p(w, Particle.CLOUD, ld, 10, 0.3, 0.3, 0.3, 0.02);
             w.playSound(ld, Sound.ENTITY_PLAYER_ATTACK_NODAMAGE, 1f, 1.2f);
             Poderes.barra(atk.dono, "§7" + def.pet.nome + " desviou!");
             Poderes.barra(def.dono, "§a" + def.pet.nome + " desviou!");
@@ -256,7 +256,7 @@ final class DueloPets implements Listener {
         def.vida -= dano;
         def.atualizar();
         ed.playHurtAnimation(0f);
-        w.spawnParticle(Particle.CRIT, ld, critico ? 25 : 10, 0.3, 0.3, 0.3, 0.2);
+        Fx.p(w, Particle.CRIT, ld, critico ? 25 : 10, 0.3, 0.3, 0.3, 0.2);
         w.playSound(ld, critico ? Sound.ENTITY_PLAYER_ATTACK_CRIT : Sound.ENTITY_PLAYER_ATTACK_STRONG, 1f, 1.1f);
         if (critico) {
             Poderes.barra(atk.dono, "§6CRITICO! §f" + atk.pet.nome + " acertou " + String.format(Locale.ROOT, "%.1f", dano));
@@ -288,7 +288,7 @@ final class DueloPets implements Listener {
         plugin.getLogger().info(msg.replaceAll("§.", ""));
         LivingEntity ev = vencedor.pet.entidade;
         if (ev.isValid()) {
-            ev.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, ev.getLocation().add(0, 0.8, 0), 40, 0.4, 0.6, 0.4, 0.3);
+            Fx.p(ev.getWorld(), Particle.TOTEM_OF_UNDYING, ev.getLocation().add(0, 0.8, 0), 40, 0.4, 0.6, 0.4, 0.3);
         }
         vencedor.dono.playSound(vencedor.dono.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1f);
         perdedor.dono.playSound(perdedor.dono.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.8f, 1f);

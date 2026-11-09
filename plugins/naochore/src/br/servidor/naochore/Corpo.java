@@ -96,6 +96,8 @@ final class Corpo {
                 e.setCollidable(false);
                 e.setPersistent(false);
                 e.setRemoveWhenFarAway(false);
+                if (e instanceof org.bukkit.entity.PiglinAbstract pa) pa.setImmuneToZombification(true);   // nao vira zumbi fora do Nether
+                if (e.getEquipment() != null) e.getEquipment().clear();
                 if (e instanceof org.bukkit.entity.AbstractHorse h) {
                     h.setTamed(false);
                     if (h instanceof org.bukkit.entity.ChestedHorse ch) ch.setCarryingChest(false);
@@ -111,7 +113,8 @@ final class Corpo {
     static Class<? extends org.bukkit.entity.Ageable> emprestada(String tipo) {
         return switch (tipo) {
             case "vigia" -> org.bukkit.entity.ZombieHorse.class;
-            case "chorona" -> org.bukkit.entity.Mule.class;
+            // era a mula, mas a mula e um dos pets (BabyPets): no celular o pet aparecia com a cara da Chorona
+            case "chorona" -> org.bukkit.entity.PiglinBrute.class;
             case "faminto" -> org.bukkit.entity.Sniffer.class;
             case "duplo" -> org.bukkit.entity.SkeletonHorse.class;
             default -> null;
@@ -146,7 +149,10 @@ final class Corpo {
     /** O modelo tem os pes em y=-16 (1,5 bloco abaixo do centro): sobe para os pes ficarem no chao. */
     private Transformation transformacao(float respiro) {
         float s = (float) escala;
-        return new Transformation(new Vector3f(0f, 1.5f * s, 0f), new AxisAngle4f(), new Vector3f(s, s * respiro, s), new AxisAngle4f());
+        // o modelo e desenhado com o centro em x=0, z=0 e o Java posiciona o item pelo ponto (8, 8, 8): sem corrigir, o monstro
+        // aparecia meio bloco fora do lugar de verdade. O item display vira o item 180 graus DEPOIS desta transformacao,
+        // por isso a correcao aqui e -0,5 (e nao +0,5) em x e z.
+        return new Transformation(new Vector3f(-0.5f * s, 1.5f * s, -0.5f * s), new AxisAngle4f(), new Vector3f(s, s * respiro, s), new AxisAngle4f());
     }
 
     @SuppressWarnings("UnstableApiUsage")

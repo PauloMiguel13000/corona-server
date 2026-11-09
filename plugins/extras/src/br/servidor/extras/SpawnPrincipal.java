@@ -3,7 +3,9 @@ package br.servidor.extras;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.bukkit.Bukkit;
@@ -92,8 +94,9 @@ final class SpawnPrincipal implements Listener {
     @EventHandler
     public void enfeitesCarregados(org.bukkit.event.world.EntitiesLoadEvent e) {
         if (e.getWorld() != mundo() || !new File(pl.getDataFolder(), "spawn-principal-v" + VERSAO + ".txt").exists()) return;
+        boolean parteFeita = new File(pl.getDataFolder(), "spawn-principal-sul-oeste-v" + PARTE + ".txt").exists();
         int n = 0;
-        for (Entity en : e.getEntities()) if (antigo(en)) {
+        for (Entity en : e.getEntities()) if (antigo(en) || (parteFeita && antigoDaParte(en))) {
             en.remove();
             n++;
         }
@@ -118,11 +121,192 @@ final class SpawnPrincipal implements Listener {
         return new int[] {px(p.angulo(), 8.6), pz(p.angulo(), 8.6)};
     }
 
+    static final String TEXTO_PORTAL_MASMORRAS = "§4§lMUNDO DAS MASMORRAS\n§7Lobby • níveis 1 a 4 • NPCs e rankings";
+    static final String DICA_MASMORRAS = "§fMasmorras: §eportal ao norte §7(nível 1 perto do lobby; mais longe = mais forte)";
+
+    static final String TEXTO_CENTRO = "§c§lCORONA SERVER\n§4Terror §fe Minigames §7ao sul  §8|  §fMasmorras §7ao norte\n§fVIP §7a leste  §8|  §fJogos §7a oeste";
+
+    /**
+     * Parte nova do spawn (09/11): no sul, dois portais lado a lado (Lobby do Terror a oeste, Lobby dos Minigames a
+     * leste) no lugar do portal unico; no oeste, um totem por minigame (11 lugares em dois aneis, textos em duas
+     * alturas para nao encavalar). Tudo o que esta parte poe leva a marca spawn_parte = PARTE; enfeite antigo
+     * nessas areas sem a marca e apagado quando carrega.
+     */
+    static final int PARTE = 2, SUL_TERROR = -6, SUL_MINIGAMES = 6, LUGARES_OESTE = 11;
+
+    private org.bukkit.NamespacedKey chaveParte() {
+        return new org.bukkit.NamespacedKey(pl, "spawn_parte");
+    }
+
+    private void marcar(Entity e) {
+        e.getPersistentDataContainer().set(chaveVersao(), PersistentDataType.INTEGER, VERSAO);
+        e.getPersistentDataContainer().set(chaveParte(), PersistentDataType.INTEGER, PARTE);
+    }
+
+    /** Angulo (0-360, 0 = leste, 90 = sul) do ponto visto do centro. */
+    private static double anguloDe(double x, double z) {
+        return Math.floorMod((int) Math.round(Math.toDegrees(Math.atan2(z - (CZ + 0.5), x - (CX + 0.5)))), 360);
+    }
+
+    /** Areas refeitas: anel dos totens no oeste e a faixa dos portais no sul. */
+    static boolean areaNova(Location l) {
+        double dx = l.getX() - (CX + 0.5), dz = l.getZ() - (CZ + 0.5);
+        if (l.getY() < PISO - 1 || l.getY() > PISO + 13) return false;
+        double d = Math.sqrt(dx * dx + dz * dz), a = anguloDe(l.getX(), l.getZ());
+        boolean oeste = d >= 15.5 && d <= 25.5 && a >= 100 && a <= 260;
+        boolean sul = Math.abs(dx) <= 13 && dz >= 15 && dz <= 26;
+        return oeste || sul;
+    }
+
+    private boolean antigoDaParte(Entity e) {
+        if (!e.getPersistentDataContainer().has(chave(), PersistentDataType.STRING)) return false;
+        Integer v = e.getPersistentDataContainer().get(chaveParte(), PersistentDataType.INTEGER);
+        return (v == null || v != PARTE) && areaNova(e.getLocation());
+    }
+
+    /** Dois portais no sul: Lobby do Terror (oeste) e Lobby dos Minigames (leste), com uma placa no meio. */
+    private void portaisSul(World w) {
+        int z = CZ + PORTAL;
+        portalSul(w, CX + SUL_TERROR, z, new String[] {"minecraft:crying_obsidian", "minecraft:polished_blackstone_bricks", "minecraft:blackstone", "minecraft:obsidian"},
+                "§4§lLOBBY DO TERROR\n§7Hotel • Porcelana • Vovó • Backrooms\n§7Não Chore • Turno • Fábrica", true);
+        portalSul(w, CX + SUL_MINIGAMES, z, new String[] {"minecraft:quartz_bricks", "minecraft:polished_blackstone_bricks", "minecraft:red_nether_bricks", "minecraft:red_concrete"},
+                "§c§lLOBBY DOS MINIGAMES\n§7Defesa da Torre • Arena PvP", false);
+        // placa no meio, no fim do tapete vermelho
+        por(w, CX, PISO + 1, z, "minecraft:polished_blackstone_bricks");
+        por(w, CX, PISO + 2, z, "minecraft:quartz_pillar");
+        por(w, CX, PISO + 3, z, "minecraft:lantern[hanging=false]");
+        texto(w, new Location(w, CX + 0.5, PISO + 4.6, z - 0.4), "§c◀ §fMinigames   §8|   §4Terror §c▶", 0.9f);
+    }
+
+    private void portalSul(World w, int cx, int z, String[] m, String nome, boolean terror) {
+        for (int s = -2; s <= 2; s++)
+            for (int y = 0; y <= 6; y++) {
+                int x = cx + s;
+                boolean borda = Math.abs(s) == 2 || y == 0 || y == 6;
+                String b = !borda ? "minecraft:nether_portal[axis=x]" : y == 6 && s == 0 ? m[3]
+                        : y == 0 ? m[2] : (y == 6 || (Math.abs(s) == 2 && y % 2 == 0)) ? m[0] : m[1];
+                por(w, x, PISO + y, z, b);
+            }
+        if (terror) {
+            por(w, cx, PISO + 7, z, "minecraft:wither_skeleton_skull[rotation=8]");
+            por(w, cx - 2, PISO + 7, z, "minecraft:soul_lantern");
+            por(w, cx + 2, PISO + 7, z, "minecraft:soul_lantern");
+            por(w, cx - 3, PISO + 1, z - 1, "minecraft:jack_o_lantern[facing=north]");
+            por(w, cx + 3, PISO + 1, z - 1, "minecraft:jack_o_lantern[facing=north]");
+        } else {
+            por(w, cx - 2, PISO + 7, z, "minecraft:lantern[hanging=false]");
+            por(w, cx + 2, PISO + 7, z, "minecraft:lantern[hanging=false]");
+        }
+        texto(w, new Location(w, cx + 0.5, PISO + 8.4, z - 0.6), nome, 1.0f);
+    }
+
+    /** Totens no oeste: um por minigame (os normais primeiro, perto do sul) e as vagas "Em breve" no fim. */
+    private void totensOeste(World w) {
+        List<LobbyMinigames.Portal> jogos = new ArrayList<>();
+        for (LobbyMinigames.Portal p : LobbyMinigames.PORTAIS) if (!p.terror()) jogos.add(p);
+        for (LobbyMinigames.Portal p : LobbyMinigames.PORTAIS) if (p.terror()) jogos.add(p);
+        int n = Math.max(LUGARES_OESTE, jogos.size() + 1);
+        double passo = 108.0 / (n - 1);
+        for (int i = 0; i < n; i++) {
+            double ang = 120 + i * passo;
+            double r = i % 2 == 0 ? 18 : 21.5, alt = i % 2 == 0 ? 4.6 : 6.2;
+            if (i < jogos.size()) totemMinigame(w, jogos.get(i), ang, r, alt);
+            else vaga(w, ang, r);
+        }
+        texto(w, new Location(w, px(180, 24.8) + 0.5, PISO + 8.0, pz(180, 24.8) + 0.5), "§f§lMINIGAMES\n§7clique num totem para jogar", 1.1f);
+    }
+
+    /** Spawn ja feito: troca so o sul e o oeste (uma vez; marca spawn-principal-sul-oeste-vN.txt). */
+    private void atualizarSulOeste(World w) {
+        File feito = new File(pl.getDataFolder(), "spawn-principal-sul-oeste-v" + PARTE + ".txt");
+        if (feito.exists()) return;
+        for (int cx = (CX - R) >> 4; cx <= (CX + R) >> 4; cx++) for (int cz = (CZ - R) >> 4; cz <= (CZ + R) >> 4; cz++) w.getChunkAt(cx, cz).load(true);
+        // espera os enfeites (entidades) dos chunks carregarem antes de tirar os antigos
+        Bukkit.getScheduler().runTaskLater(pl, () -> {
+            try {
+                int ents = 0;
+                for (Entity en : w.getEntities()) if (antigoDaParte(en)) {
+                    en.remove();
+                    ents++;
+                }
+                int blocos = 0;
+                for (int x = CX - R; x <= CX + R; x++)
+                    for (int z = CZ - R; z <= CZ + R; z++) {
+                        Location l = new Location(w, x + 0.5, PISO + 1, z + 0.5);
+                        if (!areaNova(l)) continue;
+                        String b = piso(x, z);
+                        if (b == null) continue;
+                        double d = dist(x, z);
+                        if (d > R - 1.5) continue;   // mureta e pilares da borda ficam
+                        if (!w.getBlockAt(x, PISO, z).getBlockData().getAsString().equals(Bukkit.createBlockData(b).getAsString())) {
+                            por(w, x, PISO, z, b);
+                            blocos++;
+                        }
+                        for (int y = 1; y <= 8; y++) {
+                            Block bl = w.getBlockAt(x, PISO + y, z);
+                            if (bl.getType().isAir() || bl.getType() == Material.LIGHT) continue;
+                            bl.setType(Material.AIR, false);
+                            blocos++;
+                        }
+                    }
+                portaisSul(w);
+                totensOeste(w);
+                int centro = 0;
+                for (Entity en : w.getEntities()) {
+                    if (!(en instanceof TextDisplay t) || !perto(en.getLocation()) || !t.getPersistentDataContainer().has(chave(), PersistentDataType.STRING)) continue;
+                    String plano = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(t.text());
+                    if (plano.startsWith("CORONA SERVER")) {
+                        t.text(Extras.txt(TEXTO_CENTRO));
+                        centro++;
+                    }
+                }
+                Files.writeString(feito.toPath(), "feito em " + new java.util.Date() + ": " + ents + " enfeites e " + blocos + " blocos trocados, letreiro do centro " + centro + "\n");
+                pl.getLogger().info("Spawn: sul (Terror + Minigames) e oeste (" + LobbyMinigames.PORTAIS.length + " totens) refeitos; " + ents + " enfeites antigos tirados, "
+                        + blocos + " blocos, letreiro do centro " + (centro > 0 ? "ok" : "nao achado"));
+            } catch (Throwable t) {
+                pl.getLogger().warning("Spawn (sul e oeste) nao terminou: " + t);
+            }
+        }, 100L);
+    }
+
+    /** 08/11: o portal norte leva ao Mundo das Masmorras novo; troca os letreiros que falavam do Spawn das Masmorras. */
+    private void atualizarTextosMasmorras(World w) {
+        File feito = new File(pl.getDataFolder(), "spawn-principal-textos-masmorras.txt");
+        if (feito.exists()) return;
+        int n = 0;
+        for (Entity e : w.getEntities()) {
+            if (!(e instanceof TextDisplay t) || !perto(e.getLocation()) || !t.getPersistentDataContainer().has(chave(), PersistentDataType.STRING)) continue;
+            String plano = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(t.text());
+            if (plano.contains("SPAWN DAS MASMORRAS")) {
+                t.text(Extras.txt(TEXTO_PORTAL_MASMORRAS));
+                n++;
+            } else if (plano.contains("procure pelo mundo")) {
+                String legado = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().serialize(t.text());
+                t.text(Extras.txt(legado.replaceAll("§fMasmorras: §eprocure pelo mundo! §7\\(mais longe = mais forte\\)", java.util.regex.Matcher.quoteReplacement(DICA_MASMORRAS))));
+                n++;
+            }
+        }
+        if (n == 0) return;   // os enfeites ainda nao carregaram: tenta de novo na proxima vez que ligar
+        try {
+            Files.writeString(feito.toPath(), n + " letreiro(s) trocado(s) em " + new java.util.Date() + "\n");
+        } catch (IOException ignored) {
+        }
+        pl.getLogger().info("Spawn: " + n + " letreiro(s) atualizado(s) para o Mundo das Masmorras.");
+    }
+
     void iniciar() {
         World w = mundo();
         if (w == null || !pl.getConfig().getBoolean("spawn-novo.ativo", true)) return;
         File feito = new File(pl.getDataFolder(), "spawn-principal-v" + VERSAO + ".txt");
         if (feito.exists()) {
+            Bukkit.getScheduler().runTaskLater(pl, () -> {
+                try {
+                    atualizarTextosMasmorras(w);
+                } catch (Throwable t) {
+                    pl.getLogger().warning("Letreiros do spawn: " + t);
+                }
+            }, 220L);
+            Bukkit.getScheduler().runTaskLater(pl, () -> atualizarSulOeste(w), 160L);
             // limpa enfeite antigo que tenha sobrado (ja carregado)
             Bukkit.getScheduler().runTaskLater(pl, () -> {
                 int n = 0;
@@ -212,23 +396,28 @@ final class SpawnPrincipal implements Listener {
         return Math.sqrt((x - CX) * (x - CX) + (z - CZ) * (z - CZ));
     }
 
+    /** Bloco do piso original naquele ponto (null = fora da ilha). */
+    static String piso(int x, int z) {
+        double d = dist(x, z);
+        if (d > R + 0.5) return null;
+        boolean cruz = Math.abs(x - CX) <= 1 || Math.abs(z - CZ) <= 1;
+        if (d < 0.5) return "minecraft:red_stained_glass";
+        if (d < 2.5) return "minecraft:quartz_bricks";
+        if (d < 4.5) return "minecraft:polished_blackstone_bricks";
+        if (d > R - 0.5) return "minecraft:polished_blackstone_bricks";
+        if (d > R - 1.5) return "minecraft:red_nether_bricks";
+        if (d >= 12.5 && d < 13.5) return "minecraft:red_nether_bricks";
+        if (cruz) return Math.abs(x - CX) + Math.abs(z - CZ) - 1 == (int) d && (int) d % 5 == 0 ? "minecraft:chiseled_quartz_block" : "minecraft:red_concrete";
+        if (Math.floorMod(x - CX, 4) == 0 || Math.floorMod(z - CZ, 4) == 0) return "minecraft:polished_blackstone";
+        return "minecraft:smooth_quartz";
+    }
+
     private void construir(World w) {
         // piso: quartzo com rejunte preto a cada 4, anel e borda vermelhos, cruz de tapete vermelho
         for (int x = CX - R; x <= CX + R; x++)
             for (int z = CZ - R; z <= CZ + R; z++) {
-                double d = dist(x, z);
-                if (d > R + 0.5) continue;
-                boolean cruz = Math.abs(x - CX) <= 1 || Math.abs(z - CZ) <= 1;
-                String b;
-                if (d < 0.5) b = "minecraft:red_stained_glass";
-                else if (d < 2.5) b = "minecraft:quartz_bricks";
-                else if (d < 4.5) b = "minecraft:polished_blackstone_bricks";
-                else if (d > R - 0.5) b = "minecraft:polished_blackstone_bricks";
-                else if (d > R - 1.5) b = "minecraft:red_nether_bricks";
-                else if (d >= 12.5 && d < 13.5) b = "minecraft:red_nether_bricks";
-                else if (cruz) b = Math.abs(x - CX) + Math.abs(z - CZ) - 1 == (int) d && (int) d % 5 == 0 ? "minecraft:chiseled_quartz_block" : "minecraft:red_concrete";
-                else if (Math.floorMod(x - CX, 4) == 0 || Math.floorMod(z - CZ, 4) == 0) b = "minecraft:polished_blackstone";
-                else b = "minecraft:smooth_quartz";
+                String b = piso(x, z);
+                if (b == null) continue;
                 por(w, x, PISO, z, b);
                 por(w, x, PISO - 1, z, "minecraft:obsidian");
             }
@@ -267,22 +456,15 @@ final class SpawnPrincipal implements Listener {
             por(w, x, PISO + 3, z, "minecraft:red_concrete");
             por(w, x, PISO + 4, z, "minecraft:lantern[hanging=false]");
         }
-        // portais: sul = Lobby dos Minigames, norte = Spawn das Masmorras
-        portal(w, CZ + PORTAL, "§c§lLOBBY DOS MINIGAMES\n§7todos os minigames num lugar só");
-        portal(w, CZ - PORTAL, "§4§lSPAWN DAS MASMORRAS\n§7Mercador Lendário • Treino • Chefes");
+        // portais: sul = Lobby do Terror e Lobby dos Minigames (lado a lado), norte = Mundo das Masmorras
+        portaisSul(w);
+        portal(w, CZ - PORTAL, TEXTO_PORTAL_MASMORRAS);
         // Galeria VIP (leste)
         double[] angVip = {-36, -12, 12, 36};
         for (int i = 0; i < VIPS.length; i++) totemVip(w, VIPS[i], angVip[i]);
         texto(w, new Location(w, px(0, 23.2) + 0.5, PISO + 5.2, pz(0, 23.2) + 0.5), "§c§lGALERIA VIP\n§fcompre aqui com Pix, sem sair do jogo", 1.1f);
-        // minigames (oeste): todos os do Lobby + vagas livres
-        int n = Math.max(VAGAS_MINIGAMES, LobbyMinigames.PORTAIS.length + 2);
-        double passo = 108.0 / (n - 1);
-        for (int i = 0; i < n; i++) {
-            double ang = 126 + i * passo;
-            if (i < LobbyMinigames.PORTAIS.length) totemMinigame(w, LobbyMinigames.PORTAIS[i], ang);
-            else vaga(w, ang);
-        }
-        texto(w, new Location(w, px(180, 23.2) + 0.5, PISO + 5.2, pz(180, 23.2) + 0.5), "§f§lMINIGAMES\n§7clique num totem para jogar", 1.1f);
+        // minigames (oeste): um totem por jogo + vagas livres
+        totensOeste(w);
         // pedestais nas diagonais
         for (Pedestal p : PEDESTAIS) pedestal(w, p);
         // quadros de texto
@@ -298,11 +480,11 @@ final class SpawnPrincipal implements Listener {
                 + "§fUsar poder: §eagache e soque o ar §7(mão vazia)\n"
                 + "§fTrocar poder: §eagache + F\n"
                 + "§fProteger a casa: §epá de ouro §7(2 cantos)\n"
-                + "§fMasmorras: §eprocure pelo mundo! §7(mais longe = mais forte)\n"
+                + DICA_MASMORRAS + "\n"
                 + "§fSem PvP no spawn e nas masmorras\n"
                 + "§fPule da ilha para descer ao chão §7(sem dano)\n"
                 + "§7Java e Bedrock jogam juntos", 0.75f);
-        texto(w, new Location(w, CX + 0.5, PISO + 7.4, CZ + 0.5), "§c§lCORONA SERVER\n§fMinigames §7ao sul  §8|  §fMasmorras §7ao norte\n§fVIP §7a leste  §8|  §fJogos §7a oeste", 1.5f);
+        texto(w, new Location(w, CX + 0.5, PISO + 7.4, CZ + 0.5), TEXTO_CENTRO, 1.5f);
         // luz invisivel
         Light luz = (Light) Bukkit.createBlockData(Material.LIGHT);
         luz.setLevel(15);
@@ -322,7 +504,11 @@ final class SpawnPrincipal implements Listener {
             } else en.getPersistentDataContainer().set(chaveVersao(), PersistentDataType.INTEGER, VERSAO);
         }
         if (velhos > 0) pl.getLogger().info("Spawn: " + velhos + " enfeite(s) antigo(s) apagado(s).");
-        pl.getLogger().info("Spawn principal v2 construido (raio " + R + ", galeria VIP, " + LobbyMinigames.PORTAIS.length + " minigames + vagas, 4 pedestais).");
+        try {
+            Files.writeString(new File(pl.getDataFolder(), "spawn-principal-sul-oeste-v" + PARTE + ".txt").toPath(), "junto com o spawn em " + new java.util.Date() + "\n");
+        } catch (IOException ignored) {
+        }
+        pl.getLogger().info("Spawn principal v2 construido (raio " + R + ", galeria VIP, " + LobbyMinigames.PORTAIS.length + " minigames + vagas, 4 pedestais, terror e minigames ao sul).");
     }
 
     private void portal(World w, int z, String nome) {
@@ -349,6 +535,7 @@ final class SpawnPrincipal implements Listener {
             d.setBrightness(new Display.Brightness(15, 15));
             d.setPersistent(true);
             d.getPersistentDataContainer().set(chave(), PersistentDataType.STRING, comando == null ? "texto" : comando);
+            marcar(d);
             d.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(1.3f), new AxisAngle4f()));
         });
         if (comando != null) w.spawn(new Location(w, x + 0.5, PISO + 1, z + 0.5), Interaction.class, i -> {
@@ -357,6 +544,7 @@ final class SpawnPrincipal implements Listener {
             i.setResponsive(true);
             i.setPersistent(true);
             i.getPersistentDataContainer().set(chave(), PersistentDataType.STRING, comando);
+            marcar(i);
         });
     }
 
@@ -369,14 +557,14 @@ final class SpawnPrincipal implements Listener {
         if (k != null) t.getPersistentDataContainer().set(k, PersistentDataType.STRING, v.produto());
     }
 
-    private void totemMinigame(World w, LobbyMinigames.Portal p, double ang) {
-        int x = px(ang, 19), z = pz(ang, 19);
-        base(w, x, z, "minecraft:red_concrete", p.icone(), p.comando());
-        texto(w, new Location(w, x + 0.5, PISO + 5.0, z + 0.5), p.nome() + "\n" + p.sub() + "\n§f▶ clique para jogar", 0.7f);
+    private void totemMinigame(World w, LobbyMinigames.Portal p, double ang, double r, double alturaTexto) {
+        int x = px(ang, r), z = pz(ang, r);
+        base(w, x, z, p.terror() ? "minecraft:crying_obsidian" : "minecraft:red_concrete", p.icone(), p.comando());
+        texto(w, new Location(w, x + 0.5, PISO + alturaTexto, z + 0.5), p.nome() + "\n" + p.sub() + (p.terror() ? "\n§4☠ terror" : "") + "\n§f▶ clique para jogar", 0.7f);
     }
 
-    private void vaga(World w, double ang) {
-        int x = px(ang, 19), z = pz(ang, 19);
+    private void vaga(World w, double ang, double r) {
+        int x = px(ang, r), z = pz(ang, r);
         base(w, x, z, "minecraft:polished_blackstone", null, null);
         texto(w, new Location(w, x + 0.5, PISO + 3.4, z + 0.5), "§8§lEM BREVE\n§7novo minigame", 0.7f);
     }
@@ -398,6 +586,7 @@ final class SpawnPrincipal implements Listener {
             x.setPersistent(true);
             x.setViewRange(0.6f);
             x.getPersistentDataContainer().set(chave(), PersistentDataType.STRING, "texto");
+            marcar(x);
             x.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(escala), new AxisAngle4f()));
         });
     }
@@ -444,13 +633,18 @@ final class SpawnPrincipal implements Listener {
                 }
             }
         // portais
-        if (by < 1 || by > 5 || Math.abs(bx - CX) > 1) return;
-        boolean sul = Math.abs(bz - (CZ + PORTAL)) <= 1, norte = Math.abs(bz - (CZ - PORTAL)) <= 1;
-        if (!sul && !norte) return;
+        if (by < 1 || by > 5) return;
+        boolean norte = Math.abs(bz - (CZ - PORTAL)) <= 1 && Math.abs(bx - CX) <= 1;
+        boolean sul = Math.abs(bz - (CZ + PORTAL)) <= 1;
+        boolean terror = sul && Math.abs(bx - (CX + SUL_TERROR)) <= 1, minigames = sul && Math.abs(bx - (CX + SUL_MINIGAMES)) <= 1;
+        if (!norte && !terror && !minigames) return;
         if (esperando(p)) return;
-        p.teleport(new Location(to.getWorld(), CX + 0.5, PISO + 1, (sul ? CZ + PORTAL - 6 : CZ - PORTAL + 6) + 0.5, to.getYaw(), to.getPitch()));
+        int vx = terror ? CX + SUL_TERROR : minigames ? CX + SUL_MINIGAMES : CX;
+        p.teleport(new Location(to.getWorld(), vx + 0.5, PISO + 1, (norte ? CZ - PORTAL + 6 : CZ + PORTAL - 6) + 0.5, to.getYaw(), to.getPitch()));
         p.playSound(p.getLocation(), Sound.BLOCK_PORTAL_TRAVEL, 0.25f, 1.6f);
-        if (sul) {
+        if (terror) {
+            if (pl.terror != null) pl.terror.teleportar(p);
+        } else if (minigames) {
             if (pl.lobby != null) pl.lobby.teleportar(p);
         } else p.performCommand("masmorras spawn");
     }

@@ -1,5 +1,7 @@
 package br.servidor.slender;
 
+import java.io.File;
+
 import com.destroystokyo.paper.profile.PlayerProfile;
 import com.destroystokyo.paper.profile.ProfileProperty;
 import io.papermc.paper.datacomponent.item.ResolvableProfile;
@@ -71,8 +73,8 @@ import org.bukkit.scheduler.BukkitTask;
 /** Minigame de terror: colete as 8 folhas na floresta escura antes que o Slenderman te pegue. */
 public final class Slender extends JavaPlugin implements Listener {
 
-    static final String PREFIXO = "§4§lSlender §8» §7";
-    private static final Set<String> COMANDOS_LIVRES = Set.of("slender", "slenderman", "terror", "msg", "tell", "w", "r", "reply",
+    static final String PREFIXO = "§4§lPorcelana §8» §7";
+    private static final Set<String> COMANDOS_LIVRES = Set.of("slender", "slenderman", "floresta", "porcelana", "terror", "msg", "tell", "w", "r", "reply",
             "login", "l", "logout", "register", "reg");
 
     NamespacedKey kFolha;
@@ -122,7 +124,7 @@ public final class Slender extends JavaPlugin implements Listener {
             if (!getConfig().isSet("teto-escuro")) getConfig().set("teto-escuro", true);
             if (getConfig().isSet("escuridao-duracao") && getConfig().getDouble("escuridao-duracao") == 6) getConfig().set("escuridao-duracao", 3);
             getConfig().setInlineComments("teto-escuro", List.of("true = floresta escura o tempo todo (vidro escuro no limite de altura segura a luz da lua); false = tira"));
-            getConfig().setInlineComments("escuridao-a-cada", List.of("segundos entre as piscadas (efeito Escuridao); com o Slenderman perto vem mais vezes"));
+            getConfig().setInlineComments("escuridao-a-cada", List.of("segundos entre as piscadas (efeito Escuridao); com o Porcelana perto vem mais vezes"));
             getConfig().setInlineComments("escuridao-duracao", List.of("segundos de cada piscada (de 2 a 15)"));
         }
         // 3: lanterna na mao de quem joga
@@ -177,6 +179,7 @@ public final class Slender extends JavaPlugin implements Listener {
         partida = new Partida(this, mundo, mapa);
         lanterna = new Lanterna(this, new NamespacedKey(this, "lanterna"));
         getServer().getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvents(new Pacote(), this);
         limparSobras();
         boolean precisa = !mapa.construido(mundo) || getConfig().getInt("mapa-versao", 0) != Floresta.VERSAO;
         if (precisa) construir(getConfig().getInt("mapa-versao", 0) != 0);
@@ -193,7 +196,8 @@ public final class Slender extends JavaPlugin implements Listener {
             if (pronto) lanterna.tick(mundo, partida::vivo, partida::estaticaDe, partida.posicoesFolhas());
         }, 20L, 2L);
         for (Player p : Bukkit.getOnlinePlayers()) if (guarda.tem(p)) devolverDepoisDoLogin(p);
-        getLogger().info("Slenderman pronto (" + mapa.pontos.size() + " lugares com folhas).");
+        Bukkit.getScheduler().runTaskLater(this, this::renomearTodosLetreiros, 200L);
+        getLogger().info("Porcelana pronto (" + mapa.pontos.size() + " lugares com folhas).");
     }
 
     @Override
@@ -255,24 +259,83 @@ public final class Slender extends JavaPlugin implements Listener {
     }
 
     private ResolvableProfile montarPerfil() {
-        String nome = getConfig().getString("skin.nome", "Slenderman");
-        UUID id;
+        // a criatura ORIGINAL (o Porcelana): skin desenhada por codigo (fontes/skins/porcelana.py), assinada pelo MineSkin
+        // pelo plugin Masmorras (plugins/Masmorras/skins.yml, chave "porcelana"). Sem ela ainda, usa a do config.
+        String valor = "", ass = "";
         try {
-            id = UUID.fromString(getConfig().getString("skin.uuid", ""));
-        } catch (IllegalArgumentException e) {
-            id = UUID.nameUUIDFromBytes(("Slenderman").getBytes());
+            File f = new File(getDataFolder().getParentFile(), "Masmorras/skins.yml");
+            if (f.exists()) {
+                org.bukkit.configuration.file.YamlConfiguration y = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(f);
+                valor = y.getString("porcelana.value", "");
+                ass = y.getString("porcelana.signature", "");
+            }
+        } catch (Throwable t) {
+            valor = "";
         }
-        ResolvableProfile.Builder b = ResolvableProfile.resolvableProfile().name(nome).uuid(id);
-        String valor = getConfig().getString("skin.valor", "");
-        if (!valor.isEmpty()) {
-            String ass = getConfig().getString("skin.assinatura", "");
-            b.addProperty(new ProfileProperty("textures", valor, ass.isEmpty() ? null : ass));
+        porcelanaPronta = !valor.isEmpty();
+        if (!porcelanaPronta) {
+            valor = getConfig().getString("skin.valor", "");
+            ass = getConfig().getString("skin.assinatura", "");
         }
+        UUID id = UUID.nameUUIDFromBytes("Porcelana".getBytes());
+        ResolvableProfile.Builder b = ResolvableProfile.resolvableProfile().name("Porcelana").uuid(id);
+        if (!valor.isEmpty()) b.addProperty(new ProfileProperty("textures", valor, ass.isEmpty() ? null : ass));
         return b.build();
     }
 
+    private boolean porcelanaPronta;
+    private long ultimaConferencia;
+
     ResolvableProfile perfilSlender() {
+        // a skin pode ficar pronta depois (MineSkin): confere de novo no maximo 1 vez por minuto
+        if (!porcelanaPronta && System.currentTimeMillis() - ultimaConferencia > 60_000L) {
+            ultimaConferencia = System.currentTimeMillis();
+            perfil = montarPerfil();
+        }
         return perfil;
+    }
+
+    // ------------------------------------------------------------------ nome novo nos letreiros de todos os lobbies
+    /** Letreiros (TextDisplay) de qualquer plugin que ainda falam do personagem antigo passam a dizer "Porcelana". */
+    @EventHandler
+    public void letreirosCarregados(org.bukkit.event.world.EntitiesLoadEvent e) {
+        for (org.bukkit.entity.Entity en : e.getEntities())
+            if (en instanceof org.bukkit.entity.TextDisplay td) renomearLetreiro(td);
+    }
+
+    private void renomearTodosLetreiros() {
+        int n = 0;
+        for (World w : Bukkit.getWorlds())
+            for (org.bukkit.entity.TextDisplay td : w.getEntitiesByClass(org.bukkit.entity.TextDisplay.class))
+                if (renomearLetreiro(td)) n++;
+        if (n > 0) getLogger().info("Letreiros renomeados para o Porcelana: " + n);
+    }
+
+    private boolean renomearLetreiro(org.bukkit.entity.TextDisplay td) {
+        try {
+            net.kyori.adventure.text.Component c = td.text();
+            String plano = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(c);
+            if (!plano.contains("SLENDER") && !plano.contains("Slender")) return false;
+            net.kyori.adventure.text.Component novo = c
+                    .replaceText(b -> b.matchLiteral("SLENDERMAN").replacement("O PORCELANA"))
+                    .replaceText(b -> b.matchLiteral("Slenderman").replacement("Porcelana"))
+                    .replaceText(b -> b.matchLiteral("SLENDER").replacement("PORCELANA"))
+                    .replaceText(b -> b.matchLiteral("Slender").replacement("Porcelana"));
+            td.text(novo);
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** true = o monstro e o modelo 3D do pacote (ItemDisplay) e o boneco fica invisivel; false = boneco com skin. */
+    boolean modelo3d() {
+        return getConfig().getBoolean("modelo-3d", true);
+    }
+
+    /** Giro extra (graus) do modelo 3D, se a frente aparecer virada. */
+    float modeloGiro() {
+        return (float) getConfig().getDouble("modelo-giro", 0);
     }
 
     double escala() {
@@ -380,8 +443,8 @@ public final class Slender extends JavaPlugin implements Listener {
         for (Entity e : mundo.getNearbyEntities(l, 6, 6, 6))
             if (e.getPersistentDataContainer().has(kPlaca, PersistentDataType.BYTE)) e.remove();
         mundo.spawn(l, TextDisplay.class, t -> {
-            t.text(txt("§4§lSLENDERMAN\n§fColete as §e" + getConfig().getInt("folhas-para-vencer", 8) + " folhas§f presas nas paredes\n"
-                    + "§7Não fique olhando para ele...\n§8/slender sair para desistir"));
+            t.text(txt("§4§lO PORCELANA\n§fColete as §e" + getConfig().getInt("folhas-para-vencer", 8) + " folhas§f presas nas paredes\n"
+                    + "§7Não fique encarando a máscara...\n§8/slender sair para desistir"));
             t.setBillboard(Display.Billboard.CENTER);
             // a placa continua legivel debaixo do teto escuro
             t.setBrightness(new Display.Brightness(15, 15));
@@ -592,7 +655,7 @@ public final class Slender extends JavaPlugin implements Listener {
             if (partida.participa(p)) return;
             if (guarda.tem(p)) {
                 devolver(p);
-                p.sendMessage(PREFIXO + "§7Seus itens do último Slenderman foram devolvidos.");
+                p.sendMessage(PREFIXO + "§7Seus itens da última partida do Porcelana foram devolvidos.");
             } else if (noMundo(p)) devolver(p);
             else devolverPet(p);
         }, 20L, 20L);
@@ -641,8 +704,8 @@ public final class Slender extends JavaPlugin implements Listener {
         }
         saveConfig();
         if (!nomes.isEmpty()) {
-            Bukkit.broadcast(txt("§4§lSlender §8» §f" + String.join(", ", nomes) + " §7escapou" + (nomes.size() > 1 ? "aram" : "")
-                    + " do Slenderman em §f" + tempo + "§7!" + (novo ? " §6§lNOVO RECORDE!" : "")));
+            Bukkit.broadcast(txt("§4§lPorcelana §8» §f" + String.join(", ", nomes) + " §7escapou" + (nomes.size() > 1 ? "aram" : "")
+                    + " do Porcelana em §f" + tempo + "§7!" + (novo ? " §6§lNOVO RECORDE!" : "")));
         }
     }
 
@@ -660,8 +723,8 @@ public final class Slender extends JavaPlugin implements Listener {
             case "", "menu" -> menu(p);
             case "entrar", "jogar" -> entrar(p);
             case "sair" -> {
-                if (!partida.remover(p)) p.sendMessage(PREFIXO + "Você não está no Slenderman.");
-                else p.sendMessage(PREFIXO + "Você saiu do Slenderman.");
+                if (!partida.remover(p)) p.sendMessage(PREFIXO + "Você não está na partida do Porcelana.");
+                else p.sendMessage(PREFIXO + "Você saiu da partida do Porcelana.");
             }
             case "status", "info" -> info(p);
             case "reviver", "moeda" -> {
@@ -751,7 +814,7 @@ public final class Slender extends JavaPlugin implements Listener {
             return;
         }
         if (partida.participa(p)) {
-            p.sendMessage(PREFIXO + "Você já está no Slenderman. §e/slender sair §7para sair.");
+            p.sendMessage(PREFIXO + "Você já está na partida do Porcelana. §e/slender sair §7para sair.");
             return;
         }
         if (p.isInsideVehicle()) p.leaveVehicle();
@@ -768,7 +831,7 @@ public final class Slender extends JavaPlugin implements Listener {
         mover(p, Floresta.lobby(mundo));
         partida.adicionar(p);
         p.playSound(p.getLocation(), Sound.AMBIENT_CAVE, 1f, 0.7f);
-        p.sendMessage("§4§l--- SLENDERMAN ---");
+        p.sendMessage("§4§l--- O PORCELANA ---");
         p.sendMessage("§7Seus itens ficaram guardados e voltam quando você sair.");
         p.sendMessage("§fEncontre as §e" + partida.totalFolhas() + " folhas §fpresas nas paredes pela floresta e clique nelas.");
         p.sendMessage("§fQuanto mais folhas, mais perto ele chega. §cOlhar para ele por muito tempo te pega.");
@@ -797,7 +860,7 @@ public final class Slender extends JavaPlugin implements Listener {
 
     private void menu(Player p) {
         Menu h = new Menu();
-        Inventory inv = Bukkit.createInventory(h, 27, txt("§4§lSlenderman"));
+        Inventory inv = Bukkit.createInventory(h, 27, txt("§4§lO Porcelana"));
         h.inv = inv;
         ItemStack vidro = item(Material.BLACK_STAINED_GLASS_PANE, " ");
         for (int i = 0; i < 27; i++) inv.setItem(i, vidro);
@@ -810,14 +873,14 @@ public final class Slender extends JavaPlugin implements Listener {
         inv.setItem(11, entrar);
         inv.setItem(13, item(Material.FILLED_MAP, "§e§lComo jogar",
                 "§7Ande pela floresta escura e encontre", "§7as §f" + partida.totalFolhas() + " folhas §7presas nas paredes.",
-                "§7Clique na folha para pegar.", "", "§7O Slenderman aparece e some.", "§7Quanto mais folhas, mais perto ele chega.",
+                "§7Clique na folha para pegar.", "", "§7O Porcelana aparece e some.", "§7Quanto mais folhas, mais perto ele chega.",
                 "§cNão fique olhando para ele!", "§7Se ele encostar em você... acabou."));
         int rec = getConfig().getInt("recorde.segundos", 0);
         inv.setItem(15, item(Material.CLOCK, "§6§lRecorde",
                 rec > 0 ? "§7Mais rápido: §f" + String.format("%d:%02d", rec / 60, rec % 60) : "§7Ninguém escapou ainda.",
                 rec > 0 ? "§7Por: §f" + getConfig().getString("recorde.jogadores", "") : "",
                 "§7Suas vitórias: §f" + getConfig().getInt("vitorias." + p.getUniqueId(), 0)));
-        if (partida.participa(p)) inv.setItem(22, item(Material.BARRIER, "§c§lSair do Slenderman", "§7Seus itens voltam para você."));
+        if (partida.participa(p)) inv.setItem(22, item(Material.BARRIER, "§c§lSair da partida", "§7Seus itens voltam para você."));
         p.openInventory(inv);
     }
 
@@ -844,7 +907,7 @@ public final class Slender extends JavaPlugin implements Listener {
         } else if (e.getSlot() == 22 && partida.participa(p)) {
             p.closeInventory();
             partida.remover(p);
-            p.sendMessage(PREFIXO + "Você saiu do Slenderman.");
+            p.sendMessage(PREFIXO + "Você saiu da partida do Porcelana.");
         }
     }
 
@@ -963,7 +1026,7 @@ public final class Slender extends JavaPlugin implements Listener {
         if (c.contains(":")) c = c.substring(c.indexOf(':') + 1);
         if (COMANDOS_LIVRES.contains(c)) return;
         e.setCancelled(true);
-        p.sendMessage(PREFIXO + "§cNo Slenderman só vale §f/slender sair§c (e mensagens).");
+        p.sendMessage(PREFIXO + "§cNa partida do Porcelana só vale §f/slender sair§c (e mensagens).");
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -973,7 +1036,7 @@ public final class Slender extends JavaPlugin implements Listener {
         boolean deDentro = e.getFrom().getWorld().equals(mundo), praDentro = e.getTo().getWorld().equals(mundo);
         if (partida.participa(p) && !praDentro) {
             e.setCancelled(true);
-            p.sendMessage(PREFIXO + "§cPara sair do Slenderman use §f/slender sair§c.");
+            p.sendMessage(PREFIXO + "§cPara sair da partida use §f/slender sair§c.");
             return;
         }
         if (!deDentro && praDentro && !partida.participa(p) && !p.hasPermission("slender.admin")) {

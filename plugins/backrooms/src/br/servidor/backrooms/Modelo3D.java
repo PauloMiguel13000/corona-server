@@ -117,7 +117,10 @@ final class Modelo3D {
     /** O modelo tem os pes em y=-16 (1,5 bloco abaixo do centro): sobe para os pes ficarem no chao. */
     private Transformation transformacao(float respiro) {
         float s = (float) escala;
-        return new Transformation(new Vector3f(0f, 1.5f * s, 0f), new AxisAngle4f(), new Vector3f(s, s * respiro, s), new AxisAngle4f());
+        // o modelo e desenhado com o centro em x=0, z=0 e o Java posiciona o item pelo ponto (8, 8, 8): sem corrigir, o monstro
+        // aparecia meio bloco fora do lugar de verdade. O item display vira o item 180 graus DEPOIS desta transformacao,
+        // por isso a correcao aqui e -0,5 (e nao +0,5) em x e z.
+        return new Transformation(new Vector3f(-0.5f * s, 1.5f * s, -0.5f * s), new AxisAngle4f(), new Vector3f(s, s * respiro, s), new AxisAngle4f());
     }
 
     @SuppressWarnings("UnstableApiUsage")

@@ -101,6 +101,10 @@ public final class Vovo extends JavaPlugin implements Listener {
 
     // ================================================================== ligar / desligar
 
+    private void trocarSeAntigo(String chave, double antigo, double novo) {
+        if (!getConfig().isSet(chave) || Math.abs(getConfig().getDouble(chave) - antigo) < 1e-6) getConfig().set(chave, novo);
+    }
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
@@ -109,6 +113,36 @@ public final class Vovo extends JavaPlugin implements Listener {
             getConfig().options().copyDefaults(true);
             saveConfig();
             reloadConfig();
+        }
+        // aranha do esgoto mais ligeira (o Paulo achou muito devagar): so troca os valores que ainda sao os antigos
+        if (getConfig().getInt("ajustes-aranha", 0) < 2) {
+            trocarSeAntigo("modos.normal.aranha-ritmo-ronda", 0.95, 1.12);      // ~2,5 -> ~3,4 b/s
+            trocarSeAntigo("modos.normal.aranha-ritmo-procura", 1.15, 1.25);
+            trocarSeAntigo("modos.normal.aranha-ritmo-caca", 1.3, 1.34);        // ~4,6 -> ~4,9 b/s
+            trocarSeAntigo("modos.dificil.aranha-ritmo-ronda", 1.05, 1.2);      // ~3 -> ~3,9 b/s
+            getConfig().set("ajustes-aranha", 2);
+            saveConfig();
+        }
+        // aranha mais dificil (a fuga pelo esgoto so pede 2 itens): enxerga mais para os lados, ouve quem corre e corre mais
+        if (getConfig().getInt("ajustes-aranha", 0) < 3) {
+            trocarSeAntigo("modos.normal.aranha-ritmo-ronda", 1.12, 1.2);       // ~3,9 b/s
+            trocarSeAntigo("modos.normal.aranha-ritmo-procura", 1.25, 1.34);    // ~4,9 b/s
+            trocarSeAntigo("modos.normal.aranha-ritmo-caca", 1.34, 1.44);       // ~5,6 b/s: igual a voce correndo
+            trocarSeAntigo("modos.normal.aranha-visao", 22, 26);
+            trocarSeAntigo("modos.normal.aranha-visao-caca", 28, 32);
+            trocarSeAntigo("modos.normal.aranha-angulo", 45, 70);
+            getConfig().set("modos.normal.aranha-ouve-correndo", 20);
+            getConfig().set("modos.normal.aranha-ouve-andando", 7);
+            trocarSeAntigo("modos.dificil.aranha-ritmo-ronda", 1.2, 1.28);      // ~4,4 b/s
+            trocarSeAntigo("modos.dificil.aranha-ritmo-procura", 1.3, 1.42);    // ~5,4 b/s
+            trocarSeAntigo("modos.dificil.aranha-ritmo-caca", 1.42, 1.5);       // ~6,1 b/s: mais rapida que voce correndo
+            trocarSeAntigo("modos.dificil.aranha-visao", 26, 30);
+            trocarSeAntigo("modos.dificil.aranha-visao-caca", 32, 36);
+            trocarSeAntigo("modos.dificil.aranha-angulo", 55, 85);
+            getConfig().set("modos.dificil.aranha-ouve-correndo", 26);
+            getConfig().set("modos.dificil.aranha-ouve-andando", 10);
+            getConfig().set("ajustes-aranha", 3);
+            saveConfig();
         }
         kItem = new NamespacedKey(this, "item");
         kTranca = new NamespacedKey(this, "tranca");
@@ -123,6 +157,7 @@ public final class Vovo extends JavaPlugin implements Listener {
         perfil = montarPerfil();
         partida = new Partida(this, mundo, casa);
         getServer().getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvents(new Pacote(), this);
         boolean precisa = !casa.construido(mundo) || getConfig().getInt("mapa-versao", 0) != Casa.VERSAO;
         if (precisa) construir(getConfig().getInt("mapa-versao", 0) != 0);
         else terminarObra();

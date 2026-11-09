@@ -121,7 +121,7 @@ final class Torretas implements Listener {
         UUID dono = p.getUniqueId();
         torres.computeIfAbsent(dono, k -> new EnumMap<>(Tipo.class)).put(tipo, t.getUniqueId());
         w.playSound(l, Sound.BLOCK_ANVIL_PLACE, 0.8f, 1.3f);
-        w.spawnParticle(Particle.CLOUD, l.clone().add(0, 1, 0), 25, 0.4, 0.6, 0.4, 0.03);
+        Fx.p(w, Particle.CLOUD, l.clone().add(0, 1, 0), 25, 0.4, 0.6, 0.4, 0.03);
         Color cor = corDe(tipo);
         org.bukkit.block.data.BlockData vidro = vidroDe(tipo);
         plugin.fx.colunaDeLuz(l, vidro, 4.0, 1.0, 9, cor);
@@ -252,10 +252,10 @@ final class Torretas implements Listener {
         World w = t.getWorld();
         Location topo = t.getEyeLocation().add(0, 0.4, 0);
         switch (tipo) {
-            case GELO -> w.spawnParticle(Particle.SNOWFLAKE, topo, 3, 0.3, 0.3, 0.3, 0.01);
-            case FOGO -> w.spawnParticle(Particle.FLAME, topo, 3, 0.2, 0.2, 0.2, 0.01);
-            case TESLA -> w.spawnParticle(Particle.ELECTRIC_SPARK, topo.add(0, 0.4, 0), 4, 0.15, 0.3, 0.15, 0.05);
-            case CANHAO -> w.spawnParticle(Particle.SMOKE, topo, 3, 0.15, 0.1, 0.15, 0.01);
+            case GELO -> Fx.p(w, Particle.SNOWFLAKE, topo, 3, 0.3, 0.3, 0.3, 0.01);
+            case FOGO -> Fx.p(w, Particle.FLAME, topo, 3, 0.2, 0.2, 0.2, 0.01);
+            case TESLA -> Fx.p(w, Particle.ELECTRIC_SPARK, topo.add(0, 0.4, 0), 4, 0.15, 0.3, 0.15, 0.05);
+            case CANHAO -> Fx.p(w, Particle.SMOKE, topo, 3, 0.15, 0.1, 0.15, 0.01);
             default -> { }
         }
     }
@@ -366,7 +366,7 @@ final class Torretas implements Listener {
             if (flecha.isValid()) flecha.remove();
         }, 40L);
         w.playSound(origem, Sound.BLOCK_DISPENSER_LAUNCH, 0.7f, 1.4f);
-        w.spawnParticle(Particle.SMOKE, origem, 4, 0.1, 0.1, 0.1, 0.01);
+        Fx.p(w, Particle.SMOKE, origem, 4, 0.1, 0.1, 0.1, 0.01);
     }
 
     private void gelo(Player dono, ArmorStand t, LivingEntity alvo, double f) {
@@ -375,10 +375,10 @@ final class Torretas implements Listener {
         Location b = alvo.getLocation().add(0, alvo.getHeight() * 0.6, 0);
         Particle.DustOptions azul = new Particle.DustOptions(Color.fromRGB(150, 220, 255), 1.1f);
         linha(a, b, 0.35, pt -> {
-            w.spawnParticle(Particle.DUST, pt, 1, 0.03, 0.03, 0.03, 0, azul);
-            w.spawnParticle(Particle.SNOWFLAKE, pt, 1, 0.05, 0.05, 0.05, 0.0);
+            Fx.p(w, Particle.DUST, pt, 1, 0.03, 0.03, 0.03, 0, azul);
+            Fx.p(w, Particle.SNOWFLAKE, pt, 1, 0.05, 0.05, 0.05, 0.0);
         });
-        w.spawnParticle(Particle.SNOWFLAKE, b, 15, 0.4, 0.5, 0.4, 0.03);
+        Fx.p(w, Particle.SNOWFLAKE, b, 15, 0.4, 0.5, 0.4, 0.03);
         w.playSound(a, Sound.BLOCK_GLASS_BREAK, 0.5f, 1.9f);
         plugin.fx.corte(a, b, Efeitos.b(Material.LIGHT_BLUE_STAINED_GLASS), 0.16, 6, Color.fromRGB(150, 220, 255));
         plugin.cena.raioDeGelo(a, b);
@@ -393,8 +393,8 @@ final class Torretas implements Listener {
         World w = t.getWorld();
         Location a = t.getEyeLocation();
         Location b = alvo.getLocation().add(0, alvo.getHeight() * 0.5, 0);
-        linha(a, b, 0.4, pt -> w.spawnParticle(Particle.FLAME, pt, 2, 0.12, 0.12, 0.12, 0.02));
-        w.spawnParticle(Particle.FLAME, b, 12, 0.5, 0.5, 0.5, 0.03);
+        linha(a, b, 0.4, pt -> Fx.p(w, Particle.FLAME, pt, 2, 0.12, 0.12, 0.12, 0.02));
+        Fx.p(w, Particle.FLAME, b, 12, 0.5, 0.5, 0.5, 0.03);
         w.playSound(a, Sound.ENTITY_BLAZE_SHOOT, 0.4f, 0.7f);
         plugin.fx.corte(a, b, Efeitos.b(Material.ORANGE_STAINED_GLASS), 0.28, 5, Color.fromRGB(255, 140, 30));
         plugin.cena.jatoDeFogo(a, b);
@@ -420,7 +420,7 @@ final class Torretas implements Listener {
             if (plugin.causarDano(atual, dano, dono)) {
                 atual.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 15, 4));
             }
-            w.spawnParticle(Particle.ELECTRIC_SPARK, ate, 12, 0.3, 0.4, 0.3, 0.1);
+            Fx.p(w, Particle.ELECTRIC_SPARK, ate, 12, 0.3, 0.4, 0.3, 0.1);
             de = ate;
             dano = DANO_TESLA_PULO * f;
             LivingEntity prox = null;
@@ -451,8 +451,8 @@ final class Torretas implements Listener {
             if (i < partes) pt.add(r.nextDouble(-0.35, 0.35), r.nextDouble(-0.35, 0.35), r.nextDouble(-0.35, 0.35));
             final Location de = ant;
             linha(de, pt, 0.25, x -> {
-                w.spawnParticle(Particle.ELECTRIC_SPARK, x, 1, 0, 0, 0, 0);
-                w.spawnParticle(Particle.END_ROD, x, 1, 0, 0, 0, 0);
+                Fx.p(w, Particle.ELECTRIC_SPARK, x, 1, 0, 0, 0, 0);
+                Fx.p(w, Particle.END_ROD, x, 1, 0, 0, 0, 0);
             });
             ant = pt;
         }
@@ -465,7 +465,7 @@ final class Torretas implements Listener {
         // preve um pouco o movimento do alvo
         b.add(alvo.getVelocity().clone().setY(0).multiply(8));
         w.playSound(a, Sound.ENTITY_GENERIC_EXPLODE, 0.5f, 1.6f);
-        w.spawnParticle(Particle.LARGE_SMOKE, a, 8, 0.2, 0.2, 0.2, 0.03);
+        Fx.p(w, Particle.LARGE_SMOKE, a, 8, 0.2, 0.2, 0.2, 0.03);
         Vector delta = b.toVector().subtract(a.toVector());
         double altura = 2.0 + delta.length() * 0.25;
         final int duracao = 16;
@@ -483,8 +483,8 @@ final class Torretas implements Listener {
                 Visuais.escala(balaPc, 0.5f, tk[0] * 0.6f, 1);
             }
             Cenas.levar(bala, pt.clone().subtract(0, 0.5, 0));
-            w.spawnParticle(Particle.LARGE_SMOKE, pt, 2, 0.05, 0.05, 0.05, 0.0);
-            w.spawnParticle(Particle.FLAME, pt, 2, 0.05, 0.05, 0.05, 0.0);
+            Fx.p(w, Particle.LARGE_SMOKE, pt, 2, 0.05, 0.05, 0.05, 0.0);
+            Fx.p(w, Particle.FLAME, pt, 2, 0.05, 0.05, 0.05, 0.0);
             if (tk[0] < duracao && pt.getBlock().isPassable()) return;
             tarefa.cancel();
             plugin.vis.remover(balaPc);
@@ -493,8 +493,8 @@ final class Torretas implements Listener {
             plugin.fx.pulso(pt.clone().add(0, 0.5, 0), Efeitos.b(Material.ORANGE_STAINED_GLASS), Efeitos.b(Material.SHROOMLIGHT), 0.5f, 3.4f, 6, Color.fromRGB(255, 120, 40));
             plugin.fx.estilhacos(pt.clone().add(0, 0.3, 0), new org.bukkit.block.data.BlockData[] {Poderes.chaoDe(pt), Efeitos.b(Material.COBBLESTONE), Efeitos.b(Material.COAL_BLOCK)}, 10, 3.0, 14, 0.35f);
             plugin.fx.anel(pt.clone().add(0, 0.1, 0), Poderes.chaoDe(pt), 3.2, 6, 12, 0.35f, null);
-            w.spawnParticle(Particle.EXPLOSION, pt, 3, 0.6, 0.4, 0.6, 0);
-            w.spawnParticle(Particle.LAVA, pt, 10, 0.6, 0.3, 0.6, 0);
+            Fx.p(w, Particle.EXPLOSION, pt, 3, 0.6, 0.4, 0.6, 0);
+            Fx.p(w, Particle.LAVA, pt, 10, 0.6, 0.3, 0.6, 0);
             w.playSound(pt, Sound.ENTITY_GENERIC_EXPLODE, 1f, 0.9f);
             if (!dono.isOnline()) return;
             for (Entity e : w.getNearbyEntities(pt, 3.5, 3.0, 3.5)) {
@@ -557,7 +557,7 @@ final class Torretas implements Listener {
         if (t != null) t.cancel();
         Entity e = Bukkit.getEntity(id);
         if (e != null && e.isValid()) {
-            e.getWorld().spawnParticle(Particle.CLOUD, e.getLocation().add(0, 1, 0), 20, 0.3, 0.5, 0.3, 0.03);
+            Fx.p(e.getWorld(), Particle.CLOUD, e.getLocation().add(0, 1, 0), 20, 0.3, 0.5, 0.3, 0.03);
             e.getWorld().playSound(e.getLocation(), Sound.BLOCK_ANVIL_BREAK, 0.6f, 1.2f);
             e.remove();
         }

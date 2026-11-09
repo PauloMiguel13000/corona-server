@@ -3,11 +3,11 @@ version: '1.0'
 main: br.servidor.slender.Slender
 api-version: '1.21'
 softdepend: [AuthMe, Multiverse-Core, BabyPets, Geyser-Spigot]
-description: Minigame de terror - colete as 8 folhas na floresta escura antes que o Slenderman te pegue.
+description: Minigame de terror - colete as 8 folhas na floresta escura antes que o Porcelana (criatura original) te pegue.
 commands:
   slender:
-    description: Minigame do Slenderman (/slender, /slender entrar, /slender sair)
-    aliases: [slenderman, terror]
+    description: Minigame do Porcelana na floresta (/slender, /floresta, /porcelana)
+    aliases: [slenderman, terror, floresta, porcelana]
 permissions:
   slender.jogar:
     description: Jogar o Slenderman

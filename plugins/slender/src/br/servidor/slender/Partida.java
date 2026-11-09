@@ -17,21 +17,28 @@ import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Firework;
+import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Mannequin;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 /** Uma partida do Slenderman. O ciclo roda a cada 5 ticks (4 vezes por segundo). */
 final class Partida {
@@ -69,6 +76,8 @@ final class Partida {
     private long inicioTick;
     private long fimPendente = -1;
     private Mannequin slender;
+    /** Modelo 3D do pacote (ItemDisplay) que acompanha o boneco invisivel. */
+    private ItemDisplay modelo;
     private UUID alvo;
     private long visivelAte;
     private long proximaAparicao;
@@ -251,7 +260,7 @@ final class Partida {
             pl.lanterna().dar(p);
             escuridao(p, j);
             pl.mover(p, mapa.inicio(mundo, i++));
-            p.showTitle(Title.title(Slender.txt("§4§lSLENDERMAN"), Slender.txt("§7Encontre as §f" + totalFolhas() + " folhas§7. Não olhe para ele."),
+            p.showTitle(Title.title(Slender.txt("§4§lO PORCELANA"), Slender.txt("§7Encontre as §f" + totalFolhas() + " folhas§7. Não encare a máscara."),
                     Title.Times.times(Duration.ofMillis(500), Duration.ofSeconds(4), Duration.ofSeconds(1))));
             p.playSound(p.getLocation(), Sound.AMBIENT_CAVE, 1f, 0.6f);
             p.sendMessage(Slender.PREFIXO + "§fAs folhas estão presas nas §eparedes§f dos lugares da floresta. Clique nelas para pegar.");
@@ -274,7 +283,7 @@ final class Partida {
         pl.lanterna().dar(p);
         escuridao(p, j);
         pl.mover(p, mapa.inicio(mundo, rnd.nextInt(8)));
-        p.showTitle(Title.title(Slender.txt("§4§lSLENDERMAN"), Slender.txt("§7Faltam §f" + (totalFolhas() - folhas) + " folhas§7. Não olhe para ele."),
+        p.showTitle(Title.title(Slender.txt("§4§lO PORCELANA"), Slender.txt("§7Faltam §f" + (totalFolhas() - folhas) + " folhas§7. Não encare a máscara."),
                 Title.Times.times(Duration.ofMillis(500), Duration.ofSeconds(4), Duration.ofSeconds(1))));
         p.playSound(p.getLocation(), Sound.AMBIENT_CAVE, 1f, 0.6f);
         p.sendMessage(Slender.PREFIXO + "§fVocê entrou na partida em andamento: §e" + folhas + "/" + totalFolhas() + " folhas§f já pegas.");
@@ -383,6 +392,7 @@ final class Partida {
 
     private void iaSlender(List<Player> vivos, int nivel) {
         if (slender != null && !slender.isValid()) slender = null;
+        if (slender != null) Pacote.repartir(pl, slender, modelo);
         if (slender == null) {
             if (nivel >= 1 && tick >= proximaAparicao) aparecer(vivos, nivel);
             return;
@@ -484,9 +494,60 @@ final class Partida {
             if (sc != null) sc.setBaseValue(pl.escala());
             m.getPersistentDataContainer().set(pl.kSlender, PersistentDataType.BYTE, (byte) 1);
         });
+        criarModelo(0);
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
+    private static ItemStack itemModelo(int quadro) {
+        // leather_helmet: no Bedrock o Geyser (corona-porcelana.json) troca pelo item 3D que a extensao GeyserDisplayEntity mostra
+        ItemStack it = new ItemStack(Material.LEATHER_HELMET);
+        it.setData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL,
+                net.kyori.adventure.key.Key.key("corona", "props/porcelana_f" + quadro));
+        return it;
+    }
+
+    /** Modelo 3D (quadro 0 parado, 1 susto) em cima do boneco. Recria do zero (sem deslizar). */
+    private void criarModelo(int quadro) {
+        if (modelo != null) modelo.remove();
+        modelo = null;
+        if (slender == null || !pl.modelo3d()) return;
+        Location l = posModelo();
+        float esc = (float) (pl.escala() / 1.3);
+        modelo = mundo.spawn(l, ItemDisplay.class, d -> {
+            d.setItemStack(itemModelo(quadro));
+            d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
+            d.setBillboard(Display.Billboard.FIXED);
+            d.setTransformation(new Transformation(new Vector3f(0, 1.5f * esc, 0), new Quaternionf(), new Vector3f(esc, esc, esc), new Quaternionf()));
+            d.setViewRange(1.0f);
+            d.setShadowRadius(0f);
+            d.setTeleportDuration(3);
+            d.setPersistent(false);
+            d.setVisibleByDefault(false);     // so quem tem o pacote ve o modelo; os outros veem o boneco com skin
+            d.getPersistentDataContainer().set(pl.kSlender, PersistentDataType.BYTE, (byte) 1);
+        });
+        Pacote.repartir(pl, slender, modelo);
+    }
+
+    private Location posModelo() {
+        Location l = slender.getLocation();
+        l.setYaw(l.getYaw() + pl.modeloGiro());
+        l.setPitch(0);
+        return l;
+    }
+
+    /** Leva o modelo junto quando o boneco anda (desliza em 3 ticks no Java). */
+    private void moverModelo() {
+        if (modelo == null || slender == null) return;
+        if (!modelo.isValid()) {
+            criarModelo(0);
+            return;
+        }
+        modelo.teleport(posModelo());
     }
 
     private void removerSlender() {
+        if (modelo != null) modelo.remove();
+        modelo = null;
         if (slender != null) slender.remove();
         slender = null;
         alvo = null;
@@ -532,6 +593,7 @@ final class Partida {
                 c.setZ(z);
                 slender.teleport(c);
                 virarPara(a);
+                moverModelo();
                 return;
             }
         }
@@ -544,6 +606,7 @@ final class Partida {
         Location l = s.clone();
         l.setDirection(v);
         slender.setRotation(l.getYaw(), Math.max(-30, Math.min(30, l.getPitch())));
+        if (modelo != null && modelo.isValid()) modelo.setRotation(l.getYaw() + pl.modeloGiro(), 0);
     }
 
     boolean olhando(Player p) {
@@ -604,6 +667,7 @@ final class Partida {
         s.setPitch(0);
         if (slender == null) criarSlender(s);
         else slender.teleport(s);
+        criarModelo(1);
         alvo = p.getUniqueId();
         visivelAte = tick + seg(1.5);
         proximoPasso = Long.MAX_VALUE;
@@ -612,14 +676,14 @@ final class Partida {
         p.playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_SCREAM, 1f, 0.6f);
         p.playSound(p.getLocation(), Sound.ENTITY_WARDEN_SONIC_BOOM, 0.6f, 1.6f);
         p.playSound(p.getLocation(), Sound.ENTITY_GHAST_SCREAM, 0.8f, 0.5f);
-        p.showTitle(Title.title(Slender.txt("§4§k||||||||||"), Slender.txt("§cO Slenderman te pegou..."),
+        p.showTitle(Title.title(Slender.txt("§4§k||||||||||"), Slender.txt("§cO Porcelana te pegou..."),
                 Title.Times.times(Duration.ZERO, Duration.ofMillis(1500), Duration.ofMillis(500))));
         for (Player o : online(true)) {
             if (o == p) continue;
             o.playSound(o.getLocation(), Sound.BLOCK_SCULK_SHRIEKER_SHRIEK, 0.5f, 0.5f);
         }
         int restam = vivos().size();
-        avisar("§c☠ §f" + j.nome + " §cfoi pego pelo Slenderman! §7(" + restam + " vivo" + (restam == 1 ? "" : "s") + ")");
+        avisar("§c☠ §f" + j.nome + " §cfoi pego pelo Porcelana! §7(" + restam + " vivo" + (restam == 1 ? "" : "s") + ")");
         int espera = Reviver.segundos(pl);
         if (Reviver.moedas(p) > 0) j.reviverAte = tick + seg(espera + 4);
         Bukkit.getScheduler().runTaskLater(pl, () -> {
@@ -627,7 +691,7 @@ final class Partida {
             if (alvo != null && alvo.equals(p.getUniqueId())) sumir(nivel());
             if (j.vivo) return; // ja voltou
             espectador(p);
-            if (estado == Estado.JOGANDO) Reviver.oferecer(pl, p, "o Slenderman", espera, () -> reviver(p));
+            if (estado == Estado.JOGANDO) Reviver.oferecer(pl, p, "o Porcelana", espera, () -> reviver(p));
         }, 30L);
     }
 
@@ -664,7 +728,7 @@ final class Partida {
         pl.lanterna().dar(p);
         escuridao(p, j);
         pl.mover(p, outros.isEmpty() ? mapa.inicio(mundo, rnd.nextInt(8)) : outros.get(rnd.nextInt(outros.size())).getLocation());
-        p.showTitle(Title.title(Slender.txt("§a§lVOCÊ VOLTOU!"), Slender.txt("§7Ainda faltam §f" + (totalFolhas() - folhas) + " folhas§7. Não olhe para ele."),
+        p.showTitle(Title.title(Slender.txt("§a§lVOCÊ VOLTOU!"), Slender.txt("§7Ainda faltam §f" + (totalFolhas() - folhas) + " folhas§7. Não encare a máscara."),
                 Title.Times.times(Duration.ofMillis(200), Duration.ofSeconds(3), Duration.ofMillis(700))));
         avisar("§e✦ §f" + j.nome + " §eusou uma Moeda de Reviver e voltou para a floresta!");
         return true;
@@ -779,7 +843,7 @@ final class Partida {
         estado = Estado.FIM;
         removerSlender();
         for (Player p : online(true)) {
-            p.showTitle(Title.title(Slender.txt("§4§lO SLENDERMAN VENCEU"), Slender.txt("§7Folhas coletadas: §f" + folhas + "/" + totalFolhas()),
+            p.showTitle(Title.title(Slender.txt("§4§lO PORCELANA VENCEU"), Slender.txt("§7Folhas coletadas: §f" + folhas + "/" + totalFolhas()),
                     Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(4), Duration.ofSeconds(1))));
             p.playSound(p.getLocation(), Sound.ENTITY_WARDEN_SONIC_BOOM, 0.5f, 0.5f);
         }

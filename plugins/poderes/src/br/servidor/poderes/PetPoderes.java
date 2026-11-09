@@ -53,7 +53,7 @@ final class PetPoderes implements Listener {
             {"§7Uiva e congela os monstros perto:", "§7ficam bem lentos e levam dano."},
             {"§7Cura o dono (3 corações) e dá", "§7regeneração. Vida cheia: escudo."},
             {"§7Fica furioso por 8 segundos:", "§7bate mais rápido, +50% de dano e fogo."}};
-    static final List<String> MUNDOS_PADRAO = List.of("defesa", "backrooms", "hotel", "slender", "vovo", "login", "minigames");
+    static final List<String> MUNDOS_PADRAO = List.of("defesa", "backrooms", "hotel", "slender", "vovo", "login", "minigames", "terror", "galeria");
 
     private final Poderes pl;
     private final NamespacedKey chave;
@@ -137,7 +137,7 @@ final class PetPoderes implements Listener {
             if (p.getGameMode() == org.bukkit.GameMode.SPECTATOR || p.isDead() || !mundoLiberado(p.getWorld())) continue;
             PetsPonte.PetInfo pet = pl.pets.petAtivo(p);
             if (pet == null || !pet.entidade.isValid() || !pet.entidade.getWorld().equals(p.getWorld())) continue;
-            if (supremo(pet)) pet.entidade.getWorld().spawnParticle(Particle.END_ROD, pet.entidade.getLocation().add(0, pet.entidade.getHeight() + 0.3, 0), 3, 0.25, 0.15, 0.25, 0.01);
+            if (supremo(pet)) Fx.p(pet.entidade.getWorld(), Particle.END_ROD, pet.entidade.getLocation().add(0, pet.entidade.getHeight() + 0.3, 0), 3, 0.25, 0.15, 0.25, 0.01);
             else if (pet.lendario()) auraLendaria(pet.entidade);
             if (!Poderes.logado(p)) continue;
             LivingEntity melhor = null;
@@ -186,25 +186,25 @@ final class PetPoderes implements Listener {
         switch (pd.acao()) {
             case GOLPE -> {
                 acertar(dono, alvo, d * pd.mult(), pd, pe.getLocation());
-                w.spawnParticle(part, la, 14, 0.35, 0.35, 0.35, 0.08);
+                Fx.p(w, part, la, 14, 0.35, 0.35, 0.35, 0.08);
                 w.playSound(la, pd.som(), 1f, pd.tom());
                 for (int k = 1; k <= pd.sangra(); k++)
                     Bukkit.getScheduler().runTaskLater(pl, () -> {
                         if (!alvo.isValid() || alvo.isDead() || !dono.isOnline()) return;
-                        alvo.getWorld().spawnParticle(Particle.DUST, alvo.getLocation().add(0, alvo.getHeight() / 2, 0), 8, 0.25, 0.3, 0.25,
+                        Fx.p(alvo.getWorld(), Particle.DUST, alvo.getLocation().add(0, alvo.getHeight() / 2, 0), 8, 0.25, 0.3, 0.25,
                                 new Particle.DustOptions(org.bukkit.Color.RED, 1.2f));
                         bater(alvo, Math.max(1.0, d * 0.3), dono);
                     }, 20L * k);
             }
             case AREA -> {
-                w.spawnParticle(part, la, 50, pd.raio() * 0.6, 0.8, pd.raio() * 0.6, 0.05);
+                Fx.p(w, part, la, 50, pd.raio() * 0.6, 0.8, pd.raio() * 0.6, 0.05);
                 w.playSound(la, pd.som(), 1f, pd.tom());
                 for (LivingEntity e : alvosPerto(dono, alvo, alvo.getLocation(), pd.raio())) acertar(dono, e, d * pd.mult(), pd, alvo.getLocation());
             }
             case INVESTIDA -> {
                 Vector v = alvo.getLocation().toVector().subtract(pe.getLocation().toVector());
                 if (v.lengthSquared() > 0.01) pe.setVelocity(v.normalize().multiply(1.1).setY(0.45));
-                w.spawnParticle(part, la, 30, 1.2, 0.5, 1.2, 0.05);
+                Fx.p(w, part, la, 30, 1.2, 0.5, 1.2, 0.05);
                 w.playSound(la, pd.som(), 1f, pd.tom());
                 for (LivingEntity e : alvosPerto(dono, alvo, alvo.getLocation(), pd.raio())) acertar(dono, e, d * pd.mult(), pd, e == alvo ? pe.getLocation() : alvo.getLocation());
             }
@@ -229,15 +229,15 @@ final class PetPoderes implements Listener {
                     for (PotionEffectType ruim : List.of(PotionEffectType.POISON, PotionEffectType.WITHER, PotionEffectType.SLOWNESS, PotionEffectType.WEAKNESS,
                             PotionEffectType.BLINDNESS, PotionEffectType.NAUSEA, PotionEffectType.HUNGER, PotionEffectType.MINING_FATIGUE))
                         dono.removePotionEffect(ruim);
-                dono.getWorld().spawnParticle(part, dono.getLocation().add(0, 1.6, 0), 12, 0.5, 0.5, 0.5, 0.02);
-                dono.getWorld().spawnParticle(Particle.HEART, dono.getLocation().add(0, 2, 0), 5, 0.4, 0.3, 0.4, 0);
+                Fx.p(dono.getWorld(), part, dono.getLocation().add(0, 1.6, 0), 12, 0.5, 0.5, 0.5, 0.02);
+                Fx.p(dono.getWorld(), Particle.HEART, dono.getLocation().add(0, 2, 0), 5, 0.4, 0.3, 0.4, 0);
                 w.playSound(dono.getLocation(), pd.som(), 0.8f, pd.tom());
                 bater(alvo, d * pd.mult(), dono);
             }
             case BUFF -> {
                 if (pd.efeito() != null) dono.addPotionEffect(new PotionEffect(pd.efeito(), Math.max(20, pd.segundos() * 20), pd.forca(), false, true));
                 dono.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, Math.max(20, pd.segundos() * 20), 0, false, true));
-                dono.getWorld().spawnParticle(part, dono.getLocation().add(0, 1, 0), 20, 0.4, 0.6, 0.4, 0.02);
+                Fx.p(dono.getWorld(), part, dono.getLocation().add(0, 1, 0), 20, 0.4, 0.6, 0.4, 0.02);
                 w.playSound(dono.getLocation(), pd.som(), 0.8f, pd.tom());
                 acertar(dono, alvo, d * pd.mult(), pd, pe.getLocation());
             }
@@ -245,8 +245,8 @@ final class PetPoderes implements Listener {
                 furiaAte.put(dono.getUniqueId(), agora + 8000L);
                 if (pd.efeito() != null && pd.efeito() != PotionEffectType.POISON)
                     dono.addPotionEffect(new PotionEffect(pd.efeito(), Math.max(20, pd.segundos() * 20), pd.forca(), false, true));
-                w.spawnParticle(part, la, 40, 1.5, 0.8, 1.5, 0.05);
-                w.spawnParticle(Particle.ANGRY_VILLAGER, pe.getLocation().add(0, pe.getHeight() + 0.3, 0), 4, 0.3, 0.2, 0.3, 0);
+                Fx.p(w, part, la, 40, 1.5, 0.8, 1.5, 0.05);
+                Fx.p(w, Particle.ANGRY_VILLAGER, pe.getLocation().add(0, pe.getHeight() + 0.3, 0), 4, 0.3, 0.2, 0.3, 0);
                 w.playSound(la, pd.som(), 1f, pd.tom());
                 for (LivingEntity e : alvosPerto(dono, alvo, alvo.getLocation(), pd.raio())) acertar(dono, e, d * pd.mult(), pd, alvo.getLocation());
             }
@@ -268,9 +268,9 @@ final class PetPoderes implements Listener {
             double a0 = (System.currentTimeMillis() % 3600) / 3600.0 * Math.PI * 2;
             for (int k = 0; k < 6; k++) {
                 double a = a0 + k * Math.PI / 3;
-                w.spawnParticle(Particle.DUST, c.getX() + Math.cos(a) * 0.6, c.getY() + h * 0.5, c.getZ() + Math.sin(a) * 0.6, 1, 0, 0, 0, 0, k % 2 == 0 ? OURO : OURO_CLARO);
+                Fx.p(w, Particle.DUST, c.getX() + Math.cos(a) * 0.6, c.getY() + h * 0.5, c.getZ() + Math.sin(a) * 0.6, 1, 0, 0, 0, 0, k % 2 == 0 ? OURO : OURO_CLARO);
             }
-            w.spawnParticle(Particle.WAX_ON, c.clone().add(0, h + 0.25, 0), 2, 0.2, 0.1, 0.2, 0);
+            Fx.p(w, Particle.WAX_ON, c.clone().add(0, h + 0.25, 0), 2, 0.2, 0.1, 0.2, 0);
         } catch (Throwable ignored) {
         }
     }
@@ -285,9 +285,9 @@ final class PetPoderes implements Listener {
             World w = alvo.getWorld();
             Location la = alvo.getLocation();
             w.strikeLightningEffect(la);
-            w.spawnParticle(Particle.DUST, la.clone().add(0, 1, 0), 60, 1.6, 0.9, 1.6, 0, OURO);
-            w.spawnParticle(Particle.TOTEM_OF_UNDYING, la.clone().add(0, 1, 0), 40, 0.8, 0.8, 0.8, 0.35);
-            w.spawnParticle(Particle.FLASH, la.clone().add(0, 1, 0), 1, 0, 0, 0, 0, org.bukkit.Color.fromRGB(255, 220, 90));
+            Fx.p(w, Particle.DUST, la.clone().add(0, 1, 0), 60, 1.6, 0.9, 1.6, 0, OURO);
+            Fx.p(w, Particle.TOTEM_OF_UNDYING, la.clone().add(0, 1, 0), 40, 0.8, 0.8, 0.8, 0.35);
+            Fx.p(w, Particle.FLASH, la.clone().add(0, 1, 0), 1, 0, 0, 0, 0, org.bukkit.Color.fromRGB(255, 220, 90));
             w.playSound(la, Sound.ITEM_TRIDENT_THUNDER, 0.7f, 1.4f);
             w.playSound(la, Sound.BLOCK_BEACON_POWER_SELECT, 0.9f, 1.6f);
             double d = dano(pet, dono) * pl.getConfig().getDouble("pets.lendario-poder-mult", 1.5);
@@ -335,7 +335,7 @@ final class PetPoderes implements Listener {
         int n = Math.max(12, (int) (r * 8));
         for (int k = 0; k < n; k++) {
             double a = Math.PI * 2 * k / n;
-            w.spawnParticle(part, c.getX() + Math.cos(a) * r, c.getY(), c.getZ() + Math.sin(a) * r, 1, 0.05, 0.05, 0.05, 0.01);
+            Fx.p(w, part, c.getX() + Math.cos(a) * r, c.getY(), c.getZ() + Math.sin(a) * r, 1, 0.05, 0.05, 0.05, 0.01);
         }
     }
 

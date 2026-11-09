@@ -549,7 +549,7 @@ final class Hub implements Listener {
             if (w != null && p.length >= 4)
                 return new Location(w, Double.parseDouble(p[1]), Double.parseDouble(p[2]), Double.parseDouble(p[3]), p.length > 4 ? Float.parseFloat(p[4]) : 0f, 0f);
         }
-        World w = Bukkit.getWorld(pl.getConfig().getString("mundos.normal", "world"));
+        World w = Bukkit.getWorld(pl.mundoSpawnPrincipal());
         if (w == null) return null;
         Location sp = w.getSpawnLocation();
         return Loja.lugarPerto(w, sp.getBlockX(), sp.getBlockY(), sp.getBlockZ());
@@ -694,7 +694,7 @@ final class Hub implements Listener {
         if (to.getBlockX() == e.getFrom().getBlockX() && to.getBlockZ() == e.getFrom().getBlockZ() && to.getBlockY() == e.getFrom().getBlockY()) return;
 
         if (to.getBlock().getRelative(BlockFace.DOWN).getType() == Material.EMERALD_BLOCK) {
-            World w = Bukkit.getWorld(pl.getConfig().getString("mundos.normal", "world"));
+            World w = Bukkit.getWorld(pl.mundoSpawnPrincipal());
             if (w == null) return;
             Player p = e.getPlayer();
             p.teleportAsync(w.getSpawnLocation().add(0.5, 0, 0.5), PlayerTeleportEvent.TeleportCause.PLUGIN)

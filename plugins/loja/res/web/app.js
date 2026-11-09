@@ -23,7 +23,8 @@
       estado.loja = d;
       var s = d.servidor;
       $("nomeServidor").textContent = s.nome;
-      document.title = "Loja oficial do " + s.nome;
+      document.title = s.nome + ": loja oficial e como entrar";
+      if (s.discord) Array.prototype.forEach.call(document.querySelectorAll("[data-discord]"), function (a) { a.href = s.discord; });
       online(s);
       $("ipJava").textContent = s.ipJava;
       $("ipBedrock").textContent = s.ipBedrock + (s.portaBedrock ? ", porta " + s.portaBedrock : "");

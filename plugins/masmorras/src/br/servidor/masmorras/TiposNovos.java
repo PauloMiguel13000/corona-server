@@ -377,8 +377,8 @@ final class TiposNovos {
         rel(t, "do Coveiro", "§7", 0x9A9A9A, "SOUL", "OSSOS", "Pá do Coveiro", "deixa o alvo lento e fraco", "armor", 0.5, false, "Terra Batida", "+0,5 de armadura");
 
         t = n("ESGOTO", "Esgoto Gosmento", "Gosma Primordial", Onde.NORMAL, 1, Estilo.SUBTERRANEA, "musgo", "ESGOTO", "Esgoto");
-        t.lacaios = m("SLIME", "SLIME", "ZOMBIE", "CAVE_SPIDER");
-        chefe(t, "SLIME", 160, 1.0, 6);
+        t.lacaios = m("SLIME", "SLIME", "ZOMBIE", "SPIDER");
+        chefe(t, "SLIME", 140, 1.0, 5);
         t.habs = h(Hab.GOSMA, Hab.PISAO, Hab.NUVEM_VENENO, Hab.INVOCAR);
         t.ajudantes = m("SLIME");
         t.esp = Esp.ONDAS;
@@ -386,8 +386,8 @@ final class TiposNovos {
         rel(t, "da Gosma Primordial", "§a", 0x7CCB5B, "ITEM_SLIME", "VENENO", "Gosma Ácida", "envenena o alvo", "jump_strength", 0.04, false, "Pulo de Gosma", "pula mais alto");
 
         t = n("ACAMPAMENTO", "Acampamento Saqueador", "Capitão Saqueador", Onde.NORMAL, 1, Estilo.SUBTERRANEA, "madeira", "ACAMPAMENTO", "Acampamento");
-        t.lacaios = m("PILLAGER", "PILLAGER", "VINDICATOR", "ZOMBIE");
-        chefe(t, "PILLAGER", 150, 1.6, 6, "HAND:CROSSBOW", "HEAD:WHITE_BANNER");
+        t.lacaios = m("PILLAGER", "PILLAGER", "ZOMBIE", "ZOMBIE");   // nivel 1: sem Vingador (batia demais)
+        chefe(t, "PILLAGER", 130, 1.6, 5, "HAND:CROSSBOW", "HEAD:WHITE_BANNER");
         t.habs = h(Hab.FLECHAS, Hab.INVOCAR, Hab.CORRENTES, Hab.SANGRAR);
         t.ajudantes = m("PILLAGER", "VINDICATOR");
         t.esp = Esp.FRENESI;

@@ -797,6 +797,9 @@ final class Casa {
         if (caixa(l, ESCADA_SAIDA[0] - 0.4, ESCADA_SAIDA[0] + 1.4, PISO_ESGOTO - 2, 66, ESCADA_SAIDA[1] - 0.4, ESCADA_SAIDA[1] + 1.4)) return true;
         if (l.getY() >= PISO_PORAO + 1 || l.getY() < PISO_ESGOTO - 2) return false;
         if (caixa(l, 6, 7, 49, 58, 18, 19)) return true;
+        // o vao da grade (x=51) fica ENTRE o trecho estreito e a sala da escada e nao estava em nenhuma area: quem
+        // passava pela grade cortada era tratado como "fora da casa" e voltava para o comeco (a fuga nao funcionava)
+        if (caixa(l, GRADE_X, GRADE_X + 1, PISO_ESGOTO - 2, PISO_PORAO, 85, 88)) return true;
         for (int[] a : ESGOTO)
             if (caixa(l, a[0], a[2] + 1, PISO_ESGOTO - 2, PISO_PORAO, a[1], a[3] + 1)) return true;
         return false;

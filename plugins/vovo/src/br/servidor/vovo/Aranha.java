@@ -61,7 +61,12 @@ final class Aranha {
     private Location ultimaPos;
     private int ultimoPonto = -1;
     private long proximoChiado;
+    /** Desde quando ela esta parada na frente de alguem que entrou numa passagem estreita (-1 = nao esta). */
+    private long cercoDesde = -1;
     private final Map<UUID, Long> ignorarAte = new HashMap<>();
+    /** Onde cada jogador estava no ciclo anterior e quanto andou desde entao (a velocidade do jogador no servidor nao serve). */
+    private final Map<UUID, Location> posAnterior = new HashMap<>();
+    private final Map<UUID, Double> andouAgora = new HashMap<>();
 
     Aranha(Vovo pl, Partida jogo, World mundo) {
         this.pl = pl;
@@ -142,7 +147,11 @@ final class Aranha {
             b.setSilent(true);
             b.setCanPickupItems(false);
             b.setCollidable(false);
-            atributo(b, Attribute.SCALE, t);
+            // o motor e mais estreito que a aranha que aparece: com a largura toda ela raspava nas quinas dos tuneis e
+            // quase parava em toda curva. Ainda e largo demais para as portas e passagens de 1 bloco.
+            atributo(b, Attribute.SCALE, Math.max(1.0, t * 0.75));
+            b.addScoreboardTag("clearlag_exclude");
+            marcarSemNivel(b);
             atributo(b, Attribute.MOVEMENT_SPEED, 0.25);
             atributo(b, Attribute.FOLLOW_RANGE, 64);
             atributo(b, Attribute.KNOCKBACK_RESISTANCE, 1);
@@ -168,8 +177,11 @@ final class Aranha {
             s.setInvulnerable(true);
             s.setCanPickupItems(false);
             s.setCollidable(false);
+            s.addScoreboardTag("clearlag_exclude");
+            marcarSemNivel(s);
             atributo(s, Attribute.SCALE, t);
         });
+        cercoDesde = -1;
         estado = Estado.DORMINDO;
         alvo = null;
         destino = null;
@@ -179,7 +191,15 @@ final class Aranha {
         ignorarAte.clear();
     }
 
+    /** Pede ao LevelledMobs para nao dar nivel (ele mexe na velocidade e na vida). */
+    private static void marcarSemNivel(LivingEntity e) {
+        org.bukkit.NamespacedKey sn = org.bukkit.NamespacedKey.fromString("levelledmobs:nolevel");
+        if (sn != null) e.getPersistentDataContainer().set(sn, PersistentDataType.STRING, "vovo");
+    }
+
     void remover() {
+        posAnterior.clear();
+        andouAgora.clear();
         if (ent != null) ent.remove();
         if (corpo != null) corpo.remove();
         ent = null;
@@ -220,10 +240,10 @@ final class Aranha {
             boolean seguindo = perseguindo(p);
             Vector para = p.getEyeLocation().toVector().subtract(olho.toVector());
             double d = para.length();
-            if (d > (seguindo ? jogo.dif("aranha-visao-caca", 28) : jogo.dif("aranha-visao", 22))) continue;
+            if (d > (seguindo ? jogo.dif("aranha-visao-caca", 32) : jogo.dif("aranha-visao", 26))) continue;
             if (d > 3.5) {
                 Vector h = para.clone().setY(0);
-                if (h.lengthSquared() > 1e-6 && Math.toDegrees(frente.angle(h.normalize())) > (seguindo ? 75 : jogo.dif("aranha-angulo", 40))) continue;
+                if (h.lengthSquared() > 1e-6 && Math.toDegrees(frente.angle(h.normalize())) > (seguindo ? 75 : jogo.dif("aranha-angulo", 70))) continue;
             }
             if (!ent.hasLineOfSight(p)) continue;
             if (d < melhorD) {
@@ -232,6 +252,39 @@ final class Aranha {
             }
         }
         return melhor;
+    }
+
+    /** Quem ela escuta agora (o mais perto): correndo ate "aranha-ouve-correndo" blocos, andando ate "aranha-ouve-andando". */
+    private Player ouvir(List<Player> vivos) {
+        double correndo = jogo.dif("aranha-ouve-correndo", 20), andando = jogo.dif("aranha-ouve-andando", 7);
+        Location v = ent.getLocation();
+        Player melhor = null;
+        double melhorD = 1e9;
+        for (Player p : vivos) {
+            Partida.Jogador j = jogo.jogadores.get(p.getUniqueId());
+            if (j == null || tick < j.graca || p.isSneaking() || !Casa.noEsgoto(p.getLocation())) continue;
+            Long ig = ignorarAte.get(p.getUniqueId());
+            if (ig != null && tick < ig) continue;
+            Double andou = andouAgora.get(p.getUniqueId());
+            if ((andou == null || andou < 0.35) && !p.isSprinting()) continue;      // parado nao faz barulho
+            double d = p.getLocation().distance(v);
+            if (d <= (p.isSprinting() ? correndo : andando) && d < melhorD) {
+                melhorD = d;
+                melhor = p;
+            }
+        }
+        return melhor;
+    }
+
+    /** Vai conferir um lugar (ouviu um barulho). */
+    void investigar(Location onde, boolean chiar) {
+        if (!viva() || estado == Estado.DORMINDO || estado == Estado.CACANDO || onde == null) return;
+        estado = Estado.PROCURANDO;
+        destino = onde.clone();
+        parado = 0;
+        esperaAte = 0;
+        mover(destino, ritmo("procura"));
+        if (chiar) mundo.playSound(ent.getLocation(), Sound.ENTITY_SPIDER_AMBIENT, 2.2f, 0.7f);
     }
 
     private void comecar(Player p) {
@@ -264,7 +317,7 @@ final class Aranha {
         destino = null;
         esperaAte = 0;
         mundo.playSound(ent.getLocation(), Sound.ENTITY_SPIDER_AMBIENT, 3f, 0.4f);
-        jogo.avisar("§8Algo enorme se mexeu no esgoto...");
+        jogo.avisar("§8Algo enorme se mexeu no esgoto... §7Ela ouve quem §fcorre§7: ande §fagachado§7 e saia da frente dela.");
     }
 
     void aqui(Location l) {
@@ -294,6 +347,11 @@ final class Aranha {
             Estado antes = estado;
             criar();
             if (antes != Estado.DORMINDO) estado = Estado.RONDA;
+        }
+        andouAgora.clear();
+        for (Player p : vivos) {
+            Location agora = p.getLocation(), antes = posAnterior.put(p.getUniqueId(), agora);
+            if (antes != null && antes.getWorld() == agora.getWorld()) andouAgora.put(p.getUniqueId(), antes.distance(agora));
         }
         Location v = ent.getLocation();
         if (!Casa.areaDaAranha(v)) {
@@ -339,6 +397,10 @@ final class Aranha {
             if (estado != Estado.CACANDO || !visto.getUniqueId().equals(alvo)) comecar(visto);
             vistoEm = t;
             ultimoLocal = visto.getLocation();
+        } else if (estado == Estado.RONDA || estado == Estado.PROCURANDO) {
+            // nao viu ninguem, mas OUVE: quem corre faz barulho de longe, quem anda so de perto; agachado nao faz nenhum
+            Player ouvido = ouvir(vivos);
+            if (ouvido != null && (estado == Estado.RONDA || t % 8 == 0)) investigar(ouvido.getLocation(), estado == Estado.RONDA);
         }
 
         switch (estado) {
@@ -350,6 +412,38 @@ final class Aranha {
                     destino = null;
                     break;
                 }
+                if (!Casa.areaDaAranha(a.getLocation())) {
+                    // a pessoa entrou numa salinha ou passagem estreita: ela nao cabe. Antes ela ficava refazendo o
+                    // caminho a cada passo da pessoa e andava de um lado para o outro na frente da porta, sem parar.
+                    // Agora chega perto UMA vez, fica ameacando alguns segundos e vai embora.
+                    if (cercoDesde < 0) {
+                        cercoDesde = t;
+                        destino = a.getLocation();
+                        mover(destino, ritmo("caca"));
+                    } else if (t - cercoDesde >= seg(6)) {
+                        ignorarAte.put(a.getUniqueId(), t + seg(12));
+                        estado = Estado.RONDA;
+                        alvo = null;
+                        destino = null;
+                        esperaAte = 0;
+                        cercoDesde = -1;
+                        parado = 0;
+                        mundo.playSound(v, Sound.ENTITY_SPIDER_AMBIENT, 2f, 0.6f);
+                    } else if (parado >= seg(1)) {
+                        // chegou o mais perto que da: para e encara
+                        parar();
+                        destino = null;
+                        Vector para = a.getLocation().toVector().subtract(v.toVector()).setY(0);
+                        if (para.lengthSquared() > 1e-4) {
+                            Location olha = v.clone();
+                            olha.setDirection(para);
+                            ent.setRotation(olha.getYaw(), 0);
+                            ent.setBodyYaw(olha.getYaw());
+                        }
+                    }
+                    break;
+                }
+                cercoDesde = -1;
                 if (t - vistoEm > seg(3)) {
                     estado = Estado.PROCURANDO;
                     destino = ultimoLocal;
@@ -422,20 +516,49 @@ final class Aranha {
     private void ronda() {
         if (destino == null || chegou(destino)) {
             if (esperaAte == 0) {
-                esperaAte = tick + seg(1 + rnd.nextDouble() * 2.5);
+                esperaAte = tick + seg(0.4 + rnd.nextDouble() * 1.2);
                 parar();
                 return;
             }
             if (tick < esperaAte) return;
             esperaAte = 0;
-            int i;
-            do {
-                i = rnd.nextInt(caminho.size());
-            } while (caminho.size() > 1 && i == ultimoPonto);
+            int i = proximoPonto();
             ultimoPonto = i;
             destino = caminho.get(i);
             mover(destino, ritmo("ronda"));
         } else if (tick % 8 == 0) mover(destino, ritmo("ronda"));
+    }
+
+    /**
+     * Proximo ponto da ronda. Antes era sorteado entre todos: ela ia ate um ponto, dava meia-volta, voltava pelo mesmo
+     * tunel, virava de novo... parecia perdida. Agora, entre alguns pontos sorteados, escolhe o que fica mais "para a
+     * frente" de onde ela esta olhando e nao muito perto, entao a ronda da voltas pelo esgoto.
+     */
+    private int proximoPonto() {
+        Location l = ent.getLocation();
+        Vector frente = l.getDirection().setY(0);
+        if (frente.lengthSquared() < 1e-6) frente = new Vector(0, 0, 1);
+        frente.normalize();
+        int melhor = -1;
+        double melhorNota = -1e9;
+        for (int k = 0; k < 6; k++) {
+            int i = rnd.nextInt(caminho.size());
+            if (i == ultimoPonto && caminho.size() > 1) continue;
+            Vector para = caminho.get(i).toVector().subtract(l.toVector()).setY(0);
+            double d = para.length();
+            if (d < 1e-3) continue;
+            double nota = frente.dot(para.clone().multiply(1 / d)) * 2.0 + (d < 14 ? -1.5 : 0) + rnd.nextDouble() * 0.6;
+            if (nota > melhorNota) {
+                melhorNota = nota;
+                melhor = i;
+            }
+        }
+        if (melhor < 0) {
+            do {
+                melhor = rnd.nextInt(caminho.size());
+            } while (caminho.size() > 1 && melhor == ultimoPonto);
+        }
+        return melhor;
     }
 
     String status() {

@@ -1,0 +1,7 @@
+name: Vista
+version: '1.0'
+main: teste.vista.Vista
+api-version: '1.21'
+commands:
+  vista:
+    description: foto de cima (teste)

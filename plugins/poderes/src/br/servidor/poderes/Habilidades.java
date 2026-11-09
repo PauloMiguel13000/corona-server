@@ -228,7 +228,7 @@ final class Habilidades implements Listener {
         Particle.DustOptions escuro = cor(40, 110, 30, 1.2f);
         w.playSound(p.getLocation(), Sound.ENTITY_SPLASH_POTION_THROW, 1f, 0.8f);
         Torretas.linha(p.getEyeLocation().subtract(0, 0.3, 0), c.clone().add(0, 0.8, 0), 0.6,
-                pt -> w.spawnParticle(Particle.DUST, pt, 1, 0.02, 0.02, 0.02, 0, verde));
+                pt -> Fx.p(w, Particle.DUST, pt, 1, 0.02, 0.02, 0.02, 0, verde));
         w.playSound(c, Sound.ENTITY_SPLASH_POTION_BREAK, 1f, 0.6f);
         org.bukkit.Color corVeneno = org.bukkit.Color.fromRGB(80, 220, 60);
         plugin.cena.veneno(p, c);
@@ -244,9 +244,9 @@ final class Habilidades implements Listener {
                 double ang = rnd().nextDouble(Math.PI * 2);
                 double r = Math.sqrt(rnd().nextDouble()) * 3.5;
                 Location pt = c.clone().add(Math.cos(ang) * r, rnd().nextDouble(0.1, 1.6), Math.sin(ang) * r);
-                w.spawnParticle(Particle.DUST, pt, 1, 0, 0, 0, 0, i % 3 == 0 ? escuro : verde);
+                Fx.p(w, Particle.DUST, pt, 1, 0, 0, 0, 0, i % 3 == 0 ? escuro : verde);
             }
-            w.spawnParticle(Particle.ITEM_SLIME, c.clone().add(0, 0.5, 0), 3, 2.0, 0.4, 2.0, 0);
+            Fx.p(w, Particle.ITEM_SLIME, c.clone().add(0, 0.5, 0), 3, 2.0, 0.4, 2.0, 0);
             if (t[0] % 15 == 0 && t[0] <= 85) plugin.fx.bolhas(c, Efeitos.b(Material.LIME_STAINED_GLASS), 5, 3.2, 1.9, 14, corVeneno);
             if (t[0] % 20 == 0) {
                 if (t[0] % 40 == 0) w.playSound(c, Sound.BLOCK_BREWING_STAND_BREW, 0.6f, 0.6f);
@@ -284,7 +284,7 @@ final class Habilidades implements Listener {
                 }
                 for (int k = 0; k < 16; k++) {
                     double a = Math.PI * 2 * k / 16;
-                    w.spawnParticle(Particle.FLAME, alvo.clone().add(Math.cos(a) * 1.5, 0.1, Math.sin(a) * 1.5), 1, 0, 0, 0, 0);
+                    Fx.p(w, Particle.FLAME, alvo.clone().add(Math.cos(a) * 1.5, 0.1, Math.sin(a) * 1.5), 1, 0, 0, 0, 0);
                 }
                 Location topo = alvo.clone().add(rnd().nextDouble(-4, 4), 18, rnd().nextDouble(-4, 4));
                 Vector caminho = alvo.toVector().subtract(topo.toVector());
@@ -316,9 +316,9 @@ final class Habilidades implements Listener {
                         if (tk[0] % 2 == 0) Props3D.quadro(met3d, "meteoro_f" + ((tk[0] / 2) % 2));
                     }
                     if (rocha != null && rocha.isValid()) rocha.setVelocity(caminho.clone().multiply(1.0 / 12));
-                    w.spawnParticle(Particle.DUST, pt, 6, 0.25, 0.25, 0.25, 0, laranja);
-                    w.spawnParticle(Particle.FLAME, pt, 6, 0.3, 0.3, 0.3, 0.02);
-                    w.spawnParticle(Particle.LARGE_SMOKE, pt, 2, 0.2, 0.2, 0.2, 0.01);
+                    Fx.p(w, Particle.DUST, pt, 6, 0.25, 0.25, 0.25, 0, laranja);
+                    Fx.p(w, Particle.FLAME, pt, 6, 0.3, 0.3, 0.3, 0.02);
+                    Fx.p(w, Particle.LARGE_SMOKE, pt, 2, 0.2, 0.2, 0.2, 0.01);
                     if (tk[0] < 12) return;
                     tarefa.cancel();
                     plugin.vis.remover(rochaPc);
@@ -328,9 +328,9 @@ final class Habilidades implements Listener {
                     plugin.fx.estilhacos(alvo.clone().add(0, 0.3, 0), new BlockData[] {Efeitos.b(Material.MAGMA_BLOCK), Efeitos.b(Material.NETHERRACK), Efeitos.b(Material.BLACKSTONE), Poderes.chaoDe(alvo)}, 10, 3.2, 16, 0.4f);
                     plugin.fx.pulso(alvo.clone().add(0, 0.6, 0), Efeitos.b(Material.ORANGE_STAINED_GLASS), Efeitos.b(Material.SHROOMLIGHT), 0.6f, 3.4f, 6, corFogo);
                     plugin.fx.anel(alvo.clone().add(0, 0.1, 0), Efeitos.b(Material.MAGMA_BLOCK), 3.0, 6, 12, 0.35f, corFogo);
-                    w.spawnParticle(Particle.EXPLOSION, alvo.clone().add(0, 0.5, 0), 3, 0.8, 0.4, 0.8, 0);
-                    w.spawnParticle(Particle.FLAME, alvo.clone().add(0, 0.3, 0), 30, 1.2, 0.3, 1.2, 0.08);
-                    w.spawnParticle(Particle.LAVA, alvo, 8, 1.0, 0.2, 1.0, 0);
+                    Fx.p(w, Particle.EXPLOSION, alvo.clone().add(0, 0.5, 0), 3, 0.8, 0.4, 0.8, 0);
+                    Fx.p(w, Particle.FLAME, alvo.clone().add(0, 0.3, 0), 30, 1.2, 0.3, 1.2, 0.08);
+                    Fx.p(w, Particle.LAVA, alvo, 8, 1.0, 0.2, 1.0, 0);
                     w.playSound(alvo, Sound.ENTITY_GENERIC_EXPLODE, 1f, 0.8f);
                     if (!p.isOnline()) return;
                     for (LivingEntity le : inimigosPerto(alvo, 3.0, 3.0, p)) {
@@ -399,9 +399,9 @@ final class Habilidades implements Listener {
                             }
                             Cenas.levar(kiCel, pos.clone().subtract(0, 0.5, 0));
                             plugin.cena.kiRastro(pos, ssj);
-                            w.spawnParticle(Particle.DUST, pos, 3, 0.1, 0.1, 0.1, 0, amarelo);
-                            w.spawnParticle(Particle.DUST, pos, 1, 0.04, 0.04, 0.04, 0, branco);
-                            w.spawnParticle(Particle.END_ROD, pos, 1, 0.04, 0.04, 0.04, 0.0);
+                            Fx.p(w, Particle.DUST, pos, 3, 0.1, 0.1, 0.1, 0, amarelo);
+                            Fx.p(w, Particle.DUST, pos, 1, 0.04, 0.04, 0.04, 0, branco);
+                            Fx.p(w, Particle.END_ROD, pos, 1, 0.04, 0.04, 0.04, 0.0);
                         },
                         (alvo, pos) -> {
                             plugin.vis.remover(esfera);
@@ -432,8 +432,8 @@ final class Habilidades implements Listener {
     }
 
     private static void estouroKi(World w, Location pos) {
-        w.spawnParticle(Particle.DUST, pos, 20, 0.4, 0.4, 0.4, 0, cor(255, 230, 90, 1.8f));
-        w.spawnParticle(Particle.EXPLOSION, pos, 1, 0, 0, 0, 0);
+        Fx.p(w, Particle.DUST, pos, 20, 0.4, 0.4, 0.4, 0, cor(255, 230, 90, 1.8f));
+        Fx.p(w, Particle.EXPLOSION, pos, 1, 0, 0, 0, 0);
         w.playSound(pos, Sound.ENTITY_GENERIC_EXPLODE, 0.4f, 1.8f);
     }
 
@@ -472,8 +472,8 @@ final class Habilidades implements Listener {
         plugin.fx.colunaDeLuz(l, Efeitos.b(Material.WHITE_STAINED_GLASS), 3.0, 0.9, 7, branco);
         plugin.cena.teleKi(l);
         plugin.fx.anel(l.clone().add(0, 0.1, 0), Efeitos.b(Material.WHITE_STAINED_GLASS), 1.7, 5, 10, 0.22f, branco);
-        w.spawnParticle(Particle.DUST, c, 25, 0.3, 0.7, 0.3, 0, cor(255, 255, 255, 1.4f));
-        w.spawnParticle(Particle.END_ROD, c, 12, 0.3, 0.6, 0.3, 0.05);
+        Fx.p(w, Particle.DUST, c, 25, 0.3, 0.7, 0.3, 0, cor(255, 255, 255, 1.4f));
+        Fx.p(w, Particle.END_ROD, c, 12, 0.3, 0.6, 0.3, 0.05);
         w.playSound(l, Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 2.0f);
         w.playSound(l, Sound.BLOCK_AMETHYST_BLOCK_CHIME, 1f, 1.6f);
     }
@@ -509,20 +509,20 @@ final class Habilidades implements Listener {
         w.playSound(l, Sound.BLOCK_BEACON_ACTIVATE, 1f, 1.4f);
         for (int i = 0; i < 40; i++) {
             double a = Math.PI * 2 * i / 40;
-            w.spawnParticle(Particle.DUST, l.clone().add(Math.cos(a) * 1.6, 0.2 + i * 0.05, Math.sin(a) * 1.6), 2, 0.05, 0.05, 0.05, 0, ouro);
+            Fx.p(w, Particle.DUST, l.clone().add(Math.cos(a) * 1.6, 0.2 + i * 0.05, Math.sin(a) * 1.6), 2, 0.05, 0.05, 0.05, 0, ouro);
         }
-        w.spawnParticle(Particle.ELECTRIC_SPARK, l.clone().add(0, 1, 0), 40, 0.6, 1.0, 0.6, 0.2);
+        Fx.p(w, Particle.ELECTRIC_SPARK, l.clone().add(0, 1, 0), 40, 0.6, 1.0, 0.6, 0.2);
         // raio que nao queima nem machuca, coluna dourada e onda de choque no chao
         w.strikeLightningEffect(l);
-        for (int i = 0; i < 30; i++) w.spawnParticle(Particle.DUST, l.clone().add(0, i * 0.15, 0), 3, 0.25, 0.05, 0.25, 0, claro);
+        for (int i = 0; i < 30; i++) Fx.p(w, Particle.DUST, l.clone().add(0, i * 0.15, 0), 3, 0.25, 0.05, 0.25, 0, claro);
         for (int anel = 1; anel <= 4; anel++) {
             final double raio = anel * 1.2;
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 for (int i = 0; i < 36; i++) {
                     double a = Math.PI * 2 * i / 36;
-                    w.spawnParticle(Particle.DUST, l.clone().add(Math.cos(a) * raio, 0.15, Math.sin(a) * raio), 1, 0, 0, 0, 0, ouro);
+                    Fx.p(w, Particle.DUST, l.clone().add(Math.cos(a) * raio, 0.15, Math.sin(a) * raio), 1, 0, 0, 0, 0, ouro);
                 }
-                w.spawnParticle(Particle.CLOUD, l.clone().add(0, 0.2, 0), 6, raio * 0.4, 0.05, raio * 0.4, 0.02);
+                Fx.p(w, Particle.CLOUD, l.clone().add(0, 0.2, 0), 6, raio * 0.4, 0.05, raio * 0.4, 0.02);
             }, anel * 2L);
         }
         // explosao de ki: esfera dourada que cresce, chao rachando e espiral de energia subindo
@@ -530,7 +530,7 @@ final class Habilidades implements Listener {
         Bukkit.getScheduler().runTaskLater(plugin, () -> Visuais.escala(esfera, 4.5f, 1.2f, 10), 1L);
         try {
             BlockData chao = l.clone().subtract(0, 0.5, 0).getBlock().getBlockData();
-            if (!chao.getMaterial().isAir()) w.spawnParticle(Particle.BLOCK, l.clone().add(0, 0.1, 0), 80, 1.6, 0.1, 1.6, 0.3, chao);
+            if (!chao.getMaterial().isAir()) Fx.p(w, Particle.BLOCK, l.clone().add(0, 0.1, 0), 80, 1.6, 0.1, 1.6, 0.3, chao);
         } catch (Throwable ignored) {
         }
         for (int k = 0; k < 10; k++) {
@@ -538,8 +538,8 @@ final class Habilidades implements Listener {
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 for (int j = 0; j < 3; j++) {
                     double a = kk * 0.7 + j * Math.PI * 2 / 3;
-                    w.spawnParticle(Particle.DUST, l.clone().add(Math.cos(a) * 1.1, kk * 0.3, Math.sin(a) * 1.1), 2, 0.03, 0.03, 0.03, 0, ouro);
-                    w.spawnParticle(Particle.END_ROD, l.clone().add(Math.cos(a) * 1.1, kk * 0.3, Math.sin(a) * 1.1), 1, 0, 0, 0, 0.01);
+                    Fx.p(w, Particle.DUST, l.clone().add(Math.cos(a) * 1.1, kk * 0.3, Math.sin(a) * 1.1), 2, 0.03, 0.03, 0.03, 0, ouro);
+                    Fx.p(w, Particle.END_ROD, l.clone().add(Math.cos(a) * 1.1, kk * 0.3, Math.sin(a) * 1.1), 1, 0, 0, 0, 0.01);
                 }
             }, k);
         }
@@ -576,9 +576,9 @@ final class Habilidades implements Listener {
             plugin.cena.ssjAura(p, t[0]);
             if (t[0] % 12 == 0) mostrarVisual(p, true);
             if (t[0] % 30 == 0) w.playSound(c, Sound.BLOCK_BEACON_AMBIENT, 0.6f, 1.8f);
-            w.spawnParticle(Particle.DUST, c, 6, 0.35, 0.8, 0.35, 0, ouro);
-            w.spawnParticle(Particle.DUST, c.clone().add(0, 0.6, 0), 2, 0.2, 0.3, 0.2, 0, claro);
-            if (t[0] % 9 == 0) w.spawnParticle(Particle.ELECTRIC_SPARK, c, 3, 0.4, 0.7, 0.4, 0.1);
+            Fx.p(w, Particle.DUST, c, 6, 0.35, 0.8, 0.35, 0, ouro);
+            Fx.p(w, Particle.DUST, c.clone().add(0, 0.6, 0), 2, 0.2, 0.3, 0.2, 0, claro);
+            if (t[0] % 9 == 0) Fx.p(w, Particle.ELECTRIC_SPARK, c, 3, 0.4, 0.7, 0.4, 0.1);
             if (t[0] % 21 == 0) {
                 long resta = (saiyajinAte.getOrDefault(id, 0L) - System.currentTimeMillis() + 999) / 1000;
                 Poderes.barra(p, "§6§lSUPER SAIYAJIN §e" + resta + "s");
@@ -596,8 +596,8 @@ final class Habilidades implements Listener {
         if (estava && p.isOnline()) {
             mostrarVisual(p, false);
             Location c = p.getLocation().add(0, 1, 0);
-            p.getWorld().spawnParticle(Particle.DUST, c, 30, 0.4, 0.8, 0.4, 0, cor(255, 230, 120, 1.2f));
-            p.getWorld().spawnParticle(Particle.CLOUD, c, 10, 0.3, 0.6, 0.3, 0.02);
+            Fx.p(p.getWorld(), Particle.DUST, c, 30, 0.4, 0.8, 0.4, 0, cor(255, 230, 120, 1.2f));
+            Fx.p(p.getWorld(), Particle.CLOUD, c, 10, 0.3, 0.6, 0.3, 0.02);
             p.getWorld().playSound(c, Sound.BLOCK_BEACON_DEACTIVATE, 0.8f, 1.4f);
         }
         if (avisar) Poderes.barra(p, "§7A transformacao acabou. Voce voltou ao normal.");
@@ -707,7 +707,7 @@ final class Habilidades implements Listener {
                 double dist = i * 0.13;
                 float tam = 1.4f - i * 0.22f;
                 int g = 200 + i * 12;
-                w.spawnParticle(Particle.DUST, base.clone().add(d.clone().multiply(dist)), 1, 0, 0, 0, 0, cor(255, Math.min(255, g), 40 + i * 30, tam));
+                Fx.p(w, Particle.DUST, base.clone().add(d.clone().multiply(dist)), 1, 0, 0, 0, 0, cor(255, Math.min(255, g), 40 + i * 30, tam));
             }
         }
     }
@@ -735,8 +735,8 @@ final class Habilidades implements Listener {
                 for (int i = 0; i < pontos; i++) {
                     double a = Math.PI * 2 * i / pontos;
                     Location pt = l.clone().add(Math.cos(a) * raio, 0.3, Math.sin(a) * raio);
-                    w.spawnParticle(Particle.CLOUD, pt, 1, 0, 0.05, 0, 0.0);
-                    if (i % 4 == 0) w.spawnParticle(Particle.CRIT, pt.add(0, 0.4, 0), 1, 0, 0, 0, 0.0);
+                    Fx.p(w, Particle.CLOUD, pt, 1, 0, 0.05, 0, 0.0);
+                    if (i % 4 == 0) Fx.p(w, Particle.CRIT, pt.add(0, 0.4, 0), 1, 0, 0, 0, 0.0);
                 }
             }, anel);
         }
@@ -792,7 +792,7 @@ final class Habilidades implements Listener {
         BlockData dado = chao.isPassable() ? Material.DIRT.createBlockData() : chao.getBlockData();
         w.playSound(c, Sound.ENTITY_GENERIC_EXPLODE, 1f, 0.6f);
         w.playSound(c, Sound.BLOCK_ANVIL_LAND, 0.8f, 0.5f);
-        w.spawnParticle(Particle.EXPLOSION, c, 2, 0.3, 0.1, 0.3, 0);
+        Fx.p(w, Particle.EXPLOSION, c, 2, 0.3, 0.1, 0.3, 0);
         final BlockData terra = dado;
         plugin.cena.terremoto(c, terra);
         plugin.fx.estilhacos(c.clone().add(0, 0.3, 0), new BlockData[] {terra, terra, Efeitos.b(Material.COBBLESTONE), Efeitos.b(Material.GRAVEL)}, 16, 5.0, 18, 0.45f);
@@ -815,7 +815,7 @@ final class Habilidades implements Listener {
                 for (int i = 0; i < pontos; i++) {
                     double a = Math.PI * 2 * i / pontos;
                     Location pt = c.clone().add(Math.cos(a) * raio, 0.2, Math.sin(a) * raio);
-                    w.spawnParticle(Particle.BLOCK, pt, 4, 0.2, 0.3, 0.2, 0, dado);
+                    Fx.p(w, Particle.BLOCK, pt, 4, 0.2, 0.3, 0.2, 0, dado);
                 }
                 w.playSound(c, Sound.BLOCK_GRAVEL_BREAK, 0.6f, 0.6f);
             }, anel * 2L);
@@ -869,8 +869,8 @@ final class Habilidades implements Listener {
                                     new org.joml.Vector3f(0.55f), new org.joml.Quaternionf()));
                         }
                         Cenas.levar(estrela, pos.clone().subtract(0, 0.25, 0));
-                        w.spawnParticle(Particle.DUST, pos, 2, 0.08, 0.02, 0.08, 0, aco);
-                        w.spawnParticle(Particle.CRIT, pos, 1, 0, 0, 0, 0.0);
+                        Fx.p(w, Particle.DUST, pos, 2, 0.08, 0.02, 0.08, 0, aco);
+                        Fx.p(w, Particle.CRIT, pos, 1, 0, 0, 0, 0.0);
                     },
                     (alvo, pos) -> {
                         plugin.vis.remover(estrela);
@@ -878,7 +878,7 @@ final class Habilidades implements Listener {
                         plugin.props.remover(estrela3d);
                         plugin.fx.cortesX(pos, d, 1.1, org.bukkit.Color.fromRGB(220, 220, 235));
                         plugin.cena.corteX(pos, d);
-                        w.spawnParticle(Particle.CRIT, pos, 10, 0.2, 0.2, 0.2, 0.2);
+                        Fx.p(w, Particle.CRIT, pos, 10, 0.2, 0.2, 0.2, 0.2);
                         w.playSound(pos, Sound.ENTITY_PLAYER_ATTACK_CRIT, 0.7f, 1.4f);
                         plugin.causarDano(alvo, DANO_SHURIKEN * f, p);
                     },
@@ -886,7 +886,7 @@ final class Habilidades implements Listener {
                         plugin.vis.remover(estrela);
                         plugin.vis.remover(estrelaPc);
                         plugin.props.remover(estrela3d);
-                        w.spawnParticle(Particle.CRIT, pos, 4, 0.1, 0.1, 0.1, 0.05);
+                        Fx.p(w, Particle.CRIT, pos, 4, 0.1, 0.1, 0.1, 0.05);
                     });
         }
         return true;
@@ -909,8 +909,8 @@ final class Habilidades implements Listener {
                 tarefa.cancel();
                 return;
             }
-            w.spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, l.clone().add(0, 0.8, 0), t[0] == 0 ? 40 : 8, 1.6, 0.8, 1.6, 0.02);
-            w.spawnParticle(Particle.LARGE_SMOKE, l.clone().add(0, 1, 0), t[0] == 0 ? 60 : 10, 1.8, 1.0, 1.8, 0.03);
+            Fx.p(w, Particle.CAMPFIRE_COSY_SMOKE, l.clone().add(0, 0.8, 0), t[0] == 0 ? 40 : 8, 1.6, 0.8, 1.6, 0.02);
+            Fx.p(w, Particle.LARGE_SMOKE, l.clone().add(0, 1, 0), t[0] == 0 ? 60 : 10, 1.8, 1.0, 1.8, 0.03);
             t[0] += 5;
         }, 0L, 5L);
         p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 100, 0, false, false));
@@ -976,8 +976,8 @@ final class Habilidades implements Listener {
             for (int i = 0; i < 4; i++) {
                 double a = base + Math.PI / 2 * i;
                 Location pt = c.clone().add(Math.cos(a) * 2.0, 0, Math.sin(a) * 2.0);
-                w.spawnParticle(Particle.SWEEP_ATTACK, pt, 1, 0, 0, 0, 0);
-                w.spawnParticle(Particle.CRIT, pt, 2, 0.1, 0.1, 0.1, 0.05);
+                Fx.p(w, Particle.SWEEP_ATTACK, pt, 1, 0, 0, 0, 0);
+                Fx.p(w, Particle.CRIT, pt, 2, 0.1, 0.1, 0.1, 0.05);
             }
             if (t[0] % 10 == 0) {
                 p.swingMainHand();
@@ -1024,7 +1024,7 @@ final class Habilidades implements Listener {
             }
             if (i[0] >= fila.size()) {
                 Torretas.linha(p.getLocation().add(0, 1, 0), origem.clone().add(0, 1, 0), 0.5,
-                        pt -> w.spawnParticle(Particle.DUST, pt, 1, 0.05, 0.05, 0.05, 0, roxo));
+                        pt -> Fx.p(w, Particle.DUST, pt, 1, 0.05, 0.05, 0.05, 0, roxo));
                 if (p.getWorld().equals(origem.getWorld()))
                     plugin.fx.corte(p.getLocation().add(0, 1, 0), origem.clone().add(0, 1, 0), Efeitos.b(Material.PURPLE_STAINED_GLASS), 0.1, 8, org.bukkit.Color.fromRGB(190, 70, 255));
                 if (origem.getWorld().equals(p.getWorld())) p.teleport(origem, PlayerTeleportEvent.TeleportCause.PLUGIN);
@@ -1038,7 +1038,7 @@ final class Habilidades implements Listener {
             Location d = atras(a);
             if (d == null) d = a.getLocation();
             Torretas.linha(p.getLocation().add(0, 1, 0), d.clone().add(0, 1, 0), 0.5,
-                    pt -> w.spawnParticle(Particle.DUST, pt, 1, 0.05, 0.05, 0.05, 0, roxo));
+                    pt -> Fx.p(w, Particle.DUST, pt, 1, 0.05, 0.05, 0.05, 0, roxo));
             Location saida = p.getLocation().add(0, 1, 0);
             if (!p.teleport(d, PlayerTeleportEvent.TeleportCause.ENDER_PEARL)) return;
             plugin.fx.corte(saida, d.clone().add(0, 1, 0), Efeitos.b(Material.WHITE_STAINED_GLASS), 0.1, 8, org.bukkit.Color.fromRGB(190, 70, 255));
@@ -1047,8 +1047,8 @@ final class Habilidades implements Listener {
             plugin.fx.cortesX(a.getLocation().add(0, a.getHeight() * 0.6, 0), d.toVector().subtract(saida.toVector()), 1.8, org.bukkit.Color.fromRGB(230, 200, 255));
             p.swingMainHand();
             Location meio = a.getLocation().add(0, a.getHeight() * 0.6, 0);
-            w.spawnParticle(Particle.SWEEP_ATTACK, meio, 2, 0.3, 0.2, 0.3, 0);
-            w.spawnParticle(Particle.CRIT, meio, 12, 0.3, 0.4, 0.3, 0.2);
+            Fx.p(w, Particle.SWEEP_ATTACK, meio, 2, 0.3, 0.2, 0.3, 0);
+            Fx.p(w, Particle.CRIT, meio, 12, 0.3, 0.4, 0.3, 0.2);
             w.playSound(meio, Sound.ENTITY_PLAYER_ATTACK_STRONG, 1f, 1.3f);
             plugin.causarDano(a, DANO_RELAMPAGO * f, p);
         }, 2L, 5L);
@@ -1067,7 +1067,7 @@ final class Habilidades implements Listener {
         w.playSound(c, Sound.BLOCK_GRASS_BREAK, 1f, 0.6f);
         for (int i = 0; i < 24; i++) {
             double a = Math.PI * 2 * i / 24;
-            w.spawnParticle(Particle.BLOCK, c.clone().add(Math.cos(a) * 3.5, 0.2, Math.sin(a) * 3.5), 3, 0.1, 0.2, 0.1, 0, raiz);
+            Fx.p(w, Particle.BLOCK, c.clone().add(Math.cos(a) * 3.5, 0.2, Math.sin(a) * 3.5), 3, 0.1, 0.2, 0.1, 0, raiz);
         }
         plugin.fx.anel(c.clone().add(0, 0.1, 0), raiz, 3.5, 6, 16, 0.45f, null);
         for (int i = 0; i < 8; i++) {
@@ -1144,11 +1144,11 @@ final class Habilidades implements Listener {
                 le.setVelocity(new Vector(0, Math.min(0, v.getY()), 0));
                 if (t[0] % 4 == 0) {
                     Location pe = le.getLocation().add(0, 0.3, 0);
-                    w.spawnParticle(Particle.BLOCK, pe, 6, 0.3, 0.3, 0.3, 0, raiz);
-                    w.spawnParticle(Particle.DUST, pe, 3, 0.3, 0.4, 0.3, 0, marrom);
+                    Fx.p(w, Particle.BLOCK, pe, 6, 0.3, 0.3, 0.3, 0, raiz);
+                    Fx.p(w, Particle.DUST, pe, 3, 0.3, 0.4, 0.3, 0, marrom);
                 }
             }
-            if (t[0] % 8 == 0) w.spawnParticle(Particle.HAPPY_VILLAGER, c.clone().add(0, 0.3, 0), 6, 2.5, 0.2, 2.5, 0);
+            if (t[0] % 8 == 0) Fx.p(w, Particle.HAPPY_VILLAGER, c.clone().add(0, 0.3, 0), 6, 2.5, 0.2, 2.5, 0);
             t[0]++;
         }, 0L, 1L);
         Poderes.barra(p, "§2§lRAIZES! §7" + (presos.isEmpty() ? "Ninguem foi preso." : presos.size() + " inimigo(s) preso(s) por 3s"));
@@ -1200,7 +1200,7 @@ final class Habilidades implements Listener {
             }
             AttributeInstance ataque = lobo.getAttribute(Attribute.ATTACK_DAMAGE);
             if (ataque != null) ataque.setBaseValue(DANO_LOBO * f);
-            w.spawnParticle(Particle.SOUL, lobo.getLocation().add(0, 0.5, 0), 10, 0.3, 0.3, 0.3, 0.02);
+            Fx.p(w, Particle.SOUL, lobo.getLocation().add(0, 0.5, 0), 10, 0.3, 0.3, 0.3, 0.02);
             plugin.fx.colunaDeLuz(lobo.getLocation(), Efeitos.b(Material.LIGHT_BLUE_STAINED_GLASS), 3.0, 0.9, 10, org.bukkit.Color.fromRGB(120, 220, 255));
             plugin.cena.loboChega(lobo.getLocation());
             ids.add(lobo.getUniqueId());
@@ -1226,7 +1226,7 @@ final class Habilidades implements Listener {
             for (UUID id : lobos.getOrDefault(dono, List.of())) {
                 Entity e = Bukkit.getEntity(id);
                 if (e == null) continue;
-                w.spawnParticle(Particle.SOUL_FIRE_FLAME, e.getLocation().add(0, 0.6, 0), 2, 0.2, 0.2, 0.2, 0.0);
+                Fx.p(w, Particle.SOUL_FIRE_FLAME, e.getLocation().add(0, 0.6, 0), 2, 0.2, 0.2, 0.2, 0.0);
                 if (!e.getWorld().equals(p.getWorld()) || e.getLocation().distanceSquared(p.getLocation()) > 30 * 30) {
                     e.teleport(p.getLocation());
                 }
@@ -1244,7 +1244,7 @@ final class Habilidades implements Listener {
         for (UUID id : l) {
             Entity e = Bukkit.getEntity(id);
             if (e != null && e.isValid()) {
-                e.getWorld().spawnParticle(Particle.SOUL, e.getLocation().add(0, 0.5, 0), 12, 0.3, 0.3, 0.3, 0.03);
+                Fx.p(e.getWorld(), Particle.SOUL, e.getLocation().add(0, 0.5, 0), 12, 0.3, 0.3, 0.3, 0.03);
                 e.remove();
             }
         }
@@ -1257,7 +1257,7 @@ final class Habilidades implements Listener {
         Location l = p.getLocation();
         w.playSound(l, Sound.BLOCK_BEACON_ACTIVATE, 1f, 1.6f);
         w.playSound(l, Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.8f);
-        w.spawnParticle(Particle.TOTEM_OF_UNDYING, l.clone().add(0, 1, 0), 40, 0.5, 0.8, 0.5, 0.3);
+        Fx.p(w, Particle.TOTEM_OF_UNDYING, l.clone().add(0, 1, 0), 40, 0.5, 0.8, 0.5, 0.3);
         org.bukkit.Color verdeClaro = org.bukkit.Color.fromRGB(120, 255, 120);
         plugin.fx.colunaDeLuz(l, Efeitos.b(Material.LIME_STAINED_GLASS), 7.0, 1.6, 14, verdeClaro);
         plugin.cena.bencao(l);
@@ -1265,7 +1265,7 @@ final class Habilidades implements Listener {
         plugin.fx.bolhas(l, Efeitos.b(Material.LIME_STAINED_GLASS), 16, 6.0, 2.6, 20, verdeClaro);
         for (int i = 0; i < 48; i++) {
             double a = Math.PI * 2 * i / 48;
-            w.spawnParticle(Particle.HAPPY_VILLAGER, l.clone().add(Math.cos(a) * 8, 0.3, Math.sin(a) * 8), 1, 0, 0, 0, 0);
+            Fx.p(w, Particle.HAPPY_VILLAGER, l.clone().add(Math.cos(a) * 8, 0.3, Math.sin(a) * 8), 1, 0, 0, 0, 0);
         }
         int curados = 0;
         for (Entity e : w.getNearbyEntities(l, 8, 4, 8)) {
@@ -1278,7 +1278,7 @@ final class Habilidades implements Listener {
             le.setHealth(Math.min(m, le.getHealth() + 6.0));
             le.setFireTicks(0);
             le.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 1));
-            w.spawnParticle(Particle.HEART, le.getLocation().add(0, le.getHeight() + 0.3, 0), 5, 0.4, 0.3, 0.4, 0.1);
+            Fx.p(w, Particle.HEART, le.getLocation().add(0, le.getHeight() + 0.3, 0), 5, 0.4, 0.3, 0.4, 0.1);
             if (e instanceof Player outro && !outro.equals(p)) {
                 Poderes.barra(outro, "§a" + p.getName() + " te curou com a Bencao da Natureza!");
                 curados++;
@@ -1308,9 +1308,9 @@ final class Habilidades implements Listener {
                     Location pe = c.clone().add(Math.cos(a) * r, 0, Math.sin(a) * r);
                     if (i % 2 == 0) plugin.fx.pilar(pe.clone().subtract(0, 0.3, 0), Efeitos.b(Material.CACTUS), rnd().nextDouble(1.0, 1.9), 0.32, rnd().nextDouble(0.1, 0.45), 3, 10, null);
                     for (double y = 0; y < 1.6; y += 0.25) {
-                        w.spawnParticle(Particle.DUST, pe.clone().add(0, y, 0), 1, 0.02, 0, 0.02, 0, verde);
+                        Fx.p(w, Particle.DUST, pe.clone().add(0, y, 0), 1, 0.02, 0, 0.02, 0, verde);
                     }
-                    w.spawnParticle(Particle.BLOCK, pe.clone().add(0, 0.3, 0), 4, 0.2, 0.2, 0.2, 0, espinho);
+                    Fx.p(w, Particle.BLOCK, pe.clone().add(0, 0.3, 0), 4, 0.2, 0.2, 0.2, 0, espinho);
                 }
                 for (LivingEntity le : inimigosPerto(c, 7.0, 3.0, p)) {
                     if (plugin.causarDano(le, DANO_ESPINHOS * f, p)) {
@@ -1379,22 +1379,22 @@ final class Habilidades implements Listener {
         org.bukkit.entity.Trident visual = plugin.vis.tridente(origem, dir, 2.0, 20, true);
         projetil(p, origem, dir, 30, 2.0, 0.7,
                 pos -> {
-                    w.spawnParticle(Particle.DUST, pos, 3, 0.05, 0.05, 0.05, 0, agua);
-                    w.spawnParticle(Particle.SPLASH, pos, 3, 0.05, 0.05, 0.05, 0);
-                    w.spawnParticle(Particle.BUBBLE_POP, pos, 2, 0.1, 0.1, 0.1, 0.02);
+                    Fx.p(w, Particle.DUST, pos, 3, 0.05, 0.05, 0.05, 0, agua);
+                    Fx.p(w, Particle.SPLASH, pos, 3, 0.05, 0.05, 0.05, 0);
+                    Fx.p(w, Particle.BUBBLE_POP, pos, 2, 0.1, 0.1, 0.1, 0.02);
                 },
                 (alvo, pos) -> {
                     plugin.vis.remover(visual);
-                    w.spawnParticle(Particle.SPLASH, pos, 40, 0.4, 0.4, 0.4, 0.3);
-                    w.spawnParticle(Particle.FALLING_WATER, pos.clone().add(0, 0.8, 0), 25, 0.5, 0.3, 0.5, 0);
-                    w.spawnParticle(Particle.BUBBLE_POP, pos, 20, 0.4, 0.4, 0.4, 0.1);
+                    Fx.p(w, Particle.SPLASH, pos, 40, 0.4, 0.4, 0.4, 0.3);
+                    Fx.p(w, Particle.FALLING_WATER, pos.clone().add(0, 0.8, 0), 25, 0.5, 0.3, 0.5, 0);
+                    Fx.p(w, Particle.BUBBLE_POP, pos, 20, 0.4, 0.4, 0.4, 0.1);
                     w.playSound(pos, Sound.ITEM_TRIDENT_HIT, 1f, 1f);
                     w.playSound(pos, Sound.ENTITY_GENERIC_SPLASH, 0.8f, 1.2f);
                     plugin.causarDano(alvo, DANO_ARREMESSO * f, p);
                 },
                 pos -> {
                     plugin.vis.remover(visual);
-                    w.spawnParticle(Particle.SPLASH, pos, 20, 0.3, 0.3, 0.3, 0.15);
+                    Fx.p(w, Particle.SPLASH, pos, 20, 0.3, 0.3, 0.3, 0.15);
                     w.playSound(pos, Sound.ITEM_TRIDENT_HIT_GROUND, 1f, 1f);
                 });
         return true;
@@ -1467,9 +1467,9 @@ final class Habilidades implements Listener {
                     Visuais.escala(b, 0.9f, 0f, 1);
                     Bukkit.getScheduler().runTaskLater(plugin, () -> Visuais.escala(b, 1.3f, 0.4f, 4), 1L);
                     Bukkit.getScheduler().runTaskLater(plugin, () -> Visuais.escala(b, 0.05f, 0.8f, 6), 6L);
-                    w.spawnParticle(Particle.SPLASH, pt.clone().add(0, 1, 0), 6, 0.3, 0.4, 0.3, 0.15);
-                    w.spawnParticle(Particle.FALLING_WATER, pt.clone().add(0, 1.5, 0), 3, 0.3, 0.1, 0.3, 0);
-                    w.spawnParticle(Particle.DUST, pt.clone().add(0, 0.8, 0), 1, 0.1, 0.4, 0.1, 0, azul);
+                    Fx.p(w, Particle.SPLASH, pt.clone().add(0, 1, 0), 6, 0.3, 0.4, 0.3, 0.15);
+                    Fx.p(w, Particle.FALLING_WATER, pt.clone().add(0, 1.5, 0), 3, 0.3, 0.1, 0.3, 0);
+                    Fx.p(w, Particle.DUST, pt.clone().add(0, 0.8, 0), 1, 0.1, 0.4, 0.1, 0, azul);
                 }
                 if (dist % 2 == 0) w.playSound(c, Sound.ENTITY_GENERIC_SPLASH, 0.7f, 1.2f);
             }, k * 2L);
@@ -1505,15 +1505,15 @@ final class Habilidades implements Listener {
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 if (!le.isValid() || le.isDead() || !p.isOnline()) return;
                 plugin.vis.tridente(le.getLocation().add(0, 12, 0), new Vector(0, -1, 0), 3.0, 6, true);
-                w.spawnParticle(Particle.ELECTRIC_SPARK, le.getLocation().add(0, 6, 0), 20, 0.3, 4, 0.3, 0.05);
+                Fx.p(w, Particle.ELECTRIC_SPARK, le.getLocation().add(0, 6, 0), 20, 0.3, 4, 0.3, 0.05);
             }, 4L * i);
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 if (!le.isValid() || le.isDead() || !p.isOnline()) return;
                 w.strikeLightningEffect(le.getLocation());
-                w.spawnParticle(Particle.FLASH, le.getLocation().add(0, 1, 0), 1, 0, 0, 0, 0, Color.WHITE);
+                Fx.p(w, Particle.FLASH, le.getLocation().add(0, 1, 0), 1, 0, 0, 0, 0, Color.WHITE);
                 plugin.cena.fogos(le.getLocation().add(0, 1, 0), org.bukkit.FireworkEffect.Type.BURST, true, Cenas.CIANO, Cenas.BRANCO, Cenas.AZUL);
                 plugin.cena.raioParticulas(le.getLocation().add(0, 10, 0), le.getLocation().add(0, 1, 0), 0.6);
-                w.spawnParticle(Particle.SPLASH, le.getLocation().add(0, 0.5, 0), 30, 0.6, 0.3, 0.6, 0.3);
+                Fx.p(w, Particle.SPLASH, le.getLocation().add(0, 0.5, 0), 30, 0.6, 0.3, 0.6, 0.3);
                 plugin.causarDano(le, DANO_TRIDENTE_RAIO * f, p);
             }, 4L * i + 4L);
         }
@@ -1563,16 +1563,16 @@ final class Habilidades implements Listener {
                 g.teleport(c.clone().add(Math.cos(a) * r, y, Math.sin(a) * r));
                 Visuais.escala(g, 0.45f, (float) a, 2);
             }
-            w.spawnParticle(Particle.BUBBLE_COLUMN_UP, c.clone().add(0, 0.2, 0), 6, 0.4, 0.1, 0.4, 0.05);
-            if (t[0] % 6 == 0) w.spawnParticle(Particle.FALLING_WATER, c.clone().add(0, 3, 0), 8, 1.5, 0.2, 1.5, 0);
+            Fx.p(w, Particle.BUBBLE_COLUMN_UP, c.clone().add(0, 0.2, 0), 6, 0.4, 0.1, 0.4, 0.05);
+            if (t[0] % 6 == 0) Fx.p(w, Particle.FALLING_WATER, c.clone().add(0, 3, 0), 8, 1.5, 0.2, 1.5, 0);
             double base = t[0] * 0.4;
             for (int i = 0; i < 6; i++) {
                 double a = base + Math.PI / 3 * i;
                 double r = 0.6 + (i % 3) * 0.9;
                 double y = (i % 3) * 0.7;
                 Location pt = c.clone().add(Math.cos(a) * r, 0.2 + y, Math.sin(a) * r);
-                w.spawnParticle(Particle.DUST, pt, 1, 0, 0, 0, 0, azul);
-                w.spawnParticle(Particle.SPLASH, pt, 2, 0.05, 0.05, 0.05, 0);
+                Fx.p(w, Particle.DUST, pt, 1, 0, 0, 0, 0, azul);
+                Fx.p(w, Particle.SPLASH, pt, 2, 0.05, 0.05, 0.05, 0);
             }
             if (t[0] % 10 == 0) {
                 w.playSound(c, Sound.BLOCK_BUBBLE_COLUMN_WHIRLPOOL_INSIDE, 0.8f, 1f);
@@ -1620,8 +1620,8 @@ final class Habilidades implements Listener {
         }, 2L);
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             w.strikeLightningEffect(onde);
-            w.spawnParticle(Particle.EXPLOSION_EMITTER, onde, 1);
-            w.spawnParticle(Particle.SPLASH, onde.clone().add(0, 1, 0), 120, 2.5, 1.2, 2.5, 0.4);
+            Fx.p(w, Particle.EXPLOSION_EMITTER, onde, 1);
+            Fx.p(w, Particle.SPLASH, onde.clone().add(0, 1, 0), 120, 2.5, 1.2, 2.5, 0.4);
             w.playSound(onde, Sound.ITEM_TRIDENT_THUNDER, 1f, 0.8f);
         }, 10L);
         org.bukkit.entity.BlockDisplay cupula = plugin.vis.bloco(c.clone().add(0, 1, 0), Material.LIGHT_BLUE_STAINED_GLASS.createBlockData(), 24, Color.fromRGB(40, 120, 255));
@@ -1633,8 +1633,8 @@ final class Habilidades implements Listener {
                 for (int i = 0; i < 24; i++) {
                     double a = Math.PI * 2 / 24 * i;
                     Location pt = c.clone().add(Math.cos(a) * raio, 0.5, Math.sin(a) * raio);
-                    w.spawnParticle(Particle.SPLASH, pt, 3, 0.1, 0.6, 0.1, 0.1);
-                    w.spawnParticle(Particle.DUST, pt, 1, 0.1, 0.4, 0.1, 0, azul);
+                    Fx.p(w, Particle.SPLASH, pt, 3, 0.1, 0.6, 0.1, 0.1);
+                    Fx.p(w, Particle.DUST, pt, 1, 0.1, 0.4, 0.1, 0, azul);
                 }
             }, r * 2L);
         }
@@ -1659,30 +1659,30 @@ final class Habilidades implements Listener {
                 explode ? Color.fromRGB(255, 90, 20) : Color.fromRGB(255, 220, 90));
         projetil(p, origem, dir, alcance, velocidade, 0.6,
                 pos -> {
-                    w.spawnParticle(explode ? Particle.SMALL_FLAME : Particle.CRIT, pos, 2, 0.02, 0.02, 0.02, 0);
-                    if (!explode) w.spawnParticle(Particle.END_ROD, pos, 1, 0.01, 0.01, 0.01, 0);
+                    Fx.p(w, explode ? Particle.SMALL_FLAME : Particle.CRIT, pos, 2, 0.02, 0.02, 0.02, 0);
+                    if (!explode) Fx.p(w, Particle.END_ROD, pos, 1, 0.01, 0.01, 0.01, 0);
                 },
                 (alvo, pos) -> {
                     plugin.vis.remover(visual);
                     w.playSound(pos, Sound.ENTITY_ARROW_HIT, 1f, 1.1f);
-                    w.spawnParticle(Particle.CRIT, pos, 12, 0.2, 0.2, 0.2, 0.3);
+                    Fx.p(w, Particle.CRIT, pos, 12, 0.2, 0.2, 0.2, 0.3);
                     if (explode) explodir(p, pos, dano);
                     else plugin.causarDano(alvo, dano, p);
                 },
                 pos -> {
                     plugin.vis.remover(visual);
                     if (explode) explodir(p, pos, dano);
-                    else w.spawnParticle(Particle.CRIT, pos, 6, 0.1, 0.1, 0.1, 0.05);
+                    else Fx.p(w, Particle.CRIT, pos, 6, 0.1, 0.1, 0.1, 0.05);
                 });
     }
 
     private void explodir(Player p, Location pos, double dano) {
         World w = pos.getWorld();
-        w.spawnParticle(Particle.EXPLOSION, pos, 2, 0.3, 0.3, 0.3, 0);
+        Fx.p(w, Particle.EXPLOSION, pos, 2, 0.3, 0.3, 0.3, 0);
         plugin.cena.explosaoFlecha(pos);
-        w.spawnParticle(Particle.FLAME, pos, 35, 0.8, 0.5, 0.8, 0.08);
-        w.spawnParticle(Particle.LAVA, pos, 8, 0.6, 0.3, 0.6, 0);
-        w.spawnParticle(Particle.LARGE_SMOKE, pos, 10, 0.6, 0.4, 0.6, 0.03);
+        Fx.p(w, Particle.FLAME, pos, 35, 0.8, 0.5, 0.8, 0.08);
+        Fx.p(w, Particle.LAVA, pos, 8, 0.6, 0.3, 0.6, 0);
+        Fx.p(w, Particle.LARGE_SMOKE, pos, 10, 0.6, 0.4, 0.6, 0.03);
         w.playSound(pos, Sound.ENTITY_GENERIC_EXPLODE, 0.8f, 1.2f);
         for (LivingEntity le : inimigosPerto(pos, 3.5, 2.5, p)) {
             if (!plugin.causarDano(le, dano, p)) continue;
@@ -1738,7 +1738,7 @@ final class Habilidades implements Listener {
                 double a = rnd().nextDouble(Math.PI * 2), r = rnd().nextDouble(0, 4.0);
                 Location chao = c.clone().add(Math.cos(a) * r, 0.1, Math.sin(a) * r);
                 plugin.vis.flecha(chao.clone().add(rnd().nextDouble(-1, 1), 11, rnd().nextDouble(-1, 1)), new Vector(0, -1, 0), 1.6, 14, true, false, Color.fromRGB(230, 230, 255));
-                w.spawnParticle(Particle.CRIT, chao.clone().add(0, 0.2, 0), 3, 0.1, 0.1, 0.1, 0.1);
+                Fx.p(w, Particle.CRIT, chao.clone().add(0, 0.2, 0), 3, 0.1, 0.1, 0.1, 0.1);
             }
             w.playSound(c, Sound.ENTITY_ARROW_HIT, 0.6f, 1.3f);
             for (LivingEntity le : inimigosPerto(c, 4.0, 3.0, p)) plugin.causarDano(le, DANO_CHUVA * f, p);

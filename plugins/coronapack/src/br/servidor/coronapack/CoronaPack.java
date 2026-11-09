@@ -181,10 +181,10 @@ public final class CoronaPack extends JavaPlugin implements Listener {
     /** Pergunta rapida (HEAD) ao link: responde 200 com application/zip? */
     private static boolean linkNoAr(String u) {
         try {
-            java.net.http.HttpClient c = java.net.http.HttpClient.newBuilder().connectTimeout(java.time.Duration.ofSeconds(6))
+            java.net.http.HttpClient c = java.net.http.HttpClient.newBuilder().connectTimeout(java.time.Duration.ofSeconds(15))
                     .followRedirects(java.net.http.HttpClient.Redirect.NORMAL).build();
             java.net.http.HttpResponse<Void> r = c.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(u))
-                    .timeout(java.time.Duration.ofSeconds(8)).header("User-Agent", "CoronaServer/1.0")
+                    .timeout(java.time.Duration.ofSeconds(40)).header("User-Agent", "CoronaServer/1.0")
                     .method("HEAD", java.net.http.HttpRequest.BodyPublishers.noBody()).build(), java.net.http.HttpResponse.BodyHandlers.discarding());
             return r.statusCode() == 200 && r.headers().firstValue("content-type").orElse("").toLowerCase(java.util.Locale.ROOT).startsWith("application/zip");
         } catch (Exception e) {

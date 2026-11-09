@@ -7,9 +7,21 @@ construir: true            # constroi sozinho as que faltam (aos poucos, sem tra
 refazer-antigas: true      # desmancha as masmorras da versao antiga (pequenas), o terreno volta, e faz as novas
 aproximar: true # masmorras longe demais (de antes das distancias menores) sao desmanchadas e refeitas mais perto (a secreta fica)
 mundos:
-  normal: world
-  nether: world_nether
-  end: world_the_end
+  normal: masmorras_mundo     # mundo novo das masmorras (gerado pelo plugin, em aneis por nivel)
+  nether: masmorras_nether    # Nether so das masmorras
+  end: masmorras_end          # End so das masmorras
+  survival: world             # spawn principal / survival (para "voltar ao spawn")
+
+# Mundo novo das masmorras: gigante, em aneis. Nivel 1 ate zonas[0] blocos do lobby, nivel 2 ate zonas[1], nivel 3 ate
+# zonas[2], nivel 4 dali ate a borda. Sem fome; o terreno quebra (menos lobby, estruturas e masmorras); nenhum monstro nasce sozinho.
+mundo-novo:
+  ativo: true
+  nome: masmorras_mundo
+  semente: 20261108
+  hora-fixa: 12200    # fim de tarde eterno no mundo das masmorras (ceu laranja, luz cheia); -1 = dia e noite normais
+  sem-chuva: true
+  zonas: [900, 1900, 3000]
+  nether-end: true            # cria tambem o Nether e o End proprios das masmorras
 
 # Quantas de cada tipo. No maximo 2 de cada (pedido do Paulo, 04/11): as que passarem disso sao desmanchadas sozinhas
 # (o terreno volta) e as 40 novas enchem o mapa. Nivel 1 fica a 250-1500 blocos do spawn, nivel 2 a 1000-2600, nivel 3 e 4 de 2200 ate a borda.
@@ -121,11 +133,43 @@ xp-classes:
 # o Nether e 8 vezes menor (1 bloco la = 8 aqui).
 borda:
   aplicar: true
-  normal: 10000
+  normal: 8200
   nether: 1250
-  end: 10000
+  end: 6000
 
 # Reliquias: o equipamento do chefe e dos baus vira reliquia da masmorra (nome, brilho, poder). Monstros comuns
 # soltam uma reliquia de vez em quando (0.025 = 2,5% por monstro morto por jogador).
 reliquias:
   chance-monstro: 0.025
+
+# Campos de monstros do Mundo das Masmorras (grupos parados pelo mapa para farmar XP; voltam 4 min depois de morrerem).
+campos:
+  ativo: true
+  um-a-cada-chunks: 8
+  coronas-por-monstro: 1   # x nivel do anel
+  xp-classes: 6            # XP de habilidade por monstro, x nivel do anel
+  # v2 (08/11): as estruturas do mapa (ruina, torre, monolito, acampamento, circulo, altar, ossada, torre quebrada)
+  # tem guardioes do tema; campos do mato ganham fogueira/barraca/estacas; elites (brilhando, 3x vida) dao mais; limpar
+  # o campo inteiro da bonus para quem matou o ultimo.
+  guardioes-das-estruturas: true
+  enfeites: true
+  elite-multiplicador: 6   # coronas e XP do elite = normal x isto
+  premio-limpar: true
+  coronas-limpar: 4        # x nivel do anel
+
+# FASE 7: mundos que deixaram de ser de masmorras. Tudo que sobrou neles e desmanchado (o terreno volta), uma por vez.
+desmanchar-mundos: [world, world_nether, world_the_end]
+
+# Dificuldade dos chefes por nivel (1 a 5): multiplica a vida e o dano do chefe. Nivel 1 e 2 mais leves (pedido do Paulo).
+dificuldade:
+  vida-chefe: [0.7, 0.85, 1.0, 1.0, 1.0]
+  dano-chefe: [0.8, 0.9, 1.0, 1.0, 1.0]
+
+# Skins dos NPCs (bonecos com cara propria no lugar dos aldeoes). As skins (PNG no jar) sao assinadas UMA vez pelo
+# MineSkin (api.mineskin.org, aprovado pelo Paulo 08/11) e ficam em skins.yml. Sem api-key funciona, so mais devagar.
+# /masmorras admin skins mostra o estado e tenta de novo as que faltam.
+skins:
+  ligado: true
+  api: https://api.mineskin.org
+  api-key: ""
+  intervalo-segundos: 6

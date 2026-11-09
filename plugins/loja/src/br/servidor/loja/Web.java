@@ -199,6 +199,7 @@ final class Web {
                 : caminho.endsWith(".js") ? "application/javascript; charset=utf-8"
                 : caminho.endsWith(".css") ? "text/css; charset=utf-8"
                 : caminho.endsWith(".png") ? "image/png"
+                : caminho.endsWith(".jpg") ? "image/jpeg"
                 : caminho.endsWith(".svg") ? "image/svg+xml"
                 : caminho.endsWith(".ico") ? "image/x-icon"
                 : caminho.endsWith(".woff2") ? "font/woff2" : "application/octet-stream";
@@ -215,7 +216,8 @@ final class Web {
         b.append("\"max\":").append(pl.maxJogadores()).append(',');
         b.append("\"ipJava\":").append(Loja.json(pl.cfg("servidor.ip-java", ""))).append(',');
         b.append("\"ipBedrock\":").append(Loja.json(pl.cfg("servidor.ip-bedrock", ""))).append(',');
-        b.append("\"portaBedrock\":").append(Loja.json(pl.cfg("servidor.porta-bedrock", "")));
+        b.append("\"portaBedrock\":").append(Loja.json(pl.cfg("servidor.porta-bedrock", ""))).append(',');
+        b.append("\"discord\":").append(Loja.json(pl.cfg("servidor.discord", "https://discord.gg/uhEaWb9sJA")));
         b.append("},\"modo\":").append(Loja.json(pl.mp().ativo() ? "auto" : "manual"));
         b.append(",\"pedeEmail\":").append(pl.mp().ativo());
         b.append(",\"aberta\":").append(pl.aberta());

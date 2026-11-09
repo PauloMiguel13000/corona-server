@@ -148,6 +148,14 @@ public final class TesteBot extends JavaPlugin implements org.bukkit.event.Liste
                 log("PKT " + bot + " ADD id=" + a.getId() + " tipo=" + a.getType().toShortString() + " pos=" + String.format("%.2f %.2f %.2f", a.getX(), a.getY(), a.getZ()) + " yaw=" + a.getYRot());
             } else if (m instanceof net.minecraft.network.protocol.game.ClientboundSetPassengersPacket sp) {
                 log("PKT " + bot + " MONTAR veiculo=" + sp.getVehicle() + " passageiros=" + java.util.Arrays.toString(sp.getPassengers()));
+            } else if (m instanceof net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket tt) {
+                log("PKT " + bot + " TITULO " + tt.text().getString());
+            } else if (m instanceof net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket st) {
+                log("PKT " + bot + " SUBTITULO " + st.text().getString());
+            } else if (m instanceof net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket ab) {
+                log("PKT " + bot + " BARRA " + ab.text().getString());
+            } else if (m instanceof net.minecraft.network.protocol.game.ClientboundClearTitlesPacket) {
+                log("PKT " + bot + " LIMPAR-TITULO");
             } else if (m instanceof net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket r) {
                 log("PKT " + bot + " APAGAR " + r.entityIds());
             } else if (m instanceof net.minecraft.network.protocol.game.ClientboundMoveEntityPacket.Rot r) {
@@ -182,9 +190,14 @@ public final class TesteBot extends JavaPlugin implements org.bukkit.event.Liste
     }
 
     private Player entrar(String nome, Location onde) {
+        return entrar(nome, onde, false);
+    }
+
+    /** bedrock = UUID com a parte alta zerada, como o Floodgate (para testar o que e so do celular). */
+    private Player entrar(String nome, Location onde, boolean bedrock) {
         MinecraftServer server = ((CraftServer) Bukkit.getServer()).getServer();
         ServerLevel level = ((CraftWorld) onde.getWorld()).getHandle();
-        UUID id = UUID.nameUUIDFromBytes(("OfflinePlayer:" + nome).getBytes());
+        UUID id = bedrock ? new UUID(0L, 0x9000000L + Math.abs(nome.hashCode())) : UUID.nameUUIDFromBytes(("OfflinePlayer:" + nome).getBytes());
         GameProfile perfil = new GameProfile(id, nome);
         ServerPlayer sp = new ServerPlayer(server, level, perfil, ClientInformation.createDefault());
         Connection con = new Connection(PacketFlow.SERVERBOUND);
@@ -216,12 +229,12 @@ public final class TesteBot extends JavaPlugin implements org.bukkit.event.Liste
         }
         String sub = a[0];
         String nome = a[1];
-        if (sub.equals("entrar")) {
-            World w = Bukkit.getWorlds().get(0);
+        if (sub.equals("entrar") || sub.equals("entrarb")) {
+            World w = a.length >= 6 ? Bukkit.getWorld(a[5]) : Bukkit.getWorlds().get(0);
             Location l = a.length >= 5
                     ? new Location(w, Double.parseDouble(a[2]), Double.parseDouble(a[3]), Double.parseDouble(a[4]))
                     : w.getSpawnLocation();
-            Player p = entrar(nome, l);
+            Player p = entrar(nome, l, sub.equals("entrarb"));
             log("ENTROU " + p.getName() + " em " + fmt(p.getLocation()));
             return true;
         }
@@ -299,8 +312,9 @@ public final class TesteBot extends JavaPlugin implements org.bukkit.event.Liste
                         Object mod = d.getItemStack() == null ? null : d.getItemStack().getData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL);
                         extra = " modelo=" + mod;
                     } else if (e instanceof org.bukkit.entity.LivingEntity le) {
-                        extra = " invisivel=" + le.isInvisible();
+                        extra = " invisivel=" + le.isInvisible() + " vida=" + (int) le.getHealth();
                     }
+                    if (e.customName() != null) extra += " nome='" + net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(e.customName()) + "'";
                     sb.append("\n   ").append(e.getType()).append(" ").append(fmt(e.getLocation())).append(" d=").append(String.format("%.1f", e.getLocation().distance(p.getLocation()))).append(extra);
                 }
                 log("VER " + p.getName() + ":" + sb);
@@ -430,6 +444,32 @@ public final class TesteBot extends JavaPlugin implements org.bukkit.event.Liste
                         : org.bukkit.event.player.PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED;
                 Bukkit.getPluginManager().callEvent(new org.bukkit.event.player.PlayerResourcePackStatusEvent(p, id, st));
                 log("PACOTE " + nome + " " + st);
+            }
+            case "mundo" -> {
+                // cria/carrega um mundo com um gerador de plugin: fake mundo <jogador> <nome> [gerador]
+                org.bukkit.WorldCreator wc = org.bukkit.WorldCreator.name(a[2]);
+                if (a.length > 3) wc.generator(a[3]);
+                org.bukkit.World w = Bukkit.createWorld(wc);
+                log("MUNDO " + a[2] + " -> " + (w == null ? "falhou" : w.getName() + " spawn=" + fmt(w.getSpawnLocation())));
+            }
+            case "fatia" -> {
+                // fatia vertical: fake fatia <jogador> <mundo> <x1> <x2> <y1> <y2> <z|z=...> ; mostra uma letra por bloco
+                org.bukkit.World w = Bukkit.getWorld(a[2]);
+                int x1 = Integer.parseInt(a[3]), x2 = Integer.parseInt(a[4]), y1 = Integer.parseInt(a[5]), y2 = Integer.parseInt(a[6]), z = Integer.parseInt(a[7]);
+                StringBuilder sb = new StringBuilder("FATIA z=" + z + "\n");
+                for (int yy = y2; yy >= y1; yy--) {
+                    sb.append(String.format("%4d ", yy));
+                    for (int x = x1; x <= x2; x++) {
+                        String n = w.getBlockAt(x, yy, z).getType().name();
+                        char c = n.equals("AIR") ? '.' : n.contains("STAIRS") ? '/' : n.contains("SLAB") ? '_' : n.contains("GLASS") || n.contains("BARS") ? '#'
+                                : n.contains("DOOR") ? 'D' : n.contains("BED") ? 'B' : n.contains("CHEST") ? 'C' : n.contains("LANTERN") || n.contains("TORCH") || n.contains("ROD") ? '*'
+                                : n.contains("LOG") || n.contains("PILLAR") ? 'I' : n.contains("PLANKS") || n.contains("WOOD") ? 'W' : n.contains("LEAVES") ? '%' : n.contains("FENCE") || n.contains("WALL") || n.contains("CHAIN") ? '|'
+                                : n.contains("GRASS") ? 'g' : n.contains("DIRT") ? 'd' : n.contains("WATER") ? '~' : n.contains("PLATE") ? '=' : n.contains("GOLD") ? '$' : n.contains("QUARTZ") ? 'Q' : n.contains("BOOKSHELF") ? 'b' : 'S';
+                        sb.append(c);
+                    }
+                    sb.append('\n');
+                }
+                log(sb.toString());
             }
             case "vazio" -> {
                 p.getInventory().clear();

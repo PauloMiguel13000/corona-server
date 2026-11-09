@@ -6,6 +6,18 @@ classes:
   troca-recarga-minutos: 60
   # Mostra a classe na lista de jogadores (TAB), ex: [Mago] Paulo
   mostrar-no-tab: true
+  # Travas: nivel de VIP exigido (1 VIP, 2 VIP+, 3 MVP, 4 LENDA; 0 = livre). Permissao poderes.todas-classes libera tudo.
+  travas:
+    lutador: 3
+    saiyajin: 3
+    cipo: 1
+    tridente: 1
+  # Preco em coronas para quem nao tem o VIP comprar a classe no Vendedor de Classes (lobby das masmorras). 0 = nao vende.
+  preco:
+    lutador: 90000
+    saiyajin: 120000
+    cipo: 50000
+    tridente: 50000
 
 # Mundos onde as habilidades das classes nao funcionam (ex.: o minigame Defesa da Torre,
 # para as torres do Engenheiro nao furarem o limite de torres). Tire 'defesa' da lista para liberar.
@@ -40,6 +52,9 @@ lobos:
 # Celular (Bedrock). extensao-itens: auto = se a extensao GeyserDisplayEntity estiver no Geyser, o celular ve os
 # itens do PC (laminas, folhas, estrela, tridente) e as copias de item do celular sao desligadas. sim / nao forca.
 celular:
+  # emissores: em vez da chuva de particulas, um emissor invisivel por efeito e o pacote v2 desenha a animacao no
+  # celular. false = volta a mandar particulas reduzidas (1/3).
+  emissores: true
   extensao-itens: auto
 
 # Lutador: passiva "Punhos de Aco". Soco de mao vazia da dano a mais, que cresce com o nivel de poder:
@@ -48,3 +63,17 @@ lutador:
   soco-bonus-min: 3.0
   soco-bonus-max: 14.0   # nivel maximo: soco carregado = 15 (espada de diamante afiacao IV = 9,5; netherite afiacao V = 11)
 # Mudou aqui? Use /poderes recarregar (admin), sem reiniciar.
+
+# Cipo: passiva "Seiva Venenosa". Todo ataque (soco, espada, flecha) envenena o monstro por veneno-segundos; o dano por
+# segundo cresce com o nivel de poder, de veneno-min (nivel 0) ate veneno-max (nivel da 5a habilidade). Mais fraco que o
+# soco do Lutador porque o Cipo pode usar espada. Pega mortos-vivos tambem.
+cipo:
+  veneno-min: 0.6
+  veneno-max: 3.0
+  veneno-segundos: 4
+
+# Barra de habilidades: as 5 habilidades da classe viram itens nos slots 1 a 5 da barra (segure e clique para usar).
+# Liga/desliga no item Habilidades do kit (livro) ou com /poderes. Liga sozinha ao escolher a classe.
+barra:
+  ligado: true
+  agachar-tambem: false   # true = agachar + soco no ar com a mao vazia tambem solta a habilidade escolhida

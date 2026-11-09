@@ -6,7 +6,9 @@ min-jogadores: 1          # quantos na fila para comecar a contagem (1 = da para
 max-jogadores: 8          # com essa quantidade na fila a contagem cai para 10 segundos (nao e limite: entra quem quiser)
 contagem-segundos: 30
 folhas-para-vencer: 8
-escala: 1.3               # tamanho do Slenderman (1.0 = altura normal de jogador)
+escala: 1.3               # tamanho do monstro (1.3 = 2,3 blocos, 1.0 = altura normal de jogador)
+modelo-3d: true           # true = monstro e o modelo 3D do pacote (Java e Bedrock); false = boneco com skin
+modelo-giro: 0            # graus a mais no giro do modelo 3D (so se a frente aparecer virada)
 distancia-visao: 5        # distancia de visao do mundo do Slenderman (em chunks); menor = mais neblina
 teto-escuro: true         # true = floresta escura o tempo todo (vidro escuro no limite de altura segura a luz da lua); false = tira
 escuridao-a-cada: 10      # segundos entre as piscadas (efeito Escuridao); com o Slenderman perto vem mais vezes

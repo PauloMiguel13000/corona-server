@@ -89,6 +89,12 @@ divulgacao:
     - '&6&l>> &eVote no servidor e ganhe itens: &f/votar &7(1 vez por dia em cada site)'
     - '&6&l>> &eMasmorras com chefes pelo mundo: &f/masmorras mapa &7| jogue em grupo: &f/grupo'
     - '&6&l>> &eNovo por aqui? Leia as placas na ilha do spawn &7(&f/spawn&7) e pegue os kits: &f/kit'
+  # Convite do Discord no chat (so aparece se tiver jogador online). Comando: /discord
+  discord:
+    ativo: true
+    link: 'https://discord.gg/uhEaWb9sJA'
+    a-cada-minutos: 50
+    mensagem: '&9&l>> &bEntre no nosso Discord! &fNovidades, call com música, grupos para masmorra e suporte.'
   indicacao:
     ativo: true
     minutos-jogando: 30         # o novo precisa jogar isso para os dois ganharem
@@ -103,3 +109,37 @@ vip:
 # Quem joga pelo celular/Bedrock (Geyser) recebe menos mapa em volta (em chunks): o celular trava menos. 0 = desliga.
 celular:
   distancia-visao: 4
+
+# Bedrock (celular): aura do Traje do Rei leve para quem ve pelo celular (cada particula vira um pacote no 4G/5G)
+# e medidor de rede no log (ping de verdade do NetherNet, perdas, pacotes e KB por segundo). /extras rede
+bedrock:
+  # tamanho maximo do pacote do NetherNet (celular). 0 = deixa o Geyser decidir (normal).
+  nethernet-mtu: 0
+  # SCTP do NetherNet: quanto esperar para reenviar um pacote perdido (o Geyser deixa ate 10 s; aqui no maximo 1 s)
+  sctp:
+    ligado: true
+    rto-min-ms: 200
+    rto-max-ms: 1000
+    rto-inicial-ms: 500
+    tentativas: 15
+    sack-ms: 20
+    controle: 0
+  aura-leve: true
+  medidor-segundos: 30
+  medidor-java: false
+
+# Aviso grande na tela (titulo) para quem ainda nao fez /login ou /register no AuthMe.
+login-aviso:
+  ligado: true
+
+# Mensagens de entrar/sair, boas-vindas na tela e efeito de entrada por nivel de VIP
+# (VIP brilho, VIP+ espiral, MVP fogos dourados, LENDA raio e fogos roxos).
+entradas:
+  ligado: true
+
+# Mochilas separadas: o inventario (+ armadura, bau do fim e XP) do survival e o das masmorras sao guardados a parte.
+# Mundos fora das duas listas (minigames, lobbies) nao trocam nada.
+mochilas:
+  ligado: true
+  survival: [world, world_nether, world_the_end, plots]
+  masmorras: [masmorras_mundo, masmorras_nether, masmorras_end]

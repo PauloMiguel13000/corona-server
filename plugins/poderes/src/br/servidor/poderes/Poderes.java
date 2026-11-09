@@ -76,6 +76,9 @@ public final class Poderes extends JavaPlugin implements Listener {
     Habilidades hab;
     Lutador lut;
     Cipo cipo;
+    VenenoCipo venenoCipo;
+    Travas travas;
+    Barra barraItens;
     Visuais vis;
     Efeitos fx;
     Cenas cena;
@@ -169,6 +172,11 @@ public final class Poderes extends JavaPlugin implements Listener {
         hab.carregarCabecaGoku();
         lut = new Lutador(this);
         cipo = new Cipo(this);
+        venenoCipo = new VenenoCipo(this);
+        travas = new Travas(this);
+        Bukkit.getPluginManager().registerEvents(venenoCipo, this);
+        barraItens = new Barra(this);
+        Bukkit.getPluginManager().registerEvents(barraItens, this);
         petPoderes = new PetPoderes(this);
         Bukkit.getPluginManager().registerEvents(this, this);
         Bukkit.getPluginManager().registerEvents(petPoderes, this);
@@ -186,11 +194,14 @@ public final class Poderes extends JavaPlugin implements Listener {
             Bukkit.getPluginManager().disablePlugin(antigo);
             getLogger().info("MaoDeFogo desativado: o Poderes ja inclui a bola de fogo (pode apagar o MaoDeFogo-1.0.jar).");
         }
-        getLogger().info("Poderes ativo: agache + soco no ar com a mao vazia. Menu: /poderes");
+        Fx.ligar(this);
+        getLogger().info("Poderes ativo: barra de habilidades (slots 1 a 5, liga no item Habilidades / /poderes). Menu: /poderes menu"
+                + (Fx.emissoresLigados ? " | celular: efeitos por emissor (pacote v2)" : ""));
     }
 
     @Override
     public void onDisable() {
+        Fx.desligar();
         for (UUID id : new ArrayList<>(voando.keySet())) {
             Player p = Bukkit.getPlayer(id);
             if (p != null) terminarVoo(p, false);
@@ -261,6 +272,11 @@ public final class Poderes extends JavaPlugin implements Listener {
             barra(p, "§eVoce ja e " + c.cor + c.nome + "§e.");
             return false;
         }
+        if (!forcar && travas != null && !travas.liberada(p, c)) {
+            p.sendMessage("§c" + c.cor + "§l" + c.nome + " §cé uma classe trancada. " + travas.porque(c));
+            p.playSound(p.getLocation(), Sound.BLOCK_CHEST_LOCKED, 0.8f, 1f);
+            return false;
+        }
         long falta = forcar ? 0 : minutosParaTrocar(p);
         if (falta > 0) {
             p.sendMessage("§cVoce so pode trocar de classe daqui a " + falta + " minuto(s).");
@@ -278,13 +294,20 @@ public final class Poderes extends JavaPlugin implements Listener {
         p.showTitle(net.kyori.adventure.title.Title.title(txt(c.cor + "§l" + c.nome.toUpperCase(Locale.ROOT)),
                 txt("§7" + c.desc1 + " " + c.desc2)));
         p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.7f, 1.2f);
-        p.sendMessage("§aAgora voce e " + c.cor + "§l" + c.nome + "§a! §7Agache + soco no ar com a mao vazia para usar a habilidade.");
-        p.sendMessage("§7Agache + §fF §7troca de habilidade. §f/poderes §7mostra as suas habilidades.");
+        if (barraItens != null && barraItens.ligado()) {
+            p.sendMessage("§aAgora voce e " + c.cor + "§l" + c.nome + "§a! §7Suas 5 habilidades sao os itens dos §fslots 1 a 5§7: segure e clique para usar.");
+            p.sendMessage("§7O item §bHabilidades §7(livro) liga/desliga a barra. §f/poderes menu §7mostra os detalhes.");
+            barraItens.aoTrocarClasse(p);
+        } else {
+            p.sendMessage("§aAgora voce e " + c.cor + "§l" + c.nome + "§a! §7Agache + soco no ar com a mao vazia para usar a habilidade.");
+            p.sendMessage("§7Agache + §fF §7troca de habilidade. §f/poderes §7mostra as suas habilidades.");
+        }
         if (c == Classe.LUTADOR) {
             double b = Lutador.bonusSoco(Math.max(0, nivelDePoder(p)), lut.nivelMaximo(), lut.bonusMin(), lut.bonusMax());
             p.sendMessage("§6Passiva Punhos de Aco: §7seu soco de mao vazia da §c+" + num(b) + " §7de dano (chega a §c+"
                     + num(lut.bonusMax()) + " §7no nivel " + lut.nivelMaximo() + ").");
         }
+        if (c == Classe.CIPO && venenoCipo != null) p.sendMessage(venenoCipo.descricao(p));
         if (atual != null) {
             long min = getConfig().getLong("classes.troca-recarga-minutos", 60L);
             if (min > 0) p.sendMessage("§8Proxima troca de classe liberada em " + min + " minuto(s).");
@@ -422,6 +445,7 @@ public final class Poderes extends JavaPlugin implements Listener {
         if (a != Action.LEFT_CLICK_AIR) return;
         if (e.getHand() != null && e.getHand() != EquipmentSlot.HAND) return;
         if (!p.isSneaking()) return;
+        if (barraItens != null && barraItens.ligado() && !getConfig().getBoolean("barra.agachar-tambem", false)) return;
         if (!p.hasPermission("poderes.usar")) return;
         if (!p.getInventory().getItemInMainHand().getType().isAir()) return;
         if (!logado(p)) return;
@@ -429,7 +453,7 @@ public final class Poderes extends JavaPlugin implements Listener {
     }
 
     /** Minigames (e o login/lobby de minigames): sem habilidades. A lista do config soma com estes. */
-    static final List<String> SEM_PODERES_SEMPRE = List.of("defesa", "slender", "vovo", "backrooms", "hotel", "login", "minigames", "naochore");
+    static final List<String> SEM_PODERES_SEMPRE = List.of("defesa", "slender", "vovo", "backrooms", "hotel", "login", "minigames", "naochore", "turno_noite", "fabrica", "terror", "galeria");
 
     /** Mundo onde os poderes acertam qualquer jogador (Arena PvP). */
     boolean pvpLivre(org.bukkit.World w) {
@@ -448,6 +472,7 @@ public final class Poderes extends JavaPlugin implements Listener {
     @EventHandler
     public void entrouEmMinigame(org.bukkit.event.player.PlayerChangedWorldEvent e) {
         Player p = e.getPlayer();
+        Fx.esconderDe(p);
         if (!semPoderes(p.getWorld())) return;
         try {
             hab.limpar(p);
@@ -462,7 +487,7 @@ public final class Poderes extends JavaPlugin implements Listener {
 
     void lancar(Player p) {
         if (semPoderes(p.getWorld())) {
-            barra(p, "§7As habilidades ficam desligadas aqui (minigame).");
+            barra(p, "§7As habilidades só funcionam no Mundo das Masmorras §8(portal no spawn)§7.");
             return;
         }
         if (classe(p) == null) {
@@ -546,7 +571,10 @@ public final class Poderes extends JavaPlugin implements Listener {
             case FLOR_CARNIVORA -> cipo.flor(p);
             case SELVA_VIVA -> cipo.selva(p);
         };
-        if (ok) recargas.put(chave, agora + poder.recargaSeg * 1000L);
+        if (ok) {
+            recargas.put(chave, agora + poder.recargaSeg * 1000L);
+            if (barraItens != null) barraItens.recarga(p, poder);
+        }
     }
 
     // ------------------------------------------------------------------ poderes
@@ -575,8 +603,8 @@ public final class Poderes extends JavaPlugin implements Listener {
             World w = fim.getWorld();
             fx.pulso(fim, Efeitos.b(Material.ORANGE_STAINED_GLASS), Efeitos.b(Material.SHROOMLIGHT), 0.3f, 1.8f, 5, laranja);
             fx.anel(fim, Efeitos.b(Material.MAGMA_BLOCK), 1.8, 6, 8, 0.28f, laranja);
-            w.spawnParticle(Particle.FLAME, fim, 18, 0.35, 0.35, 0.35, 0.06);
-            w.spawnParticle(Particle.LAVA, fim, 4, 0.3, 0.2, 0.3, 0);
+            Fx.p(w, Particle.FLAME, fim, 18, 0.35, 0.35, 0.35, 0.06);
+            Fx.p(w, Particle.LAVA, fim, 4, 0.3, 0.2, 0.3, 0);
         });
         return true;
     }
@@ -591,7 +619,7 @@ public final class Poderes extends JavaPlugin implements Listener {
                 tarefa.cancel();
                 return;
             }
-            bola.getWorld().spawnParticle(Particle.SNOWFLAKE, bola.getLocation(), 3, 0.05, 0.05, 0.05, 0.01);
+            Fx.p(bola.getWorld(), Particle.SNOWFLAKE, bola.getLocation(), 3, 0.05, 0.05, 0.05, 0.01);
         }, 1L, 1L);
         org.bukkit.Color gelo = org.bukkit.Color.fromRGB(150, 220, 255);
         org.bukkit.entity.BlockDisplay cristal = vis.bloco(bola.getLocation(), Material.BLUE_ICE.createBlockData(), 70, gelo);
@@ -600,7 +628,7 @@ public final class Poderes extends JavaPlugin implements Listener {
         fx.seguir(bola, cristal, 60, 0.8f, 0.4f, fim -> {
             fx.estilhacos(fim, new org.bukkit.block.data.BlockData[] {Efeitos.b(Material.ICE), Efeitos.b(Material.PACKED_ICE), Efeitos.b(Material.BLUE_ICE)}, 9, 1.8, 12, 0.25f);
             fx.anel(fim, Efeitos.b(Material.PACKED_ICE), 1.6, 5, 8, 0.22f, gelo);
-            fim.getWorld().spawnParticle(Particle.SNOWFLAKE, fim, 20, 0.4, 0.4, 0.4, 0.05);
+            Fx.p(fim.getWorld(), Particle.SNOWFLAKE, fim, 20, 0.4, 0.4, 0.4, 0.05);
             fim.getWorld().playSound(fim, Sound.BLOCK_GLASS_BREAK, 0.7f, 1.6f);
         });
         return true;
@@ -613,7 +641,7 @@ public final class Poderes extends JavaPlugin implements Listener {
         p.setVelocity(v);
         semDanoQueda.put(p.getUniqueId(), System.currentTimeMillis() + 4000L);
         World w = p.getWorld();
-        w.spawnParticle(Particle.CLOUD, p.getLocation(), 25, 0.3, 0.1, 0.3, 0.05);
+        Fx.p(w, Particle.CLOUD, p.getLocation(), 25, 0.3, 0.1, 0.3, 0.05);
         w.playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_FLAP, 1f, 1.4f);
         Location ini = p.getLocation();
         cena.investida(p, ini);
@@ -646,7 +674,7 @@ public final class Poderes extends JavaPlugin implements Listener {
         p.setFireTicks(0);
         p.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 0));
         World w = p.getWorld();
-        w.spawnParticle(Particle.HEART, p.getLocation().add(0, 1.2, 0), 10, 0.5, 0.5, 0.5, 0.1);
+        Fx.p(w, Particle.HEART, p.getLocation().add(0, 1.2, 0), 10, 0.5, 0.5, 0.5, 0.1);
         w.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.6f);
         org.bukkit.Color verde = org.bukkit.Color.fromRGB(90, 230, 90);
         fx.orbitar(p, new org.bukkit.inventory.ItemStack(Material.FLOWERING_AZALEA_LEAVES), 4, 1.0, 0.9, 0.35, 0.45f, 24, null);
@@ -750,9 +778,9 @@ public final class Poderes extends JavaPlugin implements Listener {
             return false;
         }
         semDanoQueda.put(p.getUniqueId(), System.currentTimeMillis() + 3000L);
-        w.spawnParticle(Particle.PORTAL, origem.add(0, 1, 0), 60, 0.4, 0.8, 0.4, 0.5);
+        Fx.p(w, Particle.PORTAL, origem.add(0, 1, 0), 60, 0.4, 0.8, 0.4, 0.5);
         w.playSound(origem, Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
-        w.spawnParticle(Particle.PORTAL, destino.clone().add(0, 1, 0), 60, 0.4, 0.8, 0.4, 0.5);
+        Fx.p(w, Particle.PORTAL, destino.clone().add(0, 1, 0), 60, 0.4, 0.8, 0.4, 0.5);
         w.playSound(destino, Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1.2f);
         org.bukkit.Color roxo = org.bukkit.Color.fromRGB(150, 60, 220);
         cena.sombra(origem, destino);
@@ -819,7 +847,7 @@ public final class Poderes extends JavaPlugin implements Listener {
             if (jogado.isValid() && !jogado.isDead()) jogado.setVelocity(empurra);
         });
         w.playSound(l, Sound.ENTITY_IRON_GOLEM_ATTACK, 1f, 1f);
-        w.spawnParticle(Particle.CLOUD, l, 20, 0.4, 0.1, 0.4, 0.05);
+        Fx.p(w, Particle.CLOUD, l, 20, 0.4, 0.1, 0.4, 0.05);
         cena.golem(p, l);
         Location mao = p.getEyeLocation().add(dir.clone().multiply(0.8)).subtract(0, 0.4, 0);
         org.bukkit.entity.BlockDisplay punho = vis.bloco(mao, Material.IRON_BLOCK.createBlockData(), 14, null);
@@ -835,7 +863,7 @@ public final class Poderes extends JavaPlugin implements Listener {
             fx.anel(l.clone().add(0, 0.1, 0), chaoDe(l), 3.0, 6, 14, 0.4f, null);
         }, 3L);
         Bukkit.getScheduler().runTaskLater(this, () -> vis.remover(punho), 9L);
-        w.spawnParticle(Particle.CRIT, l.clone().add(0, 1, 0), 15, 0.3, 0.4, 0.3, 0.2);
+        Fx.p(w, Particle.CRIT, l.clone().add(0, 1, 0), 15, 0.3, 0.4, 0.3, 0.2);
         return true;
     }
 
@@ -891,7 +919,7 @@ public final class Poderes extends JavaPlugin implements Listener {
                 Props3D.escala(carga3d, 0.4f + s * 1.6f, t[0] * 0.5f, 2);
                 if (t[0] % 4 == 0) Props3D.quadro(carga3d, "kame_carga_f" + ((t[0] / 4) % 3));
             }
-            p.getWorld().spawnParticle(Particle.DUST, mao, 6, 0.15, 0.15, 0.15, 0, azul);
+            Fx.p(p.getWorld(), Particle.DUST, mao, 6, 0.15, 0.15, 0.15, 0, azul);
             cena.kameCarga(p, mao, t[0]);
             // energia sendo puxada para as maos (particulas que andam para o centro)
             for (int i = 0; i < 4; i++) {
@@ -899,7 +927,7 @@ public final class Poderes extends JavaPlugin implements Listener {
                 Vector off = new Vector(Math.cos(a) * Math.cos(b), Math.sin(b), Math.sin(a) * Math.cos(b)).multiply(r);
                 Location de = mao.clone().add(off);
                 Vector para = off.clone().multiply(-1);
-                p.getWorld().spawnParticle(Particle.END_ROD, de, 0, para.getX(), para.getY(), para.getZ(), 0.09);
+                Fx.p(p.getWorld(), Particle.END_ROD, de, 0, para.getX(), para.getY(), para.getZ(), 0.09);
             }
             if (t[0] % 6 == 0) {
                 int k = Math.min(3, t[0] / 6 - 1);
@@ -931,7 +959,7 @@ public final class Poderes extends JavaPlugin implements Listener {
         World w0 = p.getWorld();
         w0.playSound(p.getLocation(), Sound.ENTITY_WARDEN_SONIC_BOOM, 1.2f, 1.0f);
         w0.playSound(p.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 0.7f, 1.6f);
-        w0.spawnParticle(Particle.SONIC_BOOM, p.getEyeLocation().add(p.getLocation().getDirection().multiply(1.2)), 1);
+        Fx.p(w0, Particle.SONIC_BOOM, p.getEyeLocation().add(p.getLocation().getDirection().multiply(1.2)), 1);
         p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 62, 1));
         Particle.DustOptions azul = new Particle.DustOptions(org.bukkit.Color.fromRGB(60, 190, 255), 3.0f);
         Particle.DustOptions branco = new Particle.DustOptions(org.bukkit.Color.fromRGB(235, 252, 255), 1.6f);
@@ -996,15 +1024,15 @@ public final class Poderes extends JavaPlugin implements Listener {
             }
             for (double d = 0.8; d <= dist; d += 1.5) {
                 Location pt = olho.clone().add(dir.clone().multiply(d)).subtract(0, 0.25, 0);
-                w.spawnParticle(Particle.DUST, pt, 1, grossura, grossura, grossura, 0, azul);
-                if (tick[0] % 4 == 0) w.spawnParticle(Particle.DUST, pt, 1, 0.05, 0.05, 0.05, 0, branco);
+                Fx.p(w, Particle.DUST, pt, 1, grossura, grossura, grossura, 0, azul);
+                if (tick[0] % 4 == 0) Fx.p(w, Particle.DUST, pt, 1, 0.05, 0.05, 0.05, 0, branco);
             }
-            w.spawnParticle(Particle.END_ROD, ponta, 6, 0.6, 0.6, 0.6, 0.15);
-            w.spawnParticle(Particle.ELECTRIC_SPARK, ponta, 6, 0.8, 0.8, 0.8, 0.2);
+            Fx.p(w, Particle.END_ROD, ponta, 6, 0.6, 0.6, 0.6, 0.15);
+            Fx.p(w, Particle.ELECTRIC_SPARK, ponta, 6, 0.8, 0.8, 0.8, 0.2);
             if (tick[0] % 12 == 0) {
                 cena.kameImpacto(p, ponta);
-                w.spawnParticle(Particle.EXPLOSION_EMITTER, ponta, 1, 0, 0, 0, 0);
-                w.spawnParticle(Particle.CLOUD, ponta, 12, 0.6, 0.6, 0.6, 0.1);
+                Fx.p(w, Particle.EXPLOSION_EMITTER, ponta, 1, 0, 0, 0, 0);
+                Fx.p(w, Particle.CLOUD, ponta, 12, 0.6, 0.6, 0.6, 0.1);
                 w.playSound(ponta, Sound.ENTITY_GENERIC_EXPLODE, 0.5f, 1.5f);
                 w.playSound(olho, Sound.BLOCK_BEACON_AMBIENT, 1f, 2f);
                 java.util.Set<UUID> atingidos = new java.util.HashSet<>();
@@ -1043,7 +1071,7 @@ public final class Poderes extends JavaPlugin implements Listener {
         Double f = pr.getPersistentDataContainer().get(chaveGelo, PersistentDataType.DOUBLE);
         if (f == null) return;
         Location l = pr.getLocation();
-        l.getWorld().spawnParticle(Particle.SNOWFLAKE, l, 25, 0.4, 0.4, 0.4, 0.05);
+        Fx.p(l.getWorld(), Particle.SNOWFLAKE, l, 25, 0.4, 0.4, 0.4, 0.05);
         l.getWorld().playSound(l, Sound.BLOCK_GLASS_BREAK, 0.8f, 1.6f);
         {   // props 3D: cristais de gelo brotando no ponto do impacto (crescem e derretem)
             java.util.List<Player> plateia3d = props.plateia(l);
@@ -1128,8 +1156,8 @@ public final class Poderes extends JavaPlugin implements Listener {
             }
             Location l = alvo.getLocation().add(0, alvo.getHeight() / 2.0, 0);
             World w = alvo.getWorld();
-            w.spawnParticle(Particle.CRIT, l, 12, 0.3, 0.3, 0.3, 0.2);
-            w.spawnParticle(Particle.SWEEP_ATTACK, l, 1, 0, 0, 0, 0);
+            Fx.p(w, Particle.CRIT, l, 12, 0.3, 0.3, 0.3, 0.2);
+            Fx.p(w, Particle.SWEEP_ATTACK, l, 1, 0, 0, 0, 0);
             w.playSound(l, Sound.ENTITY_PLAYER_ATTACK_STRONG, 0.8f, 1.3f);
             if (causarDano(alvo, dano * petPoderes.fatorAlvo(alvo), dono)) petPoderes.talvezUsar(dono, pet, alvo);
         }, 4L);
@@ -1188,7 +1216,7 @@ public final class Poderes extends JavaPlugin implements Listener {
         Bukkit.getScheduler().runTaskLater(this, () -> {
             if (p.isOnline() && voando.containsKey(p.getUniqueId())) p.setFlying(true);
         }, 3L);
-        p.getWorld().spawnParticle(Particle.CLOUD, p.getLocation(), 30, 0.4, 0.2, 0.4, 0.05);
+        Fx.p(p.getWorld(), Particle.CLOUD, p.getLocation(), 30, 0.4, 0.2, 0.4, 0.05);
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PHANTOM_FLAP, 1f, 1.2f);
         barra(p, "§b" + nome + " ativado: §f" + dur + "s");
         voo.tarefa = Bukkit.getScheduler().runTaskTimer(this, () -> {
@@ -1323,7 +1351,7 @@ public final class Poderes extends JavaPlugin implements Listener {
             lobo.setHealth(40.0);
         }
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_WOLF_GROWL, 1f, 1f);
-        p.getWorld().spawnParticle(Particle.HEART, lobo.getLocation().add(0, 1, 0), 6, 0.4, 0.3, 0.4, 0.1);
+        Fx.p(p.getWorld(), Particle.HEART, lobo.getLocation().add(0, 1, 0), 6, 0.4, 0.3, 0.4, 0.1);
         p.sendMessage("§6Um lobo guerreiro agora te segue! §7Ele ataca quem voce bater e quem te atacar.");
         return true;
     }
@@ -1386,6 +1414,7 @@ public final class Poderes extends JavaPlugin implements Listener {
             lore.add(txt("§fRecarga: §e" + po.recargaSeg + "s"));
             lore.add(txt(""));
             if (!lib) lore.add(txt("§cBloqueado: suba suas skills (/skills)"));
+            else if (barraItens != null && barraItens.ligado()) lore.add(txt("§eNa barra: slot " + (i + 1)));
             else if (po == sel) lore.add(txt("§aEsta e a sua habilidade atual"));
             else lore.add(txt("§eClique para usar esta habilidade"));
             m.lore(lore);
@@ -1410,9 +1439,15 @@ public final class Poderes extends JavaPlugin implements Listener {
         ItemMeta lm = livro.getItemMeta();
         lm.displayName(txt("§e§lComo usar"));
         List<Component> lore = new ArrayList<>();
-        lore.add(txt("§fAgache + soco no ar com a mao vazia"));
-        lore.add(txt("§7= usa a habilidade escolhida."));
-        lore.add(txt("§fAgache + F §7= troca para a proxima."));
+        if (barraItens != null && barraItens.ligado()) {
+            lore.add(txt("§fSlots 1 a 5 da barra §7= suas 5 habilidades."));
+            lore.add(txt("§7Segure o item e clique para usar."));
+            lore.add(txt("§fItem Habilidades §7(livro) liga/desliga a barra."));
+        } else {
+            lore.add(txt("§fAgache + soco no ar com a mao vazia"));
+            lore.add(txt("§7= usa a habilidade escolhida."));
+            lore.add(txt("§fAgache + F §7= troca para a proxima."));
+        }
         lore.add(txt(""));
         lore.add(txt("§7Suba suas skills para liberar"));
         lore.add(txt("§7as outras habilidades e deixar"));
@@ -1481,8 +1516,24 @@ public final class Poderes extends JavaPlugin implements Listener {
                 lore.add(txt("§7 Soco de mao vazia: §c+" + num(lut.bonusMin()) + " §7a §c+" + num(lut.bonusMax()) + " §7de dano"));
                 lore.add(txt("§7 (cresce com o nivel ate o nivel " + lut.nivelMaximo() + ")"));
             }
+            if (c == Classe.CIPO && venenoCipo != null) {
+                lore.add(txt("§2Passiva: Seiva Venenosa"));
+                lore.add(txt("§7 Todo ataque envenena: §a" + num(venenoCipo.danoMin()) + " §7a §a" + num(venenoCipo.danoMax()) + " §7de vida/s por " + venenoCipo.segundos() + " s"));
+                lore.add(txt("§7 (cresce com o nivel ate o nivel " + venenoCipo.nivelMaximo() + ")"));
+            }
             lore.add(txt(""));
+            boolean trancada = travas != null && !travas.liberada(p, c);
+            if (trancada) {
+                int exige = travas.vipExigido(c);
+                lore.add(txt("§c§l🔒 TRANCADA"));
+                lore.add(txt("§7Só para " + (exige >= 3 ? "§6MVP §7e §dLENDA" : exige == 2 ? "§bVIP+ §7para cima" : "§aVIPs")));
+                if (travas.preco(c) > 0) {
+                    lore.add(txt("§7ou compre por §6" + Travas.fmt(travas.preco(c)) + " coronas"));
+                    lore.add(txt("§7no §eVendedor de Classes §7(lobby das masmorras)"));
+                }
+            } else if (travas != null && travas.vipExigido(c) > 0) lore.add(txt("§a✔ Liberada para você" + (Travas.comprou(p, c) ? " §7(comprada)" : " §7(VIP)")));
             if (c == atual) lore.add(txt("§aEsta e a sua classe"));
+            else if (trancada) lore.add(txt("§8Clique para ver como liberar"));
             else if (falta > 0) lore.add(txt("§cTroca liberada em " + falta + " minuto(s)"));
             else lore.add(txt("§eClique para escolher"));
             m.lore(lore);
@@ -1508,7 +1559,7 @@ public final class Poderes extends JavaPlugin implements Listener {
         p.openInventory(inv);
     }
 
-    private static String num(double v) {
+    static String num(double v) {
         return String.format(java.util.Locale.ROOT, "%.1f", v).replace('.', ',');
     }
 
@@ -1618,6 +1669,7 @@ public final class Poderes extends JavaPlugin implements Listener {
         if (!p.isSneaking() || !p.getInventory().getItemInMainHand().getType().isAir()) return;
         Classe c = classe(p);
         if (c == null || !p.hasPermission("poderes.usar")) return;
+        if (barraItens != null && barraItens.ligado()) return;
         e.setCancelled(true);
         int nivel = nivelDePoder(p);
         int atual = c.posicao(selecionado(p));
@@ -1638,6 +1690,24 @@ public final class Poderes extends JavaPlugin implements Listener {
     public void aoEntrar(org.bukkit.event.player.PlayerJoinEvent e) {
         Player p = e.getPlayer();
         atualizarTab(p);
+        Fx.esconderDe(p);
+        // classe trancada (VIP acabou, ou regra nova): tira a classe e avisa; ele escolhe outra no menu
+        Classe atualC = classe(p);
+        if (atualC != null && travas != null && !travas.liberada(p, atualC) && !p.hasPermission("poderes.admin")) {
+            Bukkit.getScheduler().runTaskLater(this, () -> {
+                if (!p.isOnline() || classe(p) != atualC || travas.liberada(p, atualC)) return;
+                torretas.remover(p.getUniqueId(), false);
+                guardioes.remover(p.getUniqueId(), false);
+                hab.limpar(p);
+                p.getPersistentDataContainer().remove(chaveClasse);
+                p.getPersistentDataContainer().remove(chaveTrocaClasse);
+                if (barraItens != null) barraItens.aoTrocarClasse(p);
+                atualizarTab(p);
+                p.sendMessage("§c§l>> §cA classe " + atualC.cor + "§l" + atualC.nome + " §cagora é trancada. " + travas.porque(atualC));
+                p.sendMessage("§7Escolha outra classe de graça: §f/classe§7.");
+                abrirMenuClasses(p);
+            }, 100L);
+        }
         if (classe(p) != null || !p.hasPermission("poderes.usar")) return;
         final int[] tentativas = {0};
         Bukkit.getScheduler().runTaskTimer(this, tarefa -> {
@@ -1658,6 +1728,17 @@ public final class Poderes extends JavaPlugin implements Listener {
     }
 
     // ------------------------------------------------------------------ comandos
+
+    private static org.bukkit.Color corDaCategoria(String c) {
+        return switch (c) {
+            case "poeira_vermelho" -> org.bukkit.Color.fromRGB(240, 40, 40); case "poeira_laranja" -> org.bukkit.Color.fromRGB(255, 140, 25);
+            case "poeira_amarelo" -> org.bukkit.Color.fromRGB(255, 230, 50); case "poeira_verde" -> org.bukkit.Color.fromRGB(75, 230, 75);
+            case "poeira_azul" -> org.bukkit.Color.fromRGB(65, 115, 255); case "poeira_ciano" -> org.bukkit.Color.fromRGB(75, 230, 255);
+            case "poeira_roxo" -> org.bukkit.Color.fromRGB(150, 65, 230); case "poeira_rosa" -> org.bukkit.Color.fromRGB(255, 130, 205);
+            case "poeira_preto" -> org.bukkit.Color.fromRGB(30, 25, 35); case "poeira_marrom" -> org.bukkit.Color.fromRGB(140, 90, 40);
+            case "poeira_dourado" -> org.bukkit.Color.fromRGB(255, 205, 75); default -> org.bukkit.Color.fromRGB(245, 245, 245);
+        };
+    }
 
     @Override
     public boolean onCommand(CommandSender s, Command cmd, String label, String[] args) {
@@ -1686,12 +1767,26 @@ public final class Poderes extends JavaPlugin implements Listener {
         }
 
         if (args.length == 0) {
-            if (s instanceof Player p) abrirMenu(p);
-            else s.sendMessage("Uso: poderes darpena <jogador> [qtd] | poderes darlobo <jogador>");
+            if (s instanceof Player p) {
+                if (barraItens != null && barraItens.ligado() && classe(p) != null) barraItens.alternar(p);
+                else abrirMenu(p);
+            } else s.sendMessage("Uso: poderes darpena <jogador> [qtd] | poderes darlobo <jogador>");
             return true;
         }
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
+            case "menu" -> {
+                if (s instanceof Player p) abrirMenu(p);
+                else s.sendMessage("Somente jogadores.");
+                return true;
+            }
+            case "barra" -> {
+                if (s instanceof Player p) {
+                    if (barraItens != null && barraItens.ligado()) barraItens.alternar(p);
+                    else s.sendMessage("§cA barra de habilidades esta desligada no config.");
+                } else s.sendMessage("Somente jogadores.");
+                return true;
+            }
             case "darpena" -> {
                 if (!s.hasPermission("poderes.admin")) {
                     s.sendMessage("§cSem permissao.");
@@ -1737,6 +1832,37 @@ public final class Poderes extends JavaPlugin implements Listener {
                 darLobo(alvo);
                 return true;
             }
+            case "fx" -> {
+                // teste dos efeitos do celular: /poderes fx [categoria|tudo]
+                if (!s.hasPermission("poderes.admin") || !(s instanceof Player jp)) {
+                    s.sendMessage("§cSem permissao.");
+                    return true;
+                }
+                java.util.List<String> cats = Fx.categoriasConhecidas();
+                String pedido = args.length > 1 ? args[1].toLowerCase(java.util.Locale.ROOT) : "tudo";
+                org.bukkit.Location base = jp.getLocation().add(jp.getLocation().getDirection().setY(0).normalize().multiply(3));
+                int i = 0;
+                for (String c : cats) {
+                    if (!pedido.equals("tudo") && !c.equals(pedido)) continue;
+                    org.bukkit.Location l = pedido.equals("tudo") ? base.clone().add((i % 6) * 3 - 7.5, 1 + (i / 6) * 3, 0) : base.clone().add(0, 1, 0);
+                    final org.bukkit.Location lf = l;
+                    org.bukkit.Particle pt = switch (c) {
+                        case "fogo" -> org.bukkit.Particle.FLAME; case "alma" -> org.bukkit.Particle.SOUL_FIRE_FLAME; case "gelo" -> org.bukkit.Particle.SNOWFLAKE;
+                        case "raio" -> org.bukkit.Particle.ELECTRIC_SPARK; case "luz" -> org.bukkit.Particle.END_ROD; case "fumaca" -> org.bukkit.Particle.CLOUD;
+                        case "sombra" -> org.bukkit.Particle.SQUID_INK; case "cura" -> org.bukkit.Particle.HEART; case "agua" -> org.bukkit.Particle.SPLASH;
+                        case "golpe" -> org.bukkit.Particle.CRIT; case "explosao" -> org.bukkit.Particle.EXPLOSION; case "natureza" -> org.bukkit.Particle.CHERRY_LEAVES;
+                        case "veneno" -> org.bukkit.Particle.ITEM_SLIME; case "terra" -> org.bukkit.Particle.DUST_PILLAR; default -> org.bukkit.Particle.DUST;
+                    };
+                    final Object dado = pt == org.bukkit.Particle.DUST ? new org.bukkit.Particle.DustOptions(corDaCategoria(c), 1.2f)
+                            : pt == org.bukkit.Particle.DUST_PILLAR ? org.bukkit.Material.DIRT.createBlockData() : null;
+                    for (int t = 0; t < 60; t += 2) {
+                        Bukkit.getScheduler().runTaskLater(this, () -> Fx.p(lf.getWorld(), pt, lf, 12, 0.4, 0.4, 0.4, 0.02, dado), t);
+                    }
+                    i++;
+                }
+                s.sendMessage("§aEfeitos de teste (" + pedido + ") por 3 s. Emissores vivos: " + Fx.emissoresVivos() + ". No celular cada um e uma animacao do pacote v2.");
+                return true;
+            }
             case "recarregar" -> {
                 if (!s.hasPermission("poderes.admin")) {
                     s.sendMessage("§cSem permissao.");
@@ -1749,9 +1875,9 @@ public final class Poderes extends JavaPlugin implements Listener {
             case "ajuda" -> {
                 s.sendMessage("§6--- Poderes e Classes ---");
                 s.sendMessage("§f/classe §7= escolhe ou troca a sua classe.");
-                s.sendMessage("§f/poderes §7= menu com as 5 habilidades da sua classe.");
-                s.sendMessage("§fAgache + soco no ar com a mao vazia §7= usa a habilidade escolhida.");
-                s.sendMessage("§fAgache + F §7= troca para a proxima habilidade liberada.");
+                s.sendMessage("§f/poderes §7(ou o item Habilidades) = liga/desliga a barra de habilidades.");
+                s.sendMessage("§fSlots 1 a 5 §7= as 5 habilidades da classe: segure o item e clique para usar.");
+                s.sendMessage("§f/poderes menu §7= detalhes das habilidades (dano, recarga, nivel).");
                 s.sendMessage("§f/duelopet <jogador> §7= duelo de pets.");
                 s.sendMessage("§f/voar §7= liga/desliga o voo dentro do seu terreno.");
                 return true;
@@ -1776,7 +1902,8 @@ public final class Poderes extends JavaPlugin implements Listener {
                     return true;
                 }
                 selecionar(p, po);
-                s.sendMessage("§aHabilidade escolhida: " + po.cor + po.nome + "§a. Agache + soco no ar com a mao vazia.");
+                s.sendMessage("§aHabilidade escolhida: " + po.cor + po.nome + (barraItens != null && barraItens.ligado()
+                        ? "§a. Ela esta no slot " + (c.posicao(po) + 1) + " da barra." : "§a. Agache + soco no ar com a mao vazia."));
                 return true;
             }
         }
@@ -1816,6 +1943,7 @@ public final class Poderes extends JavaPlugin implements Listener {
                     hab.limpar(alvo);
                     alvo.getPersistentDataContainer().remove(chaveClasse);
                     alvo.getPersistentDataContainer().remove(chaveTrocaClasse);
+                    if (barraItens != null) barraItens.aoTrocarClasse(alvo);
                     atualizarTab(alvo);
                     alvo.sendMessage("§eSua classe foi resetada. Escolha uma nova com §f/classe§e.");
                     s.sendMessage("§aClasse de " + alvo.getName() + " resetada.");
@@ -1882,6 +2010,8 @@ public final class Poderes extends JavaPlugin implements Listener {
             Classe c = s instanceof Player pl ? classe(pl) : null;
             for (Poder p : c != null ? c.poderes : Poder.values()) r.add(p.id);
             r.add("ajuda");
+            r.add("menu");
+            r.add("barra");
             if (s.hasPermission("poderes.admin")) {
                 r.add("darpena");
                 r.add("darlobo");
