@@ -13,6 +13,10 @@
   LoginLobby - **Bedrock entra sem senha** (`bedrock-sem-senha: true`): 2 s depois de entrar, `AuthMeApi.forceLogin` (conta
   existente) ou `forceRegister` com senha aleatória (conta nova). Pedido do Paulo às 18:47 depois que `.Mona7375` desistiu no
   `/register`. Letreiro do lobby de login com exemplo de `/register`. CoronaLoja - `overflow-x: clip` no site.
+- **ajustes126** (19:0x): LoginLobby - lista `bedrock-com-senha` (padrão no código: `.BalmierGorgon43`): a conta do dono no
+  Bedrock continua com `/login` porque é a conta admin; o resto do Bedrock entra direto; Java sempre com `/login`. Pedido do
+  Paulo às 19:03. Testado no contêiner com o stub (B1 entra direto, B2 da lista fica no lobby de login). Com o AuthMe de
+  verdade só dá para confirmar quando o próximo jogador de Bedrock entrar: procurar `entrou sem senha` no log.
 
 ## Discord (servidor Corona Server, conta coronadooscar no Chrome)
 - Convite permanente: https://discord.gg/uhEaWb9sJA

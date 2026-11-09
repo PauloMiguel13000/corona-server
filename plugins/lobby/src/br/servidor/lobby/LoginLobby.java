@@ -406,12 +406,24 @@ public final class LoginLobby extends JavaPlugin implements Listener {
         // Bedrock (celular/console) ja entrou com a conta Xbox conferida pelo Floodgate: nao precisa de senha.
         // Espera o AuthMe terminar a entrada dele (2 s) para o login valer; o lobby devolve a pessoa sozinho.
         Bukkit.getScheduler().runTaskLater(this, () -> {
-            if (p.isOnline() && !logado(p) && bedrockSemSenha() && bedrock(p)) entrarSemSenha(p);
+            if (p.isOnline() && !logado(p) && bedrockSemSenha() && bedrock(p) && !precisaDeSenha(p)) entrarSemSenha(p);
         }, 40L);
     }
 
     private boolean bedrockSemSenha() {
         return getConfig().getBoolean("bedrock-sem-senha", true);
+    }
+
+    /**
+     * Contas do Bedrock que continuam usando /login mesmo com bedrock-sem-senha ligado (a conta do dono, que tem
+     * poderes de administrador). Compara sem ligar para maiusculas nem para o ponto do comeco do nome.
+     */
+    private boolean precisaDeSenha(Player p) {
+        java.util.List<String> l = getConfig().contains("bedrock-com-senha") ? getConfig().getStringList("bedrock-com-senha")
+                : java.util.List.of(".BalmierGorgon43");
+        String eu = p.getName().toLowerCase().replaceFirst("^\\.", "");
+        for (String n : l) if (n.toLowerCase().replaceFirst("^\\.", "").equals(eu)) return true;
+        return false;
     }
 
     /** Jogador do Bedrock que entrou pelo Geyser/Floodgate (a conta Xbox ja foi conferida na entrada). */

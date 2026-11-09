@@ -12,6 +12,9 @@ enfeitar-spawn: true
 # true = quem entra pelo Bedrock (celular, console, Windows) nao precisa de senha: a conta Xbox ja foi conferida
 # pelo Floodgate. Quem e novo ganha conta automatica; quem ja tinha conta entra direto. false = todo mundo usa /login.
 bedrock-sem-senha: true
+# Contas do Bedrock que continuam precisando de /login (a do dono, que tem poderes de administrador).
+bedrock-com-senha:
+  - '.BalmierGorgon43'
 # O plugin preenche sozinho (nao precisa mexer):
 spawn-enfeite-versao: 0
 versao-lobby: 0
