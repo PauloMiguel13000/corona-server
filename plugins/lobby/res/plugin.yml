@@ -2,7 +2,7 @@ name: LoginLobby
 version: '1.0'
 main: br.servidor.lobby.LoginLobby
 api-version: '1.21'
-softdepend: [AuthMe, BabyPets, Multiverse-Core, Spawn]
+softdepend: [AuthMe, BabyPets, Multiverse-Core, Spawn, floodgate]
 description: Lobby leve para fazer /login sem lag; depois do login volta para onde estava.
 commands:
   loginlobby:

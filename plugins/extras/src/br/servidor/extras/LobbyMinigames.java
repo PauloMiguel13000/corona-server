@@ -256,6 +256,7 @@ final class LobbyMinigames implements Listener {
             }
         }
         // (v2 tinha aqui a colocacao dos portais do Turno e da Fabrica num lobby ja feito; o v3 refaz tudo de uma vez)
+        Ceu.fazer(pl, "lobby-minigames", mundo, 0, 0, Y, R, 52, Ceu.JOGOS, !feitoAntes);
         for (World w : Bukkit.getWorlds()) for (Entity en : w.getEntities()) atualizarPlaca(en);
         icones.clear();
         for (Entity e : mundo.getEntities())

@@ -9,6 +9,9 @@ spawn-novatos: ''
 voltar-para-onde-estava: false
 # Enfeitar o spawn do mundo principal (caminhos, jardins, parapeito e totens dos minigames). So roda uma vez.
 enfeitar-spawn: true
+# true = quem entra pelo Bedrock (celular, console, Windows) nao precisa de senha: a conta Xbox ja foi conferida
+# pelo Floodgate. Quem e novo ganha conta automatica; quem ja tinha conta entra direto. false = todo mundo usa /login.
+bedrock-sem-senha: true
 # O plugin preenche sozinho (nao precisa mexer):
 spawn-enfeite-versao: 0
 versao-lobby: 0

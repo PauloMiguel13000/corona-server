@@ -307,6 +307,7 @@ final class SpawnPrincipal implements Listener {
                 }
             }, 220L);
             Bukkit.getScheduler().runTaskLater(pl, () -> atualizarSulOeste(w), 160L);
+            Bukkit.getScheduler().runTaskLater(pl, () -> Ceu.fazer(pl, "spawn-principal", w, CX, CZ, PISO, R, 46, Ceu.VERMELHO, false), 260L);
             // limpa enfeite antigo que tenha sobrado (ja carregado)
             Bukkit.getScheduler().runTaskLater(pl, () -> {
                 int n = 0;
@@ -322,6 +323,7 @@ final class SpawnPrincipal implements Listener {
             try {
                 construir(w);
                 Files.writeString(feito.toPath(), "construido em " + new java.util.Date() + "\n");
+                Ceu.fazer(pl, "spawn-principal", w, CX, CZ, PISO, R, 46, Ceu.VERMELHO, true);
             } catch (Throwable t) {
                 pl.getLogger().warning("Spawn novo nao terminou: " + t);
             }
@@ -339,6 +341,7 @@ final class SpawnPrincipal implements Listener {
         limparAntigo(w, () -> {
             try {
                 construir(w);
+                Ceu.fazer(pl, "spawn-principal", w, CX, CZ, PISO, R, 46, Ceu.VERMELHO, true);
                 quem.sendMessage("§aSpawn principal refeito.");
                 pl.getLogger().info("Spawn principal refeito por " + quem.getName() + ".");
             } catch (Throwable t) {

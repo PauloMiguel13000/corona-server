@@ -20,7 +20,7 @@
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; background: var(--branco); color: var(--texto); font: 17px/1.55 var(--corpo); -webkit-font-smoothing: antialiased; }
+body { margin: 0; overflow-x: clip; background: var(--branco); color: var(--texto); font: 17px/1.55 var(--corpo); -webkit-font-smoothing: antialiased; }
 h1, h2, h3, h4 { font-family: var(--titulo); color: var(--preto); margin: 0; line-height: 1; letter-spacing: .005em; }
 h2 { font-size: clamp(34px, 5vw, 48px); font-weight: 900; }
 p { margin: 0; }

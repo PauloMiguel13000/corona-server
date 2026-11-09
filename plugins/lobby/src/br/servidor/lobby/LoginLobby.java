@@ -301,7 +301,7 @@ public final class LoginLobby extends JavaPlugin implements Listener {
             if (e.getPersistentDataContainer().has(kTexto, PersistentDataType.BYTE)) e.remove();
         texto(new Location(mundo, 0.5, Y + 6.2, 0.5), "§6§lCORONA SERVER", 2.2f);
         texto(new Location(mundo, 0.5, Y + 5.0, 0.5),
-                "§fBem-vindo!\n§eJá tem conta? §fdigite §a/login <sua senha>\n§eNovo por aqui? §fdigite §a/register <senha> <senha>\n§7Depois do login você volta para onde estava.", 1.0f);
+                "§fBem-vindo!\n§eJá tem conta? §fdigite §a/login <sua senha>\n§eNovo por aqui? §fdigite §a/register <senha> <senha>\n§7Exemplo: §f/register corona123 corona123\n§7No celular (Bedrock) você entra direto, sem senha.", 1.0f);
     }
 
     private void texto(Location l, String conteudo, float escala) {
@@ -403,6 +403,57 @@ public final class LoginLobby extends JavaPlugin implements Listener {
         boolean novato = !p.hasPlayedBefore();
         // 2 ticks depois: da tempo do AuthMe reconhecer sessao salva (quem ja esta logado nem passa pelo lobby)
         Bukkit.getScheduler().runTaskLater(this, () -> mandarParaLobby(p, novato), 2L);
+        // Bedrock (celular/console) ja entrou com a conta Xbox conferida pelo Floodgate: nao precisa de senha.
+        // Espera o AuthMe terminar a entrada dele (2 s) para o login valer; o lobby devolve a pessoa sozinho.
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            if (p.isOnline() && !logado(p) && bedrockSemSenha() && bedrock(p)) entrarSemSenha(p);
+        }, 40L);
+    }
+
+    private boolean bedrockSemSenha() {
+        return getConfig().getBoolean("bedrock-sem-senha", true);
+    }
+
+    /** Jogador do Bedrock que entrou pelo Geyser/Floodgate (a conta Xbox ja foi conferida na entrada). */
+    static boolean bedrock(Player p) {
+        String teste = System.getProperty("lobby.teste.bedrock", "");
+        if (!teste.isEmpty() && java.util.Arrays.asList(teste.split(",")).contains(p.getName())) return true;
+        if (!Bukkit.getPluginManager().isPluginEnabled("floodgate")) return false;
+        try {
+            Class<?> c = Class.forName("org.geysermc.floodgate.api.FloodgateApi");
+            Object api = c.getMethod("getInstance").invoke(null);
+            return api != null && (Boolean) c.getMethod("isFloodgatePlayer", java.util.UUID.class).invoke(api, p.getUniqueId());
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /**
+     * Faz o login pelo AuthMe sem pedir senha: quem ja tem conta so entra; quem e novo ganha uma conta com senha
+     * aleatoria (ninguem precisa saber: no Bedrock a identidade e a conta Xbox). false = nao deu (segue o login normal).
+     */
+    private boolean entrarSemSenha(Player p) {
+        if (!Bukkit.getPluginManager().isPluginEnabled("AuthMe")) return false;
+        try {
+            Class<?> c = Class.forName("fr.xephi.authme.api.v3.AuthMeApi");
+            Object api = c.getMethod("getInstance").invoke(null);
+            if (api == null) return false;
+            boolean tem = (Boolean) c.getMethod("isRegistered", String.class).invoke(api, p.getName());
+            if (tem) {
+                c.getMethod("forceLogin", Player.class).invoke(api, p);
+            } else {
+                byte[] b = new byte[18];
+                new java.security.SecureRandom().nextBytes(b);
+                String senha = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(b);
+                c.getMethod("forceRegister", Player.class, String.class, boolean.class).invoke(api, p, senha, true);
+            }
+            getLogger().info(p.getName() + " (Bedrock) entrou sem senha: " + (tem ? "conta existente" : "conta nova criada"));
+            p.sendMessage(txt("§a§l✔ §aConta Xbox reconhecida: você entrou sem precisar de senha."));
+            return true;
+        } catch (Throwable t) {
+            getLogger().warning("Login sem senha do Bedrock falhou para " + p.getName() + ": " + t);
+            return false;
+        }
     }
 
     private void mandarParaLobby(Player p, boolean novato) {
