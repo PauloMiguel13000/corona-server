@@ -84,6 +84,7 @@ public final class Extras extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(terror, this);
         try {
             terror.iniciar();
+            new Estatuas(this, terror).iniciar();
         } catch (Throwable ex) {
             getLogger().warning("Lobby do Terror nao iniciou: " + ex);
         }

@@ -23,12 +23,19 @@ final class Ceu {
     static final int VERSAO = 1;
 
     /** Cores do lugar: bloco de destaque, estandarte, folha das arvores, tronco, fogo do braseiro, joia da coroa. */
-    record Tema(String destaque, String estandarte, String folha, String tronco, String fogo, String joia, String flor) {}
+    record Tema(String destaque, String estandarte, String folha, String tronco, String fogo, String joia, String flor,
+                String ouro, String chao, String lanterna, boolean morto) {}
 
     static final Tema VERMELHO = new Tema("minecraft:red_concrete", "red", "minecraft:cherry_leaves", "minecraft:cherry_log",
-            "minecraft:campfire", "minecraft:red_stained_glass", "minecraft:poppy");
+            "minecraft:campfire", "minecraft:red_stained_glass", "minecraft:poppy", "minecraft:gold_block", "minecraft:grass_block[snowy=false]",
+            "minecraft:lantern", false);
     static final Tema JOGOS = new Tema("minecraft:red_concrete", "red", "minecraft:flowering_azalea_leaves", "minecraft:oak_log",
-            "minecraft:campfire", "minecraft:red_stained_glass", "minecraft:orange_tulip");
+            "minecraft:campfire", "minecraft:red_stained_glass", "minecraft:orange_tulip", "minecraft:gold_block", "minecraft:grass_block[snowy=false]",
+            "minecraft:lantern", false);
+    /** Lobby do Terror: coroa sombria (obsidiana que chora), ilhotas de terra seca com arvore morta e lanterna de alma. */
+    static final Tema TERROR = new Tema("minecraft:crying_obsidian", "black", "minecraft:cobweb", "minecraft:dark_oak_log",
+            "minecraft:soul_campfire", "minecraft:purple_stained_glass", "minecraft:dead_bush", "minecraft:polished_blackstone", "minecraft:coarse_dirt",
+            "minecraft:soul_lantern", true);
 
     private final World w;
     private final int cx, cz, piso, raio;
@@ -48,6 +55,11 @@ final class Ceu {
 
     /** Faz o ceu do lugar se ainda nao foi feito. limite = ate onde (em blocos do centro) pode ir uma ilhota. */
     static void fazer(Extras pl, String nome, World w, int cx, int cz, int piso, int raio, int limite, Tema t, boolean refazer) {
+        fazer(pl, nome, w, cx, cz, piso, raio, limite, t, refazer, true);
+    }
+
+    /** comTorres = false para lugar de chao irregular (Lobby do Terror): so a coroa e as ilhotas. */
+    static void fazer(Extras pl, String nome, World w, int cx, int cz, int piso, int raio, int limite, Tema t, boolean refazer, boolean comTorres) {
         if (w == null || !pl.getConfig().getBoolean("ceu-dos-lobbies", true)) return;
         File feito = new File(pl.getDataFolder(), nome + "-ceu-v" + VERSAO + ".txt");
         if (feito.exists() && !refazer) return;
@@ -55,7 +67,7 @@ final class Ceu {
             for (int x = (cx - limite) >> 4; x <= (cx + limite) >> 4; x++)
                 for (int z = (cz - limite) >> 4; z <= (cz + limite) >> 4; z++) w.getChunkAt(x, z).load(true);
             Ceu c = new Ceu(w, cx, cz, piso, raio, t, nome.hashCode() * 31L + VERSAO);
-            int torres = c.torres();
+            int torres = comTorres ? c.torres() : 0;
             c.coroa();
             int ilhas = c.ilhotas(limite);
             Files.writeString(feito.toPath(), "feito em " + new java.util.Date() + ": " + torres + " torres, " + ilhas + " ilhotas, " + c.postos + " blocos\n");
@@ -142,19 +154,19 @@ final class Ceu {
                 double d = Math.sqrt(x * x + z * z);
                 if (d < 6.5 || d >= 7.5) continue;
                 por(cx + x, y - 1, cz + z, t.destaque());
-                por(cx + x, y, cz + z, "minecraft:gold_block");
+                por(cx + x, y, cz + z, t.ouro());
             }
         for (int k = 0; k < 8; k++) {
             double a = Math.toRadians(45 * k);
             int x = cx + (int) Math.round(Math.sin(a) * 7), z = cz - (int) Math.round(Math.cos(a) * 7);
             int alto = k % 2 == 0 ? 4 : 2;
-            for (int i = 1; i <= alto; i++) por(x, y + i, z, "minecraft:gold_block");
+            for (int i = 1; i <= alto; i++) por(x, y + i, z, t.ouro());
             por(x, y + alto + 1, z, t.joia());
             if (k % 2 == 0) {
                 // lanterna pendurada embaixo das pontas grandes
                 por(x, y - 2, z, "minecraft:iron_chain[axis=y,waterlogged=false]");
                 por(x, y - 3, z, "minecraft:iron_chain[axis=y,waterlogged=false]");
-                por(x, y - 4, z, "minecraft:lantern[hanging=true,waterlogged=false]");
+                por(x, y - 4, z, t.lanterna() + "[hanging=true,waterlogged=false]");
             }
         }
     }
@@ -191,7 +203,7 @@ final class Ceu {
                 double d = Math.sqrt(x * x + z * z) + (rnd.nextDouble() - 0.5) * 0.9;
                 if (d > r) continue;
                 int fundo = (int) Math.round((1 - d / r) * r * 1.7 + rnd.nextInt(2));
-                por(ix + x, iy, iz + z, "minecraft:grass_block[snowy=false]");
+                por(ix + x, iy, iz + z, t.chao());
                 for (int i = 1; i <= fundo; i++) {
                     double f = (double) i / Math.max(1, fundo);
                     String b = i <= 1 ? "minecraft:dirt" : f > 0.8 ? "minecraft:deepslate[axis=y]" : rnd.nextInt(4) == 0 ? "minecraft:andesite"
@@ -199,14 +211,14 @@ final class Ceu {
                     por(ix + x, iy - i, iz + z, b);
                 }
                 // matinho e flor
-                if (d < r - 1 && rnd.nextInt(5) == 0) por(ix + x, iy + 1, iz + z, rnd.nextInt(3) == 0 ? t.flor() : "minecraft:short_grass");
+                if (d < r - 1 && rnd.nextInt(5) == 0) por(ix + x, iy + 1, iz + z, t.morto() || rnd.nextInt(3) == 0 ? t.flor() : "minecraft:short_grass");
             }
         switch (tipo % 3) {
             case 0 -> arvore(ix, iy + 1, iz, 4 + rnd.nextInt(2));
             case 1 -> ruina(ix, iy + 1, iz);
             default -> {
                 arvore(ix + 1, iy + 1, iz, 3 + rnd.nextInt(2));
-                por(ix - 2, iy + 1, iz - 1, "minecraft:lantern[hanging=false,waterlogged=false]");
+                por(ix - 2, iy + 1, iz - 1, t.lanterna() + "[hanging=false,waterlogged=false]");
             }
         }
         // lanterna pendurada embaixo da ponta
@@ -214,7 +226,7 @@ final class Ceu {
         for (int y = iy - ponta - 3; y <= iy - 1; y++) {
             if (!ar(ix, y + 1, iz) && ar(ix, y, iz)) {
                 por(ix, y, iz, "minecraft:iron_chain[axis=y,waterlogged=false]");
-                por(ix, y - 1, iz, "minecraft:lantern[hanging=true,waterlogged=false]");
+                por(ix, y - 1, iz, t.lanterna() + "[hanging=true,waterlogged=false]");
                 break;
             }
         }
@@ -223,11 +235,25 @@ final class Ceu {
     private void arvore(int x, int y, int z, int alto) {
         for (int i = 0; i < alto; i++) {
             Block b = w.getBlockAt(x, y + i, z);
-            if (!b.getType().isAir() && !b.getType().name().contains("GRASS") && !b.getType().name().contains("TULIP") && !b.getType().name().contains("POPPY")) continue;
+            if (!b.getType().isAir() && !b.getType().name().contains("GRASS") && !b.getType().name().contains("TULIP") && !b.getType().name().contains("POPPY")
+                    && !b.getType().name().contains("DEAD_BUSH")) continue;
             b.setBlockData(Bukkit.createBlockData(t.tronco() + "[axis=y]"), false);
             postos++;
         }
         int topo = y + alto;
+        if (t.morto()) {
+            // arvore morta: so galhos secos (troncos deitados) e uma teia
+            int[][] g = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+            for (int k = 0; k < 3; k++) {
+                int[] d = g[rnd.nextInt(4)];
+                int gy = topo - 1 - rnd.nextInt(Math.max(1, alto - 2));
+                por(x + d[0], gy, z + d[1], t.tronco() + "[axis=" + (d[0] != 0 ? "x" : "z") + "]");
+                if (rnd.nextBoolean()) por(x + d[0] * 2, gy + 1, z + d[1] * 2, t.tronco() + "[axis=y]");
+            }
+            por(x, topo, z, t.tronco() + "[axis=y]");
+            if (rnd.nextBoolean()) por(x + 1, topo - 1, z + 1, "minecraft:cobweb");
+            return;
+        }
         for (int dx = -2; dx <= 2; dx++)
             for (int dz = -2; dz <= 2; dz++)
                 for (int dy = -2; dy <= 1; dy++) {
@@ -240,12 +266,13 @@ final class Ceu {
     private void ruina(int x, int y, int z) {
         int[][] p = {{-2, -1, 4}, {2, -1, 2}, {-1, 2, 3}, {2, 2, 1}};
         for (int[] c : p) {
-            for (int i = 0; i < c[2]; i++) por(x + c[0], y + i, z + c[1], i == c[2] - 1 && c[2] > 2 ? "minecraft:chiseled_quartz_block" : "minecraft:quartz_pillar[axis=y]");
+            for (int i = 0; i < c[2]; i++) por(x + c[0], y + i, z + c[1], t.morto() ? (i == c[2] - 1 && c[2] > 2 ? "minecraft:chiseled_polished_blackstone" : "minecraft:polished_basalt[axis=y]")
+                    : i == c[2] - 1 && c[2] > 2 ? "minecraft:chiseled_quartz_block" : "minecraft:quartz_pillar[axis=y]");
         }
         por(x, y, z, "minecraft:polished_blackstone_bricks");
         por(x, y + 1, z, t.destaque());
-        por(x, y + 2, z, "minecraft:lantern[hanging=false,waterlogged=false]");
+        por(x, y + 2, z, t.lanterna() + "[hanging=false,waterlogged=false]");
         por(x - 1, y, z + 1, "minecraft:polished_blackstone_brick_slab[type=bottom,waterlogged=false]");
-        por(x + 1, y, z, "minecraft:quartz_slab[type=bottom,waterlogged=false]");
+        por(x + 1, y, z, (t.morto() ? "minecraft:blackstone_slab" : "minecraft:quartz_slab") + "[type=bottom,waterlogged=false]");
     }
 }

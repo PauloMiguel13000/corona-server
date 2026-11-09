@@ -198,6 +198,8 @@ final class LobbyTerror implements Listener {
         icones.clear();
         for (Entity e : mundo.getEntities())
             if (e instanceof ItemDisplay d && d.getPersistentDataContainer().has(chave(), PersistentDataType.BYTE)) icones.add(d);
+        // coroa sombria em cima do obelisco e ilhotas mortas em volta (uma vez; marca lobby-terror-ceu-vN.txt)
+        Ceu.fazer(pl, "lobby-terror", mundo, 0, 0, Y, 51, 74, Ceu.TERROR, false, false);
         Bukkit.getScheduler().runTaskTimer(pl, this::girar, 40L, 10L);
         Bukkit.getScheduler().runTaskTimer(pl, this::ambiente, 100L, 40L);
     }

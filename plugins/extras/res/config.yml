@@ -143,3 +143,9 @@ mochilas:
   ligado: true
   survival: [world, world_nether, world_the_end, plots]
   masmorras: [masmorras_mundo, masmorras_nether, masmorras_end]
+
+# Enfeites altos dos lobbies (torres, coroa flutuando e ilhotas em volta). false = nao faz onde ainda nao foi feito.
+ceu-dos-lobbies: true
+# Lobby do Terror: estatuas 3D dos monstros ao lado dos portoes (so aparecem para quem tem o pacote de recursos).
+lobby-terror:
+  estatuas: true

@@ -20,6 +20,10 @@
 - **ajustes127** (19:4x): Turno da Noite - o Paulo ficou preso nas câmeras (só saía agachando e isso só aparecia no texto do
   tablet). Agora sai com Shift, Espaço, S (para trás), Q ou escolhendo outro espaço da barra (botão SAIR no espaço 9, para o
   celular); aviso fixo na barra de ação. `PlayerInputEvent` + `PlayerItemHeldEvent`. TesteBot ganhou `agachar`, `slot N`, `tecla`.
+- **ajustes128** (20:0x): Extras - Lobby do Terror com `Ceu.TERROR` (coroa de obsidiana que chora sobre o obelisco, 7 ilhotas
+  mortas; sem torres; marca `lobby-terror-ceu-v1.txt`) e `Estatuas.java`: ItemDisplay não salvos dos modelos 3D
+  (`props/porcelana_f0`, `vovo_idle`, `anim_capi_f0`, `anim_jaca_f0`) ao lado dos portões, só para quem tem o pacote ou
+  está no Bedrock; nascem quando chega alguém no mundo `terror`. Desliga com `lobby-terror.estatuas: false`.
 
 ## Discord (servidor Corona Server, conta coronadooscar no Chrome)
 - Convite permanente: https://discord.gg/uhEaWb9sJA
@@ -43,5 +47,4 @@
 
 ## Pendências
 - Conferir no cliente Bedrock: entrada sem senha com AuthMe de verdade, Chorona (piglin_brute), Vovó 3D, aranha no celular.
-- Lobby do Terror e lobby de login ainda sem a parte nova de enfeites.
 - A fila de comandos (`LIGAR-FILA-TESTE.bat`) venceu às 18:00.
