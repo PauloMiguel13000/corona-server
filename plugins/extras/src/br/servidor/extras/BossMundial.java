@@ -83,6 +83,13 @@ final class BossMundial implements Listener {
         this.kAjudante = new NamespacedKey(pl, "boss_ajudante");
     }
 
+    /** O boss so existe no mundo das masmorras, nunca no survival puro (pedido do Paulo, 10/11). */
+    private World mundoDoBoss() {
+        String nome = pl.getConfig().getString("boss-mundial.mundo", "masmorras_mundo");
+        if (!nome.startsWith("masmorras")) nome = "masmorras_mundo";
+        return Bukkit.getWorld(nome);
+    }
+
     private boolean ativo() {
         return pl.getConfig().getBoolean("boss-mundial.ativo", true);
     }
@@ -99,8 +106,8 @@ final class BossMundial implements Listener {
         Bukkit.getScheduler().runTaskTimer(pl, () -> {
             if (vivo() || System.currentTimeMillis() < proximoNascimento) return;
             proximoNascimento = System.currentTimeMillis() + min * 60_000L;
-            World w = Bukkit.getWorld(pl.getConfig().getString("boss-mundial.mundo", "world"));
-            if (w == null || w.getPlayers().size() < pl.getConfig().getInt("boss-mundial.minimo-de-jogadores", 1)) return;
+            World w = mundoDoBoss();
+            if (w == null || Bukkit.getOnlinePlayers().size() < pl.getConfig().getInt("boss-mundial.minimo-de-jogadores", 1)) return;
             Location l = lugar(w);
             if (l != null) nascer(l);
         }, 20L * 60, 20L * 60);
@@ -465,11 +472,21 @@ final class BossMundial implements Listener {
             switch (a[0].toLowerCase()) {
                 case "invocar", "nascer", "spawn" -> {
                     if (!(s instanceof Player p)) {
-                        World w = Bukkit.getWorld(pl.getConfig().getString("boss-mundial.mundo", "world"));
+                        World w = mundoDoBoss();
                         Location l = w == null ? null : lugar(w);
                         if (l == null) s.sendMessage("Nao achei lugar.");
                         else nascer(l);
-                    } else nascer(p.getLocation());
+                    } else if (p.getWorld().equals(mundoDoBoss())) nascer(p.getLocation());
+                    else {
+                        // fora do mundo das masmorras: nasce la, num lugar sorteado, e o /boss leva ate ele
+                        World w = mundoDoBoss();
+                        Location l = w == null ? null : lugar(w);
+                        if (l == null) p.sendMessage(Extras.txt("§cNão achei lugar no mundo das masmorras."));
+                        else {
+                            nascer(l);
+                            p.sendMessage(Extras.txt("§7O boss só nasce no mundo das masmorras. Use §f/boss §7para ir até ele."));
+                        }
+                    }
                     return true;
                 }
                 case "remover", "tirar" -> {

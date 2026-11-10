@@ -204,3 +204,9 @@
   (467,452) -> arrastar o titulo (600,7)->(150,120) -> X (1108,117).
 - Boss no Bedrock: aparece montado (asas, espada, coroa) e as partes de magma brilham no escuro; `/boss` e a barra de
   vida funcionam. Ataques nao vistos um a um. A conta voltou para galeria 17 101 1 em sobrevivencia.
+
+## ajustes145 (10/11 15:19) - Boss mundial so no mundo das masmorras
+
+- Paulo: "o boss so spawna no mundo das dungeons, nunca no survival puro", "nem lobby de terror".
+- `BossMundial.mundoDoBoss()`: sempre um mundo que comeca com `masmorras` (padrao `masmorras_mundo`). `/boss invocar`
+  fora de la faz nascer la num lugar sorteado; `/boss` leva o jogador (a mochila troca sozinha). Testado com bot.

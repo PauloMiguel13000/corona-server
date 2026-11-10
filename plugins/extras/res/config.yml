@@ -160,7 +160,7 @@ missoes-diarias:
 # Boss mundial (/boss): o Colosso da Coroa Partida nasce de tempos em tempos no mundo aberto
 boss-mundial:
   ativo: true
-  mundo: world
+  mundo: masmorras_mundo
   a-cada-minutos: 120
   minimo-de-jogadores: 1
   some-em-minutos: 20
