@@ -78,3 +78,11 @@
   o progresso so avanca para quem estava naquela noite. Item "Jogar em grupo" no menu.
 - Testado no servidor de teste com bots (2 e 3 vigias, cameras separadas, um saindo, um caindo, vitoria, susto, solo).
   NAO testado com cliente real (Java/Bedrock) no coop.
+
+## ajustes134 (10/11 10:06) - Fabrica da Alegria: Tutu e Dona Bolota em 3D
+
+- `modelos/fabrica3d.py` (usa o corpo/pintura de `animatronicos3d.py`): `corona:props/anim_tutu_f0|f1` e `anim_bolota_f0|f1`.
+  Mesclado em `coronapack/res/pack` (Java + mcpack 1.13.4, item_texture.json somado) e `custom_mappings/corona-fabrica.json`.
+- Fabrica `Boneco3d.java`: ItemDisplay que segue o Mannequin a cada tick (posicao, lado, escala = escala do boneco / 1,25,
+  quadro 1 enquanto `cacando`); so quem tem o pacote/Bedrock ve o modelo. Config `modelo-3d`.
+- Conferido so no servidor de teste (entidade criada com o item certo) e na previa; NAO visto em cliente real.

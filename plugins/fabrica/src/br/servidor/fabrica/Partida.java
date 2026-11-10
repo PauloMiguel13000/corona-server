@@ -65,6 +65,7 @@ final class Partida {
     private TextDisplay tela;
     private final Map<String, ItemDisplay> plugues = new HashMap<>();
     private Mannequin tutu, bolota;
+    private final Boneco3d tutu3d = new Boneco3d("tutu"), bolota3d = new Boneco3d("bolota");
     BossBar barra;
     BukkitTask tarefa;
     long inicioMs;
@@ -696,6 +697,11 @@ final class Partida {
     private void tick() {
         if (acabou) return;
         ticks++;
+        if (pl.getConfig().getBoolean("modelo-3d", true)) {
+            // modelos 3D do pacote seguindo os bonecos (boca aberta enquanto o Tutu caca)
+            tutu3d.atualizar(pl, tutu, cacando ? 1 : 0, ticks % 10 == 0);
+            bolota3d.atualizar(pl, bolota, 0, ticks % 10 == 0);
+        }
         List<Player> ps = online();
         if (ps.isEmpty()) {
             pl.acabou(this, false);
@@ -1047,6 +1053,8 @@ final class Partida {
 
     void limpar() {
         acabou = true;
+        tutu3d.sumir();
+        bolota3d.sumir();
         if (tarefa != null) tarefa.cancel();
         if (barra != null) barra.removeAll();
         for (Entity e : entidades) if (e != null && e.isValid()) e.remove();

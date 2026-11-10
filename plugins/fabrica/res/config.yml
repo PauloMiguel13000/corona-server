@@ -11,3 +11,6 @@ skins:
   api-key: ""
   intervalo-segundos: 12
   user-agent: CoronaServer-FabricaAlegria/1.0
+
+# true = Tutu e Dona Bolota aparecem como modelos 3D do pacote (Java e Bedrock); false = bonecos com skin
+modelo-3d: true

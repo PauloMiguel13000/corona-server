@@ -90,6 +90,7 @@ public final class Fabrica extends JavaPlugin implements Listener {
         skins = new Skins(this);
         mundo = criarMundo();
         getServer().getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvents(new Boneco3d.Ouvinte(), this);
         getLogger().info("Fabrica Alegria ligada: /fabrica (mundo " + MUNDO + ", " + getConfig().getInt("instancias", 3) + " instancias).");
     }
 
