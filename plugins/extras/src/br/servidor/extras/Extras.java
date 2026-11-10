@@ -55,6 +55,7 @@ public final class Extras extends JavaPlugin implements Listener {
     Votos votos;
     Divulgacao divulgacao;
     MissoesDiarias missoesDiarias;
+    Ajuda ajuda;
 
     @Override
     public void onEnable() {
@@ -74,6 +75,8 @@ public final class Extras extends JavaPlugin implements Listener {
         divulgacao.iniciar();
         missoesDiarias = new MissoesDiarias(this);
         missoesDiarias.iniciar();
+        ajuda = new Ajuda(this);
+        Bukkit.getPluginManager().registerEvents(ajuda, this);
         // depois que os mundos carregaram: placas do spawn (se a versao mudou) e limpeza embaixo do spawn (uma vez)
         Bukkit.getScheduler().runTaskTimer(this, this::visaoNoSpawn, 60L, 20L);
         lobby = new LobbyMinigames(this);
@@ -877,6 +880,11 @@ public final class Extras extends JavaPlugin implements Listener {
         if (cmd.getName().equalsIgnoreCase("ip")) {
             if (s instanceof Player p) divulgacao.ip(p);
             else s.sendMessage("Java: " + getConfig().getString("divulgacao.ip-java") + " | Bedrock: " + getConfig().getString("divulgacao.ip-bedrock") + " porta " + getConfig().getString("divulgacao.porta-bedrock"));
+            return true;
+        }
+        if (cmd.getName().equalsIgnoreCase("ajuda")) {
+            if (s instanceof Player p) ajuda.abrir(p);
+            else s.sendMessage("Somente jogadores.");
             return true;
         }
         if (cmd.getName().equalsIgnoreCase("missoes")) {

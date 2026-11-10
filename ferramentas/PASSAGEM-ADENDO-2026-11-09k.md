@@ -116,3 +116,12 @@
   tempo, minigames). Premio em coronas no clique; bonus das 3 (60 + 15 por dia seguido, ate 7). `missoes-diarias.yml`.
   Dono: `/missoes completar <nick>` (extras.admin) termina as 3 de hoje para testar. Config `missoes-diarias.*`.
   Testado no servidor de teste com bot (menu, completar, pegar premios, sem pagar em dobro).
+
+## ajustes138 (10/11 12:03) - Guia do servidor (/ajuda)
+
+- Extras `Ajuda.java`: `/ajuda` (aliases guia, comandos, tutorial, comecar) abre um bau de 45 com 18 atalhos (masmorras,
+  classes, minigames, terror, pets, rtp, ec, missoes, coronas, votar, vip, loja, galeria, reviver, grupo, indicar, discord,
+  ip); clicar fecha o bau e roda o comando 1 tick depois. Quem entra pela 1a vez recebe o lembrete do /ajuda (20 s).
+  Testado no servidor de teste com bot (abrir, clicar em Terror -> foi para o lobby do terror).
+- Regra do Paulo (10/11 10:27-10:41): NAO criar/alterar monstro no Hotel; ele pediu os monstros do jogo original (com
+  outro nome/cor) e isso foi recusado (personagem protegido). No Hotel, so mecanicas.
