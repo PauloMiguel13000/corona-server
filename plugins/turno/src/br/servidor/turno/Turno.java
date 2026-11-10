@@ -90,7 +90,7 @@ public final class Turno extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
-        for (Noite n : new ArrayList<>(noites.values())) n.terminar(false, null);
+        for (Noite n : new java.util.HashSet<>(noites.values())) n.terminar(false, null);
         noites.clear();
     }
 
@@ -139,7 +139,8 @@ public final class Turno extends JavaPlugin implements Listener {
 
     void venceu(Player p, int noite) {
         int atual = noiteMax(p);
-        if (noite < 6 && noite + 1 > atual) {
+        // so avanca quem estava nessa noite (no coop o convidado pode estar numa noite que ainda nao liberou)
+        if (noite < 6 && noite == atual) {
             progresso.set(p.getUniqueId() + ".noite", noite + 1);
             progresso.set(p.getUniqueId() + ".nome", p.getName());
             salvarProgresso();
@@ -173,8 +174,14 @@ public final class Turno extends JavaPlugin implements Listener {
     }
 
     void comecar(Player p, int noite, int[] ia) {
-        if (noites.containsKey(p.getUniqueId())) {
-            p.sendMessage(txt("§cVocê já está num turno."));
+        comecar(List.of(p), noite, ia);
+    }
+
+    /** Comeca a noite para um vigia ou para um grupo (coop: o primeiro e o anfitriao, a noite e a dele). */
+    void comecar(List<Player> grupo, int noite, int[] ia) {
+        Player p = grupo.get(0);
+        for (Player x : grupo) if (noites.containsKey(x.getUniqueId())) {
+            p.sendMessage(txt(x == p ? "§cVocê já está num turno." : "§c" + x.getName() + " já está num turno."));
             return;
         }
         int inst = instanciaLivre();
@@ -182,7 +189,7 @@ public final class Turno extends JavaPlugin implements Listener {
             p.sendMessage(txt("§cTodos os escritórios estão ocupados. Tente daqui a pouco."));
             return;
         }
-        if (noite < 6 && noite > noiteMax(p)) {
+        if (noite < 6 && noite > noiteMax(p) && !p.hasPermission("turno.admin")) {
             p.sendMessage(txt("§cVocê ainda não chegou nessa noite."));
             return;
         }
@@ -190,24 +197,179 @@ public final class Turno extends JavaPlugin implements Listener {
             p.sendMessage(txt("§cO mundo do minigame não carregou."));
             return;
         }
-        try {
-            if (!guarda.tem(p)) guarda.guardar(p);
-        } catch (IOException e) {
-            p.sendMessage(txt("§cNão deu para guardar seu inventário. Tente de novo."));
-            getLogger().warning("Guardar " + p.getName() + ": " + e);
-            return;
+        List<Player> dentro = new ArrayList<>();
+        for (Player x : grupo) {
+            try {
+                if (!guarda.tem(x)) guarda.guardar(x);
+                dentro.add(x);
+            } catch (IOException e) {
+                x.sendMessage(txt("§cNão deu para guardar seu inventário. Tente de novo."));
+                getLogger().warning("Guardar " + x.getName() + ": " + e);
+                if (x == p) return;
+            }
+        }
+        boolean coop = dentro.size() > 1;
+        if (coop) {
+            // em grupo fica mais facil (um nas cameras, outro nas portas): os bichos acordados ficam mais espertos
+            ia = ia.clone();
+            int mais = getConfig().getInt("coop.ia-a-mais-por-vigia", 2) * (dentro.size() - 1);
+            for (int i = 0; i < ia.length; i++) if (ia[i] > 0) ia[i] = Math.min(20, ia[i] + mais);
         }
         Mapa m = mapa(inst);
-        Noite n = new Noite(this, m, inst, p, noite, ia);
-        noites.put(p.getUniqueId(), n);
-        p.sendMessage(txt("§e§lTURNO DA NOITE §7— noite " + (noite == 6 ? "personalizada" : noite) + ". Para sair das câmeras: agache (Shift), pule (Espaço) ou aperte Q; no celular, toque em SAIR na barra. /turno sair para desistir."));
+        Noite n = new Noite(this, m, inst, dentro, noite, ia);
+        for (Player x : dentro) {
+            noites.put(x.getUniqueId(), n);
+            x.sendMessage(txt("§e§lTURNO DA NOITE §7— noite " + (noite == 6 ? "personalizada" : noite) + (coop ? " §b(coop, " + dentro.size() + " vigias)" : "")
+                    + "§7. Para sair das câmeras: agache (Shift), pule (Espaço) ou aperte Q; no celular, toque em SAIR na barra. /turno sair para desistir."));
+        }
         n.comecar();
+    }
+
+    // ------------------------------------------------------------------ coop: convite
+
+    /** Convite de coop: o anfitriao chama, os convidados aceitam em ate 60 s e a noite comeca. */
+    private static final class Convite {
+        final UUID anfitriao;
+        final int noite;
+        final List<UUID> chamados = new ArrayList<>();
+        final List<UUID> aceitos = new ArrayList<>();
+        org.bukkit.scheduler.BukkitTask prazo;
+
+        Convite(UUID anfitriao, int noite) {
+            this.anfitriao = anfitriao;
+            this.noite = noite;
+        }
+    }
+
+    private final Map<UUID, Convite> convites = new HashMap<>();   // anfitriao -> convite
+    static final int COOP_MAX = 3;
+
+    private static Player achar(String nick) {
+        Player x = Bukkit.getPlayerExact(nick);
+        if (x == null && !nick.startsWith(".")) x = Bukkit.getPlayerExact("." + nick);
+        if (x == null) for (Player o : Bukkit.getOnlinePlayers())
+            if (o.getName().equalsIgnoreCase(nick) || o.getName().equalsIgnoreCase("." + nick)) x = o;
+        return x;
+    }
+
+    private Convite conviteDe(Player convidado) {
+        for (Convite c : convites.values()) if (c.chamados.contains(convidado.getUniqueId())) return c;
+        return null;
+    }
+
+    private void coop(Player p, String[] a) {
+        if (a.length < 2) {
+            p.sendMessage(txt("§b§lTurno da Noite em grupo §7(até " + COOP_MAX + " vigias na mesma sala)"));
+            p.sendMessage(txt("§e/turno coop <nick> [nick2] [noite] §7— chama os amigos (a noite é uma das suas liberadas)"));
+            p.sendMessage(txt("§e/turno aceitar §7— aceita o convite  §8|  §e/turno recusar"));
+            return;
+        }
+        if (noiteDe(p) != null) {
+            p.sendMessage(txt("§cVocê já está num turno."));
+            return;
+        }
+        int max = noiteMax(p);
+        int noite = Math.min(5, max);
+        List<Player> chamados = new ArrayList<>();
+        for (int i = 1; i < a.length; i++) {
+            if (a[i].matches("\\d+")) {
+                noite = Integer.parseInt(a[i]);
+                continue;
+            }
+            Player x = achar(a[i]);
+            if (x == null) {
+                p.sendMessage(txt("§c" + a[i] + " não está online."));
+                return;
+            }
+            if (x == p) {
+                p.sendMessage(txt("§cChame outra pessoa, não você mesmo."));
+                return;
+            }
+            if (noiteDe(x) != null) {
+                p.sendMessage(txt("§c" + x.getName() + " já está num turno."));
+                return;
+            }
+            if (!chamados.contains(x)) chamados.add(x);
+        }
+        if (chamados.isEmpty()) {
+            p.sendMessage(txt("§cDiga quem você quer chamar: /turno coop <nick>"));
+            return;
+        }
+        if (chamados.size() > COOP_MAX - 1) {
+            p.sendMessage(txt("§cCabem até " + COOP_MAX + " vigias na sala (você e mais " + (COOP_MAX - 1) + ")."));
+            return;
+        }
+        if (noite < 1 || noite > 6 || (noite > max && !p.hasPermission("turno.admin"))) {
+            p.sendMessage(txt("§cVocê ainda não chegou na noite " + noite + ". §7Sua noite mais alta: " + Math.min(max, 6)));
+            return;
+        }
+        Convite velho = convites.remove(p.getUniqueId());
+        if (velho != null && velho.prazo != null) velho.prazo.cancel();
+        Convite c = new Convite(p.getUniqueId(), noite);
+        String qual = noite == 6 ? "personalizada" : String.valueOf(noite);
+        for (Player x : chamados) {
+            Convite outro = conviteDe(x);
+            if (outro != null) outro.chamados.remove(x.getUniqueId());
+            c.chamados.add(x.getUniqueId());
+            x.sendMessage(txt("§b§lTURNO DA NOITE §7— §f" + p.getName() + " §7chamou você para a §enoite " + qual + " §7em grupo."));
+            x.sendMessage(txt("§a§l[ACEITAR]").clickEvent(net.kyori.adventure.text.event.ClickEvent.runCommand("/turno aceitar"))
+                    .append(txt(" §7ou digite §f/turno aceitar §8(60 segundos)")));
+            x.playSound(x.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1f, 1.4f);
+        }
+        convites.put(p.getUniqueId(), c);
+        p.sendMessage(txt("§7Convite enviado para §f" + String.join("§7, §f", chamados.stream().map(Player::getName).toList()) + "§7 (noite " + qual + "). Esperando aceitar..."));
+        c.prazo = Bukkit.getScheduler().runTaskLater(this, () -> fecharConvite(c, true), 60 * 20L);
+    }
+
+    private void aceitar(Player p, boolean sim) {
+        Convite c = conviteDe(p);
+        if (c == null) {
+            p.sendMessage(txt("§7Você não tem convite de turno."));
+            return;
+        }
+        Player dono = Bukkit.getPlayer(c.anfitriao);
+        c.chamados.remove(p.getUniqueId());
+        if (!sim) {
+            p.sendMessage(txt("§7Convite recusado."));
+            if (dono != null) dono.sendMessage(txt("§7" + p.getName() + " recusou o convite."));
+        } else if (noiteDe(p) != null) {
+            p.sendMessage(txt("§cVocê já está num turno."));
+        } else {
+            c.aceitos.add(p.getUniqueId());
+            p.sendMessage(txt("§aConvite aceito!" + (c.chamados.isEmpty() ? "" : " §7Esperando os outros...")));
+            if (dono != null) dono.sendMessage(txt("§a" + p.getName() + " aceitou."));
+        }
+        if (c.chamados.isEmpty()) fecharConvite(c, false);
+    }
+
+    /** Todos responderam (ou o prazo acabou): comeca com quem aceitou. */
+    private void fecharConvite(Convite c, boolean prazo) {
+        if (convites.remove(c.anfitriao, c) == false) return;
+        if (c.prazo != null) c.prazo.cancel();
+        Player dono = Bukkit.getPlayer(c.anfitriao);
+        for (UUID id : c.chamados) {
+            Player x = Bukkit.getPlayer(id);
+            if (x != null) x.sendMessage(txt("§7O convite do turno expirou."));
+        }
+        if (dono == null) return;
+        List<Player> grupo = new ArrayList<>();
+        grupo.add(dono);
+        for (UUID id : c.aceitos) {
+            Player x = Bukkit.getPlayer(id);
+            if (x != null && noiteDe(x) == null) grupo.add(x);
+        }
+        if (grupo.size() < 2) {
+            dono.sendMessage(txt(prazo ? "§7Ninguém aceitou o convite a tempo." : "§7Ninguém aceitou o convite."));
+            return;
+        }
+        if (noiteDe(dono) != null) return;
+        comecar(grupo, c.noite, iaDaNoite(c.noite));
     }
 
     /** Tira o jogador do minigame (devolve inventario, volta ao lobby). */
     void sair(Player p, boolean desistiu) {
         Noite n = noites.remove(p.getUniqueId());
-        if (n != null && !n.acabou) n.terminar(false, null);
+        if (n != null && !n.acabou) n.remover(p);    // no coop os outros continuam; sozinho, a noite acaba
         if (guarda.tem(p)) {
             p.setWalkSpeed(0.2f);
             Guarda.limpar(p);
@@ -221,7 +383,7 @@ public final class Turno extends JavaPlugin implements Listener {
     }
 
     void noiteAcabou(Noite n) {
-        noites.remove(n.jogador, n);
+        noites.values().removeIf(x -> x == n);
     }
 
     Noite noiteDe(Player p) {
@@ -229,7 +391,7 @@ public final class Turno extends JavaPlugin implements Listener {
     }
 
     void skinPronta(String id) {
-        for (Noite n : noites.values()) for (Animatronico a : n.bichos) if (a.id.equals(id) && a.boneco != null && a.boneco.isValid()) {
+        for (Noite n : new java.util.HashSet<>(noites.values())) for (Animatronico a : n.bichos) if (a.id.equals(id) && a.boneco != null && a.boneco.isValid()) {
             var perfil = skins.perfil(id);
             if (perfil != null) a.boneco.setProfile(perfil);
         }
@@ -250,6 +412,7 @@ public final class Turno extends JavaPlugin implements Listener {
             m.displayName(txt((aberta ? "§e" : "§8") + "Noite " + noite));
             List<Component> lore = new ArrayList<>();
             lore.add(txt(aberta ? "§7Clique para começar" : "§7Vença a noite " + (noite - 1) + " primeiro"));
+            if (aberta) lore.add(txt("§bEm grupo: §f/turno coop <nick> " + noite));
             lore.add(txt("§8IA: Tuca " + IA[i][0] + " · Jaca " + IA[i][1] + " · Capi " + IA[i][2] + " · Boto " + IA[i][3]));
             m.lore(lore);
             m.getPersistentDataContainer().set(kMenu, PersistentDataType.INTEGER, noite);
@@ -272,6 +435,13 @@ public final class Turno extends JavaPlugin implements Listener {
                 txt("§7Capi só anda quando ninguém olha as câmeras."), txt("§7Boto some se você não olhar a Cortina... ou se olhar demais.")));
         como.setItemMeta(cm);
         inv.setItem(22, como);
+        ItemStack grupo = new ItemStack(Material.PLAYER_HEAD);
+        ItemMeta gm = grupo.getItemMeta();
+        gm.displayName(txt("§bJogar em grupo (coop)"));
+        gm.lore(List.of(txt("§7Até " + COOP_MAX + " vigias na mesma sala,"), txt("§7com a mesma energia para todos."), txt(""),
+                txt("§e/turno coop <nick> §7chama um amigo"), txt("§e/turno aceitar §7aceita o convite")));
+        grupo.setItemMeta(gm);
+        inv.setItem(24, grupo);
         p.openInventory(inv);
     }
 
@@ -331,6 +501,9 @@ public final class Turno extends JavaPlugin implements Listener {
                 }
                 sair(p, true);
             }
+            case "coop", "dupla", "grupo", "convidar", "chamar" -> coop(p, a);
+            case "aceitar", "aceito", "sim" -> aceitar(p, true);
+            case "recusar", "nao" -> aceitar(p, false);
             case "custom", "personalizada" -> {
                 if (noiteMax(p) < 6 && !p.hasPermission("turno.admin")) {
                     p.sendMessage(txt("§cVença a noite 5 para liberar."));
@@ -444,7 +617,7 @@ public final class Turno extends JavaPlugin implements Listener {
         }
         // tablet
         if (tablet(e.getItem()) || tablet(p.getInventory().getItemInMainHand())) {
-            if (n.camera < 0) {
+            if (n.cam(p) < 0) {
                 if (ac == Action.RIGHT_CLICK_AIR || ac == Action.RIGHT_CLICK_BLOCK) n.abrirCameras(p);
             } else {
                 if (ac == Action.RIGHT_CLICK_AIR || ac == Action.RIGHT_CLICK_BLOCK) n.proximaCamera(p, 1);
@@ -457,7 +630,7 @@ public final class Turno extends JavaPlugin implements Listener {
     public void agachou(PlayerToggleSneakEvent e) {
         Noite n = noiteDe(e.getPlayer());
         if (n == null || !e.isSneaking()) return;
-        if (n.camera >= 0) n.fecharCameras(e.getPlayer());
+        if (n.cam(e.getPlayer()) >= 0) n.fecharCameras(e.getPlayer());
     }
 
     /** Durante a noite ninguem sai do lugar (cadeira ou camera): segura qualquer subida ou passo (pulo no celular, empurrao). */
@@ -478,7 +651,7 @@ public final class Turno extends JavaPlugin implements Listener {
     @EventHandler
     public void teclas(org.bukkit.event.player.PlayerInputEvent e) {
         Noite n = noiteDe(e.getPlayer());
-        if (n == null || n.camera < 0 || n.ticks - n.cameraDesde < 6) return;
+        if (n == null || n.cam(e.getPlayer()) < 0 || n.ticks - n.desde(e.getPlayer()) < 6) return;
         org.bukkit.Input i = e.getInput();
         if (i.isSneak() || i.isJump() || i.isBackward()) n.fecharCameras(e.getPlayer());
     }
@@ -489,7 +662,7 @@ public final class Turno extends JavaPlugin implements Listener {
         Noite n = noiteDe(e.getPlayer());
         if (n == null || e.getNewSlot() == 0) return;
         e.setCancelled(true);
-        if (n.camera >= 0) n.fecharCameras(e.getPlayer());
+        if (n.cam(e.getPlayer()) >= 0) n.fecharCameras(e.getPlayer());
     }
 
     @EventHandler
@@ -498,7 +671,7 @@ public final class Turno extends JavaPlugin implements Listener {
         if (n == null) return;
         e.setCancelled(true);
         // F = troca de camera para tras (atalho)
-        if (n.camera >= 0) n.proximaCamera(e.getPlayer(), -1);
+        if (n.cam(e.getPlayer()) >= 0) n.proximaCamera(e.getPlayer(), -1);
     }
 
     @EventHandler
@@ -507,7 +680,7 @@ public final class Turno extends JavaPlugin implements Listener {
         if (n == null) return;
         e.setCancelled(true);
         // Q nas cameras = largar o tablet (sair)
-        if (n.camera >= 0 && n.ticks - n.cameraDesde >= 6) n.fecharCameras(e.getPlayer());
+        if (n.cam(e.getPlayer()) >= 0 && n.ticks - n.desde(e.getPlayer()) >= 6) n.fecharCameras(e.getPlayer());
     }
 
     @EventHandler
@@ -533,9 +706,19 @@ public final class Turno extends JavaPlugin implements Listener {
     @EventHandler
     public void saiu(PlayerQuitEvent e) {
         Player p = e.getPlayer();
+        Convite meu = convites.get(p.getUniqueId());
+        if (meu != null) {
+            convites.remove(p.getUniqueId());
+            if (meu.prazo != null) meu.prazo.cancel();
+        }
+        Convite cv = conviteDe(p);
+        if (cv != null) {
+            cv.chamados.remove(p.getUniqueId());
+            if (cv.chamados.isEmpty()) fecharConvite(cv, false);
+        }
         Noite n = noites.remove(p.getUniqueId());
         if (n != null) {
-            n.terminar(false, null);
+            n.remover(p);
             p.setWalkSpeed(0.2f);
             Guarda.limpar(p);
             guarda.devolver(p, true);

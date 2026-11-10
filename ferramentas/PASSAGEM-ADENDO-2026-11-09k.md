@@ -66,3 +66,15 @@
   `/dararmadura <nick> rei` = Traje do Rei pelo `/vip traje dar` (cortesia; fica na lista ate `/vip traje tirar`).
   Reliquias saem em diamante com o poder do tema (`reliquias.aplicar`). Testado no servidor de teste (console + bot).
 - 10/11: conferido o save do Paulo (coronadooscar) depois da queda no teste: nao morreu, mochilas survival e masmorras inteiras.
+
+## ajustes133 (10/11 09:50) - Turno da Noite em grupo (coop)
+
+- `Noite.java`: agora tem `List<Vigia>` (camera, cameraDesde, ancora, lugar e BossBar por jogador). Energia, portas, luzes e
+  bichos sao da sala. Lugares lado a lado (1,6 bloco; 2 vigias = x -0.3 e 1.3; 3 = -1.1, 0.5, 2.1). Capi so anda se NINGUEM
+  esta nas cameras; Boto para se ALGUEM olha a Cortina; cada tablet aberto conta no uso. Bicho dentro: susto para todos.
+  `remover(p)`: quem sai/cai deixa os outros jogando.
+- `Turno.java`: `/turno coop <nick> [nick2] [noite]` (ate 3 vigias, noite do anfitriao), `/turno aceitar|recusar` (60 s, clique
+  no [ACEITAR]); comeca quando todos respondem. IA +2 por vigia a mais (`coop.ia-a-mais-por-vigia`). Todos ganham as coronas;
+  o progresso so avanca para quem estava naquela noite. Item "Jogar em grupo" no menu.
+- Testado no servidor de teste com bots (2 e 3 vigias, cameras separadas, um saindo, um caindo, vitoria, susto, solo).
+  NAO testado com cliente real (Java/Bedrock) no coop.
