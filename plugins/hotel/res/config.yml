@@ -24,3 +24,6 @@ dica-armario: true
 distancia-visao: 6
 # comandos rodados para cada vencedor ({jogador} = nome)
 recompensa-comandos: []
+
+# true = a Figura e o Perseguidor aparecem como modelos 3D do pacote (Java e Bedrock); false = bonecos pintados
+modelo-3d: true

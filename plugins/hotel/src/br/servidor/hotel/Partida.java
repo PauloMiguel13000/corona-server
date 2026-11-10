@@ -1589,6 +1589,7 @@ final class Partida {
             corpo.teleport(l);
             corpo.setRotation(yaw + (float) Math.sin(rtick * 0.3) * (modo == 0 ? 6 : 18), modo == 2 ? 15 : 0);
             corpo.setBodyYaw(yaw);
+            Visual.quadro(corpo, modo == 2 ? 1 : 0);     // cacando: bracos para a frente e a boca aberta
         }
 
         void barulho(Location l, double raio) {
@@ -1766,6 +1767,7 @@ final class Partida {
             });
             criadas.add(corpo);
             Visual.gemeo(corpo, "perseguidor");
+            Visual.quadro(corpo, 1);     // ele ja nasce correndo atras: bracos para a frente
             mundo.spawnParticle(Particle.SQUID_INK, l.clone().add(0, 0.2, 0), 60, 0.7, 0.1, 0.7, 0.02);
             Sons.local(mundo, l, 90, "perseguidor", 2.5f, 1f, Sound.ENTITY_WARDEN_ROAR, 2.5f, 0.8f);
         }

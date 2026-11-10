@@ -89,3 +89,12 @@
 - ATENCAO (pacote Bedrock novo): ANTES de instalar um CoronaPack com mcpack novo, publicar o arquivo em `corona-pacotes`
   como `corona-<10 primeiros do sha1>.zip` (o plugin procura no jsDelivr ao ligar). No ajustes134 publiquei DEPOIS
   (corona-78cbbc4d2e.zip), entao ate o proximo reinicio o Bedrock recebe o pacote pelo Geyser (modo pasta), nao pelo link.
+
+## ajustes135 (10/11 10:17) - Hotel: a Figura e o Perseguidor em 3D
+
+- `modelos/hotel3d.py`: desenhos ORIGINAIS (Figura = porteiro cego de uniforme vinho com a cabeca num saco de pano;
+  Perseguidor = sombra de sobretudo e cartola com olhos/sorriso que brilham). Itens `corona:props/anim_figura_f0|f1`,
+  `anim_perseguidor_f0|f1`. mcpack 1.13.5 publicado ANTES em corona-pacotes (corona-326746167a.zip); `corona-hotel.json`.
+- Hotel `Visual.java`: para skins em `MODELOS` o Par ganha um ItemDisplay que segue o Mannequin (escala/1,25); quem tem o
+  pacote ve o modelo, o boneco pintado fica escondido; `Visual.quadro(corpo, 0|1)` (Figura cacando = 1; Perseguidor = 1).
+  Config `modelo-3d`. Testado no servidor de teste so a Figura (entidade criada e seguindo); nao visto em cliente real.

@@ -27,6 +27,11 @@ final class Visual {
 
     private static final class Par {
         final Entity principal, gemeo;
+        /** Modelo 3D do pacote (Figura e Perseguidor): quem tem o pacote ve o modelo em vez do boneco pintado. */
+        ItemDisplay modelo;
+        String modeloId;
+        float modeloEsc = -1;
+        int quadro, quadroPosto = -1;
         /** null = todos; senao so este jogador (ex.: o Sussurro, que so a vitima ve) */
         UUID so;
         Location ultima;
@@ -88,6 +93,7 @@ final class Visual {
         Par par = new Par(principal, g);
         par.ultima = l.clone();
         par.so = so == null ? null : so.getUniqueId();
+        if (principal instanceof Mannequin && MODELOS.contains(skin) && pl.getConfig().getBoolean("modelo-3d", true)) par.modeloId = skin;
         PARES.put(principal.getUniqueId(), par);
         principal.setVisibleByDefault(false);
         visibilidade(par);
@@ -105,11 +111,76 @@ final class Visual {
         x.setViewRange(d.getViewRange());
     }
 
+    /** Monstros que tem modelo 3D no pacote (corona:props/anim_<id>_f0 parado, _f1 atacando). */
+    static final java.util.Set<String> MODELOS = java.util.Set.of("figura", "perseguidor");
+
+    /** Troca o quadro do modelo 3D do monstro (0 parado/andando, 1 atacando). */
+    static void quadro(Entity principal, int q) {
+        Par par = principal == null ? null : PARES.get(principal.getUniqueId());
+        if (par != null) par.quadro = q;
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
+    private static org.bukkit.inventory.ItemStack item(String id, int q) {
+        org.bukkit.inventory.ItemStack it = new org.bukkit.inventory.ItemStack(org.bukkit.Material.LEATHER_HELMET);
+        it.setData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL, net.kyori.adventure.key.Key.key("corona", "props/anim_" + id + "_f" + q));
+        return it;
+    }
+
+    private static org.bukkit.util.Transformation forma(float e) {
+        return new org.bukkit.util.Transformation(new org.joml.Vector3f(0, 1.5f * e, 0), new org.joml.Quaternionf(), new org.joml.Vector3f(e, e, e), new org.joml.Quaternionf());
+    }
+
+    /** Mantem o modelo 3D em cima do boneco: posicao, lado, tamanho e quadro. */
+    private static void seguir(Par par) {
+        if (par.modeloId == null || !(par.principal instanceof Mannequin m)) return;
+        AttributeInstance a = m.getAttribute(Attribute.SCALE);
+        float e = (float) ((a == null ? 1.0 : a.getBaseValue()) / 1.25);     // o modelo tem 2,25 blocos = boneco na escala 1,25
+        Location l = m.getLocation();
+        l.setPitch(0);
+        if (par.modelo == null || !par.modelo.isValid()) {
+            if (!l.getChunk().isLoaded()) return;
+            final float fe = e;
+            final int q = par.quadro;
+            par.modelo = l.getWorld().spawn(l, ItemDisplay.class, d -> {
+                d.setItemStack(item(par.modeloId, q));
+                d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
+                d.setBillboard(Display.Billboard.FIXED);
+                d.setTransformation(forma(fe));
+                d.setViewRange(1.6f);
+                d.setShadowRadius(0f);
+                d.setTeleportDuration(2);
+                d.setPersistent(false);
+                d.setVisibleByDefault(false);
+                par.principal.getPersistentDataContainer().copyTo(d.getPersistentDataContainer(), true);
+            });
+            par.modeloEsc = e;
+            par.quadroPosto = q;
+            visibilidade(par);
+            return;
+        }
+        Location at = par.modelo.getLocation();
+        if (at.distanceSquared(l) > 0.0001 || Math.abs(at.getYaw() - l.getYaw()) > 0.5f) {
+            par.modelo.setTeleportDuration(at.distanceSquared(l) > 9 ? 0 : 2);
+            par.modelo.teleport(l);
+        }
+        if (Math.abs(e - par.modeloEsc) > 0.01f) {
+            par.modelo.setTransformation(forma(e));
+            par.modeloEsc = e;
+        }
+        if (par.quadro != par.quadroPosto) {
+            par.modelo.setItemStack(item(par.modeloId, par.quadro));
+            par.quadroPosto = par.quadro;
+        }
+    }
+
     private static void visibilidade(Par par) {
+        boolean tem3d = par.modelo != null && par.modelo.isValid();
         for (Player p : par.principal.getWorld().getPlayers()) {
             boolean pode = par.so == null || par.so.equals(p.getUniqueId());
             boolean pacote = Sons.temPacote(p);
-            ver(p, par.principal, pode && pacote);
+            if (tem3d) ver(p, par.modelo, pode && pacote);
+            ver(p, par.principal, pode && pacote && !tem3d);
             ver(p, par.gemeo, pode && !pacote);
         }
     }
@@ -128,9 +199,11 @@ final class Visual {
             Entity a = par.principal, g = par.gemeo;
             if (!a.isValid() || !g.isValid()) {
                 g.remove();
+                if (par.modelo != null && par.modelo.isValid()) par.modelo.remove();
                 it.remove();
                 continue;
             }
+            seguir(par);
             Location l = a.getLocation();
             if (!l.equals(par.ultima)) {
                 g.teleport(l);
