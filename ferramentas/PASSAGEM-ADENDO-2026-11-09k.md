@@ -146,3 +146,15 @@
   avisa todo mundo com [ENTRAR NA FILA]; quem entra joga junto; com 3 comeca em 3 s; sozinho, vai sozinho. A noite e a
   mais alta que TODOS liberaram (ate 5). `/turno sair` sai da fila. `/turno coop <nick>` (convite) continua existindo;
   o `menuConvite` ficou no codigo sem uso. Testado com 3 bots (fila cheia, fila de 1, sair da fila).
+
+## 10/11 13:55 - pedidos novos do Paulo (fila) e ajustes141 instalado
+
+- ajustes141 (fila do Turno coop) instalado 13:54, log ok. Proximo numero: ajustes142.
+- Pedidos (palavras dele): "Boss mundial ... nao tem nao, mas voce podia criar, com uma resource foda"; "Colocar musica
+  dentro das dungeons, efeitos de som das espadas e armas, poderes"; "Melhorar os efeitos tanto PC quanto celular dos
+  poderes, e otimizar para celular para nao ter lag"; "Otimizar o servidor para celular"; jogo de terror so nosso
+  "proximo domingo as 5 da manha" com o Porteiro e a Sombra (hotel3d.py) "e pode fazer outros tambem" (originais);
+  depois mapa survival de apocalipse zumbi com armas de fogo por plugin (item que atira, municao).
+- Boss mundial: modelo ORIGINAL pronto so como previa (`modelos/colosso3d.py`, "Colosso da Coroa Partida",
+  `anim_colosso_f0|f1`), NAO esta no pacote nem instalado. Esperando o Paulo aprovar o visual antes de fazer o evento.
+- "O boss entrando no chao durante a luta": ele nao disse qual chefe; perguntar de novo se voltar a falar.
