@@ -132,3 +132,9 @@
   as do config (`divulgacao.dicas-extras: []` desliga). Testado no servidor de teste (apareceu na 5a rodada).
 - 10/11 12:16: o Paulo mandou `REGRAS-LIMITE-DE-USO.md` (gastar pouco, melhorias pequenas, passagem perto de 94%, nao
   usar a extensao do Chrome se ela estiver na NBTSJ). Seguir. Copia em /mnt/user-data/attachments (pedir a ele de novo).
+
+## ajustes140 (10/11 12:32) - Turno coop: convite pelo menu
+
+- `/turno` -> item "Jogar em grupo" (kMenu=100) abre `menuConvite`: cabecas de quem esta online e fora de um turno
+  (kMenu=200 + kConvite=nick); clicar chama `coop(p, {"coop", nick})` com a noite mais alta do anfitriao.
+  Testado no servidor de teste com 2 bots (clique -> convite -> aceitar -> os dois na sala).

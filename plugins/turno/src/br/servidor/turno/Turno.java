@@ -64,7 +64,7 @@ public final class Turno extends JavaPlugin implements Listener {
     World mundo;
     Skins skins;
     Guarda guarda;
-    NamespacedKey kTablet, kMenu;
+    NamespacedKey kTablet, kMenu, kConvite;
     private final Map<Integer, Mapa> mapas = new HashMap<>();
     private final Map<UUID, Noite> noites = new HashMap<>();
     private File progressoArq;
@@ -78,6 +78,7 @@ public final class Turno extends JavaPlugin implements Listener {
         saveDefaultConfig();
         kTablet = new NamespacedKey(this, "tablet");
         kMenu = new NamespacedKey(this, "menu");
+        kConvite = new NamespacedKey(this, "convite");
         progressoArq = new File(getDataFolder(), "progresso.yml");
         progresso = YamlConfiguration.loadConfiguration(progressoArq);
         guarda = new Guarda(new File(getDataFolder(), "guardados"));
@@ -226,6 +227,33 @@ public final class Turno extends JavaPlugin implements Listener {
     }
 
     // ------------------------------------------------------------------ coop: convite
+
+    /** Bau com a cabeca de quem esta online e livre: clicar manda o convite (bom para o celular, sem digitar o nick). */
+    void menuConvite(Player p) {
+        Inventory inv = Bukkit.createInventory(null, 54, txt("§8Chamar para o turno"));
+        int i = 0;
+        for (Player x : Bukkit.getOnlinePlayers()) {
+            if (x == p || noiteDe(x) != null || i >= 45) continue;
+            ItemStack h = new ItemStack(Material.PLAYER_HEAD);
+            ItemMeta m = h.getItemMeta();
+            if (m instanceof org.bukkit.inventory.meta.SkullMeta sk) sk.setOwningPlayer(x);
+            m.displayName(txt("§f" + x.getName()));
+            m.lore(List.of(txt("§eClique §7para chamar para a sua noite mais alta"), txt("§7Outra noite: §f/turno coop " + x.getName() + " <noite>")));
+            m.getPersistentDataContainer().set(kMenu, PersistentDataType.INTEGER, 200);
+            m.getPersistentDataContainer().set(kConvite, PersistentDataType.STRING, x.getName());
+            h.setItemMeta(m);
+            inv.setItem(i++, h);
+        }
+        if (i == 0) {
+            ItemStack v = new ItemStack(Material.BARRIER);
+            ItemMeta m = v.getItemMeta();
+            m.displayName(txt("§cNinguém livre para chamar agora"));
+            m.lore(List.of(txt("§7Chame os amigos para o servidor: §f/ip")));
+            v.setItemMeta(m);
+            inv.setItem(22, v);
+        }
+        p.openInventory(inv);
+    }
 
     /** Convite de coop: o anfitriao chama, os convidados aceitam em ate 60 s e a noite comeca. */
     private static final class Convite {
@@ -439,7 +467,8 @@ public final class Turno extends JavaPlugin implements Listener {
         ItemMeta gm = grupo.getItemMeta();
         gm.displayName(txt("§bJogar em grupo (coop)"));
         gm.lore(List.of(txt("§7Até " + COOP_MAX + " vigias na mesma sala,"), txt("§7com a mesma energia para todos."), txt(""),
-                txt("§e/turno coop <nick> §7chama um amigo"), txt("§e/turno aceitar §7aceita o convite")));
+                txt("§eClique §7para escolher quem chamar"), txt("§7ou digite §f/turno coop <nick>")));
+        gm.getPersistentDataContainer().set(kMenu, PersistentDataType.INTEGER, 100);
         grupo.setItemMeta(gm);
         inv.setItem(24, grupo);
         p.openInventory(inv);
@@ -470,6 +499,18 @@ public final class Turno extends JavaPlugin implements Listener {
         if (noite == null) return;
         e.setCancelled(true);
         p.closeInventory();
+        if (noite == 100) {
+            // um tick depois: abrir outro bau dentro do clique da problema no Bedrock
+            Bukkit.getScheduler().runTask(this, () -> {
+                if (p.isOnline()) menuConvite(p);
+            });
+            return;
+        }
+        if (noite == 200) {
+            String nick = it.getItemMeta().getPersistentDataContainer().get(kConvite, PersistentDataType.STRING);
+            if (nick != null) coop(p, new String[] {"coop", nick});
+            return;
+        }
         if (noite == 6 && noiteMax(p) < 6) {
             p.sendMessage(txt("§cVença a noite 5 para liberar a noite personalizada."));
             return;
