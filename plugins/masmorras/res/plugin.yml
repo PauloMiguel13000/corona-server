@@ -14,6 +14,9 @@ commands:
   reviver:
     description: Suas Moedas de Reviver (voltar para a partida quando for eliminado num minigame)
     aliases: [moedareviver, revive, moeda, moedas]
+  warp:
+    description: Atalhos do dono - /warp armaduras e /warp monstros (confere os modelos 3D)
+    usage: /warp <armaduras|monstros>
   galeria:
     description: Galeria das Reliquias - os conjuntos de todas as masmorras (armadura + arma)
     aliases: [armaduras, museu]

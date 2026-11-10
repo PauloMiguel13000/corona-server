@@ -100,7 +100,11 @@ final class Noite {
         Guarda.limpar(p);
         p.setGameMode(GameMode.ADVENTURE);
         p.teleport(mapa.loc(Mapa.CADEIRA));
+        ancora = mapa.loc(Mapa.CADEIRA);
         p.setWalkSpeed(0f);
+        // o vigia fica sentado: sem pulo (pular tirava a pessoa da cadeira)
+        var pulo = p.getAttribute(org.bukkit.attribute.Attribute.JUMP_STRENGTH);
+        if (pulo != null) pulo.setBaseValue(0);
         p.setFoodLevel(20);
         p.getInventory().setItem(0, tablet());
         p.getInventory().setHeldItemSlot(0);
@@ -206,6 +210,7 @@ final class Noite {
             return;
         }
         if (ticks % 10 == 0) for (Animatronico a : bichos) a.rever();
+        amarrar(p);
         // nas cameras: lembra o tempo todo como sair (era so no texto do tablet e muita gente ficava presa)
         if (camera >= 0 && (ticks - cameraDesde) % 40 == 20) {
             boolean aviso = false;
@@ -257,7 +262,7 @@ final class Noite {
         if (barra == null) return;
         int h = hora();
         String txt = "§e⚡ " + Math.max(0, (int) Math.ceil(energia)) + "%  §7|  §f" + (h >= 6 ? "6 AM" : HORAS[h]) + "  §7|  uso " + "▮".repeat(uso())
-                + (camera >= 0 ? "  §7|  §bCAM " + Mapa.CAMERAS_NOME[camera] : "");
+                + (camera >= 0 ? "  §7|  §bCAM " + Mapa.CAMERAS_NOME[camera] + "  §7|  §eSHIFT, ESPAÇO ou Q = sair" : "");
         barra.setTitle(txt);
         barra.setProgress(Math.max(0, Math.min(1, energia / 100.0)));
         barra.setColor(energia > 50 ? BarColor.GREEN : energia > 20 ? BarColor.YELLOW : BarColor.RED);
@@ -457,6 +462,21 @@ final class Noite {
         barra();
     }
 
+    /** Onde o vigia tem de ficar (cadeira ou camera atual); null = solto (susto, fim). */
+    private Location ancora;
+
+    /** Se o cliente saiu do lugar mesmo assim (pulo no celular, empurrao), volta para a cadeira/camera olhando para o mesmo lado. */
+    private void amarrar(Player p) {
+        if (ancora == null || !p.getWorld().equals(ancora.getWorld())) return;
+        Location l = p.getLocation();
+        double dx = l.getX() - ancora.getX(), dz = l.getZ() - ancora.getZ(), dy = l.getY() - ancora.getY();
+        if (dx * dx + dz * dz <= 0.09 && dy <= 0.6 && dy >= -1.2) return;
+        Location v = ancora.clone();
+        v.setYaw(l.getYaw());
+        v.setPitch(l.getPitch());
+        p.teleport(v);
+    }
+
     /** Tick em que as cameras abriram (as teclas de sair so valem um instante depois, para nao fechar sem querer). */
     int cameraDesde;
 
@@ -496,6 +516,7 @@ final class Noite {
         if (c == null) {
             // cozinha: so audio
             p.teleport(mapa.cameraEscura());
+            ancora = mapa.cameraEscura();
             p.sendTitle("§8§lSEM SINAL", "§7Cozinha — somente áudio", 0, 40, 10);
             boolean alguem = false;
             for (Animatronico a : bichos) if (!a.noEscritorio && a.lugarAtual().equals("cozinha")) alguem = true;
@@ -509,6 +530,7 @@ final class Noite {
             }
         } else {
             p.teleport(c);
+            ancora = c.clone();
             p.sendTitle("", "§7CAM " + Mapa.CAMERAS_NOME[i], 0, 30, 10);
         }
         for (Animatronico a : bichos) if (a.boneco != null && salaDe(a).equals(Mapa.CAMERAS[i])) a.olharPara(c == null ? p.getLocation() : c);
@@ -520,6 +542,7 @@ final class Noite {
         camera = -1;
         if (p != null) {
             p.teleport(mapa.loc(Mapa.CADEIRA));
+            ancora = mapa.loc(Mapa.CADEIRA);
             p.getInventory().setItem(8, null);
             p.getInventory().setHeldItemSlot(0);
             p.sendActionBar(Turno.txt(""));
@@ -542,6 +565,7 @@ final class Noite {
         camera = -1;
         Location cad = mapa.loc(Mapa.CADEIRA);
         p.teleport(cad);
+        ancora = null; // susto: a camera do jogador e levada para a frente do bicho, sem amarra
         if (a.boneco != null) {
             Location frente = cad.clone().add(0, 0, -1.1);
             frente.setYaw(0);
@@ -589,6 +613,8 @@ final class Noite {
         mapa.luzEscritorio(true);
         if (p != null) {
             p.setWalkSpeed(0.2f);
+            var pulo = p.getAttribute(org.bukkit.attribute.Attribute.JUMP_STRENGTH);
+            if (pulo != null) pulo.setBaseValue(pulo.getDefaultValue());
             p.removePotionEffect(PotionEffectType.DARKNESS);
             p.removePotionEffect(PotionEffectType.NIGHT_VISION);
             if (venceu) {

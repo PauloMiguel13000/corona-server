@@ -122,6 +122,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
     NamespacedKey kDe, kChefe;
     Reliquias reliquias;
     Galeria galeria;
+    AlaMonstros ala;
     MundoMasmorras mundoNovo;
     LobbyMundo lobby;
     Ranking ranking;
@@ -220,6 +221,8 @@ public final class Masmorras extends JavaPlugin implements Listener {
         reliquias.iniciar();
         try {
             galeria.iniciar();
+            ala = new AlaMonstros(this, galeria);
+            ala.iniciar();
         } catch (Throwable ex) {
             getLogger().warning("Galeria das Reliquias nao iniciou: " + ex);
         }
@@ -2023,6 +2026,13 @@ public final class Masmorras extends JavaPlugin implements Listener {
         if (cmd.getName().equalsIgnoreCase("coronas")) return coronas.comando(s, a);
         if (cmd.getName().equalsIgnoreCase("reviver")) return MoedaReviver.comando(s, a);
         if (cmd.getName().equalsIgnoreCase("galeria")) return galeria.comando(s, a);
+        if (cmd.getName().equalsIgnoreCase("warp")) {
+            if (ala == null) {
+                s.sendMessage("§cA Galeria nao esta ligada.");
+                return true;
+            }
+            return ala.warp(s, a);
+        }
         if (a.length > 0 && a[0].equalsIgnoreCase("admin")) return admin(s, a);
         if (a.length > 0 && a[0].equalsIgnoreCase("spawn") && s instanceof Player pp) {
             irParaSpawnMasmorras(pp);

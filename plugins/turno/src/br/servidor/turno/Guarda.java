@@ -124,6 +124,8 @@ final class Guarda {
         p.setFlying(false);
         p.setAllowFlight(false);
         p.setWalkSpeed(0.2f);
+        AttributeInstance pulo = p.getAttribute(Attribute.JUMP_STRENGTH);
+        if (pulo != null) pulo.setBaseValue(pulo.getDefaultValue());
         AttributeInstance max = p.getAttribute(Attribute.MAX_HEALTH);
         p.setHealth(max == null ? 20 : max.getValue());
         p.setFoodLevel(20);

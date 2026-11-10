@@ -460,6 +460,20 @@ public final class Turno extends JavaPlugin implements Listener {
         if (n.camera >= 0) n.fecharCameras(e.getPlayer());
     }
 
+    /** Durante a noite ninguem sai do lugar (cadeira ou camera): segura qualquer subida ou passo (pulo no celular, empurrao). */
+    @EventHandler(ignoreCancelled = true)
+    public void parado(org.bukkit.event.player.PlayerMoveEvent e) {
+        Noite n = noiteDe(e.getPlayer());
+        if (n == null || n.acabou) return;
+        org.bukkit.Location de = e.getFrom(), para = e.getTo();
+        boolean andou = Math.abs(para.getX() - de.getX()) > 0.001 || Math.abs(para.getZ() - de.getZ()) > 0.001;
+        if (!andou && para.getY() <= de.getY() + 0.001) return;     // so virou a cabeca (ou esta descendo de volta)
+        org.bukkit.Location fica = de.clone();
+        fica.setYaw(para.getYaw());
+        fica.setPitch(para.getPitch());
+        e.setTo(fica);
+    }
+
     /** Sair das cameras tambem com pulo (espaco) ou andar para tras (S), alem de agachar: qualquer tecla "de sair". */
     @EventHandler
     public void teclas(org.bukkit.event.player.PlayerInputEvent e) {
