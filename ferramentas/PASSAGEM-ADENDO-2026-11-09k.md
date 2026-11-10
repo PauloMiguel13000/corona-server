@@ -86,3 +86,6 @@
 - Fabrica `Boneco3d.java`: ItemDisplay que segue o Mannequin a cada tick (posicao, lado, escala = escala do boneco / 1,25,
   quadro 1 enquanto `cacando`); so quem tem o pacote/Bedrock ve o modelo. Config `modelo-3d`.
 - Conferido so no servidor de teste (entidade criada com o item certo) e na previa; NAO visto em cliente real.
+- ATENCAO (pacote Bedrock novo): ANTES de instalar um CoronaPack com mcpack novo, publicar o arquivo em `corona-pacotes`
+  como `corona-<10 primeiros do sha1>.zip` (o plugin procura no jsDelivr ao ligar). No ajustes134 publiquei DEPOIS
+  (corona-78cbbc4d2e.zip), entao ate o proximo reinicio o Bedrock recebe o pacote pelo Geyser (modo pasta), nao pelo link.
