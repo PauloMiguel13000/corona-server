@@ -114,6 +114,42 @@ def colosso(susto):
     # o pedaco que falta da coroa flutua ao lado, aceso
     cs.append(C('estilhaco', 12.4, 13.4, 21.4, 23.8, 4.8, 5.8, 'ouro', ('z', -22.5, (12.9, 22.6, 5.3))))
     cs.append(C('estilhaco_luz', 12.6, 13.2, 20.4, 21.2, 5.0, 5.6, 'pupila', **LUZ))
+    # asas de osso e pano rasgado, abertas atras dos ombros (no ataque abrem mais)
+    for lado in (-1, 1):
+        ang = (45.0 if susto else 22.5) * -lado
+        piv = (8 + lado * 3.0, 9.0, 12.6)
+        rz = ('z', ang, piv)
+        x0 = 8 + lado * 3.0
+        def X(a, b):
+            return (min(x0 + lado * a, x0 + lado * b), max(x0 + lado * a, x0 + lado * b))
+        xa, xb = X(0.0, 1.4)
+        cs.append(C('asa_osso', xa, xb, 9.0, 24.0, 12.0, 13.2, 'pano', rz))
+        xa, xb = X(0.2, 11.0)
+        cs.append(C('asa_braco', xa, xb, 22.8, 24.0, 12.1, 13.1, 'pano', rz))
+        cs.append(C('asa_garra', *X(10.4, 11.6), 24.0, 26.4, 12.2, 13.0, 'ouro', rz))
+        for k, (ini, fim, baixo) in enumerate(((1.4, 4.4, 8.0), (4.6, 7.6, 11.5), (7.8, 10.8, 15.5))):
+            xa, xb = X(ini, fim)
+            cs.append(C('asa_pano', xa, xb, baixo, 22.9, 12.45, 12.75, 'corda', rz))
+            xa, xb = X(ini + 1.2, ini + 1.8)
+            cs.append(C('asa_veia', xa, xb, baixo + 1.0, 22.0, 12.3, 12.46, 'pupila', rz, so=('north',), **LUZ))
+    # aureola partida de ouro atras da cabeca, com as pontas acesas
+    cs.append(C('aureola_c', 3.6, 12.4, 22.2, 23.1, 9.6, 10.3, 'ouro'))
+    cs.append(C('aureola_e', 2.8, 3.7, 15.6, 22.4, 9.6, 10.3, 'ouro'))
+    cs.append(C('aureola_d', 12.3, 13.2, 18.4, 22.4, 9.6, 10.3, 'ouro'))
+    for cx, y in ((3.25, 14.6), (12.75, 17.4), (8.0, 23.6)):
+        cs.append(C('aureola_luz', cx - 0.4, cx + 0.4, y, y + 0.9, 9.55, 10.35, 'pupila', **LUZ))
+    # correntes cruzadas no peito e o escudo-torre no braco esquerdo
+    cs.append(C('corrente', 2.4, 13.6, 7.6, 8.3, 4.1, 4.4, 'pele', ('z', 22.5, (8.0, 8.0, 4.25)), so=('north', 'up', 'down')))
+    cs.append(C('corrente', 2.4, 13.6, 7.6, 8.3, 4.1, 4.4, 'pele', ('z', -22.5, (8.0, 8.0, 4.25)), so=('north', 'up', 'down')))
+    cxe = 8 - 7.4
+    rote = ('x', 45.0, (cxe, 9.0, 8.0)) if susto else None
+    cs.append(C('escudo', cxe - 3.6, cxe + 2.2, -9.0, 5.0, 3.6, 4.6, 'tecido2', rote))
+    cs.append(C('escudo_borda_c', cxe - 3.8, cxe + 2.4, 4.6, 5.6, 3.4, 4.8, 'ouro', rote))
+    cs.append(C('escudo_borda_b', cxe - 2.6, cxe + 1.2, -11.0, -8.8, 3.5, 4.7, 'ouro', rote))
+    cs.append(C('escudo_coroa', cxe - 2.2, cxe + 0.8, -1.2, 0.0, 3.3, 3.62, 'pupila', rote, so=('north',), **LUZ))
+    for dx in (-2.0, -0.7, 0.6):
+        cs.append(C('escudo_ponta', cxe + dx - 0.3, cxe + dx + 0.5, 0.0, 1.8 if dx == -0.7 else 1.1, 3.3, 3.62, 'pupila', rote, so=('north',), **LUZ))
+    cs.append(C('escudo_racha', cxe - 0.9, cxe - 0.4, -7.6, -2.4, 3.3, 3.62, 'pupila', rote, so=('north',), **LUZ))
     return cs
 
 
