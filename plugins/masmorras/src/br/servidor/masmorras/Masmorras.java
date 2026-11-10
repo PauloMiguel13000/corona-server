@@ -2037,6 +2037,8 @@ public final class Masmorras extends JavaPlugin implements Listener {
             }
             return MoedaReviver.comando(s, new String[] {"dar", a[0], a.length >= 2 ? a[1] : "1"});
         }
+        if (cmd.getName().equalsIgnoreCase("dararmadura")) return darItens().comando(s, a, false);
+        if (cmd.getName().equalsIgnoreCase("darespada")) return darItens().comando(s, a, true);
         if (cmd.getName().equalsIgnoreCase("galeria")) return galeria.comando(s, a);
         if (cmd.getName().equalsIgnoreCase("warp")) {
             if (ala == null) {
@@ -2305,6 +2307,8 @@ public final class Masmorras extends JavaPlugin implements Listener {
 
     @Override
     public List<String> onTabComplete(CommandSender s, Command cmd, String label, String[] a) {
+        if (cmd.getName().equalsIgnoreCase("dararmadura") || cmd.getName().equalsIgnoreCase("darespada"))
+            return s.hasPermission("masmorras.admin") ? darItens().completar(a, cmd.getName().equalsIgnoreCase("darespada")) : new ArrayList<>();
         List<String> l = new ArrayList<>();
         if (a.length == 1) {
             l.add("todas");
@@ -2316,6 +2320,13 @@ public final class Masmorras extends JavaPlugin implements Listener {
         String u = a.length == 0 ? "" : a[a.length - 1].toLowerCase(Locale.ROOT);
         l.removeIf(x -> !x.startsWith(u));
         return l;
+    }
+
+    private DarItens darItens;
+
+    private DarItens darItens() {
+        if (darItens == null) darItens = new DarItens(this);
+        return darItens;
     }
 
     Map<String, Object> resumo() {

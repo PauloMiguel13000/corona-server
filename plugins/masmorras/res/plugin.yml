@@ -18,6 +18,14 @@ commands:
     description: (equipe) Da Moeda de Reviver para um jogador - /darmoedareviver <nick> [quantidade]
     usage: /darmoedareviver <nick> [quantidade]
     aliases: [darmoeda, darreviver]
+  dararmadura:
+    description: (dono) Da a armadura de um conjunto - /dararmadura <nick> <nome> (ex. herobrine, rei esqueleto, todas)
+    usage: /dararmadura <nick> <nome>
+    aliases: [dararmor, dararmaduras]
+  darespada:
+    description: (dono) Da a espada de um conjunto - /darespada <nick> <nome> (ex. herobrine, farao, todas)
+    usage: /darespada <nick> <nome>
+    aliases: [darespadas]
   warp:
     description: Atalhos do dono - /warp armaduras e /warp monstros (confere os modelos 3D)
     usage: /warp <armaduras|monstros>
