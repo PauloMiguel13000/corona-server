@@ -24,7 +24,11 @@ H.MATS['colosso'] = {
 LUZ = dict(emite=15)
 
 
-def colosso(susto):
+def colosso(susto, partes=False):
+    """partes=True: pose neutra (bracos e asas sem o giro do ataque), para o modelo em pecas animadas."""
+    boca_aberta = susto
+    if partes:
+        susto = False
     cs = []
     # pernas largas com rachaduras de magma
     for xa, xb in ((3.6, 7.3), (8.7, 12.4)):
@@ -95,7 +99,7 @@ def colosso(susto):
         cs.append(C('orbita', cx - 0.95, cx + 0.95, 15.5, 17.0, 3.95, 4.12, 'boca', so=('north',)))
         cs.append(C('olho_luz', cx - 0.6, cx + 0.6, 15.8, 16.7, 3.85, 3.96, 'pupila', so=('north',), **LUZ))
     cs.append(C('nariz', 7.6, 8.4, 14.4, 15.4, 3.95, 4.12, 'boca', so=('north',)))
-    mand = ('x', -22.5, (8.0, 13.4, 5.0)) if susto else None
+    mand = ('x', -22.5, (8.0, 13.4, 5.0)) if boca_aberta else None
     cs.append(C('goela', 5.8, 10.2, 12.1, 13.5, 4.3, 4.7, 'pupila', so=('north',), **LUZ))
     A.dentes(cs, 5.6, 10.4, 12.9, 13.6, 3.9, 4.2, passo=0.7, larg=0.45)
     cs.append(C('queixo', 5.4, 10.6, 11.4, 12.6, 4.0, 5.6, 'pano', mand))
@@ -155,7 +159,61 @@ def colosso(susto):
 
 H.CORPOS['colosso'] = colosso
 
+# ------------------------------------------------------------------ o mesmo boss em pecas (para animar no jogo)
+# peca -> pivo (em pixels do modelo): a peca e deslocada para o pivo ficar no centro (8,8,8), que e onde o ItemDisplay gira
+PIVOS = {
+    'tronco': (8.0, -3.0, 8.0), 'cabeca': (8.0, 12.0, 8.0),
+    'braco_d': (15.4, 9.0, 8.0), 'braco_e': (0.6, 9.0, 8.0),
+    'perna_d': (10.55, -3.0, 8.0), 'perna_e': (5.45, -3.0, 8.0),
+    'asa_d': (11.0, 9.0, 12.6), 'asa_e': (5.0, 9.0, 12.6),
+}
+DA_CABECA = ('elmo', 'caveira', 'orbita', 'olho_luz', 'nariz', 'goela', 'dente', 'queixo', 'chifre', 'coroa', 'joia', 'estilhaco', 'aureola')
+DA_PERNA = ('perna', 'racha_perna', 'joelho', 'bota')
+DO_BRACO = ('braco', 'racha_braco', 'manopla', 'garra', 'cabo', 'pomo', 'guarda', 'lamina', 'alma', 'ponta', 'escudo')
+
+
+def peca_de(c):
+    n = c.nome
+    lado = 'd' if (c.de[0] + c.ate[0]) / 2 > 8 else 'e'
+    if n.startswith('asa'):
+        return 'asa_' + ('d' if c.rot[2][0] > 8 else 'e')
+    if n.startswith(DA_CABECA):
+        return 'cabeca'
+    if n.startswith(DA_PERNA):
+        return 'perna_' + lado
+    if n.startswith(DO_BRACO):
+        return 'braco_' + lado
+    return 'tronco'
+
+
+def parte(nome):
+    px, py, pz = PIVOS[nome]
+    dx, dy, dz = 8 - px, 8 - py, 8 - pz
+
+    def f(susto):
+        cs = []
+        for c in colosso(susto, partes=True):
+            if peca_de(c) != nome:
+                continue
+            rot = c.rot
+            if rot is not None:
+                rot = (rot[0], rot[1], (rot[2][0] + dx, rot[2][1] + dy, rot[2][2] + dz))
+            n = C(c.nome, c.de[0] + dx, c.ate[0] + dx, c.de[1] + dy, c.ate[1] + dy, c.de[2] + dz, c.ate[2] + dz, c.pele, rot, emite=c.emite, so=c.so)
+            cs.append(n)
+        lim = [min(float(c.de[i]) for c in cs) for i in range(3)] + [max(float(c.ate[i]) for c in cs) for i in range(3)]
+        assert min(lim[:3]) >= -16 and max(lim[3:]) <= 32, (nome, lim)
+        return cs
+    return f
+
+
+for _n in PIVOS:
+    _id = 'colosso_' + _n
+    A.PALETAS[_id] = dict(A.PALETAS['colosso'])
+    H.MATS[_id] = H.MATS['colosso']
+    H.CORPOS[_id] = parte(_n)
+
 if __name__ == '__main__':
-    A.gerar(A.SAIDA, ['colosso'])
+    ids = ['colosso'] + ['colosso_' + n for n in PIVOS]
+    A.gerar(A.SAIDA, ids)
     os.replace(os.path.join(A.SAIDA, 'corona-animatronicos.json'), os.path.join(A.SAIDA, 'corona-colosso.json'))
     os.replace(os.path.join(A.SAIDA, 'previa_animatronicos.png'), os.path.join(A.SAIDA, 'previa_colosso.png'))

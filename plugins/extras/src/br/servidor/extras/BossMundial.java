@@ -65,11 +65,11 @@ final class BossMundial implements Listener {
     private final java.util.Set<UUID> comPacote = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     private WitherSkeleton corpo;
-    private ItemDisplay modelo;
+    private ColossoCorpo corpo3d;
     private BossBar barra;
     private BukkitTask tarefa;
     private double vida, vidaMax;
-    private int ticks, proximoGolpe, quadro, quadroAte;
+    private int ticks, proximoGolpe;
     private long nasceu;
     private final Map<UUID, Double> dano = new HashMap<>();
     private final Map<UUID, String> nomes = new HashMap<>();
@@ -195,23 +195,12 @@ final class BossMundial implements Listener {
                 }
             }
         });
-        modelo = l.getWorld().spawn(l, ItemDisplay.class, d -> {
-            d.setItemStack(item(0));
-            d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
-            d.setBillboard(Display.Billboard.FIXED);
-            d.setTransformation(new Transformation(new Vector3f(0, 1.5f * ESC_MODELO, 0), new Quaternionf(), new Vector3f(ESC_MODELO, ESC_MODELO, ESC_MODELO), new Quaternionf()));
-            d.setBrightness(new Display.Brightness(12, 15));
-            d.setViewRange(2.5f);
-            d.setShadowRadius(0f);
-            d.setTeleportDuration(2);
-            d.setPersistent(false);
-            d.setVisibleByDefault(false);
-        });
+        corpo3d = new ColossoCorpo(pl, ESC_MODELO);
+        corpo3d.nascer(l);
         vidaMax = vida = pl.getConfig().getDouble("boss-mundial.vida-base", 600);
         dano.clear();
         nomes.clear();
         ticks = 0;
-        quadro = 0;
         proximoGolpe = 100;
         nasceu = System.currentTimeMillis();
         barra = BossBar.bossBar(Extras.txt("§6§l" + nome()), 1f, BossBar.Color.YELLOW, BossBar.Overlay.NOTCHED_10);
@@ -245,18 +234,8 @@ final class BossMundial implements Listener {
         }
         ticks++;
         Location l = corpo.getLocation();
-        // o modelo segue o corpo
-        if (modelo != null && modelo.isValid()) {
-            Location m = l.clone();
-            m.setPitch(0);
-            m.setYaw(corpo.getBodyYaw());
-            modelo.teleport(m);
-            int q = ticks < quadroAte ? 1 : 0;
-            if (q != quadro) {
-                quadro = q;
-                modelo.setItemStack(item(q));
-            }
-        }
+        // o corpo 3D (8 pecas animadas) segue o esqueleto invisivel
+        if (corpo3d != null) corpo3d.tick(l, corpo.getBodyYaw(), ticks);
         if (ticks % 20 == 0) {
             if (corpo.getFireTicks() > 0) corpo.setFireTicks(0);
             // caiu na agua/lava/vazio ou ficou preso: volta para o chao firme mais perto
@@ -269,10 +248,7 @@ final class BossMundial implements Listener {
             // quem tem o pacote ve o modelo e nao ve a armadura; quem nao tem ve a armadura
             for (Player p : corpo.getWorld().getPlayers()) {
                 boolean v = ve3d(p);
-                if (modelo != null && modelo.isValid() && v != p.canSee(modelo)) {
-                    if (v) p.showEntity(pl, modelo);
-                    else p.hideEntity(pl, modelo);
-                }
+                if (corpo3d != null) corpo3d.ver(p, v);
                 if (v && gente.contains(p)) for (EquipmentSlot s : new EquipmentSlot[] {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET, EquipmentSlot.HAND})
                     p.sendEquipmentChange(corpo, s, new ItemStack(Material.AIR));
             }
@@ -304,9 +280,9 @@ final class BossMundial implements Listener {
     private void golpe(List<Player> gente) {
         World w = corpo.getWorld();
         Location l = corpo.getLocation();
-        quadroAte = ticks + 40;
         switch (rnd.nextInt(4)) {
             case 0 -> {
+                corpo3d.golpe(ColossoCorpo.Golpe.ESMAGAR, ticks, 44);
                 // esmagar: avisa com um anel no chao e, 1,5 s depois, acerta todo mundo dentro
                 double raio = 7;
                 anel(l, raio, Color.fromRGB(255, 120, 20));
@@ -321,10 +297,11 @@ final class BossMundial implements Listener {
                         Vector v = p.getLocation().toVector().subtract(c.toVector()).setY(0);
                         if (v.lengthSquared() > 0.01) p.setVelocity(v.normalize().multiply(1.1).setY(0.55));
                     }
-                }, 30L);
+                }, 27L);
             }
             case 1 -> {
                 // investida: salta para cima do jogador mais longe
+                corpo3d.golpe(ColossoCorpo.Golpe.INVESTIDA, ticks, 30);
                 Player alvo = gente.get(0);
                 for (Player p : gente) if (p.getLocation().distanceSquared(l) > alvo.getLocation().distanceSquared(l)) alvo = p;
                 Vector v = alvo.getLocation().toVector().subtract(l.toVector());
@@ -335,6 +312,7 @@ final class BossMundial implements Listener {
             }
             case 2 -> {
                 // chama ajudantes (no maximo 6 vivos)
+                corpo3d.golpe(ColossoCorpo.Golpe.INVOCAR, ticks, 44);
                 ajudantes.removeIf(a -> !a.isValid());
                 int falta = Math.min(3, 6 - ajudantes.size());
                 for (int i = 0; i < falta; i++) {
@@ -352,6 +330,7 @@ final class BossMundial implements Listener {
             }
             default -> {
                 // chuva de magma: marca o chao embaixo de ate 4 jogadores e explode 1,5 s depois
+                corpo3d.golpe(ColossoCorpo.Golpe.MAGMA, ticks, 44);
                 java.util.Collections.shuffle(gente, rnd);
                 w.playSound(l, Sound.ENTITY_BLAZE_SHOOT, 2f, 0.5f);
                 for (Player p : gente.subList(0, Math.min(4, gente.size()))) {
@@ -471,8 +450,8 @@ final class BossMundial implements Listener {
         }
         naBarra.clear();
         barra = null;
-        if (modelo != null && modelo.isValid()) modelo.remove();
-        modelo = null;
+        if (corpo3d != null) corpo3d.sumir();
+        corpo3d = null;
         if (corpo != null && corpo.isValid()) corpo.remove();
         corpo = null;
         for (Entity a : ajudantes) if (a.isValid()) a.remove();

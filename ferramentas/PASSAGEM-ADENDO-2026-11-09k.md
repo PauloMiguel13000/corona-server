@@ -170,3 +170,16 @@
   Premio: 150 coronas para quem bateu (>=10 de dano) + 200/120/60 para o top 3.
 - Testado no servidor de teste com bot (nascer, ficar no chao, golpes sem erro, morrer, premio). NAO visto em cliente real.
 - device_commit_files recusou o jar de 26 MB (HTTP 400): mandar pelo SendUserFile e usar o fileUuid.
+
+## ajustes143 (10/11 14:20) - Boss mundial animado
+
+- Paulo: "nao quero nada feio, e duro, faca animacoes", "tanto pra celular e pc, quero que voce teste, SEM BUGS".
+- `colosso3d.py` gera tambem 8 pecas (`anim_colosso_<tronco|cabeca|braco_d|braco_e|perna_d|perna_e|asa_d|asa_e>_f0|f1`),
+  cada uma deslocada para o pivo ficar no centro do modelo. mcpack 1.13.7 (corona-cdeefeebd3.zip publicado antes).
+- Extras `ColossoCorpo.java`: 8 ItemDisplay; a cada 3 ticks calcula a pose (andar, respirar, asas, 4 golpes) e usa a
+  interpolacao do display. Contas no espaco da entidade (+z frente; o item e desenhado virado 180, por isso x e z do
+  pivo entram com sinal trocado). Parte de cima gira em volta do quadril (inclinacao). Cabeca f1 = boca aberta.
+- Testado so no servidor de teste (pecas nascem, transformacoes mudam, sem erro). FALTA ver em cliente real (Java) se
+  as pecas estao no lugar e girando para o lado certo; Bedrock depende do GeyserDisplayEntity (tem r-x/r-y/r-z e i-dur).
+- PEDIDOS NOVOS (14:15): drops do boss = partes da ARMADURA dele + a ESPADA grande ("crie uma armadura legal dele",
+  "quero algo bem feito", "sem bugs, teste tudo"); "va melhorando o servidor, e postando".
