@@ -183,3 +183,12 @@
   as pecas estao no lugar e girando para o lado certo; Bedrock depende do GeyserDisplayEntity (tem r-x/r-y/r-z e i-dur).
 - PEDIDOS NOVOS (14:15): drops do boss = partes da ARMADURA dele + a ESPADA grande ("crie uma armadura legal dele",
   "quero algo bem feito", "sem bugs, teste tudo"); "va melhorando o servidor, e postando".
+
+## ajustes144 (10/11 15:05) - asas do Traje do Rei viram um bichinho voando em volta (Java)
+
+- Paulo: "a asa (NAO A CAPA) da skin vip fica se mexendo toda bugada, entao faca como se fosse um bixinho voando ao redor".
+- `AsasRei.matrizBicho`: as mesmas 2 asas (corona:item/coroa/asa), escala 0,32, em orbita de raio 0,95 em volta do
+  jogador, batendo (22/78 graus alternando a cada 3 ticks); nao manda mais pacote de giro com o corpo. Config
+  `traje-do-rei.asas-modo: bicho|asas`. So Java: no Bedrock as asas vem do attachable do pacote (nao mexi).
+- Boss animado visto em cliente Java real 14:38 (montagem certa de frente e de costas). Uso do Fable: 82% as 14:38
+  (reinicia 15/11 04:00).

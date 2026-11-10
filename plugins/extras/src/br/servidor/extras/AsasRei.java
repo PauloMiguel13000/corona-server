@@ -226,6 +226,34 @@ final class AsasRei implements Listener {
         return m;
     }
 
+    /**
+     * Modo "bichinho" (10/11): em vez de asas presas nas costas (que tremiam quando o corpo girava), as duas asas viram
+     * um bichinho dourado pequeno que voa em volta do jogador, batendo as asas. Continua montado no jogador (o cliente
+     * leva junto a cada quadro), mas nao gira com o corpo: a cada 3 ticks a matriz anda um pouco na orbita e o cliente
+     * desliza ate la. passo = numero da atualizacao (cada uma vale 3 ticks).
+     */
+    static Matrix4f matrizBicho(int lado, int pose, int passo) {
+        Matrix4f m = new Matrix4f();
+        if (pose == ESCONDIDA) return m.scale(0.0001f);
+        float ang = passo * 0.33f;                                   // volta completa em ~3 s
+        float raio = 0.95f;
+        float alto = (pose == EM_PE ? -0.45f : -0.55f) + 0.14f * (float) Math.sin(passo * 0.45f);
+        float bate = (passo & 1) == 0 ? 22f : 78f;                   // asas fechando e abrindo a cada atualizacao
+        float beta = lado == 0 ? 180f - bate : bate;
+        m.translate(raio * (float) Math.cos(ang), alto, raio * (float) Math.sin(ang));
+        m.rotateY(-ang);                                             // de frente para onde esta indo
+        m.translate((lado == 0 ? -0.4f : 0.4f) * PX, 0f, 0f);
+        m.rotateY((float) Math.toRadians(beta - 180f));
+        m.scale(ESC * 0.32f);
+        // a raiz da asa (onde ela encosta no corpo) fica no meio do bichinho
+        m.translate(0f, -RAIZ_Y * 0.25f * PX, 0f);
+        return m;
+    }
+
+    private boolean bicho() {
+        return !"asas".equalsIgnoreCase(pl.getConfig().getString("traje-do-rei.asas-modo", "bicho"));
+    }
+
     private ItemDisplay criarModelo(Player p, int lado) {
         Location l = p.getLocation();
         ItemDisplay d = p.getWorld().createEntity(l, ItemDisplay.class);
@@ -329,7 +357,21 @@ final class AsasRei implements Listener {
         // pose (matriz) mudou?
         int pose = pose(dono);
         List<Packet<?>> dadosNovos = null;
-        if (pose != e.pose) {
+        boolean bicho = bicho();
+        if (bicho && (pose != e.pose || (pose != ESCONDIDA && ticks % 3 == 0))) {
+            // bichinho voando em volta: a matriz anda na orbita a cada 3 ticks
+            boolean mudouPose = pose != e.pose;
+            e.pose = pose;
+            dadosNovos = new ArrayList<>();
+            for (int k = 0; k < 2; k++) {
+                ItemDisplay d = e.modelo[k];
+                d.setInterpolationDelay(0);
+                d.setInterpolationDuration(pose == ESCONDIDA || mudouPose ? 0 : 3);
+                d.setTransformationMatrix(matrizBicho(k, pose, ticks / 3));
+                List<SynchedEntityData.DataValue<?>> v = dados(d).packDirty();
+                if (v != null && !v.isEmpty()) dadosNovos.add(new ClientboundSetEntityDataPacket(e.ids[k], v));
+            }
+        } else if (!bicho && pose != e.pose) {
             e.pose = pose;
             dadosNovos = new ArrayList<>();
             for (int k = 0; k < 2; k++) {
@@ -342,7 +384,7 @@ final class AsasRei implements Listener {
             }
         }
         byte giro = angulo(dono.getBodyYaw());
-        boolean girou = giro != e.giro;
+        boolean girou = giro != e.giro && !bicho;          // o bichinho nao gira com o corpo (era o que tremia)
         e.giro = giro;
         int passageiros = dono.getPassengers().size();
         boolean remontar = (passageiros != e.passageiros && e.passageiros >= 0) || ticks % 40 == 0;
