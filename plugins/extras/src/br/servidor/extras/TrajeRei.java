@@ -151,6 +151,28 @@ final class TrajeRei implements Listener {
 
     /** Da as pecas que faltam (procura no inventario, na armadura e no bau do fim). Devolve quantas deu. */
     int entregar(Player p, boolean avisar) {
+        return entregar(p, avisar, false);
+    }
+
+    /**
+     * O traje acompanha o dono na troca de mochila (survival <-> masmorras): cada mochila guarda as suas pecas, entao
+     * ao entrar num mundo do outro grupo as pecas que faltam ali sao dadas de novo, sem titulo nem som (10/11).
+     */
+    @EventHandler
+    public void mudouDeMundo(org.bukkit.event.player.PlayerChangedWorldEvent e) {
+        Player p = e.getPlayer();
+        if (!pl.getConfig().getBoolean("traje-do-rei.acompanha-nas-masmorras", true)) return;
+        // 30 ticks: depois de a mochila do mundo novo ser colocada
+        Bukkit.getScheduler().runTaskLater(pl, () -> {
+            if (!p.isOnline() || !pode(p)) return;
+            String n = p.getWorld().getName();
+            if (!n.startsWith("masmorras") && !n.equals("world") && !n.equals("world_nether") && !n.equals("world_the_end") && !n.equals("plots")) return;
+            int dadas = entregar(p, false, true);
+            if (dadas > 0) p.sendActionBar(Extras.txt("§6Traje do Rei §7veio com você §8(" + dadas + " peça" + (dadas > 1 ? "s" : "") + ")"));
+        }, 30L);
+    }
+
+    int entregar(Player p, boolean avisar, boolean quieto) {
         if (!pode(p)) {
             if (avisar) p.sendMessage(Extras.txt("§cO Traje do Rei é só do " + Vip.NIVEIS[3].tag() + " §ce da " + Vip.NIVEIS[4].tag() + "§c. §7Veja: §e/vip"));
             return 0;
@@ -173,7 +195,9 @@ final class TrajeRei implements Listener {
             }
             dadas++;
         }
-        if (dadas > 0) {
+        if (dadas > 0 && quieto) {
+            pl.getLogger().info("Traje do Rei: " + dadas + " peca(s) para " + p.getName() + " (troca de mochila, " + p.getWorld().getName() + ")");
+        } else if (dadas > 0) {
             p.showTitle(net.kyori.adventure.title.Title.title(Extras.txt("§6§lTRAJE DO REI"), Extras.txt("§fExclusivo do MVP e da LENDA")));
             p.playSound(p.getLocation(), Sound.ITEM_ARMOR_EQUIP_DIAMOND, 1f, 0.8f);
             p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.2f);

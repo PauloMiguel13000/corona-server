@@ -210,3 +210,11 @@
 - Paulo: "o boss so spawna no mundo das dungeons, nunca no survival puro", "nem lobby de terror".
 - `BossMundial.mundoDoBoss()`: sempre um mundo que comeca com `masmorras` (padrao `masmorras_mundo`). `/boss invocar`
   fora de la faz nascer la num lugar sorteado; `/boss` leva o jogador (a mochila troca sozinha). Testado com bot.
+
+## ajustes146 (10/11 15:32) - Traje do Rei aparece nas masmorras
+
+- Paulo: "faca a armadura vip aparecer na masmorra". `TrajeRei.mudouDeMundo`: 30 ticks depois de trocar de mundo (depois
+  da mochila), se o dono pode usar, `entregar(p, false, true)` da em silencio as pecas que faltam naquela mochila
+  (veste se o lugar da armadura estiver vazio, senao vai para o inventario). Config `traje-do-rei.acompanha-nas-masmorras`.
+  Testado com bot: entrou em masmorras_mundo vestido, voltou e entrou de novo sem duplicar.
+- PROXIMO (pedido 15:30): "termine a armadura e a espada que conversamos e teste tudo" = drops do Colosso.
