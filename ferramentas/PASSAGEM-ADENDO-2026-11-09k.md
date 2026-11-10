@@ -125,3 +125,10 @@
   Testado no servidor de teste com bot (abrir, clicar em Terror -> foi para o lobby do terror).
 - Regra do Paulo (10/11 10:27-10:41): NAO criar/alterar monstro no Hotel; ele pediu os monstros do jogo original (com
   outro nome/cor) e isso foi recusado (personagem protegido). No Hotel, so mecanicas.
+
+## ajustes139 (10/11 12:26) - dicas automaticas das novidades
+
+- `Divulgacao.DICAS_EXTRAS` (4 dicas: /missoes, /ajuda, /turno coop, /terror) entram na roda das dicas do chat junto com
+  as do config (`divulgacao.dicas-extras: []` desliga). Testado no servidor de teste (apareceu na 5a rodada).
+- 10/11 12:16: o Paulo mandou `REGRAS-LIMITE-DE-USO.md` (gastar pouco, melhorias pequenas, passagem perto de 94%, nao
+  usar a extensao do Chrome se ela estiver na NBTSJ). Seguir. Copia em /mnt/user-data/attachments (pedir a ele de novo).

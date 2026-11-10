@@ -59,8 +59,17 @@ final class Divulgacao implements Listener {
         Bukkit.getScheduler().runTaskTimer(pl, this::conferirIndicados, 20L * 60, 20L * 60);
     }
 
+    static final List<String> DICAS_EXTRAS = List.of(
+            "&6&l>> &eMissões do dia: 3 missões novas todo dia valendo coronas. &f/missoes",
+            "&6&l>> &eNão sabe por onde começar? &f/ajuda &7abre o guia com tudo o que tem no servidor",
+            "&6&l>> &eTurno da Noite agora em grupo: &f/turno coop <nick> &7(até 3 vigias na mesma sala)",
+            "&6&l>> &eJogos de terror: Hotel, Backrooms, Casa da Vovó, Não Chore, Turno, Fábrica e Floresta. &f/terror");
+
     private void dica() {
-        List<String> l = pl.getConfig().getStringList("divulgacao.dicas");
+        List<String> l = new java.util.ArrayList<>(pl.getConfig().getStringList("divulgacao.dicas"));
+        // dicas das novidades (10/11): entram na roda junto com as do config; "dicas-extras: []" no config desliga
+        List<String> extras = pl.getConfig().isSet("divulgacao.dicas-extras") ? pl.getConfig().getStringList("divulgacao.dicas-extras") : DICAS_EXTRAS;
+        for (String x : extras) if (!l.contains(x)) l.add(x);
         if (l.isEmpty() || Bukkit.getOnlinePlayers().isEmpty()) return;
         String m = l.get(proxima++ % l.size());
         Bukkit.broadcast(Extras.txt(Placas.cor(m)));
