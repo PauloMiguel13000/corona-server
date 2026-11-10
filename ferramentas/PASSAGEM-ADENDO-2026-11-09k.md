@@ -106,3 +106,13 @@
   continuam la, desligados. NAO religar sem ele pedir. Ele pediu os monstros dos jogos originais; isso nao se faz
   (personagens protegidos) e foi explicado a ele.
 - O post das 18:00 NAO deve anunciar monstros 3D do Hotel/Fabrica.
+
+## ajustes137 (10/11 10:38) - Missoes do dia
+
+- Pedido do Paulo (10:33): "Continue melhorando; se for melhorar o hotel, voce so mexe para melhorar as mecanicas que ja
+  existem iguais ao jogo" (nada de monstro/visual novo no Hotel).
+- Extras `MissoesDiarias.java`: `/missoes` (aliases missao, diarias, diaria): 3 missoes por dia, iguais para todos (sorteio
+  pela data, meia-noite de Brasilia), de 12 tipos (monstros, masmorra, minerios, pescar, colher, comer, encantar, andar,
+  tempo, minigames). Premio em coronas no clique; bonus das 3 (60 + 15 por dia seguido, ate 7). `missoes-diarias.yml`.
+  Dono: `/missoes completar <nick>` (extras.admin) termina as 3 de hoje para testar. Config `missoes-diarias.*`.
+  Testado no servidor de teste com bot (menu, completar, pegar premios, sem pagar em dobro).

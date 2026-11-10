@@ -17,6 +17,9 @@ commands:
   ip:
     description: Endereco do servidor (Java e Bedrock) para chamar os amigos
     aliases: [endereco, convidar]
+  missoes:
+    description: Missoes do dia - 3 missoes novas todo dia valendo coronas
+    aliases: [missao, diarias, diaria, missoesdiarias]
   discord:
     description: Link do Discord do servidor
     aliases: [dc, disc, discorde]

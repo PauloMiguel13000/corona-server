@@ -149,3 +149,10 @@ ceu-dos-lobbies: true
 # Lobby do Terror: estatuas 3D dos monstros ao lado dos portoes (so aparecem para quem tem o pacote de recursos).
 lobby-terror:
   estatuas: true
+
+# Missoes do dia (/missoes): 3 por dia, iguais para todos, trocam a meia-noite de Brasilia
+missoes-diarias:
+  ativo: true
+  comando: "coronas dar %jogador% %valor%"
+  bonus-das-3: 60
+  bonus-por-dia-seguido: 15

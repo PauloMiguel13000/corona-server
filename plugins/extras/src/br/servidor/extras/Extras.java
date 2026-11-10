@@ -54,6 +54,7 @@ public final class Extras extends JavaPlugin implements Listener {
     SpawnPrincipal spawnNovo;
     Votos votos;
     Divulgacao divulgacao;
+    MissoesDiarias missoesDiarias;
 
     @Override
     public void onEnable() {
@@ -71,6 +72,8 @@ public final class Extras extends JavaPlugin implements Listener {
         divulgacao = new Divulgacao(this);
         Bukkit.getPluginManager().registerEvents(divulgacao, this);
         divulgacao.iniciar();
+        missoesDiarias = new MissoesDiarias(this);
+        missoesDiarias.iniciar();
         // depois que os mundos carregaram: placas do spawn (se a versao mudou) e limpeza embaixo do spawn (uma vez)
         Bukkit.getScheduler().runTaskTimer(this, this::visaoNoSpawn, 60L, 20L);
         lobby = new LobbyMinigames(this);
@@ -174,6 +177,7 @@ public final class Extras extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if (missoesDiarias != null) missoesDiarias.parar();
         if (entradas != null) entradas.parar();
         if (filtroStun != null) {
             try {
@@ -873,6 +877,21 @@ public final class Extras extends JavaPlugin implements Listener {
         if (cmd.getName().equalsIgnoreCase("ip")) {
             if (s instanceof Player p) divulgacao.ip(p);
             else s.sendMessage("Java: " + getConfig().getString("divulgacao.ip-java") + " | Bedrock: " + getConfig().getString("divulgacao.ip-bedrock") + " porta " + getConfig().getString("divulgacao.porta-bedrock"));
+            return true;
+        }
+        if (cmd.getName().equalsIgnoreCase("missoes")) {
+            if (args.length >= 2 && args[0].equalsIgnoreCase("completar") && s.hasPermission("extras.admin")) {
+                // dono testando: /missoes completar <nick>
+                Player alvo = Bukkit.getPlayerExact(args[1]);
+                if (alvo == null) s.sendMessage("Jogador offline.");
+                else {
+                    missoesDiarias.completar(alvo);
+                    s.sendMessage("Missoes de hoje de " + alvo.getName() + " terminadas (o premio ele pega no /missoes).");
+                }
+                return true;
+            }
+            if (s instanceof Player p) missoesDiarias.abrir(p);
+            else s.sendMessage("Somente jogadores.");
             return true;
         }
         if (cmd.getName().equalsIgnoreCase("discord")) {
