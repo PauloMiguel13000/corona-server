@@ -17,6 +17,9 @@ commands:
   ip:
     description: Endereco do servidor (Java e Bedrock) para chamar os amigos
     aliases: [endereco, convidar]
+  boss:
+    description: Boss mundial - leva ate o Colosso quando ele esta acordado
+    aliases: [bossmundial, colosso, chefao]
   ajuda:
     description: Guia do servidor - tudo o que da para fazer, com atalhos
     aliases: [guia, comandos, tutorial, comecar]

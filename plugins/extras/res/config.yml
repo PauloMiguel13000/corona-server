@@ -156,3 +156,18 @@ missoes-diarias:
   comando: "coronas dar %jogador% %valor%"
   bonus-das-3: 60
   bonus-por-dia-seguido: 15
+
+# Boss mundial (/boss): o Colosso da Coroa Partida nasce de tempos em tempos no mundo aberto
+boss-mundial:
+  ativo: true
+  mundo: world
+  a-cada-minutos: 120
+  minimo-de-jogadores: 1
+  some-em-minutos: 20
+  vida-base: 600
+  vida-por-jogador: 350
+  dano: 9
+  premio: 150
+  bonus-1: 200
+  bonus-2: 120
+  bonus-3: 60

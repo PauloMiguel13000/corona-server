@@ -158,3 +158,15 @@
 - Boss mundial: modelo ORIGINAL pronto so como previa (`modelos/colosso3d.py`, "Colosso da Coroa Partida",
   `anim_colosso_f0|f1`), NAO esta no pacote nem instalado. Esperando o Paulo aprovar o visual antes de fazer o evento.
 - "O boss entrando no chao durante a luta": ele nao disse qual chefe; perguntar de novo se voltar a falar.
+
+## ajustes142 (10/11 14:12) - Boss mundial (Colosso da Coroa Partida)
+
+- Visual aprovado pelo Paulo na 3a previa ("pronto"): `modelos/colosso3d.py` (desenho proprio), `anim_colosso_f0|f1`,
+  pacote Java + mcpack 1.13.6 (publicado antes: corona-9450b77944.zip), `custom_mappings/corona-colosso.json`.
+- Extras `BossMundial.java`: esqueleto wither invisivel escala 3 + ItemDisplay (escala 3,2) seguindo; quem nao tem o
+  pacote ve a armadura gigante. Vida propria (600 + 350 por jogador a mais), 4 golpes (esmagar com anel de aviso,
+  investida, ajudantes, chuva de magma), barra de vida para quem esta a 48 blocos, some em 20 min. Nasce a cada 120 min
+  a 150-350 blocos do spawn do `world` (config `boss-mundial.*`). `/boss` leva ate ele; admin: `/boss invocar|remover|status`.
+  Premio: 150 coronas para quem bateu (>=10 de dano) + 200/120/60 para o top 3.
+- Testado no servidor de teste com bot (nascer, ficar no chao, golpes sem erro, morrer, premio). NAO visto em cliente real.
+- device_commit_files recusou o jar de 26 MB (HTTP 400): mandar pelo SendUserFile e usar o fileUuid.

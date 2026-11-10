@@ -3,8 +3,8 @@
 Detalhes completos: `PASSAGEM-ADENDO-2026-11-09k.md` (mesma pasta) e os adendos anteriores. Este é o resumo de 1 página.
 
 ## Estado atual
-- No ar: até o **ajustes141** (instalador lançado 12:40; conferir `otimizacao\ajustes141.log` = "pronto: tudo conferido"
-  e `logs\latest.log` = "Done ("). Próximo número: **ajustes142**.
+- No ar: até o **ajustes142** (instalador lançado 14:12; conferir `otimizacao\ajustes142.log` = "pronto: tudo conferido"
+  e `logs\latest.log` = "Done ("). Próximo número: **ajustes143**.
 - GitHub: `PauloMiguel13000/corona-server` (privado) em dia; `corona-pacotes` (público) com o mcpack 1.13.5.
 - Nada pela metade. Pode ter ficado 1 janela do Explorador de Arquivos aberta no PC do servidor (fechar).
 
