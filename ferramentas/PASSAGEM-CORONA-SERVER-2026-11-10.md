@@ -3,8 +3,8 @@
 Detalhes completos: `PASSAGEM-ADENDO-2026-11-09k.md` (mesma pasta) e os adendos anteriores. Este é o resumo de 1 página.
 
 ## Estado atual
-- No ar: até o **ajustes140** (instalador lançado 12:32; conferir `otimizacao\ajustes140.log` = "pronto: tudo conferido"
-  e `logs\latest.log` = "Done ("). Próximo número: **ajustes141**.
+- No ar: até o **ajustes141** (instalador lançado 12:40; conferir `otimizacao\ajustes141.log` = "pronto: tudo conferido"
+  e `logs\latest.log` = "Done ("). Próximo número: **ajustes142**.
 - GitHub: `PauloMiguel13000/corona-server` (privado) em dia; `corona-pacotes` (público) com o mcpack 1.13.5.
 - Nada pela metade. Pode ter ficado 1 janela do Explorador de Arquivos aberta no PC do servidor (fechar).
 
@@ -24,7 +24,7 @@ Detalhes completos: `PASSAGEM-ADENDO-2026-11-09k.md` (mesma pasta) e os adendos 
 ## Feito hoje (10/11)
 - 131 `/darmoedareviver` · 132 `/dararmadura` e `/darespada` · 133 Turno da Noite coop (`/turno coop <nick>`, até 3)
 - 134/135 monstros 3D da Fábrica e do Hotel → **desligados** no 136 a pedido do Paulo (`modelo-3d: false`)
-- 137 missões do dia (`/missoes`) · 138 guia (`/ajuda`) · 139 dicas automáticas das novidades
+- 140/141 Turno coop com fila (`/turno fila`, entra todo mundo junto) · 137 missões do dia (`/missoes`) · 138 guia (`/ajuda`) · 139 dicas automáticas das novidades
 - Conferido que o Paulo não perdeu itens (mochilas survival e masmorras inteiras).
 
 ## Pendências (palavras do Paulo)

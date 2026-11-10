@@ -138,3 +138,11 @@
 - `/turno` -> item "Jogar em grupo" (kMenu=100) abre `menuConvite`: cabecas de quem esta online e fora de um turno
   (kMenu=200 + kConvite=nick); clicar chama `coop(p, {"coop", nick})` com a noite mais alta do anfitriao.
   Testado no servidor de teste com 2 bots (clique -> convite -> aceitar -> os dois na sala).
+
+## ajustes141 (10/11 12:40) - Turno coop com fila
+
+- Pedido do Paulo: "O coop do fnaf, voce faz as pessoas esperarem na fila que nem os outros minigames, e ai entra todo
+  mundo no coop". `/turno fila` (ou o item "Jogar em grupo" do menu): o 1o abre a contagem (`coop.fila-segundos`, 30) e
+  avisa todo mundo com [ENTRAR NA FILA]; quem entra joga junto; com 3 comeca em 3 s; sozinho, vai sozinho. A noite e a
+  mais alta que TODOS liberaram (ate 5). `/turno sair` sai da fila. `/turno coop <nick>` (convite) continua existindo;
+  o `menuConvite` ficou no codigo sem uso. Testado com 3 bots (fila cheia, fila de 1, sair da fila).

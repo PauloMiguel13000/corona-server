@@ -5,6 +5,8 @@ gasto-energia: 1.0       # multiplicador do gasto (0.1% por segundo por "barra" 
 # coop (/turno coop <nick>): cada vigia a mais deixa os bichos acordados mais espertos
 coop:
   ia-a-mais-por-vigia: 2
+  # /turno fila: segundos de espera depois que o primeiro entra (a sala cheia comeca em 3 s)
+  fila-segundos: 30
 recompensa:
   comando: "coronas dar %jogador% %valor%"
   noite-1: 30

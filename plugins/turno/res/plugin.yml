@@ -6,7 +6,7 @@ description: Turno da Noite - minigame original de vigia noturno (Java e Bedrock
 commands:
   turno:
     description: Turno da Noite
-    usage: /turno [sair|noite <n>|coop <nick> [noite]|aceitar|custom <tuca> <jaca> <capi> <boto>]
+    usage: /turno [sair|fila|noite <n>|coop <nick> [noite]|aceitar|custom <tuca> <jaca> <capi> <boto>]
 permissions:
   turno.admin:
     default: op

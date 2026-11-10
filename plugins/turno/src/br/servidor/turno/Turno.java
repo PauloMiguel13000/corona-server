@@ -181,6 +181,7 @@ public final class Turno extends JavaPlugin implements Listener {
     /** Comeca a noite para um vigia ou para um grupo (coop: o primeiro e o anfitriao, a noite e a dele). */
     void comecar(List<Player> grupo, int noite, int[] ia) {
         Player p = grupo.get(0);
+        for (Player x : grupo) sairDaFila(x, false);
         for (Player x : grupo) if (noites.containsKey(x.getUniqueId())) {
             p.sendMessage(txt(x == p ? "§cVocê já está num turno." : "§c" + x.getName() + " já está num turno."));
             return;
@@ -224,6 +225,82 @@ public final class Turno extends JavaPlugin implements Listener {
                     + "§7. Para sair das câmeras: agache (Shift), pule (Espaço) ou aperte Q; no celular, toque em SAIR na barra. /turno sair para desistir."));
         }
         n.comecar();
+    }
+
+    // ------------------------------------------------------------------ coop: fila
+
+    /** Fila do grupo: quem entra espera a contagem; quando ela acaba (ou a sala enche) entram todos juntos. */
+    private final List<UUID> fila = new ArrayList<>();
+    private int filaSegundos;
+    private org.bukkit.scheduler.BukkitTask filaTarefa;
+
+    private List<Player> naFila() {
+        List<Player> l = new ArrayList<>();
+        fila.removeIf(id -> Bukkit.getPlayer(id) == null || noites.containsKey(id));
+        for (UUID id : fila) l.add(Bukkit.getPlayer(id));
+        return l;
+    }
+
+    void entrarNaFila(Player p) {
+        if (noiteDe(p) != null) {
+            p.sendMessage(txt("§cVocê já está num turno."));
+            return;
+        }
+        if (fila.contains(p.getUniqueId())) {
+            p.sendMessage(txt("§7Você já está na fila do Turno da Noite (" + naFila().size() + "/" + COOP_MAX + "). Sair: §f/turno sair"));
+            return;
+        }
+        boolean primeira = naFila().isEmpty();
+        fila.add(p.getUniqueId());
+        int espera = Math.max(10, getConfig().getInt("coop.fila-segundos", 30));
+        if (primeira) filaSegundos = espera;
+        List<Player> l = naFila();
+        for (Player x : l) {
+            x.sendMessage(txt("§b§lTURNO DA NOITE §7— §f" + p.getName() + " §7entrou na fila do grupo §f(" + l.size() + "/" + COOP_MAX + ")§7. Sair: §f/turno sair"));
+            x.playSound(x.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.8f, 1.2f);
+        }
+        if (primeira) {
+            // chama quem esta no lobby do terror e no spawn (um clique entra na fila)
+            Component aviso = txt("§b§lTURNO DA NOITE §7— §f" + p.getName() + " §7abriu a fila do grupo. ")
+                    .append(txt("§a§l[ENTRAR NA FILA]").clickEvent(net.kyori.adventure.text.event.ClickEvent.runCommand("/turno fila")))
+                    .append(txt(" §7ou §f/turno fila §8(" + espera + " s)"));
+            for (Player x : Bukkit.getOnlinePlayers())
+                if (x != p && noiteDe(x) == null && !x.getWorld().getName().equals("login")) x.sendMessage(aviso);
+        }
+        if (l.size() >= COOP_MAX) filaSegundos = Math.min(filaSegundos, 3);
+        if (filaTarefa == null) filaTarefa = Bukkit.getScheduler().runTaskTimer(this, this::tickFila, 20L, 20L);
+    }
+
+    boolean sairDaFila(Player p, boolean avisar) {
+        if (!fila.remove(p.getUniqueId())) return false;
+        if (avisar) p.sendMessage(txt("§7Você saiu da fila do Turno da Noite."));
+        for (Player x : naFila()) x.sendMessage(txt("§7" + p.getName() + " saiu da fila §f(" + naFila().size() + "/" + COOP_MAX + ")"));
+        return true;
+    }
+
+    private void tickFila() {
+        List<Player> l = naFila();
+        if (l.isEmpty()) {
+            if (filaTarefa != null) filaTarefa.cancel();
+            filaTarefa = null;
+            return;
+        }
+        filaSegundos--;
+        if (filaSegundos > 0) {
+            for (Player x : l) {
+                x.sendActionBar(txt("§bFila do Turno da Noite §f" + l.size() + "/" + COOP_MAX + " §7— começa em §e" + filaSegundos + " s"));
+                if (filaSegundos <= 3) x.playSound(x.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.8f, 1f);
+            }
+            return;
+        }
+        fila.clear();
+        if (filaTarefa != null) filaTarefa.cancel();
+        filaTarefa = null;
+        // a noite e a mais alta que TODOS ja liberaram (assim todo mundo avanca), ate a 5
+        int noite = 5;
+        for (Player x : l) noite = Math.min(noite, Math.max(1, noiteMax(x)));
+        if (l.size() == 1) l.get(0).sendMessage(txt("§7Ninguém mais entrou na fila: você vai sozinho."));
+        comecar(l, noite, iaDaNoite(noite));
     }
 
     // ------------------------------------------------------------------ coop: convite
@@ -467,7 +544,8 @@ public final class Turno extends JavaPlugin implements Listener {
         ItemMeta gm = grupo.getItemMeta();
         gm.displayName(txt("§bJogar em grupo (coop)"));
         gm.lore(List.of(txt("§7Até " + COOP_MAX + " vigias na mesma sala,"), txt("§7com a mesma energia para todos."), txt(""),
-                txt("§eClique §7para escolher quem chamar"), txt("§7ou digite §f/turno coop <nick>")));
+                txt("§eClique §7para entrar na fila do grupo"), txt("§7(quem entrar na fila joga junto)"),
+                txt("§7Chamar alguém direto: §f/turno coop <nick>")));
         gm.getPersistentDataContainer().set(kMenu, PersistentDataType.INTEGER, 100);
         grupo.setItemMeta(gm);
         inv.setItem(24, grupo);
@@ -500,10 +578,7 @@ public final class Turno extends JavaPlugin implements Listener {
         e.setCancelled(true);
         p.closeInventory();
         if (noite == 100) {
-            // um tick depois: abrir outro bau dentro do clique da problema no Bedrock
-            Bukkit.getScheduler().runTask(this, () -> {
-                if (p.isOnline()) menuConvite(p);
-            });
+            entrarNaFila(p);
             return;
         }
         if (noite == 200) {
@@ -535,7 +610,9 @@ public final class Turno extends JavaPlugin implements Listener {
             return true;
         }
         switch (a[0].toLowerCase()) {
+            case "fila", "entrar", "jogar" -> entrarNaFila(p);
             case "sair" -> {
+                if (sairDaFila(p, true)) return true;
                 if (noiteDe(p) == null) {
                     p.sendMessage(txt("§7Você não está num turno."));
                     return true;
@@ -747,6 +824,7 @@ public final class Turno extends JavaPlugin implements Listener {
     @EventHandler
     public void saiu(PlayerQuitEvent e) {
         Player p = e.getPlayer();
+        sairDaFila(p, false);
         Convite meu = convites.get(p.getUniqueId());
         if (meu != null) {
             convites.remove(p.getUniqueId());
