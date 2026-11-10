@@ -60,7 +60,7 @@ final class BossMundial implements Listener {
     private static final float ESC_MODELO = (float) (2.4 * ESCALA / 2.25);
 
     private final Extras pl;
-    private final NamespacedKey kBoss, kAjudante;
+    private final NamespacedKey kBoss, kAjudante, kDrop, kBussola;
     private final Random rnd = new Random();
     private final java.util.Set<UUID> comPacote = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
@@ -81,6 +81,8 @@ final class BossMundial implements Listener {
         this.pl = pl;
         this.kBoss = new NamespacedKey(pl, "boss_mundial");
         this.kAjudante = new NamespacedKey(pl, "boss_ajudante");
+        this.kDrop = new NamespacedKey(pl, "boss_drop");
+        this.kBussola = new NamespacedKey(pl, "boss_bussola");
     }
 
     /** O boss so existe no mundo das masmorras, nunca no survival puro (pedido do Paulo, 10/11). */
@@ -268,6 +270,7 @@ final class BossMundial implements Listener {
                     if (p != null) p.hideBossBar(barra);
                 }
             }
+            bussolas();
             barra.progress((float) Math.max(0, Math.min(1, vida / vidaMax)));
             barra.name(Extras.txt("§6§l" + nome() + " §7— §c" + (int) Math.ceil(vida) + " §7/ " + (int) vidaMax));
             // 20 minutos sem morrer: vai embora
@@ -287,7 +290,10 @@ final class BossMundial implements Listener {
     private void golpe(List<Player> gente) {
         World w = corpo.getWorld();
         Location l = corpo.getLocation();
-        switch (rnd.nextInt(4)) {
+        // alguem colado no boss: metade das vezes ele usa o montante
+        boolean colado = false;
+        for (Player p : gente) if (p.getLocation().distanceSquared(l) <= 11 * 11) colado = true;
+        switch (colado && rnd.nextBoolean() ? 4 : rnd.nextInt(4)) {
             case 0 -> {
                 corpo3d.golpe(ColossoCorpo.Golpe.ESMAGAR, ticks, 44);
                 // esmagar: avisa com um anel no chao e, 1,5 s depois, acerta todo mundo dentro
@@ -335,6 +341,34 @@ final class BossMundial implements Listener {
                 }
                 w.playSound(l, Sound.ENTITY_EVOKER_PREPARE_SUMMON, 2f, 0.6f);
             }
+            case 4 -> {
+                // montante do Colosso: arma o golpe e varre tudo que estiver na frente dele
+                corpo3d.golpe(ColossoCorpo.Golpe.ESPADA, ticks, 34);
+                Player alvo = gente.get(0);
+                for (Player p : gente) if (p.getLocation().distanceSquared(l) < alvo.getLocation().distanceSquared(l)) alvo = p;
+                corpo.setTarget(alvo);
+                corpo.lookAt(alvo);
+                w.playSound(l, Sound.ENTITY_RAVAGER_ROAR, 1.6f, 1.4f);
+                w.playSound(l, Sound.ITEM_ARMOR_EQUIP_NETHERITE, 1.6f, 0.6f);
+                Bukkit.getScheduler().runTaskLater(pl, () -> {
+                    if (!vivo()) return;
+                    Location c = corpo.getLocation();
+                    double rad = Math.toRadians(corpo.getBodyYaw());
+                    Vector frente = new Vector(-Math.sin(rad), 0, Math.cos(rad));
+                    double alc = pl.getConfig().getDouble("boss-mundial.alcance-da-espada", 8);
+                    w.playSound(c, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 3f, 0.5f);
+                    w.playSound(c, Sound.ENTITY_WITHER_BREAK_BLOCK, 1.4f, 1.5f);
+                    arco(c, frente, alc);
+                    for (Player p : perto(alc + 2)) {
+                        Vector d = p.getLocation().toVector().subtract(c.toVector()).setY(0);
+                        double dist = d.length();
+                        if (dist < 0.1 || dist > alc) continue;
+                        if (frente.dot(d.clone().multiply(1 / dist)) < 0.2) continue;     // so quem esta na frente
+                        p.damage(pl.getConfig().getDouble("boss-mundial.dano-da-espada", 12), corpo);
+                        p.setVelocity(d.multiply(1 / dist).multiply(1.0).setY(0.5));
+                    }
+                }, 16L);
+            }
             default -> {
                 // chuva de magma: marca o chao embaixo de ate 4 jogadores e explode 1,5 s depois
                 corpo3d.golpe(ColossoCorpo.Golpe.MAGMA, ticks, 44);
@@ -356,6 +390,92 @@ final class BossMundial implements Listener {
         }
     }
 
+    // ------------------------------------------------------------------ bussola do boss
+
+    /**
+     * Enquanto o boss esta vivo, quem esta no mundo das masmorras ganha uma bussola que aponta para ele e vai
+     * acompanhando ele andar. Quando ele morre ou vai embora, a bussola some da mao de todo mundo.
+     */
+    private void bussolas() {
+        if (!vivo()) return;
+        Location alvo = corpo.getLocation();
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (p.getWorld().equals(alvo.getWorld())) atualizarBussola(p, alvo);
+            else tirarBussola(p);
+        }
+    }
+
+    /** Poe a bussola (se ainda nao tiver) e refaz a agulha/distancia. */
+    private void atualizarBussola(Player p, Location alvo) {
+        int slot = -1;
+        ItemStack[] inv = p.getInventory().getContents();
+        for (int i = 0; i < inv.length; i++) if (ehBussola(inv[i])) { slot = i; break; }
+        ItemStack b = bussolaItem(p, alvo);
+        if (slot >= 0) {
+            p.getInventory().setItem(slot, b);
+            return;
+        }
+        for (ItemStack sobra : p.getInventory().addItem(b).values()) p.getWorld().dropItemNaturally(p.getLocation(), sobra);
+        p.sendMessage(Extras.txt("§6§l⚔ BOSS MUNDIAL §8» §7Você recebeu a §6Bússola do Colosso§7: siga a agulha."));
+        p.playSound(p.getLocation(), Sound.ITEM_LODESTONE_COMPASS_LOCK, 1f, 1f);
+    }
+
+    /** Tira a bussola do inventario (e do cursor) de um jogador. */
+    private void tirarBussola(Player p) {
+        boolean tinha = false;
+        ItemStack[] inv = p.getInventory().getContents();
+        for (int i = 0; i < inv.length; i++) if (ehBussola(inv[i])) {
+            p.getInventory().setItem(i, null);
+            tinha = true;
+        }
+        if (ehBussola(p.getItemOnCursor())) {
+            p.setItemOnCursor(null);
+            tinha = true;
+        }
+        if (tinha) p.updateInventory();
+    }
+
+    private boolean ehBussola(ItemStack it) {
+        return it != null && it.getType() == Material.COMPASS && it.hasItemMeta()
+                && it.getItemMeta().getPersistentDataContainer().has(kBussola, PersistentDataType.BYTE);
+    }
+
+    /** No Bedrock a bussola com ima derruba a sessao (Geyser): la vira bussola normal com alvo de bussola. */
+    private ItemStack bussolaItem(Player p, Location alvo) {
+        ItemStack b = new ItemStack(Material.COMPASS);
+        boolean celular = Extras.ehBedrock(p);
+        if (celular) p.setCompassTarget(alvo);
+        if (b.getItemMeta() instanceof org.bukkit.inventory.meta.CompassMeta cm) {
+            if (!celular) {
+                cm.setLodestone(alvo);
+                cm.setLodestoneTracked(false);
+            }
+            int d = (int) p.getLocation().distance(alvo);
+            cm.displayName(Extras.txt("§6§lBússola do Colosso"));
+            cm.lore(List.of(Extras.txt("§7Aponta para o §6" + nome() + "§7."),
+                    Extras.txt("§7Distância: §f" + d + " blocos"),
+                    Extras.txt("§8Some quando o boss morrer ou ir embora.")));
+            cm.getPersistentDataContainer().set(kBussola, PersistentDataType.BYTE, (byte) 1);
+            b.setItemMeta(cm);
+        }
+        return b;
+    }
+
+    /** Segurando a bussola: mostra a distancia na tela. */
+    @EventHandler
+    public void usarBussola(org.bukkit.event.player.PlayerInteractEvent e) {
+        if (e.getHand() != EquipmentSlot.HAND || !ehBussola(e.getItem())) return;
+        if (!vivo()) {
+            tirarBussola(e.getPlayer());
+            return;
+        }
+        Location alvo = corpo.getLocation();
+        Player p = e.getPlayer();
+        if (!p.getWorld().equals(alvo.getWorld())) return;
+        p.sendActionBar(Extras.txt("§6" + nome() + " §8| §e" + (int) p.getLocation().distance(alvo) + " blocos"));
+        p.playSound(p.getLocation(), "minecraft:ui.button.click", 0.4f, 1.6f);
+    }
+
     /** Anel de aviso no chao: poucos pontos, para nao pesar no celular. */
     private void anel(Location c, double raio, Color cor) {
         Particle.DustOptions po = new Particle.DustOptions(cor, 2.0f);
@@ -367,6 +487,18 @@ final class BossMundial implements Listener {
                     c.getWorld().spawnParticle(Particle.DUST, c.getX() + Math.cos(a) * raio, c.getY() + 0.25, c.getZ() + Math.sin(a) * raio, 1, 0, 0, 0, 0, po);
                 }
             }, k * 10L);
+        }
+    }
+
+    /** Rastro do montante: um arco de faiscas na frente do boss, na altura do peito. */
+    private void arco(Location c, Vector frente, double alc) {
+        Particle.DustOptions po = new Particle.DustOptions(Color.fromRGB(255, 140, 40), 2.2f);
+        double base = Math.atan2(frente.getZ(), frente.getX());
+        for (int i = 0; i <= 14; i++) {
+            double a = base + Math.toRadians(-70 + 140.0 * i / 14);
+            double r = alc * 0.85;
+            c.getWorld().spawnParticle(Particle.DUST, c.getX() + Math.cos(a) * r, c.getY() + 2.6, c.getZ() + Math.sin(a) * r, 1, 0, 0, 0, 0, po);
+            c.getWorld().spawnParticle(Particle.DUST, c.getX() + Math.cos(a) * r * 0.6, c.getY() + 2.2, c.getZ() + Math.sin(a) * r * 0.6, 1, 0, 0, 0, 0, po);
         }
     }
 
@@ -442,6 +574,13 @@ final class BossMundial implements Listener {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), pl.getConfig().getString("boss-mundial.comando", "coronas dar %jogador% %valor%")
                     .replace("%jogador%", p.getName()).replace("%valor%", String.valueOf(v)));
             p.sendMessage(Extras.txt("§6+" + v + " coronas §7pelo boss mundial."));
+            List<String> caiu = drops(p, i);
+            if (!caiu.isEmpty()) {
+                String o = String.join("§7 e §6", caiu);
+                p.sendMessage(Extras.txt("§6§l✦ DROP §8» §fVocê ganhou §6" + o + "§f!"));
+                Bukkit.broadcast(Extras.txt("§6§l✦ §f" + p.getName() + " §7ganhou §6" + o + " §7do boss mundial!"));
+                pl.getLogger().info("Boss mundial: " + p.getName() + " ganhou " + String.join(" e ", caiu));
+            }
             p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1f);
         }
         pl.getLogger().info("Boss mundial derrotado por " + ordem.size() + " jogador(es)");
@@ -449,6 +588,7 @@ final class BossMundial implements Listener {
     }
 
     private void acabar(boolean morto) {
+        for (Player p : Bukkit.getOnlinePlayers()) tirarBussola(p);
         if (tarefa != null) tarefa.cancel();
         tarefa = null;
         if (barra != null) for (UUID id : naBarra) {
@@ -463,6 +603,104 @@ final class BossMundial implements Listener {
         corpo = null;
         for (Entity a : ajudantes) if (a.isValid()) a.remove();
         ajudantes.clear();
+    }
+
+    // ------------------------------------------------------------------ drops: a armadura e o montante do Colosso
+
+    private static final String[] PECAS = {"elmo", "peitoral", "calca", "botas"};
+    private static final Material[] MAT_PECAS = {Material.NETHERITE_HELMET, Material.NETHERITE_CHESTPLATE, Material.NETHERITE_LEGGINGS, Material.NETHERITE_BOOTS};
+    private static final String[] NOME_PECAS = {"Elmo do Colosso", "Peitoral do Colosso", "Calças do Colosso", "Botas do Colosso"};
+
+    /** Peca 0..3 da armadura do Colosso (netherite, com o visual corona:colosso do pacote). */
+    @SuppressWarnings("UnstableApiUsage")
+    ItemStack pecaDoColosso(int i) {
+        ItemStack it = new ItemStack(MAT_PECAS[i]);
+        org.bukkit.inventory.meta.ItemMeta m = it.getItemMeta();
+        m.displayName(Extras.txt("§6§l" + NOME_PECAS[i]));
+        m.lore(List.of(Extras.txt("§7Arrancada do §6Colosso da Coroa Partida§7,"), Extras.txt("§7o boss mundial das masmorras."), Extras.txt(""),
+                Extras.txt("§bProteção IV §8| §bInquebrável III")));
+        m.addEnchant(org.bukkit.enchantments.Enchantment.PROTECTION, 4, true);
+        m.addEnchant(org.bukkit.enchantments.Enchantment.UNBREAKING, 3, true);
+        m.setEnchantmentGlintOverride(false);          // o brilho do encantamento apagava o desenho
+        m.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
+        m.getPersistentDataContainer().set(kDrop, PersistentDataType.STRING, PECAS[i]);
+        it.setItemMeta(m);
+        try {
+            it.setData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL, net.kyori.adventure.key.Key.key("corona", "item/armaduras/colosso_" + PECAS[i]));
+            io.papermc.paper.datacomponent.item.Equippable atual = it.getData(io.papermc.paper.datacomponent.DataComponentTypes.EQUIPPABLE);
+            EquipmentSlot slot = it.getType().getEquipmentSlot();
+            io.papermc.paper.datacomponent.item.Equippable.Builder b = io.papermc.paper.datacomponent.item.Equippable.equippable(slot);
+            // elmo 3D: sem asset_id o Java desenha o modelo do item na cabeca; as outras pecas usam a textura corona:colosso
+            if (slot != EquipmentSlot.HEAD) b.assetId(net.kyori.adventure.key.Key.key("corona", "colosso"));
+            if (atual != null) {
+                b.equipSound(atual.equipSound()).dispensable(atual.dispensable()).swappable(atual.swappable()).damageOnHurt(atual.damageOnHurt())
+                        .equipOnInteract(atual.equipOnInteract());
+                if (atual.allowedEntities() != null) b.allowedEntities(atual.allowedEntities());
+                if (atual.cameraOverlay() != null) b.cameraOverlay(atual.cameraOverlay());
+            }
+            it.setData(io.papermc.paper.datacomponent.DataComponentTypes.EQUIPPABLE, b.build());
+        } catch (Throwable ex) {
+            pl.getLogger().warning("Visual da armadura do Colosso: " + ex);
+        }
+        return it;
+    }
+
+    /** O Montante do Colosso: espada de netherite grande, com o modelo do pacote. */
+    @SuppressWarnings("UnstableApiUsage")
+    ItemStack espadaDoColosso() {
+        ItemStack it = new ItemStack(Material.NETHERITE_SWORD);
+        org.bukkit.inventory.meta.ItemMeta m = it.getItemMeta();
+        m.displayName(Extras.txt("§6§lMontante do Colosso"));
+        m.lore(List.of(Extras.txt("§7A espada colossal do §6Colosso da Coroa Partida§7."), Extras.txt("§7Raríssima: só cai do boss mundial."), Extras.txt(""),
+                Extras.txt("§bAfiação V §8| §bAspecto Flamejante II §8| §bInquebrável III")));
+        m.addEnchant(org.bukkit.enchantments.Enchantment.SHARPNESS, 5, true);
+        m.addEnchant(org.bukkit.enchantments.Enchantment.FIRE_ASPECT, 2, true);
+        m.addEnchant(org.bukkit.enchantments.Enchantment.UNBREAKING, 3, true);
+        m.setEnchantmentGlintOverride(false);
+        m.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
+        m.getPersistentDataContainer().set(kDrop, PersistentDataType.STRING, "espada");
+        it.setItemMeta(m);
+        try {
+            it.setData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL, net.kyori.adventure.key.Key.key("corona", "item/reliquias/espada_colosso"));
+        } catch (Throwable ex) {
+            pl.getLogger().warning("Visual do Montante do Colosso: " + ex);
+        }
+        return it;
+    }
+
+    private void entregar(Player p, ItemStack it) {
+        for (ItemStack sobra : p.getInventory().addItem(it).values()) p.getWorld().dropItem(p.getLocation(), sobra);
+    }
+
+    /** Sorteia os drops de um jogador (posicao 0 = quem deu mais dano) e devolve o que caiu, para o aviso. */
+    private List<String> drops(Player p, int posicao) {
+        List<String> caiu = new ArrayList<>();
+        if (!pl.getConfig().getBoolean("boss-mundial.drops.ativo", true)) return caiu;
+        double chancePeca = posicao == 0 ? pl.getConfig().getDouble("boss-mundial.drops.peca-do-1", 1.0)
+                : posicao < 3 ? pl.getConfig().getDouble("boss-mundial.drops.peca-do-top3", 0.6) : pl.getConfig().getDouble("boss-mundial.drops.peca-dos-outros", 0.3);
+        double chanceEspada = posicao == 0 ? pl.getConfig().getDouble("boss-mundial.drops.espada-do-1", 0.25)
+                : pl.getConfig().getDouble("boss-mundial.drops.espada-dos-outros", 0.06);
+        if (rnd.nextDouble() < chancePeca) {
+            // prefere uma peca que o jogador ainda nao tem
+            List<Integer> falta = new ArrayList<>();
+            for (int i = 0; i < PECAS.length; i++) if (!tem(p, PECAS[i])) falta.add(i);
+            int i = falta.isEmpty() ? rnd.nextInt(PECAS.length) : falta.get(rnd.nextInt(falta.size()));
+            entregar(p, pecaDoColosso(i));
+            caiu.add(NOME_PECAS[i]);
+        }
+        if (rnd.nextDouble() < chanceEspada) {
+            entregar(p, espadaDoColosso());
+            caiu.add("Montante do Colosso");
+        }
+        return caiu;
+    }
+
+    private boolean tem(Player p, String peca) {
+        for (ItemStack it : p.getInventory().getContents()) {
+            if (it == null || !it.hasItemMeta()) continue;
+            if (peca.equals(it.getItemMeta().getPersistentDataContainer().get(kDrop, PersistentDataType.STRING))) return true;
+        }
+        return false;
     }
 
     // ------------------------------------------------------------------ comando
@@ -492,6 +730,27 @@ final class BossMundial implements Listener {
                 case "remover", "tirar" -> {
                     acabar(false);
                     s.sendMessage(Extras.txt("§7Boss mundial removido."));
+                    return true;
+                }
+                case "dar" -> {
+                    // dono testando: /boss dar <nick> [elmo|peitoral|calca|botas|espada|tudo]
+                    Player alvo = a.length >= 2 ? Bukkit.getPlayerExact(a[1]) : null;
+                    if (alvo == null && a.length >= 2) alvo = Bukkit.getPlayerExact("." + a[1]);
+                    if (alvo == null) {
+                        s.sendMessage(Extras.txt("§eUse: §f/boss dar <nick> [elmo|peitoral|calca|botas|espada|tudo]"));
+                        return true;
+                    }
+                    String o = a.length >= 3 ? a[2].toLowerCase() : "tudo";
+                    int n = 0;
+                    for (int i = 0; i < PECAS.length; i++) if (o.equals("tudo") || o.equals(PECAS[i]) || (o.equals("calcas") && i == 2)) {
+                        entregar(alvo, pecaDoColosso(i));
+                        n++;
+                    }
+                    if (o.equals("tudo") || o.equals("espada") || o.equals("montante")) {
+                        entregar(alvo, espadaDoColosso());
+                        n++;
+                    }
+                    s.sendMessage(Extras.txt("§7" + n + " item(ns) do Colosso dado(s) a §f" + alvo.getName() + "§7."));
                     return true;
                 }
                 case "status" -> {

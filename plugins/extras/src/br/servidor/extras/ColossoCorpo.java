@@ -23,7 +23,7 @@ import org.joml.Vector3f;
  */
 final class ColossoCorpo {
 
-    enum Golpe { NENHUM, ESMAGAR, INVESTIDA, INVOCAR, MAGMA }
+    enum Golpe { NENHUM, ESMAGAR, INVESTIDA, INVOCAR, MAGMA, ESPADA }
 
     /** nome no pacote e pivo em pixels do modelo (igual ao colosso3d.py). */
     private record Peca(String nome, float px, float py, float pz, boolean deCima) {}
@@ -139,6 +139,7 @@ final class ColossoCorpo {
         float pernaD = andando ? 26 * s : 0, pernaE = -pernaD;
         float bracoD = andando ? -9 * s : 2 * lento, bracoE = andando ? 16 * s : -2 * lento;
         float bracoDFora = 0, bracoEFora = 0;
+        float bracoDGira = 0, torcao = 0;   // giro do braco da espada e torcao do tronco
         float asa = 7 + 7 * lento, asaFrente = 0;
         float inclina = andando ? 4 : 0;
         float cabecaCima = 0, cabecaLado = andando ? 0 : 9 * (float) Math.sin(faseLenta * 0.5);
@@ -199,15 +200,51 @@ final class ColossoCorpo {
                 asa = 16 + 22 * k + treme;
                 boca = true;
             }
+            case ESPADA -> {
+                // montante: arma o golpe por 0,6 s e varre a frente de uma vez so
+                if (t < 12) {
+                    float k = suave(t / 12f);
+                    bracoD = 95 * k;
+                    bracoDFora = -42 * k;
+                    bracoDGira = -78 * k;
+                    torcao = -17 * k;
+                    inclina = -6 * k;
+                    cabecaLado = -14 * k;
+                    asa = 12 + 24 * k;
+                    boca = true;
+                } else if (t < 21) {
+                    float k = suave((t - 12) / 7f);
+                    bracoD = 95 - 28 * k;
+                    bracoDFora = -42 + 14 * k;
+                    bracoDGira = -78 + 156 * k;
+                    torcao = -17 + 36 * k;
+                    inclina = -6 + 20 * k;
+                    cabecaLado = -14 + 30 * k;
+                    asa = 36 + 18 * k;
+                    boca = true;
+                } else {
+                    float k = suave((t - 21) / 12f);
+                    bracoD = 67 - 40 * k;
+                    bracoDFora = -28 + 24 * k;
+                    bracoDGira = 78 - 62 * k;
+                    torcao = 19 - 15 * k;
+                    inclina = 14 - 12 * k;
+                    cabecaLado = 16 - 13 * k;
+                    asa = 54 - 34 * k;
+                }
+                pernaD = 15;
+                pernaE = -9;
+            }
             default -> { }
         }
 
-        Quaternionf inc = frente(-inclina);          // tronco para a frente
+        // tronco: inclina para a frente e torce no golpe de espada (a parte de cima toda acompanha)
+        Quaternionf inc = new Quaternionf().rotateY((float) Math.toRadians(torcao)).mul(frente(-inclina));
         Vector3f quadril = lugar(PECAS[TRONCO]).add(0, sobe, 0);
         Quaternionf[] giro = new Quaternionf[PECAS.length];
         giro[TRONCO] = new Quaternionf();
         giro[CABECA] = new Quaternionf().rotateY((float) Math.toRadians(cabecaLado)).mul(frente(cabecaCima));
-        giro[BRACO_D] = new Quaternionf().rotateZ((float) Math.toRadians(-bracoDFora)).mul(frente(bracoD));
+        giro[BRACO_D] = new Quaternionf().rotateY((float) Math.toRadians(bracoDGira)).mul(new Quaternionf().rotateZ((float) Math.toRadians(-bracoDFora))).mul(frente(bracoD));
         giro[BRACO_E] = new Quaternionf().rotateZ((float) Math.toRadians(-bracoEFora)).mul(frente(bracoE));
         giro[PERNA_D] = frente(pernaD);
         giro[PERNA_E] = frente(pernaE);

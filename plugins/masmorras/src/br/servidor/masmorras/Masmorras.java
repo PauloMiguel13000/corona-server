@@ -131,6 +131,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
     Campos campos;
     Coroas coroas;
     Portoes portoes;
+    PortaisNivel portaisNivel;
 
     /** A masmorra que tem esse bloco dentro (ou null). */
     Masmorra masmorraEm(World w, int x, int y, int z) {
@@ -256,6 +257,13 @@ public final class Masmorras extends JavaPlugin implements Listener {
             portoes.iniciar();
         } catch (Throwable ex) {
             getLogger().warning("Portoes do Nether/End nao iniciaram: " + ex);
+        }
+        portaisNivel = new PortaisNivel(this, mundoNovo);
+        getServer().getPluginManager().registerEvents(portaisNivel, this);
+        try {
+            portaisNivel.iniciar();
+        } catch (Throwable ex) {
+            getLogger().warning("Portais dos niveis nao iniciaram: " + ex);
         }
         ConfigurationSection ms = banco.getConfigurationSection("mapas");
         if (ms != null)
@@ -2087,7 +2095,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         return true;
     }
 
-    private static double dist2(Masmorra m, Location l) {
+    static double dist2(Masmorra m, Location l) {
         double dx = m.saidaX - l.getX(), dz = m.saidaZ - l.getZ();
         return dx * dx + dz * dz;
     }
