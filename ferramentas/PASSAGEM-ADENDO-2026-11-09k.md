@@ -98,3 +98,11 @@
 - Hotel `Visual.java`: para skins em `MODELOS` o Par ganha um ItemDisplay que segue o Mannequin (escala/1,25); quem tem o
   pacote ve o modelo, o boneco pintado fica escondido; `Visual.quadro(corpo, 0|1)` (Figura cacando = 1; Perseguidor = 1).
   Config `modelo-3d`. Testado no servidor de teste so a Figura (entidade criada e seguindo); nao visto em cliente real.
+
+## ajustes136 (10/11 10:30) - Hotel e Fabrica de volta aos bonecos de antes
+
+- O Paulo NAO quis os modelos 3D novos (Figura, Perseguidor, Tutu, Bolota): "deixa do jeito que tava, nao mude nada".
+  `modelo-3d: false` em `plugins/Hotel/config.yml` e `plugins/FabricaAlegria/config.yml`. O codigo e os arquivos do pacote
+  continuam la, desligados. NAO religar sem ele pedir. Ele pediu os monstros dos jogos originais; isso nao se faz
+  (personagens protegidos) e foi explicado a ele.
+- O post das 18:00 NAO deve anunciar monstros 3D do Hotel/Fabrica.
