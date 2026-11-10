@@ -56,3 +56,13 @@
 ## Pendências
 - Conferir no cliente Bedrock: entrada sem senha com AuthMe de verdade, Chorona (piglin_brute), Vovó 3D, aranha no celular.
 - A fila de comandos (`LIGAR-FILA-TESTE.bat`) venceu às 18:00.
+
+## ajustes132 (10/11 09:36) - /dararmadura e /darespada
+
+- Masmorras `DarItens.java`: `/dararmadura <nick> <nome>` e `/darespada <nick> <nome>` (permissao `masmorras.admin`).
+  Nome = conjunto: `herobrine` (cosmetico da loja, netherite), `rei esqueleto`, `farao`, `bruxa`... (sem acento, espaco ou `_`,
+  aceita "armadura do ..." e o id da masmorra, ex. CRIPTA). Sem nome: lista todos. Nome ambiguo ("rei"): lista as opcoes.
+  `todas` = tudo em caixas de shulker (60 espadas em 3 caixas; 240 pecas em 9 caixas).
+  `/dararmadura <nick> rei` = Traje do Rei pelo `/vip traje dar` (cortesia; fica na lista ate `/vip traje tirar`).
+  Reliquias saem em diamante com o poder do tema (`reliquias.aplicar`). Testado no servidor de teste (console + bot).
+- 10/11: conferido o save do Paulo (coronadooscar) depois da queda no teste: nao morreu, mochilas survival e masmorras inteiras.
