@@ -14,6 +14,10 @@ commands:
   reviver:
     description: Suas Moedas de Reviver (voltar para a partida quando for eliminado num minigame)
     aliases: [moedareviver, revive, moeda, moedas]
+  darmoedareviver:
+    description: (equipe) Da Moeda de Reviver para um jogador - /darmoedareviver <nick> [quantidade]
+    usage: /darmoedareviver <nick> [quantidade]
+    aliases: [darmoeda, darreviver]
   warp:
     description: Atalhos do dono - /warp armaduras e /warp monstros (confere os modelos 3D)
     usage: /warp <armaduras|monstros>

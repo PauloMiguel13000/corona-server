@@ -2025,6 +2025,18 @@ public final class Masmorras extends JavaPlugin implements Listener {
     public boolean onCommand(CommandSender s, Command cmd, String label, String[] a) {
         if (cmd.getName().equalsIgnoreCase("coronas")) return coronas.comando(s, a);
         if (cmd.getName().equalsIgnoreCase("reviver")) return MoedaReviver.comando(s, a);
+        if (cmd.getName().equalsIgnoreCase("darmoedareviver")) {
+            // atalho do dono: /darmoedareviver <nick> [quantidade] (sem quantidade = 1)
+            if (!s.hasPermission("masmorras.admin") && !s.hasPermission("masmorras.reviver.dar")) {
+                s.sendMessage(txt("§cSó a equipe pode dar Moedas de Reviver."));
+                return true;
+            }
+            if (a.length == 0) {
+                s.sendMessage(txt("§eUse: §f/darmoedareviver <nick> [quantidade] §7(sem quantidade dá 1; §ftodos §7dá para quem está online)"));
+                return true;
+            }
+            return MoedaReviver.comando(s, new String[] {"dar", a[0], a.length >= 2 ? a[1] : "1"});
+        }
         if (cmd.getName().equalsIgnoreCase("galeria")) return galeria.comando(s, a);
         if (cmd.getName().equalsIgnoreCase("warp")) {
             if (ala == null) {

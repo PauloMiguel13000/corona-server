@@ -275,7 +275,7 @@ final class Vip implements Listener {
 
     // ------------------------------------------------------------------ particulas e voo
 
-    private static final java.util.Set<String> SEM_AURA = java.util.Set.of("backrooms", "fabrica", "hotel", "naochore", "slender", "turno_noite", "vovo");
+    private static final java.util.Set<String> SEM_AURA = java.util.Set.of("backrooms", "fabrica", "galeria", "hotel", "naochore", "slender", "turno_noite", "vovo");
 
     private void efeitos() {
         for (Player p : Bukkit.getOnlinePlayers()) {

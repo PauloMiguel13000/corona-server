@@ -24,6 +24,14 @@
   mortas; sem torres; marca `lobby-terror-ceu-v1.txt`) e `Estatuas.java`: ItemDisplay não salvos dos modelos 3D
   (`props/porcelana_f0`, `vovo_idle`, `anim_capi_f0`, `anim_jaca_f0`) ao lado dos portões, só para quem tem o pacote ou
   está no Bedrock; nascem quando chega alguém no mundo `terror`. Desliga com `lobby-terror.estatuas: false`.
+- **ajustes129** (09/11 20:17): Turno - `JUMP_STRENGTH` 0 durante a noite (volta em `Guarda.limpar`) e `PlayerMoveEvent` que
+  segura subida/passo. Conferido no Java de verdade em 10/11: pulo, W, A não tiram da cadeira; Espaço, S, Shift e Q saem das câmeras.
+- **ajustes130** (10/11 09:16): Turno - `Noite.amarrar` (a cada tick volta para a cadeira/câmera se o cliente saiu do lugar; pensado
+  para o Bedrock) e a dica de saída foi para a barra de cima (a barra de ação é tapada pela vida/mana do AuraSkills).
+  Masmorras - `AlaMonstros.java`: `/warp armaduras` e `/warp monstros` (masmorras.admin); passarela em x 60..121 do mundo
+  `galeria` com 21 modelos 3D em pedestais (props + naochore/backrooms do pacote Java), pedaços sempre carregados.
+- **ajustes131** (10/11 09:2x): Masmorras - `/darmoedareviver <nick> [quantidade]` (atalho de `/reviver dar`; offline fica
+  guardado; `todos` dá para quem está online). Extras - sem partículas de VIP no mundo `galeria`.
 
 ## Discord (servidor Corona Server, conta coronadooscar no Chrome)
 - Convite permanente: https://discord.gg/uhEaWb9sJA
