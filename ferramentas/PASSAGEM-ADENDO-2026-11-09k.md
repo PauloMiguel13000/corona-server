@@ -192,3 +192,15 @@
   `traje-do-rei.asas-modo: bicho|asas`. So Java: no Bedrock as asas vem do attachable do pacote (nao mexi).
 - Boss animado visto em cliente Java real 14:38 (montagem certa de frente e de costas). Uso do Fable: 82% as 14:38
   (reinicia 15/11 04:00).
+
+## 10/11 15:15 - Boss visto no BEDROCK real (PC do servidor) e receita para abrir o Bedrock
+
+- ajustes144 instalado 15:06 (log ok). Bichinho do Traje do Rei: NAO visto em cliente ainda.
+- RECEITA BEDROCK: `ABRIR-BEDROCK-NO-SERVIDOR.bat` na Area de Trabalho (1a linha da lista) = `start minecraft://connect/?serverUrl=127.0.0.1&serverPort=19132`.
+  Acesso: "Minecraft for Windows" + "minecraft.windows.exe". Cliques so com mouse_move + left_mouse_down + wait 1 +
+  left_mouse_up. Telas: "Servidor Externo Desconhecido" Continuar (785,355) -> "jogo online" Continuar (790,430) ->
+  "Baixar pacotes" Entrar e baixar tudo (790,368) -> entra no lobby de login como `.BalmierGorgon43`.
+  Fila: `authme forcelogin .BalmierGorgon43`. Chat: tecla t, digitar, Return (funciona). Sair: Escape -> Salvar e Sair
+  (467,452) -> arrastar o titulo (600,7)->(150,120) -> X (1108,117).
+- Boss no Bedrock: aparece montado (asas, espada, coroa) e as partes de magma brilham no escuro; `/boss` e a barra de
+  vida funcionam. Ataques nao vistos um a um. A conta voltou para galeria 17 101 1 em sobrevivencia.
