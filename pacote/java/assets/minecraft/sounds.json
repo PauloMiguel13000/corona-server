@@ -394,5 +394,115 @@
     "attenuation_distance": 48
    }
   ]
+ },
+ "masmorras.explorar": {
+  "subtitle": "Trilha das masmorras",
+  "sounds": [
+   {
+    "name": "masmorras/explorar",
+    "stream": true,
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "masmorras.combate": {
+  "subtitle": "Trilha das masmorras",
+  "sounds": [
+   {
+    "name": "masmorras/combate",
+    "stream": true,
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "masmorras.chefe": {
+  "subtitle": "Trilha das masmorras",
+  "sounds": [
+   {
+    "name": "masmorras/chefe",
+    "stream": true,
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "masmorras.cripta": {
+  "subtitle": "Trilha das masmorras",
+  "sounds": [
+   {
+    "name": "masmorras/cripta",
+    "stream": true,
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "masmorras.mina": {
+  "subtitle": "Trilha das masmorras",
+  "sounds": [
+   {
+    "name": "masmorras/mina",
+    "stream": true,
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "masmorras.floresta": {
+  "subtitle": "Trilha das masmorras",
+  "sounds": [
+   {
+    "name": "masmorras/floresta",
+    "stream": true,
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "masmorras.gelo": {
+  "subtitle": "Trilha das masmorras",
+  "sounds": [
+   {
+    "name": "masmorras/gelo",
+    "stream": true,
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "masmorras.mar": {
+  "subtitle": "Trilha das masmorras",
+  "sounds": [
+   {
+    "name": "masmorras/mar",
+    "stream": true,
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "masmorras.fogo": {
+  "subtitle": "Trilha das masmorras",
+  "sounds": [
+   {
+    "name": "masmorras/fogo",
+    "stream": true,
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "masmorras.vazio": {
+  "subtitle": "Trilha das masmorras",
+  "sounds": [
+   {
+    "name": "masmorras/vazio",
+    "stream": true,
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "masmorras.arcano": {
+  "subtitle": "Trilha das masmorras",
+  "sounds": [
+   {
+    "name": "masmorras/arcano",
+    "stream": true,
+    "attenuation_distance": 64
+   }
+  ]
  }
 }

@@ -968,6 +968,270 @@
      "volume": 1.0
     }
    ]
+  },
+  "masmorras.explorar": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/explorar",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
+  },
+  "minecraft:masmorras.explorar": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/explorar",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
+  },
+  "masmorras.combate": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/combate",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
+  },
+  "minecraft:masmorras.combate": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/combate",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
+  },
+  "masmorras.chefe": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/chefe",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
+  },
+  "minecraft:masmorras.chefe": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/chefe",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
+  },
+  "masmorras.cripta": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/cripta",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
+  },
+  "minecraft:masmorras.cripta": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/cripta",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
+  },
+  "masmorras.mina": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/mina",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
+  },
+  "minecraft:masmorras.mina": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/mina",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
+  },
+  "masmorras.floresta": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/floresta",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
+  },
+  "minecraft:masmorras.floresta": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/floresta",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
+  },
+  "masmorras.gelo": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/gelo",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
+  },
+  "minecraft:masmorras.gelo": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/gelo",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
+  },
+  "masmorras.mar": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/mar",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
+  },
+  "minecraft:masmorras.mar": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/mar",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
+  },
+  "masmorras.fogo": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/fogo",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
+  },
+  "minecraft:masmorras.fogo": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/fogo",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
+  },
+  "masmorras.vazio": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/vazio",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
+  },
+  "minecraft:masmorras.vazio": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/vazio",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
+  },
+  "masmorras.arcano": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/arcano",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
+  },
+  "minecraft:masmorras.arcano": {
+   "category": "music",
+   "min_distance": 1.0,
+   "max_distance": 64.0,
+   "sounds": [
+    {
+     "name": "sounds/masmorras/arcano",
+     "volume": 1.0,
+     "stream": true
+    }
+   ]
   }
  }
 }

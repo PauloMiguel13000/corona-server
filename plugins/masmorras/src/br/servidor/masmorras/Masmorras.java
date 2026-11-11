@@ -132,6 +132,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
     Coroas coroas;
     Portoes portoes;
     PortaisNivel portaisNivel;
+    Trilha trilha;
 
     /** A masmorra que tem esse bloco dentro (ou null). */
     Masmorra masmorraEm(World w, int x, int y, int z) {
@@ -258,6 +259,9 @@ public final class Masmorras extends JavaPlugin implements Listener {
         } catch (Throwable ex) {
             getLogger().warning("Portoes do Nether/End nao iniciaram: " + ex);
         }
+        trilha = new Trilha(this);
+        getServer().getPluginManager().registerEvents(trilha, this);
+        trilha.iniciar();
         portaisNivel = new PortaisNivel(this, mundoNovo);
         getServer().getPluginManager().registerEvents(portaisNivel, this);
         try {
@@ -2048,6 +2052,15 @@ public final class Masmorras extends JavaPlugin implements Listener {
         if (cmd.getName().equalsIgnoreCase("dararmadura")) return darItens().comando(s, a, false);
         if (cmd.getName().equalsIgnoreCase("darespada")) return darItens().comando(s, a, true);
         if (cmd.getName().equalsIgnoreCase("galeria")) return galeria.comando(s, a);
+        if (cmd.getName().equalsIgnoreCase("musica")) {
+            if (!(s instanceof org.bukkit.entity.Player p)) {
+                s.sendMessage("So no jogo.");
+                return true;
+            }
+            boolean ligou = trilha.alternar(p);
+            p.sendMessage(txt(PREFIXO + (ligou ? "§aTrilha das masmorras ligada." : "§7Trilha das masmorras desligada. Use §f/musica§7 para ligar de novo.")));
+            return true;
+        }
         if (cmd.getName().equalsIgnoreCase("warp")) {
             if (ala == null) {
                 s.sendMessage("§cA Galeria nao esta ligada.");

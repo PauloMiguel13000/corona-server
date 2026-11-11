@@ -32,6 +32,10 @@ commands:
   galeria:
     description: Galeria das Reliquias - os conjuntos de todas as masmorras (armadura + arma)
     aliases: [armaduras, museu]
+  musica:
+    description: Liga e desliga a trilha das masmorras so para voce
+    usage: /musica
+    aliases: [trilha, som]
 permissions:
   masmorras.usar:
     description: Ver as masmorras

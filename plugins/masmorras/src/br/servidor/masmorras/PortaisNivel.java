@@ -56,7 +56,7 @@ final class PortaisNivel implements Listener {
 
     void iniciar() {
         if (mm.normal == null || !ativo()) return;
-        File feito = new File(pl.getDataFolder(), "portais-nivel-v1.txt");
+        File feito = new File(pl.getDataFolder(), "portais-nivel-v2.txt");
         if (feito.exists()) return;
         try {
             construir();
@@ -111,7 +111,12 @@ final class PortaisNivel implements Listener {
                 else b = moldura;
                 por(w, x, y + dy, z + dz, b);
             }
-        for (int dz = -2; dz <= 2; dz++) for (int dx = 1; dx <= 2; dx++) por(w, x + dx, y, z + dz, degrau);
+        // abre o caminho na frente (lado do lobby): sem isso o portal pode nascer atras de uma parede
+        for (int dx = 1; dx <= 6; dx++)
+            for (int dz = -2; dz <= 2; dz++) {
+                for (int dy = 1; dy <= 5; dy++) por(w, x + dx, y + dy, z + dz, "minecraft:air");
+                por(w, x + dx, y, z + dz, degrau);
+            }
         por(w, x, y + 6, z, "minecraft:soul_lantern");
     }
 
