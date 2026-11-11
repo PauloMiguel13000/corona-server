@@ -44,6 +44,26 @@ ligar/desligar · 154 música do chefe refeita mais agitada (162 bpm).
 Validado em cliente Java real: a legenda "Trilha das masmorras" apareceu na tela, e o portal de nível 2 funciona
 andando. No Bedrock só foi conferido o lado do servidor (pacote 1.14.1 publicado e servido) — falta ouvir no celular.
 
+## Backup do mundo (feito em 11/11 00:00)
+`otimizacao\backup-mundo.ps1` + `BACKUP-MUNDO-AGORA.bat` e `AGENDAR-BACKUP-DO-MUNDO.bat` na Área de Trabalho.
+Manda `save-off`/`save-all flush`, copia `world` com robocopy para uma pasta temporária (robocopy lida com arquivo
+em uso; tar direto na pasta viva falha), compacta a cópia, devolve `save-on` e guarda os 5 últimos em
+`backup-corona-server\mundos`. Tarefa "Corona - backup do mundo" agendada todo dia às 05:40 (logon interativo).
+**Testado:** `mundo-2026-11-10_2357.zip`, 1,5 GB em 2m39s, com o servidor no ar.
+
+## Jogo de terror de domingo (15/11, 05:00) — desenho aprovado, NÃO construído
+"**O Apagão**": 2 a 8 pessoas no escuro, lanterna com bateria, religar **5 geradores** para abrir o portão.
+A criatura **caça por som** (correr e falar fazem barulho; agachado é seguro). Armários para esconder, batimento
+cardíaco subindo quando ela chega perto. **Uma vida só**: quem morre vira espectador e tem direito a **um aviso**.
+Mapa **novo**, construído do zero (não encostar no Hotel nem na Fábrica). Monstro **original**, com prévia antes.
+Paulo aprovou o desenho ("PERFEITO") e mandou **não começar a construir** para não gastar limite.
+
+## Vínculo de computador (problema aberto)
+Esta conversa nasceu amarrada ao PC de casa e **não dá para reapontar** — a documentação confirma que não existe
+seletor e que uma tarefa criada não troca de computador. Para trabalhar na VPS é preciso **abrir conversa nova no
+app do Claude que roda dentro dela**. Máquinas: `DESKTOP-JLG1NKU` (servidor atual), `EH-S25-25280` (VPS),
+`DESKTOP-0QEB1M0` (PC pessoal do Paulo), `NBTSJ-TI-01` (**nunca tocar**).
+
 ## Migração para VPS (plano do Paulo, 10/11 22:37)
 Ele cogita uma VPS da EletricHost (R$65 com desconto; 10 GB, 5 vCPU Xeon Gold 6138, 100 GB, 1 Gbps, Brasil).
 Conclusão combinada: o ganho é **rede e uptime**, não desempenho — o i3 de 10ª dele ganha do Xeon por núcleo, e o
