@@ -180,6 +180,10 @@ final class Monstro {
             gritou = true;
             Sons.local(w, v, 60, "naochore.rosnado", 2f, 1f, Sound.ENTITY_ENDERMAN_SCREAM, 2f, 0.4f);
             alvo.playSound(alvo.getLocation(), Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.6f, 0.5f);
+            // berro de caca: grave, de longe, todo mundo por perto escuta (Java e Bedrock)
+            w.playSound(v, Sound.ENTITY_WARDEN_ROAR, 3f, 0.5f);
+            w.playSound(v, Sound.ENTITY_GHAST_SCREAM, 3f, 0.5f);
+            w.playSound(v, Sound.ENTITY_HORSE_DEATH, 2.5f, 0.5f);
             bocaAberta(20);
         }
         Location al = alvo.getLocation();
@@ -190,6 +194,8 @@ final class Monstro {
             cicloAtaque = 4;
             bocaAberta(8);
             alvo.damage(dano, motor);
+            w.playSound(v, Sound.ENTITY_GOAT_SCREAMING_DEATH, 1.6f, 0.5f);
+            w.playSound(v, Sound.ENTITY_RAVAGER_ATTACK, 1.4f, 0.6f);
             alvo.setVelocity(alvo.getLocation().toVector().subtract(v.toVector()).setY(0).normalize().multiply(0.5).setY(0.3));
             w.playSound(v, Sound.ENTITY_ZOMBIE_ATTACK_IRON_DOOR, 0.8f, 0.5f);
         }

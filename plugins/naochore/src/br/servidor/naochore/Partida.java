@@ -49,6 +49,8 @@ final class Partida {
         long proximoPasso, proximoMaos, proximoDuplo, proximoNina;
         Medo medo;
         long reviverAte = -1;
+        /** Ultimo dano de susto (tick): dois sustos colados nao matam de uma vez. */
+        long ultimoDanoSusto = -1000;
 
         Jogador(Player p) {
             id = p.getUniqueId();
@@ -77,6 +79,8 @@ final class Partida {
     final Map<UUID, Jogador> jogadores = new LinkedHashMap<>();
     final List<Vigia> vigias = new ArrayList<>();
     final List<Monstro> monstros = new ArrayList<>();
+    /** Quem morreu ate o dia "renasce-ate-dia" e esta para renascer no mapa. */
+    final java.util.Set<UUID> voltando = new java.util.HashSet<>();
     private final Random rnd = new Random();
 
     Estado estado = Estado.ESPERANDO;
@@ -273,7 +277,8 @@ final class Partida {
             titulo(p, "§4§lNÃO CHORE", "§7Sobreviva §f" + dias() + " dias§7. Eles estão olhando.", 5);
             p.playSound(p.getLocation(), Sound.AMBIENT_CAVE, 1f, 0.5f);
             p.sendMessage(NaoChore.PREFIXO + "§fUm mundo pequeno, só seu. Junte recursos, construa um abrigo e §csobreviva " + dias() + " dias§f.");
-            p.sendMessage(NaoChore.PREFIXO + "§7Algo te observa de longe. Se chegar perto... §8não chore.");
+            p.sendMessage(NaoChore.PREFIXO + "§7Algo te observa de longe. Se chegar perto, §cele machuca§7... §8não chore.");
+            if (renasceAteDia() >= 1) p.sendMessage(NaoChore.PREFIXO + "§7Até a noite do §fdia " + renasceAteDia() + " §7quem morrer volta no mapa. §4Do dia " + (renasceAteDia() + 1) + " em diante, não.");
             p.sendMessage(NaoChore.PREFIXO + "§7No §4último dia§7 eles param de se esconder. §cPortas e janelas não vão segurar.");
         }
         if (vivos().isEmpty()) {
@@ -287,6 +292,41 @@ final class Partida {
     void entrarNoMeio(Player p) {
         // so entra quem estava na fila antes de comecar (evita entrar no dia 5 descansado)
         p.sendMessage(NaoChore.PREFIXO + "§7A partida já começou (dia " + dia() + "). Você entra na próxima.");
+    }
+
+    int renasceAteDia() {
+        return Math.max(0, pl.getConfig().getInt("renasce-ate-dia", 2));
+    }
+
+    /** Ate a noite do dia "renasce-ate-dia" quem morre volta vivo no mapa. */
+    boolean renasceAgora() {
+        return estado == Estado.JOGANDO && dia() <= renasceAteDia() && dia() < dias();
+    }
+
+    void morreuEVolta(Player p) {
+        voltando.add(p.getUniqueId());
+        avisar("§c" + p.getName() + " §7morreu no §fdia " + dia() + "§7... mas ainda volta. §8(a partir do dia " + (renasceAteDia() + 1) + " ninguém volta)");
+        pl.getLogger().info("Nao Chore: " + p.getName() + " morreu no dia " + dia() + " e renasce no mapa");
+        // quem nao renascer sozinho (tela de morte aberta) e trazido de volta
+        Bukkit.getScheduler().runTaskLater(pl, () -> {
+            if (p.isOnline() && p.isDead() && voltando.contains(p.getUniqueId())) p.spigot().respawn();
+        }, 30L);
+    }
+
+    /** Logo depois de renascer no mapa (morte ate o dia 2). */
+    void voltou(Player p) {
+        if (!p.isOnline() || !vivo(p)) return;
+        p.setGameMode(GameMode.SURVIVAL);
+        p.setFireTicks(0);
+        p.setFoodLevel(20);
+        p.setSaturation(6);
+        p.getInventory().addItem(new ItemStack(Material.BREAD, 2));
+        int resta = renasceAteDia() - dia();
+        titulo(p, "§c§lVOCÊ MORREU", resta > 0 ? "§7Desta vez você voltou. §8Suas coisas ficaram onde caiu."
+                : "§7Você voltou... §4mas depois desta noite, quem morrer não volta.", 4.5);
+        p.playSound(p.getLocation(), Sound.BLOCK_BELL_RESONATE, 1f, 0.5f);
+        p.playSound(p.getLocation(), Sound.ENTITY_WARDEN_HEARTBEAT, 1.5f, 0.6f);
+        p.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 60, 0, false, false, false));
     }
 
     void pego(Player p) {
@@ -396,6 +436,7 @@ final class Partida {
 
     void finalizar() {
         limparMonstros();
+        voltando.clear();
         for (Jogador j : new ArrayList<>(jogadores.values())) {
             if (!j.jogando) continue;
             Player p = Bukkit.getPlayer(j.id);
@@ -470,7 +511,8 @@ final class Partida {
         diaAnunciado = d;
         boolean ultimo = d >= dias();
         for (Player p : online(true)) {
-            titulo(p, (ultimo ? "§4§l" : "§c§l") + "DIA " + d, ultimo ? "§4§lELES PARARAM DE SE ESCONDER" : frase(d), ultimo ? 5 : 3.5);
+            titulo(p, (ultimo ? "§4§l" : "§c§l") + "DIA " + d, ultimo ? "§4§lELES PARARAM DE SE ESCONDER"
+                    : d == renasceAteDia() + 1 ? "§4a partir de agora, quem morrer não volta" : frase(d), ultimo ? 5 : 3.5);
             p.playSound(p.getLocation(), ultimo ? Sound.ENTITY_WARDEN_EMERGE : Sound.BLOCK_BELL_RESONATE, 1f, 0.5f);
             if (ultimo) {
                 Sons.para(p, p.getLocation(), "corrida_rugido", 2f, 0.7f, Sound.ENTITY_WARDEN_ROAR, 2f, 0.5f);
@@ -653,7 +695,7 @@ final class Partida {
             switch (v.tipo) {
                 case 0 -> {
                     if (distAlvo < gatilho(d)) {
-                        gritar(alvo, v.m, d);
+                        gritar(alvo, v.m, d, 1.0);
                         acabou = true;
                     } else if (viu) {
                         v.naoVistoDesde = -1;
@@ -725,6 +767,11 @@ final class Partida {
 
     /** O susto: o rosto pula na tela com um grito alto desde o dia 1. Cada dia pior: dia 2 + "NÃO CHORE"; dia 3 + tontura; dia 4 + um segundo rosto. */
     void gritar(Player p, Corpo m, int d) {
+        gritar(p, m, d, 0.5);
+    }
+
+    /** forca: 1 = a pessoa chegou perto dele (dano cheio); 0.5 = susto que veio ate a pessoa (meio dano). */
+    void gritar(Player p, Corpo m, int d, double forca) {
         Location l = m.getLocation().add(0, 1.6, 0);
         float vol = d >= 4 ? 2f : d == 3 ? 1.8f : 1.6f;
         String tipo = m.tipo;
@@ -735,8 +782,7 @@ final class Partida {
         naCara(p, tipo);
         String som = somGrito(tipo);
         Sons.para(p, p.getEyeLocation(), som, vol, 0.95f + rnd.nextFloat() * 0.1f, Sound.ENTITY_ENDERMAN_SCREAM, vol, 0.45f);
-        p.playSound(p.getLocation(), Sound.ENTITY_GHAST_SCREAM, vol * 0.8f, 0.5f);
-        p.playSound(p.getLocation(), Sound.ENTITY_WARDEN_ROAR, 0.9f, 1.4f);
+        berro(p, vol, d);
         p.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 50 + d * 15, 0, false, false, false));
         p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 30, 2, false, false, false));
         if (d >= 2) Bukkit.getScheduler().runTaskLater(pl, () -> titulo(p, "", "§4§lNÃO CHORE", 1.2), 14L);
@@ -750,8 +796,46 @@ final class Partida {
         // quem estiver perto escuta o grito
         for (Player o : p.getWorld().getPlayers())
             if (o != p && o.getLocation().distanceSquared(p.getLocation()) < 24 * 24) Sons.para(o, p.getLocation(), som, 1.2f, 1f, Sound.ENTITY_ENDERMAN_SCREAM, 1.2f, 0.45f);
-        // tranco na camera
-        p.setVelocity(p.getVelocity().add(new Vector((rnd.nextDouble() - 0.5) * 0.5, 0.25, (rnd.nextDouble() - 0.5) * 0.5)));
+        // tranco na camera: joga a pessoa para longe dele
+        Vector fuga = p.getLocation().toVector().subtract(m.getLocation().toVector()).setY(0);
+        if (fuga.lengthSquared() < 1e-4) fuga = new Vector(rnd.nextDouble() - 0.5, 0, rnd.nextDouble() - 0.5);
+        p.setVelocity(fuga.normalize().multiply(0.55 + 0.1 * d).setY(0.32));
+        // ele machuca: chegar perto (ou pular em cima) custa caro, e cada dia mais
+        double dano = (pl.getConfig().getDouble("susto-dano", 6) + (d - 1) * pl.getConfig().getDouble("susto-dano-por-dia", 2)) * forca;
+        if (dano > 0 && jj != null && tick - jj.ultimoDanoSusto >= seg(4) && vivo(p) && p.getGameMode() != GameMode.CREATIVE && p.getGameMode() != GameMode.SPECTATOR) {
+            jj.ultimoDanoSusto = tick;
+            p.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, p.getLocation().add(0, 1.2, 0), 8, 0.3, 0.4, 0.3, 0.1);
+            p.setNoDamageTicks(0);
+            p.damage(dano);
+        }
+    }
+
+    /**
+     * O berro: varias camadas de sons do proprio Minecraft, graves e em sequencia (todo mundo ouve igual: Java com ou sem pacote
+     * e Bedrock). Primeiro o estouro, depois um grito quase humano, e no fim o coracao disparado.
+     */
+    private void berro(Player p, float vol, int d) {
+        Location o = p.getLocation();
+        p.playSound(o, Sound.ENTITY_GHAST_SCREAM, vol, 0.5f);
+        p.playSound(o, Sound.ENTITY_WARDEN_ROAR, vol, 0.6f);
+        p.playSound(o, Sound.ENTITY_WARDEN_SONIC_BOOM, vol * 0.8f, 0.6f);
+        p.playSound(o, Sound.ENTITY_HORSE_DEATH, vol, 0.5f);
+        p.playSound(o, Sound.ENTITY_LIGHTNING_BOLT_THUNDER, vol * 0.5f, 0.5f);
+        long[] quando = {3L, 7L, 12L};
+        Sound[] qual = {Sound.ENTITY_GOAT_SCREAMING_DEATH, Sound.ENTITY_FOX_SCREECH, Sound.ENTITY_ENDERMAN_SCREAM};
+        float[] tom = {0.5f, 0.5f, 0.5f};
+        for (int k = 0; k < quando.length; k++) {
+            final int kk = k;
+            Bukkit.getScheduler().runTaskLater(pl, () -> {
+                if (p.isOnline()) p.playSound(p.getLocation(), qual[kk], vol, tom[kk] + rnd.nextFloat() * 0.08f);
+            }, quando[kk]);
+        }
+        if (d >= 3) Bukkit.getScheduler().runTaskLater(pl, () -> {
+            if (p.isOnline()) p.playSound(p.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.7f, 0.5f);
+        }, 9L);
+        for (int k = 0; k < 6; k++) Bukkit.getScheduler().runTaskLater(pl, () -> {
+            if (p.isOnline() && vivo(p)) p.playSound(p.getLocation(), Sound.ENTITY_WARDEN_HEARTBEAT, 2f, 0.9f);
+        }, 20L + k * 9L);
     }
 
     /** Caractere da fonte do pacote com o rosto gigante (so Java com o pacote). */

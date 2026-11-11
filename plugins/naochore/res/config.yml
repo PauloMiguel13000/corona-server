@@ -7,6 +7,10 @@ dias: 5                  # quantos dias para vencer
 dia-minutos: 8           # duracao de um dia inteiro (dia + noite) em minutos de verdade
 borda: 620               # lado do mundo em blocos (~1500 chunks)
 vidas: 1                 # quem morre vira espectador
+renasce-ate-dia: 2       # ate a noite deste dia quem morre volta vivo no mapa; depois disso a morte e definitiva (0 = nunca volta)
+susto-dano: 6.0          # dano do Vigia quando alguem chega perto dele no dia 1 (6 = 3 coracoes); sustos que vem ate voce dao metade
+susto-dano-por-dia: 2.0  # a cada dia o susto machuca mais
+reserva: true            # deixa o proximo mundo pronto no disco quando o servidor esta vazio (renovar o mundo nao trava)
 cacadores-base: 2        # dia 5: cacadores = base + jogadores (maximo 8)
 cacador-dano: 6.0        # 6 = 3 coracoes
 cacador-vida: 80

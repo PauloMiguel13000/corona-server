@@ -75,11 +75,18 @@ final class SpawnDecor implements Listener {
     /** Liga o giro dos icones e reconhece os totens que ja existem. */
     void iniciar() {
         w = mundo();
-        carregar();
-        icones.clear();
-        for (Entity e : w.getEntities())
-            if (e instanceof ItemDisplay d && d.getPersistentDataContainer().has(kEnfeite, PersistentDataType.BYTE)) icones.add(d);
-        if (tarefaGiro == null) tarefaGiro = Bukkit.getScheduler().runTaskTimer(pl, this::girar, 40L, 10L);
+        // carrega os pedacos do spawn sem travar o servidor: so depois que todos chegarem procura os icones
+        List<java.util.concurrent.CompletableFuture<org.bukkit.Chunk>> esperas = new ArrayList<>();
+        for (int cx = (X1 - 2) >> 4; cx <= (X2 + 2) >> 4; cx++)
+            for (int cz = (Z1 - 2) >> 4; cz <= (Z2 + 2) >> 4; cz++) esperas.add(w.getChunkAtAsync(cx, cz, true));
+        java.util.concurrent.CompletableFuture.allOf(esperas.toArray(new java.util.concurrent.CompletableFuture[0])).whenComplete((ok, erro) ->
+                Bukkit.getScheduler().runTask(pl, () -> {
+                    if (erro != null) pl.getLogger().warning("Spawn: nao carregou algum pedaco (" + erro + "); sigo com o que tem.");
+                    icones.clear();
+                    for (Entity e : w.getEntities())
+                        if (e instanceof ItemDisplay d && d.getPersistentDataContainer().has(kEnfeite, PersistentDataType.BYTE)) icones.add(d);
+                    if (tarefaGiro == null) tarefaGiro = Bukkit.getScheduler().runTaskTimer(pl, this::girar, 40L, 10L);
+                }));
     }
 
     private void carregar() {

@@ -53,12 +53,17 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class NaoChore extends JavaPlugin implements Listener {
 
     static final String MUNDO = "naochore";
+    /** Mundo de reserva: gerado com calma (sem ninguem online) e guardado no disco; na hora de renovar, a pasta dele vira o MUNDO. */
+    static final String RESERVA = "naochore_reserva";
     static final String PREFIXO = "§8[§4§lNão Chore§8] §7";
     private static final Set<String> COMANDOS_LIVRES = Set.of("naochore", "dontcry", "naochora", "msg", "tell", "w", "r", "login", "l", "logout", "g", "c", "cla", "clan");
 
     World mundo;
     boolean mundoUsado;
     private boolean preparando;
+    private boolean criandoReserva;
+    /** Ultima vez (ms) que tinha alguem online: a reserva so e gerada com o servidor vazio ha um tempo. */
+    private long ultimoComGente = System.currentTimeMillis();
     Partida partida;
     Guarda guarda;
     NamespacedKey kMonstro;
@@ -86,6 +91,9 @@ public final class NaoChore extends JavaPlugin implements Listener {
             }
             if (getConfig().getBoolean("mundo-usado", false) || w == null) renovarMundo();
         }, 60L);
+        // reserva: a cada 20 s olha se da para deixar o proximo mundo pronto (so com o servidor vazio)
+        Bukkit.getScheduler().runTaskTimer(this, this::cuidarReserva, 20L * 90, 20L * 20);
+        Bukkit.getScheduler().runTaskAsynchronously(this, this::limparLixo);
         Bukkit.getScheduler().runTaskTimer(this, partida::ciclo, 100L, 5L);
         Bukkit.getScheduler().runTaskTimer(this, partida::sincronizar, 101L, 1L);
         getLogger().info("Nao Chore pronto.");
@@ -132,9 +140,10 @@ public final class NaoChore extends JavaPlugin implements Listener {
                 }
             }
             mundo = null;
-            apagarPastas();
-            long semente = new java.util.Random().nextLong();
             long t0 = System.currentTimeMillis();
+            apagarPastas();
+            boolean daReserva = usarReserva();
+            long semente = new java.util.Random().nextLong();
             w = new WorldCreator(MUNDO).environment(World.Environment.NORMAL).seed(semente).generateStructures(true).createWorld();
             if (w == null) {
                 getLogger().severe("Nao consegui criar o mundo do Nao Chore!");
@@ -146,7 +155,8 @@ public final class NaoChore extends JavaPlugin implements Listener {
             mundoUsado = false;
             getConfig().set("mundo-usado", false);
             saveConfig();
-            getLogger().info("Mundo novo do Nao Chore pronto em " + (System.currentTimeMillis() - t0) + " ms (semente " + semente + ").");
+            getLogger().info("Mundo novo do Nao Chore pronto em " + (System.currentTimeMillis() - t0) + " ms (" + (daReserva ? "veio da reserva" : "gerado na hora")
+                    + ", semente " + w.getSeed() + ").");
         } catch (Throwable t) {
             getLogger().warning("Erro ao renovar o mundo do Nao Chore: " + t);
         } finally {
@@ -154,15 +164,109 @@ public final class NaoChore extends JavaPlugin implements Listener {
         }
     }
 
-    private void apagarPastas() {
+    /** Onde um mundo com esse nome pode estar no disco (o formato mudou entre versoes do Minecraft). */
+    private List<File> pastasDe(String nome) {
         List<File> pastas = new ArrayList<>();
-        pastas.add(new File(Bukkit.getWorldContainer(), MUNDO));
+        pastas.add(new File(Bukkit.getWorldContainer(), nome));
         if (!Bukkit.getWorlds().isEmpty()) {
             World principal = Bukkit.getWorlds().get(0);
-            pastas.add(new File(Bukkit.getWorldContainer(), principal.getName() + "/dimensions/minecraft/" + MUNDO));
-            pastas.add(new File(principal.getWorldFolder(), "dimensions/minecraft/" + MUNDO));
+            pastas.add(new File(Bukkit.getWorldContainer(), principal.getName() + "/dimensions/minecraft/" + nome));
+            pastas.add(new File(principal.getWorldFolder(), "dimensions/minecraft/" + nome));
         }
-        for (File f : pastas) if (f.exists()) apagar(f);
+        return pastas;
+    }
+
+    private File pastaExistente(String nome) {
+        for (File f : pastasDe(nome)) if (f.isDirectory()) return f;
+        return null;
+    }
+
+    /** Tira o mundo usado do caminho na hora (so muda o nome da pasta) e apaga os arquivos fora do thread principal. */
+    private void apagarPastas() {
+        List<File> lixo = new ArrayList<>();
+        for (File f : pastasDe(MUNDO)) {
+            if (!f.exists()) continue;
+            File destino = new File(f.getParentFile(), MUNDO + "_lixo_" + System.nanoTime());
+            if (f.renameTo(destino)) lixo.add(destino);
+            else apagar(f);
+        }
+        if (!lixo.isEmpty()) Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
+            for (File f : lixo) apagar(f);
+        });
+    }
+
+    /** Sobras de mundos usados (servidor caiu antes de apagar). Roda fora do thread principal. */
+    private void limparLixo() {
+        try {
+            for (File f : pastasDe(MUNDO)) {
+                File[] irmaos = f.getParentFile() == null ? null : f.getParentFile().listFiles();
+                if (irmaos == null) continue;
+                for (File x : irmaos) if (x.isDirectory() && x.getName().startsWith(MUNDO + "_lixo_")) apagar(x);
+            }
+        } catch (Throwable t) {
+            getLogger().warning("Nao consegui limpar sobras de mundos: " + t);
+        }
+    }
+
+    // ================================================================== reserva (proximo mundo ja pronto no disco)
+
+    boolean temReserva() {
+        return !criandoReserva && Bukkit.getWorld(RESERVA) == null && pastaExistente(RESERVA) != null;
+    }
+
+    /** A pasta da reserva vira a pasta do MUNDO (so muda o nome: nao gera terreno, nao trava). false = nao tinha ou nao deu. */
+    private boolean usarReserva() {
+        try {
+            if (criandoReserva) return false;
+            World r = Bukkit.getWorld(RESERVA);
+            if (r != null && !Bukkit.unloadWorld(r, true)) return false;
+            File de = pastaExistente(RESERVA);
+            if (de == null) return false;
+            File para = new File(de.getParentFile(), MUNDO);
+            if (para.exists()) return false;
+            return de.renameTo(para);
+        } catch (Throwable t) {
+            getLogger().warning("Nao consegui usar o mundo de reserva: " + t);
+            return false;
+        }
+    }
+
+    /** A cada 20 s: com o servidor vazio ha 1 minuto e sem reserva pronta, gera a reserva (e o unico momento em que gerar mundo nao atrapalha ninguem). */
+    private void cuidarReserva() {
+        if (!Bukkit.getOnlinePlayers().isEmpty()) {
+            ultimoComGente = System.currentTimeMillis();
+            return;
+        }
+        if (System.currentTimeMillis() - ultimoComGente < 60_000L) return;
+        if (preparando || criandoReserva || !getConfig().getBoolean("reserva", true)) return;
+        if (partida.estado == Partida.Estado.JOGANDO || partida.estado == Partida.Estado.FIM || partida.estado == Partida.Estado.CONTAGEM) return;
+        if (Bukkit.getWorld(RESERVA) != null || pastaExistente(RESERVA) != null) return;
+        criarReserva();
+    }
+
+    /** Gera o mundo de reserva e ja descarrega (fica salvo no disco). */
+    void criarReserva() {
+        if (criandoReserva || preparando) return;
+        criandoReserva = true;
+        try {
+            long t0 = System.currentTimeMillis();
+            long semente = new java.util.Random().nextLong();
+            World w = new WorldCreator(RESERVA).environment(World.Environment.NORMAL).seed(semente).generateStructures(true).createWorld();
+            if (w == null) {
+                getLogger().warning("Nao consegui gerar o mundo de reserva do Nao Chore.");
+                return;
+            }
+            for (Player p : new ArrayList<>(w.getPlayers())) mover(p, Bukkit.getWorlds().get(0).getSpawnLocation());
+            if (!Bukkit.unloadWorld(w, true)) {
+                getLogger().warning("Nao consegui guardar o mundo de reserva do Nao Chore (fica carregado; tento usar assim mesmo).");
+                return;
+            }
+            getLogger().info("Mundo de reserva do Nao Chore pronto em " + (System.currentTimeMillis() - t0) + " ms (semente " + semente + ").");
+        } catch (Throwable t) {
+            getLogger().warning("Erro ao gerar o mundo de reserva do Nao Chore: " + t);
+        } finally {
+            criandoReserva = false;
+        }
     }
 
     private static void apagar(File f) {
@@ -357,7 +461,11 @@ public final class NaoChore extends JavaPlugin implements Listener {
             }
             case "mundo" -> {
                 renovarMundo();
-                s.sendMessage(PREFIXO + "Mundo renovado: " + mundoPronto());
+                s.sendMessage(PREFIXO + "Mundo renovado: " + mundoPronto() + " | reserva pronta: " + temReserva());
+            }
+            case "reserva" -> {
+                if (!temReserva()) criarReserva();
+                s.sendMessage(PREFIXO + "Reserva pronta: " + temReserva());
             }
             default -> s.sendMessage(PREFIXO + "/naochore admin <iniciar|parar|status|dia <n>|susto <0 vigia|1 noite|2 cara|3 maos|4 duplo|5 chorona em casa|6 morte>|mundo>");
         }
@@ -375,6 +483,11 @@ public final class NaoChore extends JavaPlugin implements Listener {
         Player p = e.getEntity();
         if (!noMundo(p) || !partida.vivo(p)) return;
         e.deathMessage(null);
+        if (partida.renasceAgora()) {
+            // ate o dia 2 (config "renasce-ate-dia"): morreu, volta vivo no mapa; do dia 3 em diante a morte e definitiva
+            partida.morreuEVolta(p);
+            return;
+        }
         partida.pego(p);
         Bukkit.getScheduler().runTask(this, () -> {
             if (!p.isOnline()) return;
@@ -390,6 +503,7 @@ public final class NaoChore extends JavaPlugin implements Listener {
         Player p = e.getPlayer();
         if (!noMundo(p) || !partida.participa(p)) return;
         e.setRespawnLocation(spawn());
+        if (partida.voltando.remove(p.getUniqueId())) Bukkit.getScheduler().runTaskLater(this, () -> partida.voltou(p), 3L);
     }
 
     /** Bater no corpo do Faminto machuca o motor dele. */
