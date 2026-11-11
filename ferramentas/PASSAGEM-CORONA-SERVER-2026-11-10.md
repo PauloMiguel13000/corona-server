@@ -3,10 +3,10 @@
 Resumo de 1 página. Detalhes antigos: `PASSAGEM-ADENDO-2026-11-09k.md` (mesma pasta).
 
 ## Estado atual
-- No ar: até o **ajustes151**. Próximo número: **ajustes152**.
+- No ar: até o **ajustes154**. Próximo número: **ajustes155**.
 - Conferir sempre `otimizacao\ajustesNNN.log` ("pronto: tudo conferido") e `logs\latest.log` ("Done (").
 - GitHub: `PauloMiguel13000/corona-server` (privado) em dia até o 150; `corona-pacotes` (público) com o mcpack
-  **1.13.9** = `corona-27f7d6e240.zip`.
+  **1.14.1** = `corona-158b2a55fa.zip`.
 - Fica aberta 1 janela do Explorador de Arquivos no PC do servidor (**fechar**) e o atendedor de comandos
   (`LIGAR-FILA-TESTE`, ligado 19:28, dura ~2 h): escrever `.txt` em `otimizacao\fila\` e ler a resposta em `logs\latest.log`.
 
@@ -35,6 +35,21 @@ Resumo de 1 página. Detalhes antigos: `PASSAGEM-ADENDO-2026-11-09k.md` (mesma p
 149 **efeitos dos poderes no celular** (2ª camada por categoria, pacote 1.13.9) · 150 **portais dos níveis 2 a 5** no
 lobby das masmorras (trava pela média do equipamento) · 151 `command-suggestions: false` no Geyser (comando com
 argumento ficava vermelho no celular).
+
+## Feito à noite (10/11)
+152 corredor na frente dos portais (tinham nascido atrás das paredes do lobby) · 153 **trilha sonora das masmorras**:
+11 músicas originais sintetizadas (`sons/gerar_trilhas.py` e `sons/gerar_masmorras.py` no repo), uma por família de
+masmorra, com troca automática para `combate` (2+ monstros perto) e `chefe` (na arena, chefe vivo) e `/musica` para
+ligar/desligar · 154 música do chefe refeita mais agitada (162 bpm).
+Validado em cliente Java real: a legenda "Trilha das masmorras" apareceu na tela, e o portal de nível 2 funciona
+andando. No Bedrock só foi conferido o lado do servidor (pacote 1.14.1 publicado e servido) — falta ouvir no celular.
+
+## Migração para VPS (plano do Paulo, 10/11 22:37)
+Ele cogita uma VPS da EletricHost (R$65 com desconto; 10 GB, 5 vCPU Xeon Gold 6138, 100 GB, 1 Gbps, Brasil).
+Conclusão combinada: o ganho é **rede e uptime**, não desempenho — o i3 de 10ª dele ganha do Xeon por núcleo, e o
+servidor já roda com `XMX=10` (está no `memoria.bat`, que sobrepõe o `iniciar-servidor.bat`). Quando migrar:
+guardar o token, deixar no endereço antigo do playit um aviso com o IP novo, atualizar os sites, e ficar com
+**um IP para Java e outro para Bedrock**.
 
 ## Pendências (palavras do Paulo)
 - **Texturas bugadas no celular**: print mostra um boneco preto/rosa (textura faltando) e o item da mão quebrado, em
