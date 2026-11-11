@@ -33,7 +33,7 @@ final class Trilha implements Listener {
     static {
         DURACAO.put("explorar", 37.5);
         DURACAO.put("combate", 40.3);
-        DURACAO.put("chefe", 44.2);
+        DURACAO.put("chefe", 42.3);
         DURACAO.put("cripta", 42.5);
         DURACAO.put("mina", 35.1);
         DURACAO.put("floresta", 33.9);
