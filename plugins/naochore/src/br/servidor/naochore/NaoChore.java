@@ -85,11 +85,23 @@ public final class NaoChore extends JavaPlugin implements Listener {
         // mundo de partida antiga (servidor caiu no meio): apaga e faz outro
         Bukkit.getScheduler().runTaskLater(this, () -> {
             World w = Bukkit.getWorld(MUNDO);
+            boolean usado = getConfig().getBoolean("mundo-usado", false);
+            // o mundo da ultima vez esta inteiro no disco e ninguem jogou nele: so carrega (nao gera outro, nao trava)
+            if (w == null && !usado && pastaExistente(MUNDO) != null) {
+                try {
+                    long t0 = System.currentTimeMillis();
+                    w = new WorldCreator(MUNDO).environment(World.Environment.NORMAL).generateStructures(true).createWorld();
+                    if (w != null) getLogger().info("Mundo do Nao Chore carregado do disco em " + (System.currentTimeMillis() - t0) + " ms (semente " + w.getSeed() + ").");
+                } catch (Throwable t) {
+                    getLogger().warning("Nao consegui carregar o mundo do Nao Chore que estava no disco (" + t + "); faco outro.");
+                    w = Bukkit.getWorld(MUNDO);
+                }
+            }
             if (w != null) {
                 mundo = w;
                 configurar(w);
             }
-            if (getConfig().getBoolean("mundo-usado", false) || w == null) renovarMundo();
+            if (usado || w == null) renovarMundo();
         }, 60L);
         // reserva: a cada 20 s olha se da para deixar o proximo mundo pronto (so com o servidor vazio)
         Bukkit.getScheduler().runTaskTimer(this, this::cuidarReserva, 20L * 90, 20L * 20);
