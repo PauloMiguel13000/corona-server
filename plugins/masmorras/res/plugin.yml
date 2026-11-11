@@ -32,6 +32,10 @@ commands:
   galeria:
     description: Galeria das Reliquias - os conjuntos de todas as masmorras (armadura + arma)
     aliases: [armaduras, museu]
+  nivel:
+    description: Mostra o nivel do seu equipamento e quais areas de masmorra voce pode entrar
+    usage: /nivel
+    aliases: [level, equipamento, equip, lvl]
   musica:
     description: Liga e desliga a trilha das masmorras so para voce
     usage: /musica

@@ -2052,6 +2052,14 @@ public final class Masmorras extends JavaPlugin implements Listener {
         if (cmd.getName().equalsIgnoreCase("dararmadura")) return darItens().comando(s, a, false);
         if (cmd.getName().equalsIgnoreCase("darespada")) return darItens().comando(s, a, true);
         if (cmd.getName().equalsIgnoreCase("galeria")) return galeria.comando(s, a);
+        if (cmd.getName().equalsIgnoreCase("nivel")) {
+            if (!(s instanceof org.bukkit.entity.Player p)) {
+                s.sendMessage("So no jogo.");
+                return true;
+            }
+            PortaisNivel.comando(p);
+            return true;
+        }
         if (cmd.getName().equalsIgnoreCase("musica")) {
             if (!(s instanceof org.bukkit.entity.Player p)) {
                 s.sendMessage("So no jogo.");

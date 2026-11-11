@@ -250,4 +250,102 @@ final class PortaisNivel implements Listener {
             if (perto != null) pl.darBussola(p, perto);
         });
     }
+
+    // ------------------------------------------------------------------ /nivel
+
+    /** Nome curto do material, em portugues de gente ("Peitoral de ferro"). */
+    private static String nomeMat(ItemStack it) {
+        if (it == null || it.getType().isAir()) return "§8(vazio)";
+        String m = it.getType().name();
+        String mat = m.startsWith("NETHERITE") ? "netherita"
+                : m.startsWith("DIAMOND") ? "diamante"
+                : m.startsWith("IRON") ? "ferro"
+                : m.startsWith("CHAINMAIL") ? "malha"
+                : m.startsWith("GOLDEN") ? "ouro"
+                : m.startsWith("STONE") ? "pedra"
+                : m.startsWith("LEATHER") ? "couro"
+                : m.startsWith("WOODEN") ? "madeira"
+                : m.startsWith("TURTLE") ? "casco"
+                : null;
+        String base = m.endsWith("_HELMET") || m.equals("TURTLE_HELMET") ? "Capacete"
+                : m.endsWith("_CHESTPLATE") ? "Peitoral"
+                : m.endsWith("_LEGGINGS") ? "Calça"
+                : m.endsWith("_BOOTS") ? "Bota"
+                : m.endsWith("_SWORD") ? "Espada"
+                : m.endsWith("_AXE") ? "Machado"
+                : m.equals("BOW") ? "Arco"
+                : m.equals("CROSSBOW") ? "Besta"
+                : m.equals("TRIDENT") ? "Tridente"
+                : null;
+        if (base == null) return "§7" + m.charAt(0) + m.substring(1).toLowerCase().replace('_', ' ');
+        return "§f" + base + (mat == null ? "" : " de " + mat);
+    }
+
+    /** Cor conforme os pontos da peca (vermelho fraco, verde forte). */
+    private static String corPontos(int n) {
+        return switch (n) {
+            case 5 -> "§d";
+            case 4 -> "§b";
+            case 3 -> "§a";
+            case 2 -> "§e";
+            case 1 -> "§6";
+            default -> "§c";
+        };
+    }
+
+    private static void linha(Player p, String rotulo, ItemStack it) {
+        int n = pontos(it);
+        p.sendMessage(Masmorras.txt("§8| §7" + rotulo + " §8- " + nomeMat(it) + " " + corPontos(n) + n));
+    }
+
+    /**
+     * /nivel — mostra ao jogador o nivel do equipamento dele, quais areas ja pode entrar
+     * e quanto falta para a proxima. So texto, para funcionar igual no Java e no Bedrock.
+     */
+    static void comando(Player p) {
+        ItemStack[] arm = p.getInventory().getArmorContents(); // bota, calca, peitoral, capacete
+        ItemStack mao = p.getInventory().getItemInMainHand();
+        int soma = 0;
+        for (ItemStack it : arm) soma += pontos(it);
+        soma += pontos(mao);
+        int nivel = soma / 5;
+
+        p.sendMessage(Masmorras.txt("§8+--------------------------------+"));
+        p.sendMessage(Masmorras.txt(" " + visual(Math.max(2, Math.min(5, nivel)))[3] + "§lSEU NÍVEL DE EQUIPAMENTO"));
+        linha(p, "Capacete", arm.length > 3 ? arm[3] : null);
+        linha(p, "Peitoral", arm.length > 2 ? arm[2] : null);
+        linha(p, "Calça   ", arm.length > 1 ? arm[1] : null);
+        linha(p, "Botas   ", arm.length > 0 ? arm[0] : null);
+        linha(p, "Na mão  ", mao);
+        p.sendMessage(Masmorras.txt("§8|"));
+        p.sendMessage(Masmorras.txt("§8| §fNível §l" + nivel + " §7(" + soma + " de 25 pontos)"));
+
+        StringBuilder abertas = new StringBuilder("§a1");
+        StringBuilder fechadas = new StringBuilder();
+        for (int n : NIVEIS) {
+            if (nivel >= n) abertas.append("§7, §a").append(n);
+            else fechadas.append(fechadas.length() == 0 ? "" : "§7, ").append("§c").append(n);
+        }
+        p.sendMessage(Masmorras.txt("§8| §7Áreas liberadas: " + abertas));
+        if (fechadas.length() > 0) p.sendMessage(Masmorras.txt("§8| §7Ainda trancadas: " + fechadas));
+
+        if (nivel >= 5) {
+            p.sendMessage(Masmorras.txt("§8| §dEquipamento no máximo. Todos os portais são seus."));
+        } else {
+            int falta = (nivel + 1) * 5 - soma;
+            p.sendMessage(Masmorras.txt("§8| §eFaltam §f" + falta + " ponto" + (falta == 1 ? "" : "s")
+                    + " §epara o nível §f" + (nivel + 1) + "§e."));
+            int pior = 0, piorN = 99;
+            String[] rot = {"as botas", "a calça", "o peitoral", "o capacete"};
+            for (int i = 0; i < arm.length && i < 4; i++) {
+                int n = pontos(arm[i]);
+                if (n < piorN) { piorN = n; pior = i; }
+            }
+            if (pontos(mao) < piorN) p.sendMessage(Masmorras.txt("§8| §7Comece melhorando §fa arma da mão§7."));
+            else p.sendMessage(Masmorras.txt("§8| §7Comece melhorando §f" + rot[pior] + "§7."));
+        }
+        p.sendMessage(Masmorras.txt("§8| §7Vale: §fcouro/madeira 1§7, §fpedra/ouro 2§7, §fferro/malha 3§7, §fdiamante 4§7, §fnetherita 5§7."));
+        p.sendMessage(Masmorras.txt("§8+--------------------------------+"));
+    }
+
 }
