@@ -32,6 +32,10 @@ commands:
   galeria:
     description: Galeria das Reliquias - os conjuntos de todas as masmorras (armadura + arma)
     aliases: [armaduras, museu]
+  trilha:
+    description: Trilha das Masmorras - o conjunto de cada masmorra (chefe da o peitoral, monstros dao o resto)
+    usage: /trilha [nivel]
+    aliases: [caminho, jornada]
   nivel:
     description: Mostra o nivel do seu equipamento e quais areas de masmorra voce pode entrar
     usage: /nivel

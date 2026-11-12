@@ -1383,7 +1383,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
                 if (dentroDe) e.getDrops().clear();
             }
             if (de != null && k != null) {
-                if (rnd.nextDouble() < getConfig().getDouble("reliquias.chance-monstro", 0.025)) {
+                if (rnd.nextDouble() < getConfig().getDouble("reliquias.chance-monstro", 0.012)) {
                     ItemStack rel = item(Premios.equipamento(de.tipo.nivel, rnd));
                     if (rel != null) {
                         e.getDrops().add(reliquias.aplicar(rel, de.tipo));
@@ -1393,6 +1393,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
                 }
                 darXpClasses(k, getConfig().getDouble("xp-classes.monstro", 12) * de.tipo.nivel, false);
                 if (missoes != null) missoes.monstroMorto(k, de.tipo.nivel);
+                if (missoes != null) missoes.trilhaMonstro(k, de.tipo);
                 coronas.dar(k, coronas.comVip(k, getConfig().getLong("coronas.monstro", 3) * de.tipo.nivel + rnd.nextInt(de.tipo.nivel + 1)), true);
             }
             return;
@@ -1423,6 +1424,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         for (Player p : lutaram) darXpClasses(p, xp, true);
         if (ranking != null) for (Player p : lutaram) ranking.chefeDerrotado(p);
         if (missoes != null) for (Player p : lutaram) missoes.chefeMorto(p, t.nivel);
+        if (missoes != null) for (Player p : lutaram) missoes.trilhaChefe(p, t);
         long cor = t.secreta ? getConfig().getLong("coronas.secreta", 5000) : getConfig().getLong("coronas.chefe", 250) * t.nivel;
         for (Player p : lutaram) {
             coronas.dar(p, coronas.comVip(p, cor), false);
@@ -2052,6 +2054,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         if (cmd.getName().equalsIgnoreCase("dararmadura")) return darItens().comando(s, a, false);
         if (cmd.getName().equalsIgnoreCase("darespada")) return darItens().comando(s, a, true);
         if (cmd.getName().equalsIgnoreCase("galeria")) return galeria.comando(s, a);
+        if (cmd.getName().equalsIgnoreCase("trilha")) return missoes != null && missoes.comandoTrilha(s, a);
         if (cmd.getName().equalsIgnoreCase("nivel")) {
             if (!(s instanceof org.bukkit.entity.Player p)) {
                 s.sendMessage("So no jogo.");

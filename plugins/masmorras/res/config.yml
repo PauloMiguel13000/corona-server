@@ -140,7 +140,8 @@ borda:
 # Reliquias: o equipamento do chefe e dos baus vira reliquia da masmorra (nome, brilho, poder). Monstros comuns
 # soltam uma reliquia de vez em quando (0.025 = 2,5% por monstro morto por jogador).
 reliquias:
-  chance-monstro: 0.025
+  # 11/11: menos da metade (o conjunto de cada masmorra agora vem pela Trilha: /trilha)
+  chance-monstro: 0.012
 
 # Campos de monstros do Mundo das Masmorras (grupos parados pelo mapa para farmar XP; voltam 4 min depois de morrerem).
 campos:
