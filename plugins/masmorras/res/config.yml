@@ -142,6 +142,8 @@ borda:
 reliquias:
   # 11/11: menos da metade (o conjunto de cada masmorra agora vem pela Trilha: /trilha)
   chance-monstro: 0.012
+  # defesa das armaduras de reliquia em relacao a armadura comum (0.8 = 20% menos). So vale para as novas.
+  fator-defesa: 0.8
 
 # Campos de monstros do Mundo das Masmorras (grupos parados pelo mapa para farmar XP; voltam 4 min depois de morrerem).
 campos:

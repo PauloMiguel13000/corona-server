@@ -234,6 +234,18 @@ final class Reliquias implements Listener {
                     Multimap<Attribute, AttributeModifier> padrao = LinkedHashMultimap.create(it.getType().getDefaultAttributeModifiers(slot));
                     m.setAttributeModifiers(padrao);
                 }
+                // 12/11 (pedido do Paulo): armadura de reliquia defende um pouco menos que a comum, para a masmorra pesar
+                double fd = pl.getConfig().getDouble("reliquias.fator-defesa", 0.8);
+                if (fd > 0 && fd < 1) for (Attribute ad : new Attribute[] {Attribute.ARMOR, Attribute.ARMOR_TOUGHNESS}) {
+                    java.util.Collection<AttributeModifier> ms = m.getAttributeModifiers(ad);
+                    if (ms == null) continue;
+                    for (AttributeModifier am : new ArrayList<>(ms)) {
+                        if (am.getOperation() != AttributeModifier.Operation.ADD_NUMBER || am.getAmount() <= 0 || am.getKey().getKey().startsWith("reliquia_")) continue;
+                        double v = Math.max(0.5, Math.round(am.getAmount() * fd * 2) / 2.0);
+                        m.removeAttributeModifier(ad, am);
+                        m.addAttributeModifier(ad, new AttributeModifier(am.getKey(), v, am.getOperation(), am.getSlotGroup()));
+                    }
+                }
                 Attribute at = atributo(tm.attr());
                 if (at != null) m.addAttributeModifier(at, new AttributeModifier(new NamespacedKey(pl, "reliquia_" + slot.name().toLowerCase()),
                         tm.valor(), tm.op(), grupo(slot)));

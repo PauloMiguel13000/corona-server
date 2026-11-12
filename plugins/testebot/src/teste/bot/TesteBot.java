@@ -462,6 +462,10 @@ public final class TesteBot extends JavaPlugin implements org.bukkit.event.Liste
                 else ouvindo.add(nome.toLowerCase());
                 log("SONS " + nome + " " + ouvindo.contains(nome.toLowerCase()));
             }
+            case "renascer" -> {
+                p.spigot().respawn();
+                log("RENASCER " + nome + " -> " + p.getWorld().getName() + " " + p.getLocation().getBlockX() + " " + p.getLocation().getBlockY() + " " + p.getLocation().getBlockZ());
+            }
             case "pacote" -> {
                 UUID id = UUID.nameUUIDFromBytes("corona-server-pack".getBytes(java.nio.charset.StandardCharsets.UTF_8));
                 org.bukkit.event.player.PlayerResourcePackStatusEvent.Status st = a.length > 2

@@ -210,6 +210,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(chocadeiras, this);
         // efeitos do conjunto cosmetico de Herobrine (so visual)
         getServer().getPluginManager().registerEvents(new HerobrineEfeitos(this), this);
+        getServer().getPluginManager().registerEvents(new Vidas(this), this);
         hub = new Hub(this);
         getServer().getPluginManager().registerEvents(loja, this);
         getServer().getPluginManager().registerEvents(hub, this);
