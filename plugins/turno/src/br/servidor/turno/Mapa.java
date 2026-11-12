@@ -192,7 +192,10 @@ final class Mapa {
         por(0, Y + 5, 0, "dark_oak_planks");
         por(0, Y + 4, 0, "soul_lantern[hanging=true]");
         por(0, Y + 4, -2, "light[level=7]");
-        // luzes fracas nas salas (escuro, mas da para ver um pouco); corredores sem luz
+        // luzes fracas nas salas (escuro, mas da para ver um pouco); corredores com um fio de luz no fundo
+        // (longe da porta: junto dela continua escuro, quem ilumina ali e o botao de luz)
+        por(-8, Y + 4, -12, "light[level=4]");
+        por(8, Y + 4, -12, "light[level=4]");
         for (Sala s : SALAS.values()) {
             if (s.id.startsWith("corr") || s.id.equals("escritorio")) continue;
             int cx = (s.x1 + s.x2) / 2, cz = (s.z1 + s.z2) / 2;

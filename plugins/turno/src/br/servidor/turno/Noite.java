@@ -620,6 +620,7 @@ final class Noite {
             // cozinha: so audio
             p.teleport(mapa.cameraEscura());
             v.ancora = mapa.cameraEscura();
+            p.removePotionEffect(PotionEffectType.NIGHT_VISION);   // cozinha: so audio, continua no escuro
             p.sendTitle("§8§lSEM SINAL", "§7Cozinha — somente áudio", 0, 40, 10);
             boolean alguem = false;
             for (Animatronico a : bichos) if (!a.noEscritorio && a.lugarAtual().equals("cozinha")) alguem = true;
@@ -634,6 +635,8 @@ final class Noite {
         } else {
             p.teleport(c);
             v.ancora = c.clone();
+            // as cameras tem visao noturna (pedido do Paulo, 12/11); fora delas o restaurante e escuro
+            p.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 0, false, false, false));
             p.sendTitle("", "§7CAM " + Mapa.CAMERAS_NOME[i], 0, 30, 10);
         }
         for (Animatronico a : bichos) if (a.boneco != null && salaDe(a).equals(Mapa.CAMERAS[i])) a.olharPara(c == null ? p.getLocation() : c);
@@ -645,6 +648,7 @@ final class Noite {
         if (v == null || v.camera < 0) return;
         v.camera = -1;
         p.teleport(v.lugar);
+        p.removePotionEffect(PotionEffectType.NIGHT_VISION);
         visivel(p, true);
         v.ancora = v.lugar.clone();
         p.getInventory().setItem(8, null);
