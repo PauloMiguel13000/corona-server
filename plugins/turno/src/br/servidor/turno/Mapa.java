@@ -196,10 +196,10 @@ final class Mapa {
         for (Sala s : SALAS.values()) {
             if (s.id.startsWith("corr") || s.id.equals("escritorio")) continue;
             int cx = (s.x1 + s.x2) / 2, cz = (s.z1 + s.z2) / 2;
-            por(cx, Y + 4, cz, s.id.equals("palco") ? "light[level=7]" : "light[level=4]");
+            por(cx, Y + 4, cz, s.id.equals("palco") ? "light[level=9]" : "light[level=6]");
             if (s.id.equals("salao")) {
-                por(cx - 8, Y + 4, cz, "light[level=4]");
-                por(cx + 8, Y + 4, cz, "light[level=4]");
+                por(cx - 8, Y + 4, cz, "light[level=6]");
+                por(cx + 8, Y + 4, cz, "light[level=6]");
             }
         }
         // mesas do salao
