@@ -47,6 +47,13 @@ public final class VigiaLag extends JavaPlugin {
                 sb.append(String.format(java.util.Locale.ROOT, " tps=%.1f mspt=%.1f pior=%dms", Bukkit.getTPS()[0], Bukkit.getAverageTickTime(), piorTick / 1_000_000L));
                 piorTick = 0;
                 Runtime rt = Runtime.getRuntime();
+                long g = gcMs();
+                sb.append(" gc=").append(g - gcNoResumo).append("ms");
+                gcNoResumo = g;
+                try {
+                    com.sun.management.OperatingSystemMXBean os = (com.sun.management.OperatingSystemMXBean) java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+                    sb.append(String.format(java.util.Locale.ROOT, " cpu-maquina=%.0f%% cpu-java=%.0f%%", os.getCpuLoad() * 100, os.getProcessCpuLoad() * 100));
+                } catch (Throwable ignored) { }
                 sb.append(" mem=").append((rt.totalMemory() - rt.freeMemory()) / 1048576L).append("/").append(rt.maxMemory() / 1048576L).append("MB");
                 java.util.List<org.bukkit.World> ws = new java.util.ArrayList<>(Bukkit.getWorlds());
                 ws.sort((x, y) -> Integer.compare(y.getEntityCount(), x.getEntityCount()));
@@ -76,6 +83,7 @@ public final class VigiaLag extends JavaPlugin {
                 long agora = System.nanoTime(), t = ultimoTick;
                 long parado = agora - t;
                 if (jogadores > 0 && agora - inicio > espera) try { amostrar(principal.getStackTrace()); } catch (Throwable ignored) { }
+                if (parado < 100_000_000L) gcAntesDaTravada = gcMs();
                 if (parado < limite) {
                     // acabou uma travada que foi anotada: registra quanto durou
                     if (pilha != null && tickDaPilha != t) {
@@ -95,6 +103,15 @@ public final class VigiaLag extends JavaPlugin {
         vigia.start();
         getLogger().info("Vigiando ticks parados por mais de " + (limite / 1_000_000L) + " ms (anota em plugins/VigiaLag/travadas.log).");
     }
+
+    /** Tempo total (ms) que o Java ja passou em coleta de lixo (GC). */
+    private static long gcMs() {
+        long t = 0;
+        for (java.lang.management.GarbageCollectorMXBean b : java.lang.management.ManagementFactory.getGarbageCollectorMXBeans()) t += Math.max(0, b.getCollectionTime());
+        return t;
+    }
+
+    private volatile long gcAntesDaTravada, gcNoResumo;
 
     private static final String[][] MARCAS = {
         {"waitForTasks", "(ocioso: esperando o proximo tick)"}, {"ServerChunkCache.getChunk", "servidor: esperando chunk carregar (carga sincrona)"}, {"LockSupport.park", "(ocioso: esperando o proximo tick)"}, {"NaturalSpawner", "servidor: nascimento natural de monstros"},
@@ -163,7 +180,7 @@ public final class VigiaLag extends JavaPlugin {
 
     private void escrever(File arq, long ms, StackTraceElement[] pilha) {
         StringBuilder sb = new StringBuilder();
-        sb.append(new SimpleDateFormat("dd/MM HH:mm:ss").format(new Date())).append(" tick de ").append(ms).append(" ms | jogadores: ");
+        sb.append(new SimpleDateFormat("dd/MM HH:mm:ss").format(new Date())).append(" tick de ").append(ms).append(" ms | GC nesse tempo: ").append(gcMs() - gcAntesDaTravada).append(" ms | jogadores: ");
         try { sb.append(Bukkit.getOnlinePlayers().size()); } catch (Throwable t) { sb.append('?'); }
         sb.append('\n');
         int n = 0;
