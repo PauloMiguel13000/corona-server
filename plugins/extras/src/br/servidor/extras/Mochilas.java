@@ -131,9 +131,7 @@ final class Mochilas implements Listener {
                     p.getInventory().clear();
                     p.getEnderChest().clear();
                     p.updateInventory();
-                    Bukkit.getScheduler().runTaskLater(pl, () -> {
-                        if (p.isOnline() && "masmorras".equals(grupo(p.getWorld())) && "masmorras".equals(p.getPersistentDataContainer().get(kGrupo, PersistentDataType.STRING))) pl.darItens(p);
-                    }, 5L);
+                    pl.darItens(p);   // na hora: se ele estiver saindo para o survival, a mochila ja fica guardada com os itens de menu
                 } else {
                     for (String parte : new String[] {"inv", "bau", "tem"}) pdc.remove(chave("masmorras", parte));
                 }
