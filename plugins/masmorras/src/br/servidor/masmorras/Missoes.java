@@ -322,6 +322,21 @@ final class Missoes implements Listener {
         festa(p, t, "Elmo, calça e botas");
     }
 
+    /** Linha curta para o Guia do lobby: onde o jogador esta na trilha e qual e a proxima masmorra. */
+    void resumoTrilha(Player p) {
+        br.servidor.masmorras.Tipo prox = proxima(p);
+        int total = trilha().size();
+        if (prox == null) {
+            p.sendMessage(Masmorras.txt("§6§l⚔ Trilha das Masmorras: §acompleta! §7(" + total + "/" + total + ")"));
+            return;
+        }
+        String falta = (trilhaChefeFeito(p, prox) ? "" : "§cchefe " + prox.chefeNome + " §7(peitoral)")
+                + (trilhaChefeFeito(p, prox) || trilhaRestoFeito(p, prox) ? "" : " §7e ")
+                + (trilhaRestoFeito(p, prox) ? "" : "§f" + Math.max(0, metaMonstros(prox.nivel) - trilhaMonstros(p, prox)) + " monstros §7(elmo, calça e botas)");
+        p.sendMessage(Masmorras.txt("§6§l⚔ Trilha das Masmorras §7(" + feitas(p) + "/" + total + ") §8» §7próxima: §e" + prox.nome + " §7— §e§lNÍVEL " + prox.nivel));
+        p.sendMessage(Masmorras.txt("§7   Falta: " + falta + "§7. Tudo em §f/trilha§7."));
+    }
+
     /** /trilha [nivel]: mostra o caminho. Sem numero, mostra o nivel em que o jogador esta. */
     boolean comandoTrilha(org.bukkit.command.CommandSender s, String[] a) {
         // teste pelo console: /trilha simular <jogador> <TIPO> <chefe|monstros> [quantidade]

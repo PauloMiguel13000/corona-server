@@ -67,6 +67,8 @@ final class Tipo {
     String pilar, escada, luz, janela;
     /** Luz pendurada no teto (lanterna) ou no lugar de um bloco do teto (luminaria). */
     boolean luzNoTeto;
+    /** Masmorra aquatica: os corredores entre as salas sao tuneis alagados (passa mergulhando). */
+    boolean tuneisDeAgua;
     String[] decoPiso = {}, decoTeto = {};
     double chancePiso = 0.15, chanceTeto = 0.08;
     String tabela = "chests/simple_dungeon";
@@ -477,6 +479,7 @@ final class Tipo {
 
         // ----------------------------------------------------------------- tipos novos (com particularidades)
         t = add(new Tipo("AFOGADA", "Catacumba Afogada", "Rei Afogado", Onde.NORMAL, 2, Estilo.SUBTERRANEA));
+        t.tuneisDeAgua = true;
         t.parede = bs("prismarine_bricks", "prismarine_bricks", "prismarine", "dark_prismarine", "mossy_stone_bricks");
         t.piso = bs("prismarine_bricks", "dark_prismarine", "sand", "gravel");
         t.teto = bs("prismarine_bricks", "dark_prismarine");

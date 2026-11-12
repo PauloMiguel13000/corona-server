@@ -554,6 +554,7 @@ final class LobbyMundo implements Listener {
         Player p = e.getPlayer();
         if (guia) {
             p.sendMessage(Masmorras.txt("§e§lGuia: §fAs masmorras de §anível 1 §fficam em volta do lobby; as de §enível 2§f, §6nível 3 §fe §cnível 4 §fcada vez mais longe. Escolha uma e eu te dou a bússola."));
+            if (pl.missoes != null) pl.missoes.resumoTrilha(p);
             pl.abrirMenu(p);
         } else {
             p.sendMessage(Masmorras.txt("§b§lMestre das Classes: §fCada classe tem 5 habilidades que liberam com o seu nível de poder."));

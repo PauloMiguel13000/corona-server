@@ -141,10 +141,63 @@ final class Construtor {
         for (Caixa c : p.corredores) vazio(c);
         for (int k = 0; k < p.salas.size(); k++) decorar(p.salas.get(k), k == p.salas.size() - 1);
         for (Caixa c : p.corredores) luz(c.cx(), c.y2(), c.cz());
+        if (t.tuneisDeAgua) for (Caixa c : p.corredores) tunelDeAgua(c);
         if (t.onde == Tipo.Onde.END) {
             varanda();
             ilha(p.area());
         } else tunel();
+    }
+
+    /**
+     * Masmorra aquatica (12/11, pedido do Paulo): o corredor entre duas salas vira um tunel alagado. O chao afunda
+     * 4 blocos e enche de agua; no meio, o corredor e fechado em cima, entao so da para passar mergulhando.
+     * A agua fica abaixo do nivel do piso das salas (nao escorre para dentro delas).
+     */
+    private void tunelDeAgua(Caixa c) {
+        boolean noX = (c.x2() - c.x1()) >= (c.z2() - c.z1());
+        int a1 = noX ? c.x1() : c.z1(), a2 = noX ? c.x2() : c.z2();
+        int b1 = noX ? c.z1() : c.x1(), b2 = noX ? c.z2() : c.x2();
+        // fatias do corredor que ficam fora das salas (com 1 bloco de folga depois da parede, para pisar)
+        List<Integer> fatias = new ArrayList<>();
+        for (int a = a1; a <= a2; a++) {
+            boolean livre = true;
+            for (int b = b1; b <= b2 && livre; b++) {
+                int x = noX ? a : b, z = noX ? b : a;
+                for (Caixa s : p.salas) {
+                    Caixa g = s.crescer(2);
+                    if (x >= g.x1() && x <= g.x2() && z >= g.z1() && z <= g.z2()) {
+                        livre = false;
+                        break;
+                    }
+                }
+            }
+            if (livre) fatias.add(a);
+            else if (!fatias.isEmpty()) break;   // so o primeiro trecho continuo
+        }
+        if (fatias.size() < 4) return;
+        int y1 = c.y1(), fundo = y1 - 5, n = fatias.size();
+        int ini = fatias.get(0), fim = fatias.get(n - 1);
+        for (int k = 0; k < n; k++) {
+            int a = fatias.get(k);
+            boolean fechado = n >= 7 && k >= 2 && k <= n - 3;
+            for (int b = b1 - 1; b <= b2 + 1; b++) {
+                int x = noX ? a : b, z = noX ? b : a;
+                boolean lado = b < b1 || b > b2;
+                for (int y = fundo; y <= y1 - 1; y++) {
+                    if (lado) por(x, y, z, parede(x, y, z));
+                    else if (y == fundo) por(x, y, z, (k % 3 == 1 && b == (b1 + b2) / 2) ? "minecraft:sea_lantern" : piso(x, y, z));
+                    else por(x, y, z, "minecraft:water");
+                }
+                if (!lado && fechado) for (int y = y1; y <= c.y2(); y++) por(x, y, z, parede(x, y, z));
+            }
+        }
+        // tampas nas duas pontas, por baixo do patamar
+        for (int a : new int[] {ini - 1, fim + 1})
+            for (int b = b1 - 1; b <= b2 + 1; b++) {
+                int x = noX ? a : b, z = noX ? b : a;
+                for (int y = fundo; y <= y1 - 2; y++) por(x, y, z, parede(x, y, z));
+            }
+        o.protecao.add(noX ? new Caixa(ini - 1, fundo, b1 - 1, fim + 1, c.y2() + 1, b2 + 1) : new Caixa(b1 - 1, fundo, ini - 1, b2 + 1, c.y2() + 1, fim + 1));
     }
 
     /** Pilares na arena, decoracao pelas bordas e no teto, luzes. */
