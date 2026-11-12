@@ -148,7 +148,7 @@ reliquias:
 # Campos de monstros do Mundo das Masmorras (grupos parados pelo mapa para farmar XP; voltam 4 min depois de morrerem).
 campos:
   ativo: true
-  um-a-cada-chunks: 8
+  um-a-cada-chunks: 16   # 12/11: metade dos campos (menos monstros soltos no mapa = menos lag)
   coronas-por-monstro: 1   # x nivel do anel
   xp-classes: 6            # XP de habilidade por monstro, x nivel do anel
   # v2 (08/11): as estruturas do mapa (ruina, torre, monolito, acampamento, circulo, altar, ossada, torre quebrada)

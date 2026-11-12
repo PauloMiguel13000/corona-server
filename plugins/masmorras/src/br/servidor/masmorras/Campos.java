@@ -39,7 +39,7 @@ import org.bukkit.persistence.PersistentDataType;
 final class Campos implements Listener {
 
     // raio menor (08/11, celular travando): so nasce a menos de 72 blocos e some a mais de 150 - menos bichos por jogador
-    private static final int RAIO_CHUNKS = 4, RAIO_CAMPO = 14, RESPAWN_MS = 4 * 60_000, LONGE = 150;
+    private static final int RAIO_CHUNKS = 3, RAIO_CAMPO = 14, RESPAWN_MS = 4 * 60_000, LONGE = 150;
 
     enum Tipo { CAMPO, RUINA, TORRE, MONOLITO, ACAMPAMENTO, CIRCULO, ALTAR, OSSADA, TORRE_QUEBRADA }
 
@@ -99,7 +99,7 @@ final class Campos implements Listener {
         h ^= h >>> 29;
         h *= 0xBF58476D1CE4E5B9L;
         h ^= h >>> 32;
-        int freq = Math.max(2, pl.getConfig().getInt("campos.um-a-cada-chunks", 8));
+        int freq = Math.max(2, pl.getConfig().getInt("campos.um-a-cada-chunks", 16));
         return Math.floorMod(h, freq) == 0;
     }
 
