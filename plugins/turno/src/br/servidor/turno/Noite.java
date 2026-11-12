@@ -188,7 +188,8 @@ final class Noite {
             p.setFoodLevel(20);
             p.getInventory().setItem(0, tablet());
             p.getInventory().setHeldItemSlot(0);
-            p.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 0, false, false, false));
+            // 12/11 (pedido do Paulo): sem visao noturna - o restaurante fica escuro de verdade; so a cabine tem luz
+            p.removePotionEffect(PotionEffectType.NIGHT_VISION);
             v.barra = Bukkit.createBossBar("", BarColor.GREEN, BarStyle.SEGMENTED_10);
             v.barra.addPlayer(p);
             p.showTitle(net.kyori.adventure.title.Title.title(Turno.txt("§f§lNOITE " + (noite == 6 ? "PERSONALIZADA" : noite) + (coop() ? " §7(coop)" : "")),
@@ -601,8 +602,19 @@ final class Noite {
         p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 0.7f);
     }
 
+    /** No coop: quem esta olhando as cameras some para os colegas (dois na mesma camera ficavam um em cima do outro, tapando a visao). */
+    private void visivel(Player p, boolean ver) {
+        for (Vigia o : vigias) {
+            Player q = o.p();
+            if (q == null || q.equals(p)) continue;
+            if (ver) q.showPlayer(pl, p);
+            else q.hidePlayer(pl, p);
+        }
+    }
+
     private void mostrarCamera(Vigia v, Player p, int i) {
         v.camera = i;
+        visivel(p, false);
         Location c = mapa.camera(i);
         if (c == null) {
             // cozinha: so audio
@@ -633,6 +645,7 @@ final class Noite {
         if (v == null || v.camera < 0) return;
         v.camera = -1;
         p.teleport(v.lugar);
+        visivel(p, true);
         v.ancora = v.lugar.clone();
         p.getInventory().setItem(8, null);
         p.getInventory().setHeldItemSlot(0);
@@ -645,6 +658,11 @@ final class Noite {
     void remover(Player p) {
         Vigia v = vigia(p);
         if (v == null) return;
+        visivel(p, true);
+        for (Vigia o : vigias) {
+            Player q = o.p();
+            if (q != null && !q.equals(p)) p.showPlayer(pl, q);
+        }
         vigias.remove(v);
         if (v.barra != null) v.barra.removeAll();
         if (acabou) return;
@@ -733,6 +751,7 @@ final class Noite {
             p.setWalkSpeed(0.2f);
             var pulo = p.getAttribute(org.bukkit.attribute.Attribute.JUMP_STRENGTH);
             if (pulo != null) pulo.setBaseValue(pulo.getDefaultValue());
+            visivel(p, true);
             p.removePotionEffect(PotionEffectType.DARKNESS);
             p.removePotionEffect(PotionEffectType.NIGHT_VISION);
             if (venceu) {

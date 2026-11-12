@@ -188,14 +188,15 @@ final class Mapa {
         por(0, Y + 1, CADEIRA_Z, "dark_oak_stairs[facing=south]");    // cadeira (virada para o norte)
         por(-3, Y + 3, -3, "painting[facing=south]");
         por(3, Y + 3, -3, "painting[facing=south]");
-        por(0, Y + 4, 0, "light[level=7]");
-        por(0, Y + 5, 0, "sea_lantern");
-        por(0, Y + 4, -2, "light[level=5]");
+        // 12/11: cabine com luz fraca de lanterna (antes era uma lanterna do mar no teto, clara demais)
+        por(0, Y + 5, 0, "dark_oak_planks");
+        por(0, Y + 4, 0, "soul_lantern[hanging=true]");
+        por(0, Y + 4, -2, "light[level=7]");
         // luzes fracas nas salas (escuro, mas da para ver um pouco); corredores sem luz
         for (Sala s : SALAS.values()) {
             if (s.id.startsWith("corr") || s.id.equals("escritorio")) continue;
             int cx = (s.x1 + s.x2) / 2, cz = (s.z1 + s.z2) / 2;
-            por(cx, Y + 4, cz, s.id.equals("palco") ? "light[level=10]" : "light[level=4]");
+            por(cx, Y + 4, cz, s.id.equals("palco") ? "light[level=7]" : "light[level=4]");
             if (s.id.equals("salao")) {
                 por(cx - 8, Y + 4, cz, "light[level=4]");
                 por(cx + 8, Y + 4, cz, "light[level=4]");
@@ -271,9 +272,9 @@ final class Mapa {
 
     /** Luz do escritorio (acaba a energia). */
     void luzEscritorio(boolean acesa) {
-        por(0, Y + 4, 0, acesa ? "light[level=7]" : "air");
-        por(0, Y + 4, -2, acesa ? "light[level=5]" : "air");
-        por(0, Y + 5, 0, acesa ? "sea_lantern" : "dark_oak_planks");
+        por(0, Y + 4, 0, acesa ? "soul_lantern[hanging=true]" : "air");
+        por(0, Y + 4, -2, acesa ? "light[level=7]" : "air");
+        por(0, Y + 5, 0, "dark_oak_planks");
         Sala pc = SALAS.get("palco");
         for (int x = pc.x1 + 1; x <= pc.x2 - 1; x += 3) por(x, Y + 4, pc.z2 + 1, acesa ? "redstone_lamp[lit=true]" : "redstone_lamp[lit=false]");
     }

@@ -120,11 +120,17 @@ public final class Turno extends JavaPlugin implements Listener {
         return mapas.computeIfAbsent(i, k -> {
             Mapa m = new Mapa(mundo, k * Mapa.ESPACO);
             File flag = new File(getDataFolder(), "mapa-" + k + ".txt");
-            if (!flag.exists()) {
+            String feito = "";
+            try {
+                if (flag.exists()) feito = java.nio.file.Files.readString(flag.toPath()).trim();
+            } catch (IOException ignored) {
+            }
+            // "v2-escuro" (12/11): luzes novas - reconstroi os mapas feitos antes
+            if (!feito.equals("v2-escuro")) {
                 m.construir();
                 try {
                     getDataFolder().mkdirs();
-                    java.nio.file.Files.writeString(flag.toPath(), "construido");
+                    java.nio.file.Files.writeString(flag.toPath(), "v2-escuro");
                 } catch (IOException ignored) {
                 }
             }
