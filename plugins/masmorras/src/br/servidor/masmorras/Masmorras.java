@@ -1103,10 +1103,10 @@ public final class Masmorras extends JavaPlugin implements Listener {
     /**
      * Remendo (12/11): no celular o pacote do Bedrock desenha TODO piglin bruto como a Chorona do Nao Chore (o Nao Chore
      * usa o piglin bruto "emprestado"). Ate o pacote ser corrigido, as masmorras usam piglin comum no lugar.
-     * Para voltar: masmorras.piglin-bruto: true no config.
+     * Desligado (12/11): o pacote 1.14.2 corrige isso. Para ligar o remendo de novo: masmorras.piglin-bruto: false no config.
      */
     String semBruto(String tipo) {
-        return "PIGLIN_BRUTE".equals(tipo) && !getConfig().getBoolean("masmorras.piglin-bruto", false) ? "PIGLIN" : tipo;
+        return "PIGLIN_BRUTE".equals(tipo) && !getConfig().getBoolean("masmorras.piglin-bruto", true) ? "PIGLIN" : tipo;
     }
 
     /** O boneco com a cara do Herobrine (corpo do Steve + cabeca do Herobrine). Nao fica salvo no mundo. */
