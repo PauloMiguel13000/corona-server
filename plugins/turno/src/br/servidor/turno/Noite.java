@@ -635,8 +635,8 @@ final class Noite {
         } else {
             p.teleport(c);
             v.ancora = c.clone();
-            // as cameras tem visao noturna (pedido do Paulo, 12/11); fora delas o restaurante e escuro
-            p.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 0, false, false, false));
+            // sem pocao de visao noturna nas cameras (o Paulo pediu para tirar em 12/11): vale a luz da sala
+            p.removePotionEffect(PotionEffectType.NIGHT_VISION);
             p.sendTitle("", "§7CAM " + Mapa.CAMERAS_NOME[i], 0, 30, 10);
         }
         for (Animatronico a : bichos) if (a.boneco != null && salaDe(a).equals(Mapa.CAMERAS[i])) a.olharPara(c == null ? p.getLocation() : c);
