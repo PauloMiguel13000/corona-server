@@ -641,7 +641,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
     boolean atualizarAntigas() {
         if (!getConfig().getBoolean("refazer-antigas", true)) return false;
         if (demolindoAgora != null || atual != null) return true;
-        for (Masmorra m : todas) if ((m.versao < Planta.VERSAO || longeDemais(m)) && !demolir.contains(m)) demolir.add(m);
+        for (Masmorra m : todas) if ((m.versao < Planta.versaoDe(m.tipo) || longeDemais(m)) && !demolir.contains(m)) demolir.add(m);
         // FASE 7 (08/11): mundos que deixaram de ser de masmorras (o survival): tudo que sobrou la e desmanchado, o terreno volta
         List<String> velhos = getConfig().getStringList("desmanchar-mundos");
         int antigos = 0;

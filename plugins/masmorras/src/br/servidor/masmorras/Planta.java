@@ -14,6 +14,11 @@ final class Planta {
     /** Versao do desenho (masmorras de versao menor sao desmanchadas e feitas de novo). */
     static final int VERSAO = 2;
 
+    /** Versao pedida para um tipo: as aquaticas (tuneis de agua, 12/11) sao refeitas uma vez. */
+    static int versaoDe(Tipo t) {
+        return VERSAO + (t != null && t.tuneisDeAgua ? 1 : 0);
+    }
+
     final Tipo tipo;
     final long semente;
     final int ox, oy, oz;

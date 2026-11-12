@@ -107,7 +107,7 @@ final class Masmorra {
         m.saidaX = o.saidaX;
         m.saidaY = o.saidaY;
         m.saidaZ = o.saidaZ;
-        m.versao = Planta.VERSAO;
+        m.versao = Planta.versaoDe(tipo);
         m.fechar();
         return m;
     }
