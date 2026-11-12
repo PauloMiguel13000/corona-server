@@ -493,8 +493,10 @@ public final class Masmorras extends JavaPlugin implements Listener {
             for (int cz = Math.floorDiv(z1, 16); cz <= Math.floorDiv(z2, 16); cz++) p.chunks.add(new long[] {cx, cz});
         int[] faltam = {p.chunks.size()};
         for (long[] ch : p.chunks) {
-            w.addPluginChunkTicket((int) ch[0], (int) ch[1], this);
+            // 12/11: o bilhete so entra depois que o chunk carregou. Antes ele vinha primeiro, e addPluginChunkTicket
+            // carrega/gera o chunk na hora, na thread principal: o servidor parava 10 a 40 s a cada masmorra nova.
             w.getChunkAtAsync((int) ch[0], (int) ch[1], true, chunk -> {
+                w.addPluginChunkTicket((int) ch[0], (int) ch[1], this);
                 if (--faltam[0] == 0) depois(2, () -> validar(p));
             });
         }
@@ -712,8 +714,8 @@ public final class Masmorras extends JavaPlugin implements Listener {
             for (int cz = Math.floorDiv(a.z1(), 16); cz <= Math.floorDiv(a.z2(), 16); cz++) chunksDemolicao.add(new long[] {cx, cz});
         int[] faltam = {chunksDemolicao.size()};
         for (long[] ch : chunksDemolicao) {
-            w.addPluginChunkTicket((int) ch[0], (int) ch[1], this);
             w.getChunkAtAsync((int) ch[0], (int) ch[1], true, chunk -> {
+                w.addPluginChunkTicket((int) ch[0], (int) ch[1], this);   // depois de carregado: nao trava (ver tentar)
                 if (--faltam[0] == 0) depois(2, () -> desmanchar(m, w));
             });
         }
