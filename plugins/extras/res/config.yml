@@ -141,6 +141,9 @@ entradas:
 # Mundos fora das duas listas (minigames, lobbies) nao trocam nada.
 mochilas:
   ligado: true
+  # reset unico da mochila das masmorras: cada jogador perde os itens dela na proxima entrada (copia fica em
+  # plugins/Extras/reset-masmorras-<n>). 0 = nunca. Aumentar o numero faz outro reset.
+  reset-masmorras: 0
   survival: [world, world_nether, world_the_end, plots]
   masmorras: [masmorras_mundo, masmorras_nether, masmorras_end]
 

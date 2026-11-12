@@ -145,6 +145,7 @@ final class Votos implements Listener {
     void premiar(UUID id, Site s) {
         Player p = Bukkit.getPlayer(id);
         if (p == null) return;
+        VotoClaim.dar(p, pl);   // +150 blocos de terreno por voto (11/11)
         int dados = 0;
         for (String linha : pl.getConfig().getStringList("votos.premio.itens")) {
             String[] a = linha.trim().split("\\s+");

@@ -89,8 +89,12 @@ final class Vazio implements Listener {
         return pl.getConfig().getBoolean("vazio.ativo", true);
     }
 
+    /** Guarda o "sim": este metodo roda a cada passo de cada jogador, e olhar o disco ali travou o servidor 11 s (11/11). */
+    private volatile boolean feitoVisto;
+
     boolean feito() {
-        return feito.exists();
+        if (feitoVisto) return true;
+        return feitoVisto = feito.exists();
     }
 
     // ================================================================== limpar (uma vez)
