@@ -1,0 +1,10 @@
+name: MusicaMasmorra
+version: '1.1'
+main: br.servidor.musica.MusicaMasmorra
+api-version: '1.21'
+author: Corona Server
+description: Toca musica no spawn da masmorra (Java e Bedrock). /musicaspawn liga e desliga para o jogador.
+commands:
+  musicaspawn:
+    description: Liga ou desliga a musica do spawn da masmorra e a musica de chefe para voce
+    aliases: [somspawn]

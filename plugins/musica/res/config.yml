@@ -1,0 +1,19 @@
+# Mundos onde a musica toca (o spawn da masmorra).
+mundos: [masmorras_spawn]
+volume: 1.0
+# Espera entre uma faixa e a proxima, em segundos.
+pausa: 4
+# Faixas: som do jogo e duracao em segundos. Tocam em ordem, comecando por uma sorteada.
+faixas:
+  - {som: 'minecraft:music_disc.pigstep', segundos: 149}
+  - {som: 'minecraft:music_disc.otherside', segundos: 196}
+  - {som: 'minecraft:music_disc.creator', segundos: 177}
+  - {som: 'minecraft:music_disc.relic', segundos: 219}
+
+# Musica de luta contra chefe: toca para quem estiver perto de um monstro com um destes nomes.
+chefe:
+  nomes: [herobrine]
+  som: 'minecraft:music.dragon'
+  segundos: 345
+  raio: 40
+  volume: 1.0

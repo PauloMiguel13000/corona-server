@@ -1,0 +1,6 @@
+name: VigiaLag
+version: '1.0'
+main: br.servidor.vigialag.VigiaLag
+api-version: '1.21'
+author: Corona Server
+description: Anota no log (e em plugins/VigiaLag/travadas.log) o que a thread principal estava fazendo quando um tick demora demais. So observa, nao muda nada.

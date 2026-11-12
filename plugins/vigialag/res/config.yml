@@ -1,0 +1,6 @@
+# Tick parado por mais que isto (ms) e anotado, com o que o servidor estava fazendo.
+limite-ms: 400
+# No maximo uma anotacao a cada tantos segundos.
+intervalo-segundos: 5
+# Nao anota nos primeiros segundos depois de ligar (o arranque trava mesmo).
+espera-inicial-segundos: 240

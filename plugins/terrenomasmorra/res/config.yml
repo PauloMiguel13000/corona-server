@@ -1,0 +1,6 @@
+# Mundos das masmorras onde o jogador pode marcar terreno com a pa de ouro (GriefPrevention).
+mundos: [masmorras_mundo]
+# Distancias minimas, em blocos, entre a borda do terreno e:
+lobby-raio: 160          # o centro do lobby do mundo das masmorras (0,0)
+margem-masmorra: 40      # a area protegida de qualquer masmorra
+margem-monstros: 16      # o centro de um ponto de monstros (o campo tem raio 14; pontos sao muitos, margem grande demais nao deixa lugar livre)

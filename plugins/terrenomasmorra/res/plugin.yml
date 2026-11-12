@@ -1,0 +1,15 @@
+name: TerrenoMasmorra
+version: '1.0'
+main: br.servidor.terrenomasmorra.TerrenoMasmorra
+api-version: '1.21'
+author: Corona Server
+description: Libera terreno (claim do GriefPrevention) no mundo das masmorras, longe do lobby, das masmorras e dos pontos de monstros.
+depend: [GriefPrevention]
+softdepend: [Masmorras, Multiverse-Core]
+commands:
+  terrenomasmorra:
+    description: Admin - testa se uma area pode virar terreno (/terrenomasmorra testar <x1> <z1> <x2> <z2>)
+    permission: terrenomasmorra.admin
+permissions:
+  terrenomasmorra.admin:
+    default: op
