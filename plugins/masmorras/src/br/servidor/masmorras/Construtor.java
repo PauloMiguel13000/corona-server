@@ -142,6 +142,8 @@ final class Construtor {
         for (int k = 0; k < p.salas.size(); k++) decorar(p.salas.get(k), k == p.salas.size() - 1);
         for (Caixa c : p.corredores) luz(c.cx(), c.y2(), c.cz());
         if (t.tuneisDeAgua) for (Caixa c : p.corredores) tunelDeAgua(c);
+        if (t.corredorDeTeias) for (Caixa c : p.corredores) corredorDeTeias(c);
+        if (t.ponteDeLava) for (Caixa c : p.corredores) ponteDeLava(c);
         if (t.onde == Tipo.Onde.END) {
             varanda();
             ilha(p.area());
@@ -198,6 +200,80 @@ final class Construtor {
                 for (int y = fundo; y <= y1 - 2; y++) por(x, y, z, parede(x, y, z));
             }
         o.protecao.add(noX ? new Caixa(ini - 1, fundo, b1 - 1, fim + 1, c.y2() + 1, b2 + 1) : new Caixa(b1 - 1, fundo, ini - 1, b2 + 1, c.y2() + 1, fim + 1));
+    }
+
+    /** Fatias do corredor (ao longo do comprimento) que ficam fora das salas, com 2 blocos de folga; so o primeiro trecho continuo. */
+    private List<Integer> fatiasLivres(Caixa c, boolean noX) {
+        int a1 = noX ? c.x1() : c.z1(), a2 = noX ? c.x2() : c.z2();
+        int b1 = noX ? c.z1() : c.x1(), b2 = noX ? c.z2() : c.x2();
+        List<Integer> fatias = new ArrayList<>();
+        for (int a = a1; a <= a2; a++) {
+            boolean livre = true;
+            for (int b = b1; b <= b2 && livre; b++) {
+                int x = noX ? a : b, z = noX ? b : a;
+                for (Caixa s : p.salas) {
+                    Caixa g = s.crescer(2);
+                    if (x >= g.x1() && x <= g.x2() && z >= g.z1() && z <= g.z2()) {
+                        livre = false;
+                        break;
+                    }
+                }
+            }
+            if (livre) fatias.add(a);
+            else if (!fatias.isEmpty()) break;
+        }
+        return fatias;
+    }
+
+    /**
+     * Ninho da aranha (12/11): cortinas de teia atravessam o corredor a cada 2 blocos, com uma passagem de 1 bloco que
+     * troca de lado: o jogador anda em ziguezague (ou fica preso na teia); as aranhas passam por dentro.
+     */
+    private void corredorDeTeias(Caixa c) {
+        boolean noX = (c.x2() - c.x1()) >= (c.z2() - c.z1());
+        int b1 = noX ? c.z1() : c.x1(), b2 = noX ? c.z2() : c.x2();
+        List<Integer> fatias = fatiasLivres(c, noX);
+        if (fatias.size() < 4 || b2 - b1 < 2) return;
+        int y1 = c.y1();
+        for (int k = 1; k < fatias.size() - 1; k += 2) {
+            int a = fatias.get(k);
+            int passagem = ((k / 2) % 2 == 0) ? b1 : b2;
+            for (int b = b1; b <= b2; b++) {
+                if (b == passagem) continue;
+                int x = noX ? a : b, z = noX ? b : a;
+                for (int y = y1; y <= Math.min(y1 + 2, c.y2()); y++) por(x, y, z, "minecraft:cobweb");
+            }
+        }
+    }
+
+    /**
+     * Forja (12/11): o corredor vira uma ponte de 1 bloco sobre um canal de lava (a lava fica no lugar do piso, 1 bloco
+     * de fundura: quem cai consegue sair andando, mas queima).
+     */
+    private void ponteDeLava(Caixa c) {
+        boolean noX = (c.x2() - c.x1()) >= (c.z2() - c.z1());
+        int b1 = noX ? c.z1() : c.x1(), b2 = noX ? c.z2() : c.x2();
+        List<Integer> fatias = fatiasLivres(c, noX);
+        if (fatias.size() < 4 || b2 - b1 < 2) return;
+        int y1 = c.y1(), meio = (b1 + b2) / 2, n = fatias.size();
+        for (int k = 0; k < n; k++) {
+            int a = fatias.get(k);
+            for (int b = b1 - 1; b <= b2 + 1; b++) {
+                int x = noX ? a : b, z = noX ? b : a;
+                por(x, y1 - 2, z, parede(x, y1 - 2, z));
+                if (b < b1 || b > b2) por(x, y1 - 1, z, parede(x, y1 - 1, z));
+                else if (b == meio) por(x, y1 - 1, z, "minecraft:polished_blackstone_bricks");
+                else por(x, y1 - 1, z, "minecraft:lava");
+            }
+        }
+        int ini = fatias.get(0), fim = fatias.get(n - 1);
+        for (int a : new int[] {ini - 1, fim + 1})
+            for (int b = b1 - 1; b <= b2 + 1; b++) {
+                int x = noX ? a : b, z = noX ? b : a;
+                por(x, y1 - 1, z, piso(x, y1 - 1, z));
+                por(x, y1 - 2, z, parede(x, y1 - 2, z));
+            }
+        o.protecao.add(noX ? new Caixa(ini - 1, y1 - 2, b1 - 1, fim + 1, c.y2() + 1, b2 + 1) : new Caixa(b1 - 1, y1 - 2, ini - 1, b2 + 1, c.y2() + 1, fim + 1));
     }
 
     /** Pilares na arena, decoracao pelas bordas e no teto, luzes. */

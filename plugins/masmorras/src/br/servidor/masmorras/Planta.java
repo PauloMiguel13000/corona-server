@@ -16,7 +16,7 @@ final class Planta {
 
     /** Versao pedida para um tipo: as aquaticas (tuneis de agua, 12/11) sao refeitas uma vez. */
     static int versaoDe(Tipo t) {
-        return VERSAO + (t != null && t.tuneisDeAgua ? 1 : 0);
+        return VERSAO + (t != null && (t.tuneisDeAgua || t.corredorDeTeias || t.ponteDeLava) ? 1 : 0);
     }
 
     final Tipo tipo;

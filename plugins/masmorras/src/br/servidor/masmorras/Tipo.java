@@ -69,6 +69,8 @@ final class Tipo {
     boolean luzNoTeto;
     /** Masmorra aquatica: os corredores entre as salas sao tuneis alagados (passa mergulhando). */
     boolean tuneisDeAgua;
+    /** Ninho da aranha: cortinas de teia nos corredores. Forja: ponte estreita sobre lava nos corredores. */
+    boolean corredorDeTeias, ponteDeLava;
     String[] decoPiso = {}, decoTeto = {};
     double chancePiso = 0.15, chanceTeto = 0.08;
     String tabela = "chests/simple_dungeon";
@@ -173,6 +175,7 @@ final class Tipo {
 
         t = add(new Tipo("NINHO", "Ninho da Aranha", "Rainha Aranha", Onde.NORMAL, 1, Estilo.SUBTERRANEA));
         t.salas = 4;
+        t.corredorDeTeias = true;
         t.parede = bs("mossy_cobblestone", "mossy_cobblestone", "mossy_cobblestone", "cobblestone", "cobblestone", "tuff", "coarse_dirt");
         t.piso = bs("coarse_dirt", "coarse_dirt", "rooted_dirt", "moss_block", "dirt");
         t.teto = bs("cobblestone", "mossy_cobblestone", "mossy_cobblestone", "dirt");
@@ -285,6 +288,7 @@ final class Tipo {
         // ----------------------------------------------------------------- nether
         t = add(new Tipo("FORJA", "Forja Infernal", "Senhor das Chamas", Onde.NETHER, 3, Estilo.SUBTERRANEA));
         t.salas = 4;
+        t.ponteDeLava = true;
         t.parede = bs("polished_blackstone_bricks", "polished_blackstone_bricks", "polished_blackstone_bricks", "blackstone", "blackstone", "basalt[axis=y]", "cracked_polished_blackstone_bricks");
         t.piso = bs("polished_blackstone", "polished_blackstone", "polished_blackstone", "blackstone", "magma_block");
         t.teto = bs("polished_blackstone_bricks", "polished_blackstone_bricks", "basalt[axis=y]");
