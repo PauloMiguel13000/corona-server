@@ -829,7 +829,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
     LivingEntity lacaio(Masmorra m, String tipo, Location l, boolean doChefe) {
         EntityType et;
         try {
-            et = EntityType.valueOf(tipo);
+            et = EntityType.valueOf(semBruto(tipo));
         } catch (IllegalArgumentException ex) {
             return null;
         }
@@ -846,6 +846,18 @@ public final class Masmorras extends JavaPlugin implements Listener {
             return null;
         }
         int n = m.tipo.nivel;
+        if ("PIGLIN_BRUTE".equals(tipo) && le.getType() == EntityType.PIGLIN) {
+            // piglin comum no lugar do bruto: fica com a forca do bruto (vida 50, machado de ouro) e nao para para olhar ouro
+            AttributeInstance v0 = le.getAttribute(Attribute.MAX_HEALTH), d0 = le.getAttribute(Attribute.ATTACK_DAMAGE);
+            if (v0 != null) v0.setBaseValue(50);
+            if (d0 != null) d0.setBaseValue(7);
+            le.setCanPickupItems(false);
+            EntityEquipment eq0 = le.getEquipment();
+            if (eq0 != null) {
+                eq0.setItemInMainHand(new ItemStack(Material.GOLDEN_AXE));
+                eq0.setItemInMainHandDropChance(0f);
+            }
+        }
         AttributeInstance vida = le.getAttribute(Attribute.MAX_HEALTH);
         if (vida != null) {
             vida.setBaseValue(Math.min(1024, vida.getBaseValue() * (1 + 0.3 * (n - 1))));
@@ -898,7 +910,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         Location l = new Location(w, a.cx() + 0.5, a.y1(), a.cz() + 0.5);
         EntityType et;
         try {
-            et = EntityType.valueOf(t.chefe);
+            et = EntityType.valueOf(semBruto(t.chefe));
         } catch (IllegalArgumentException ex) {
             return;
         }
@@ -1086,6 +1098,15 @@ public final class Masmorras extends JavaPlugin implements Listener {
             });
             return;
         }
+    }
+
+    /**
+     * Remendo (12/11): no celular o pacote do Bedrock desenha TODO piglin bruto como a Chorona do Nao Chore (o Nao Chore
+     * usa o piglin bruto "emprestado"). Ate o pacote ser corrigido, as masmorras usam piglin comum no lugar.
+     * Para voltar: masmorras.piglin-bruto: true no config.
+     */
+    String semBruto(String tipo) {
+        return "PIGLIN_BRUTE".equals(tipo) && !getConfig().getBoolean("masmorras.piglin-bruto", false) ? "PIGLIN" : tipo;
     }
 
     /** O boneco com a cara do Herobrine (corpo do Steve + cabeca do Herobrine). Nao fica salvo no mundo. */
@@ -2221,7 +2242,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
                     return true;
                 }
                 Location lc = pj.getLocation().add(pj.getLocation().getDirection().setY(0).normalize().multiply(3));
-                LivingEntity zb = (LivingEntity) pj.getWorld().spawnEntity(lc, EntityType.valueOf(tt.chefe.equals("WARDEN") ? "ZOMBIE" : tt.chefe), CreatureSpawnEvent.SpawnReason.CUSTOM);
+                LivingEntity zb = (LivingEntity) pj.getWorld().spawnEntity(lc, EntityType.valueOf(tt.chefe.equals("WARDEN") ? "ZOMBIE" : semBruto(tt.chefe)), CreatureSpawnEvent.SpawnReason.CUSTOM);
                 if (zb instanceof Mob mb) mb.setAI(false);
                 zb.customName(Chefe.nome(tt));
                 zb.setCustomNameVisible(true);
