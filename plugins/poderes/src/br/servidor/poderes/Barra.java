@@ -179,6 +179,10 @@ final class Barra implements Listener {
         p.getPersistentDataContainer().set(kLigada, PersistentDataType.BYTE, (byte) 1);
         marcarVoltar(p, false);
         p.updateInventory();
+        // Bedrock (Geyser): logo depois de trocar de mundo o cliente as vezes nao desenha os itens novos; manda de novo
+        for (long espera : new long[] {20L, 60L}) Bukkit.getScheduler().runTaskLater(pl, () -> {
+            if (p.isOnline() && ligada(p)) p.updateInventory();
+        }, espera);
         if (avisar) {
             p.playSound(p.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 0.7f, 1.6f);
             p.sendMessage("§a§l>> §aBarra de habilidades LIGADA. §7Slots §f1 a 5 §7= as 5 habilidades de " + c.cor + c.nome
