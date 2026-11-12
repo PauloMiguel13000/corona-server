@@ -174,3 +174,9 @@ boss-mundial:
   bonus-1: 200
   bonus-2: 120
   bonus-3: 60
+
+# Pets (BabyPets) so aparecem nestes mundos; nos outros (minigames, terror, lobbies) o pet some e volta depois.
+# Lista vazia = os mundos das mochilas (survival, plots e masmorras) + masmorras_spawn.
+pets:
+  esconder-fora: true
+  mundos-permitidos: []

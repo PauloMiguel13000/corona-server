@@ -2,7 +2,7 @@ name: Extras
 version: '1.0'
 main: br.servidor.extras.Extras
 api-version: '1.21'
-softdepend: [GriefPrevention, WorldGuard, Geyser-Spigot, floodgate, AuthMe]
+softdepend: [GriefPrevention, WorldGuard, Geyser-Spigot, floodgate, AuthMe, BabyPets]
 description: Teleporte aleatorio (/rtp) e queda segura no spawn alto.
 commands:
   rtp:

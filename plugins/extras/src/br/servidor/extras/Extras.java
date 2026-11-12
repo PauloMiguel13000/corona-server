@@ -68,6 +68,7 @@ public final class Extras extends JavaPlugin implements Listener {
         placas = new Placas(this);
         vazio = new Vazio(this);
         Bukkit.getPluginManager().registerEvents(vazio, this);
+        Bukkit.getPluginManager().registerEvents(new SemPets(this), this);
         votos = new Votos(this);
         Bukkit.getPluginManager().registerEvents(votos, this);
         votos.iniciar();
