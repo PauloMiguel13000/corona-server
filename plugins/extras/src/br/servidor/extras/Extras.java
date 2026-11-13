@@ -72,6 +72,7 @@ public final class Extras extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new KitsContexto(this), this);
         tesouro = new Tesouro(this);
         Bukkit.getPluginManager().registerEvents(tesouro, this);
+        new PainelDia(this);
         votos = new Votos(this);
         Bukkit.getPluginManager().registerEvents(votos, this);
         votos.iniciar();

@@ -39,6 +39,8 @@ final class Tesouro implements Listener {
         Bukkit.getScheduler().runTaskTimer(pl, this::brilhar, 40L, 20L);
     }
 
+    boolean ativo() { return bau != null && !aberto; }
+
     private World mundo() { return Bukkit.getWorld(pl.getConfig().getString("tesouro.mundo", "world")); }
 
     void talvezSurgir() {

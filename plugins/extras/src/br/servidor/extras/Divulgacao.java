@@ -67,7 +67,12 @@ final class Divulgacao implements Listener {
             "&6&l>> &eNOVO: a &6&lPRISÃO &e(Rank Up)! &f/minas &7— 12 minas, dinheiro próprio, kits e encantamentos. Portal no spawn!",
             "&6&l>> &eCoragem? A &cMina PvP &e(rank D) tem o melhor minério e paga por abate, mas lá quem morre perde os itens. &f/minas",
             "&6&l>> &eNa Prisão: pise no &atapete verde &epara vender, pegue a &a/recompensa &ediária e fique de olho na &bChuva de Minério&e!",
-            "&6&l>> &eDefesa da Torre tem fases novas: &bGeleira &ee &5Ninho do Dragão&e, e 3 torres novas! &f/defesa");
+            "&6&l>> &eDefesa da Torre tem fases novas: &bGeleira &ee &5Ninho do Dragão&e, e 3 torres novas! &f/defesa",
+            "&6&l>> &eNOVO: &f/kits &e— kits do &aSurvival &e(sobrevivente, construtor, fazendeiro, minerador) e das &cMasmorras &e(aventureiro, alquimista, explorador)!",
+            "&6&l>> &eCAÇA AO TESOURO: de tempos em tempos um &6Baú do Tesouro &eaparece no Survival com um feixe de luz. &f/tesouro",
+            "&6&l>> &eTodo dia uma &cmasmorra em destaque &ecom coronas e XP em DOBRO — veja no painel do spawn!",
+            "&6&l>> &eDefesa da Torre: &6poderes &e(meteoros, nevasca, trovão) e um &5desafio diferente &etodo dia. &f/defesa",
+            "&6&l>> &eNa Prisão tem &6missões do dia &ecom prêmio em $ — dentro dela use &f/missoes");
 
     private void dica() {
         List<String> l = new java.util.ArrayList<>(pl.getConfig().getStringList("divulgacao.dicas"));
