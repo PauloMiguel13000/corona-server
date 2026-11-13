@@ -49,7 +49,7 @@ import java.util.*;
 public final class Mineracao extends JavaPlugin implements Listener {
 
     static final String MUNDO = "mineracao";
-    static final int VERSAO_CONSTRUCAO = 7;   // 4: tapetes de vender; 5: loja de picaretas; 6: sem melhoria com $ (so encantando)
+    static final int VERSAO_CONSTRUCAO = 8;   // 4: tapetes de vender; 5: loja de picaretas; 6: sem melhoria com $ (so encantando)
     /** 13/11 (Paulo): minas em quadrado (4 x 3), perto uma da outra para todos se verem, com um vao de 10 blocos
      *  de vazio entre as bordas (ninguem pula de uma para a outra). */
     static final int GRADE_X0 = 100, GRADE_Z0 = -53, GRADE_PASSO = 2 * (Mina.RAIO + 1 + Mina.BORDA) + 1 + 10;
@@ -380,11 +380,20 @@ public final class Mineracao extends JavaPlugin implements Listener {
         icone(new Location(mundo, 0.5, PISO + 6.2, 0.5), Material.DIAMOND_PICKAXE, 1.4f);
         texto(new Location(mundo, 0.5, PISO + 8.6, 0.5), "§8§l⛓ §6§lPRISÃO CORONA §8§l⛓\n§7Minere, venda e suba de rank\n§e/minas §7• §e/rankup §7• §e/vender", 1.3f);
         interacao(new Location(mundo, 0.5, PISO + 1, 0.5), "menu", 2f, 4f);
-        totem(-9, 0, Material.EXPERIENCE_BOTTLE, "§6§lRANK UP", "§7suba de rank com $", "rankup", "minecraft:gold_block", -7, 0);
-        totem(9, 0, Material.GOLD_INGOT, "§2§lVENDER", "§7venda o minério das minas", "vender", "minecraft:emerald_block", 7, 0);
-        totem(0, 9, Material.CHEST, "§b§lKITS", "§7kits da prisão (24 h)", "kits", "minecraft:diamond_block", 0, 7);
+        // 13/11 (Paulo): as estacoes do patio viraram bancas (como a loja) com um farol de cor atras de cada uma
+        banca(-9, 0, 1, 0, "minecraft:yellow_wool", "minecraft:orange_wool", new Material[]{Material.EXPERIENCE_BOTTLE, Material.NETHER_STAR, Material.GOLD_INGOT},
+                "§6§l▲ RANK UP ▲\n§fsuba de rank com $\n§7pise no tapete ou clique", "rankup", "minecraft:yellow_glazed_terracotta");
+        farol(-12, 0, "minecraft:gold_block", "minecraft:yellow_stained_glass");
+        banca(9, 0, -1, 0, "minecraft:lime_wool", "minecraft:white_wool", new Material[]{Material.EMERALD, Material.RAW_GOLD, Material.DIAMOND},
+                "§2§l$ VENDER $\n§fvende todo o minério\n§7pise no tapete ou clique", "vender", "minecraft:lime_glazed_terracotta");
+        farol(12, 0, "minecraft:emerald_block", "minecraft:lime_stained_glass");
+        banca(0, 9, 0, -1, "minecraft:red_wool", "minecraft:white_wool", new Material[]{Material.CHEST, Material.IRON_CHESTPLATE, Material.GOLDEN_APPLE},
+                "§c§l✦ KITS ✦\n§fkits da Prisão (24 h)\n§7pise no tapete ou clique", "kits", "minecraft:red_glazed_terracotta");
+        farol(0, 12, "minecraft:diamond_block", "minecraft:red_stained_glass");
         // 13/11 (Paulo): picareta so fica forte encantando na mesa (nada de melhorar com $)
-        totem(0, -9, Material.ENCHANTING_TABLE, "§d§lENCANTAMENTOS", "§7leva para a sala das mesas", "enc", "minecraft:amethyst_block", 0, -7);
+        banca(0, -9, 0, 1, "minecraft:purple_wool", "minecraft:magenta_wool", new Material[]{Material.ENCHANTED_BOOK, Material.ENCHANTING_TABLE, Material.LAPIS_LAZULI},
+                "§d§l✧ ENCANTAMENTOS ✧\n§fleva para a sala das mesas\n§7pise no tapete ou clique", "enc", "minecraft:magenta_glazed_terracotta");
+        farol(0, -12, "minecraft:iron_block", "minecraft:magenta_stained_glass");
         banca(-9, -10, 0, 1);   // loja do patio, de frente para o sul (tapete em -9,-8)
         for (int[] b : new int[][]{{-13, -10}, {-13, -8}}) por(b[0], PISO + 1, b[1], "minecraft:anvil[facing=north]");
         texto(new Location(mundo, -12.5, PISO + 2.6, -8.5), "§7§lBIGORNAS", 0.8f);
@@ -393,6 +402,12 @@ public final class Mineracao extends JavaPlugin implements Listener {
     /** Banca da loja: balcao de barris, picaretas e lapis em cima, toldo listrado azul e branco, lanterna e letreiro.
      *  (fx, fz) = para onde a frente olha; o tapete fica 2 blocos na frente. */
     private void banca(int cx, int cz, int fx, int fz) {
+        banca(cx, cz, fx, fz, "minecraft:blue_wool", "minecraft:white_wool", new Material[]{Material.IRON_PICKAXE, Material.DIAMOND_PICKAXE, Material.LAPIS_LAZULI},
+                "§b§l⛏ LOJA ⛏\n§fpicaretas e lápis-lazúli\n§7pise no tapete ou clique", "loja", "minecraft:light_blue_glazed_terracotta");
+    }
+
+    /** Banca generica: lona (duas cores listradas), tres mercadorias no balcao, letreiro, acao do clique e bloco do tapete. */
+    private void banca(int cx, int cz, int fx, int fz, String lona1, String lona2, Material[] merc, String titulo, String acao, String tapete) {
         int px = -fz, pz = fx;   // lado
         for (int sd = -1; sd <= 1; sd++)
             for (int d = -1; d <= 0; d++)
@@ -407,12 +422,11 @@ public final class Mineracao extends JavaPlugin implements Listener {
                 por(x - fx, PISO + 2, z - fz, "minecraft:spruce_fence");
                 por(x - fx, PISO + 3, z - fz, "minecraft:spruce_fence");
             }
-            for (int d = -1; d <= 0; d++) por(x + d * fx, PISO + 4, z + d * fz, (sd + 1) % 2 == 0 ? "minecraft:blue_wool" : "minecraft:white_wool");
+            for (int d = -1; d <= 0; d++) por(x + d * fx, PISO + 4, z + d * fz, (sd + 1) % 2 == 0 ? lona1 : lona2);
         }
         por(cx - fx, PISO + 1, cz - fz, "minecraft:chest[facing=" + face(fx, fz) + "]");
         por(cx - fx, PISO + 3, cz - fz, "minecraft:lantern[hanging=true]");
         // mercadoria deitada no balcao
-        Material[] merc = {Material.IRON_PICKAXE, Material.DIAMOND_PICKAXE, Material.LAPIS_LAZULI};
         for (int sd = -1; sd <= 1; sd++) {
             Material mm = merc[sd + 1];
             Location l = new Location(mundo, cx + sd * px + 0.5, PISO + 2.03, cz + sd * pz + 0.5);
@@ -424,13 +438,21 @@ public final class Mineracao extends JavaPlugin implements Listener {
                 d.getPersistentDataContainer().set(kVersao, PersistentDataType.INTEGER, VERSAO_CONSTRUCAO);
             });
         }
-        texto(new Location(mundo, cx + 0.5 + fx * 0.6, PISO + 5.4, cz + 0.5 + fz * 0.6), "§b§l⛏ LOJA ⛏\n§fpicaretas e lápis-lazúli\n§7pise no tapete ou clique", 1.0f);
-        interacao(new Location(mundo, cx + 0.5, PISO + 1, cz + 0.5), "loja", 3f, 2.5f);
-        por(cx + 2 * fx, PISO, cz + 2 * fz, "minecraft:light_blue_glazed_terracotta");
+        texto(new Location(mundo, cx + 0.5 + fx * 0.6, PISO + 5.4, cz + 0.5 + fz * 0.6), titulo, 1.0f);
+        interacao(new Location(mundo, cx + 0.5, PISO + 1, cz + 0.5), acao, 3f, 2.5f);
+        por(cx + 2 * fx, PISO, cz + 2 * fz, tapete);
         lojas.add(new int[]{cx + 2 * fx, cz + 2 * fz});
     }
 
     final List<int[]> lojas = new ArrayList<>();
+
+    /** Farol (beacon) com vidro colorido: feixe de luz ate o ceu atras da banca. */
+    private void farol(int x, int z, String base, String vidro) {
+        for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) por(x + dx, PISO, z + dz, base);
+        por(x, PISO + 1, z, "minecraft:beacon");
+        por(x, PISO + 2, z, vidro);
+        for (int y = PISO + 3; y <= PISO + 12; y++) if (mundo.getBlockAt(x, y, z).getType() == Material.LIGHT) por(x, y, z, "minecraft:air");
+    }
 
     static String face(int fx, int fz) { return fx > 0 ? "east" : fx < 0 ? "west" : fz > 0 ? "south" : "north"; }
 
