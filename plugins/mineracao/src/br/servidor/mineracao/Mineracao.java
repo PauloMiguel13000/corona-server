@@ -76,7 +76,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
     final List<Mina> minas = new ArrayList<>();
     final Map<Material, Double> precos = new EnumMap<>(Material.class);
     World mundo;
-    NamespacedKey kRank, kMinerado, kGanhou, kDinheiro, kEnfeite, kAcao, kPrisao, kAuto;
+    NamespacedKey kRank, kMinerado, kGanhou, kDinheiro, kEnfeite, kAcao, kPrisao, kAuto, kPrest, kDiaria;
     static final NamespacedKey VIP_NIVEL = new NamespacedKey("extras", "vip_nivel");
     static final NamespacedKey VIP_ATE = new NamespacedKey("extras", "vip_ate");
     private final Set<String> mundosComAcesso = new HashSet<>();
@@ -102,6 +102,8 @@ public final class Mineracao extends JavaPlugin implements Listener {
         kAcao = new NamespacedKey(this, "acao");
         kPrisao = new NamespacedKey(this, "item_prisao");
         kAuto = new NamespacedKey(this, "auto_venda");
+        kPrest = new NamespacedKey(this, "prestigio");
+        kDiaria = new NamespacedKey(this, "diaria");
         saveDefaultConfig();
         mundosComAcesso.addAll(getConfig().getStringList("mundos-com-acesso"));
         int reset = Math.max(1, getConfig().getInt("reset-minutos", 8));
@@ -187,6 +189,9 @@ public final class Mineracao extends JavaPlugin implements Listener {
         }, 400L, 200L);
         Bukkit.getScheduler().runTaskLater(this, this::portalDoSpawn, 200L);
         Bukkit.getScheduler().runTaskTimer(this, this::brilhoTapetes, 60L, 20L);
+        Bukkit.getScheduler().runTaskLater(this, this::infosPortais, 160L);
+        Bukkit.getScheduler().runTaskTimer(this, this::atualizarInfos, 200L, 100L);
+        Bukkit.getScheduler().runTaskTimer(this, this::sortearChuva, 12000L, 36000L);
     }
 
     @Override
@@ -481,6 +486,69 @@ public final class Mineracao extends JavaPlugin implements Listener {
         }
     }
 
+    // ------------------------------------------------------------------ chuva de minerio (evento) e placas dos portais
+    String chuvaMina;
+    long chuvaAte;
+
+    boolean chuva(Mina m) { return m != null && m.id.equals(chuvaMina) && System.currentTimeMillis() < chuvaAte; }
+
+    /** A cada 30 min (com gente na Prisao): uma mina sorteada da minerio em DOBRO por 10 min. */
+    void sortearChuva() {
+        if (mundo == null || mundo.getPlayers().isEmpty()) return;
+        List<Mina> normais = new ArrayList<>();
+        int maior = 0;
+        for (Player p : mundo.getPlayers()) maior = Math.max(maior, rank(p));
+        for (Mina m : minas) if (!m.pvp && m.rank <= maior) normais.add(m);
+        if (normais.isEmpty()) return;
+        Mina m = normais.get(new Random().nextInt(normais.size()));
+        chuvaMina = m.id;
+        chuvaAte = System.currentTimeMillis() + 10 * 60_000L;
+        for (Player p : mundo.getPlayers()) {
+            p.showTitle(Title.title(txt("§b§l⛏ CHUVA DE MINÉRIO!"), txt("§f" + m.nome.split(" • ")[0] + " §7dá minério em §bDOBRO §7por 10 min"),
+                    Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(3), Duration.ofMillis(600))));
+            p.playSound(p.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 1f, 0.8f);
+        }
+        Bukkit.broadcast(txt("§b§l⛏ CHUVA DE MINÉRIO §bno §f" + m.nome + "§b: minério em dobro por 10 minutos! §e/minas " + m.id));
+        getLogger().info("Chuva de minerio no " + m.id);
+        atualizarInfos();
+    }
+
+    private final Map<String, TextDisplay> infos = new HashMap<>();
+
+    /** Plaquinha embaixo de cada portal de mina no patio: quantos jogadores, quanto ja foi minerado, quando refaz. */
+    void infosPortais() {
+        if (mundo == null) return;
+        for (Entity e : mundo.getEntities())
+            if ("info".equals(e.getPersistentDataContainer().get(kEnfeite, PersistentDataType.STRING))) e.remove();
+        infos.clear();
+        for (Portal pt : portaisPatio) {
+            Mina m = mina(pt.acao());
+            if (m == null) continue;
+            int dx = pt.parede() == 'l' ? -1 : pt.parede() == 'o' ? 1 : 0, dz = pt.parede() == 'n' ? 1 : pt.parede() == 's' ? -1 : 0;
+            TextDisplay t = texto(new Location(mundo, pt.x() + 0.5 + dx * 1.8, PISO + 6.3, pt.z() + 0.5 + dz * 1.8), "§7...", 0.7f);
+            t.getPersistentDataContainer().set(kEnfeite, PersistentDataType.STRING, "info");
+            infos.put(m.id, t);
+        }
+        atualizarInfos();
+    }
+
+    void atualizarInfos() {
+        if (mundo == null || infos.isEmpty()) return;
+        Map<String, Integer> gente = new HashMap<>();
+        for (Player p : mundo.getPlayers()) { Mina m = minaDaArea(p.getLocation()); if (m != null) gente.merge(m.id, 1, Integer::sum); }
+        long agora = System.currentTimeMillis();
+        for (Map.Entry<String, TextDisplay> en : infos.entrySet()) {
+            Mina m = mina(en.getKey());
+            TextDisplay t = en.getValue();
+            if (m == null || t == null || !t.isValid()) continue;
+            int pct = (int) Math.min(100, m.quebrados * 100L / Mina.volume());
+            long falta = m.quebrados == 0 ? -1 : Math.max(0, resetMs - (agora - m.ultimoReset));
+            String l = "§f👤 " + gente.getOrDefault(m.id, 0) + " §8• §7" + pct + "% minerada" + (falta < 0 ? " §8• §acheia" : " §8• §7refaz em §f" + (falta / 60000 + 1) + " min");
+            if (chuva(m)) l = "§b§l⛏ CHUVA: MINÉRIO EM DOBRO!\n" + l;
+            t.text(txt(l));
+        }
+    }
+
     void brilhoTapetes() {
         if (mundo == null) return;
         Set<Mina> comGente = new HashSet<>();
@@ -706,6 +774,68 @@ public final class Mineracao extends JavaPlugin implements Listener {
         return r == null ? 0 : Math.max(0, Math.min(RANKS.length - 1, r));
     }
 
+    int prestigio(Player p) {
+        Integer v = p.getPersistentDataContainer().get(kPrest, PersistentDataType.INTEGER);
+        return v == null ? 0 : Math.max(0, v);
+    }
+
+    /** Bonus de venda do prestigio: +20% por estrela. */
+    static double multPrest(int pr) { return 1.0 + 0.2 * pr; }
+
+    static String estrelas(int pr) { return pr <= 0 ? "" : "§e★" + (pr > 1 ? pr : "") + " "; }
+
+    static final long CUSTO_PRESTIGIO = 1_000_000;
+    private final Map<UUID, Long> confirmaPrest = new HashMap<>();
+
+    void fazerPrestigio(Player p) {
+        int r = rank(p);
+        if (r + 1 < RANKS.length) { p.sendMessage(txt("§7O prestígio libera no rank máximo " + nomeRank(RANKS.length - 1) + "§7. Você está no " + nomeRank(r) + "§7.")); return; }
+        long tem = dinheiro(p);
+        if (tem < CUSTO_PRESTIGIO) { p.sendMessage(txt("§cO prestígio custa " + din(CUSTO_PRESTIGIO) + "§c. Faltam " + din(CUSTO_PRESTIGIO - tem) + "§c.")); return; }
+        Long t = confirmaPrest.get(p.getUniqueId());
+        long agora = System.currentTimeMillis();
+        int pr = prestigio(p);
+        if (t == null || agora - t > 15000) {
+            confirmaPrest.put(p.getUniqueId(), agora);
+            p.sendMessage(txt("§e§l★ PRESTÍGIO §8» §7Você volta para o rank §fA§7, o dinheiro zera e ganha §e★" + (pr + 1)
+                    + " §7com §a+" + Math.round((multPrest(pr + 1) - 1) * 100) + "% §7na venda §lpara sempre§7. Digite §e/prestigio §7de novo em 15 s para confirmar."));
+            return;
+        }
+        confirmaPrest.remove(p.getUniqueId());
+        setDinheiro(p, 0);
+        p.getPersistentDataContainer().set(kRank, PersistentDataType.INTEGER, 0);
+        p.getPersistentDataContainer().set(kPrest, PersistentDataType.INTEGER, pr + 1);
+        p.showTitle(Title.title(txt("§e§l★ PRESTÍGIO " + (pr + 1) + " ★"), txt("§7venda §a+" + Math.round((multPrest(pr + 1) - 1) * 100) + "% §7para sempre"),
+                Title.Times.times(Duration.ofMillis(200), Duration.ofSeconds(4), Duration.ofMillis(600))));
+        p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 0.8f);
+        Bukkit.broadcast(txt("§e§l★ §6" + p.getName() + " §efez o §lPRESTÍGIO " + (pr + 1) + " §ena Prisão! §7(voltou para o rank A com bônus para sempre)"));
+        getLogger().info(p.getName() + " fez o prestigio " + (pr + 1));
+        registrarTop(p, 0);
+        irCentro(p);
+    }
+
+    // ---------- recompensa diaria
+    long valorDiaria(Player p) {
+        return Math.round(150L * (rank(p) + 1) * multPrest(prestigio(p)) * (100 + BONUS_VIP[vip(p)]) / 100.0);
+    }
+
+    long faltaDiaria(Player p) {
+        Long ult = p.getPersistentDataContainer().get(kDiaria, PersistentDataType.LONG);
+        if (ult == null) return 0;
+        return Math.max(0, ult + 20 * 3600_000L - System.currentTimeMillis());
+    }
+
+    void diaria(Player p) {
+        if (p.getWorld() != mundo) { p.sendMessage(txt("§cA recompensa diária sai dentro da Prisão (§e/minas§c).")); return; }
+        long f = faltaDiaria(p);
+        if (f > 0) { p.sendMessage(txt("§eSua recompensa diária volta em " + (f / 3600000) + "h " + ((f / 60000) % 60) + "min.")); return; }
+        long v = valorDiaria(p);
+        setDinheiro(p, dinheiro(p) + v);
+        p.getPersistentDataContainer().set(kDiaria, PersistentDataType.LONG, System.currentTimeMillis());
+        p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.3f);
+        p.sendMessage(txt("§a§l$ Recompensa diária: §f+" + din(v) + " §7(sobe com o rank, prestígio e VIP) §8• saldo " + din(dinheiro(p))));
+    }
+
     boolean autoVenda(Player p) {
         Byte b = p.getPersistentDataContainer().get(kAuto, PersistentDataType.BYTE);
         return b == null || b == 1;   // VIP comeca com ela ligada
@@ -750,8 +880,34 @@ public final class Mineracao extends JavaPlugin implements Listener {
         Material t = e.getBlock().getType();
         if (t == Material.STONE || t == Material.DEEPSLATE || t == Material.COBBLESTONE || t == Material.COBBLED_DEEPSLATE || t == Material.ANDESITE
                 || t == Material.NETHERRACK || t == Material.BLACKSTONE) e.setDropItems(false);
-        e.setExpToDrop(Math.min(e.getExpToDrop(), 3));
+        // 13/11: XP de cada minerio (a picareta so fica forte encantando, entao precisa de XP para as mesas)
+        e.setExpToDrop(xpDe(t));
         m.quebrados++;
+    }
+
+    static int xpDe(Material t) {
+        return switch (t) {
+            case COAL_ORE, DEEPSLATE_COAL_ORE, COPPER_ORE, DEEPSLATE_COPPER_ORE, NETHER_QUARTZ_ORE, NETHER_GOLD_ORE -> 1;
+            case IRON_ORE, DEEPSLATE_IRON_ORE, GOLD_ORE, DEEPSLATE_GOLD_ORE, REDSTONE_ORE, DEEPSLATE_REDSTONE_ORE, LAPIS_ORE, DEEPSLATE_LAPIS_ORE, GILDED_BLACKSTONE -> 2;
+            case DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE -> 4;
+            case EMERALD_ORE, DEEPSLATE_EMERALD_ORE -> 5;
+            case ANCIENT_DEBRIS -> 6;
+            case GOLD_BLOCK, DIAMOND_BLOCK, EMERALD_BLOCK -> 8;
+            default -> 0;
+        };
+    }
+
+    /** Tag do rank no chat de quem esta na Prisao: [B] Nome. */
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void chat(io.papermc.paper.event.player.AsyncChatEvent e) {
+        Player p = e.getPlayer();
+        if (mundo == null || p.getWorld() != mundo) return;
+        Integer r = p.getPersistentDataContainer().get(kRank, PersistentDataType.INTEGER);
+        int ri = r == null ? 0 : Math.max(0, Math.min(RANKS.length - 1, r));
+        Integer pr = p.getPersistentDataContainer().get(kPrest, PersistentDataType.INTEGER);
+        Component tag = txt(estrelas(pr == null ? 0 : pr) + "§8[" + RANKS[ri].cor() + RANKS[ri].letra() + "§8] ");
+        io.papermc.paper.chat.ChatRenderer antes = e.renderer();
+        e.renderer((src, nome, msg, quem) -> tag.append(antes.render(src, nome, msg, quem)));
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -764,6 +920,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
             ItemStack s = it.getItemStack();
             if (!precos.containsKey(s.getType())) continue;
             ItemStack m = marcar(s);
+            if (chuva(minaDoBloco(e.getBlock()))) m.setAmount(Math.min(m.getMaxStackSize(), m.getAmount() * 2));
             Map<Integer, ItemStack> sobra = p.getInventory().addItem(m.clone());
             if (sobra.isEmpty()) { i.remove(); continue; }
             cheio = true;
@@ -879,6 +1036,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void pvp(EntityDamageByEntityEvent e) {
         if (e.getEntity().getWorld() != mundo) return;
+        if (e.getDamager() instanceof Firework) { e.setCancelled(true); return; }
         if (e.getEntity() instanceof Interaction i && e.getDamager() instanceof Player p) {   // clique esquerdo no totem
             e.setCancelled(true);
             String a = i.getPersistentDataContainer().get(kAcao, PersistentDataType.STRING);
@@ -1086,7 +1244,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         long d = dinheiro(p);
         List<String> l = new ArrayList<>();
         l.add("§8 ");
-        l.add("§7Rank: " + RANKS[r].cor() + "[" + RANKS[r].letra() + "] " + RANKS[r].nome());
+        l.add("§7Rank: " + estrelas(prestigio(p)) + RANKS[r].cor() + "[" + RANKS[r].letra() + "] " + RANKS[r].nome());
         l.add("§7Dinheiro: " + din(d));
         if (r + 1 < RANKS.length) {
             long c = RANKS[r + 1].custo();
@@ -1095,14 +1253,24 @@ public final class Mineracao extends JavaPlugin implements Listener {
             for (int i = 0; i < 10; i++) b.append(i < pct / 10 ? "§a■" : "§8■");
             l.add("§7Próximo: " + RANKS[r + 1].cor() + "[" + RANKS[r + 1].letra() + "] §7" + din(c));
             l.add(b + " §f" + pct + "%" + (pct >= 100 ? " §a§l/rankup" : ""));
-        } else l.add("§d§lRANK MÁXIMO!");
+        } else {
+            l.add("§d§lRANK MÁXIMO! §e/prestigio");
+            int pct = (int) Math.min(100, d * 100 / CUSTO_PRESTIGIO);
+            l.add("§7Prestígio: §f" + pct + "% §7de " + din(CUSTO_PRESTIGIO));
+        }
         l.add("§0 ");
         if (m != null) {
             int pm = (int) Math.min(100, m.quebrados * 100L / Mina.volume());
             l.add((m.pvp ? "§4§l⚔ PVP §c" : "§6⛏ §f") + m.nome.split(" • ")[0]);
             l.add("§7Minerada: §f" + pm + "%");
         } else l.add("§7Local: §fPátio");
-        l.add("§7Bônus venda: §a+" + Math.round((RANKS[r].mult() - 1) * 100 + BONUS_VIP[nv]) + "%" + (horaDourada() ? " §6x2" : ""));
+        l.add("§7Bônus venda: §a+" + Math.round((RANKS[r].mult() * multPrest(prestigio(p)) * (100 + BONUS_VIP[nv]) / 100.0 - 1) * 100) + "%" + (horaDourada() ? " §6x2" : ""));
+        if (faltaDiaria(p) == 0) l.add("§a§l$ §aDiária: §e/recompensa");
+        if (chuvaMina != null && System.currentTimeMillis() < chuvaAte) {
+            Mina cm = mina(chuvaMina);
+            long f = (chuvaAte - System.currentTimeMillis()) / 1000;
+            if (cm != null) l.add("§b⛏ Chuva: §f" + cm.nome.split(" • ")[0] + " §7" + (f / 60) + ":" + String.format("%02d", f % 60));
+        }
         if (nv > 0) l.add("§7Venda auto: " + (autoVenda(p) ? "§aligada" : "§7desligada"));
         l.add("§1 ");
         if (m != null) l.add("§a$ Vender: §fpise no tapete verde");
@@ -1164,6 +1332,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         String k = p.getUniqueId().toString();
         top.set(k + ".nome", p.getName());
         top.set(k + ".rank", rank(p));
+        top.set(k + ".prest", prestigio(p));
         top.set(k + ".vendido", top.getLong(k + ".vendido", 0) + Math.max(0, vendeu));
         topSujo = true;
     }
@@ -1171,13 +1340,18 @@ public final class Mineracao extends JavaPlugin implements Listener {
     List<String> linhasTop(int n) {
         List<String[]> l = new ArrayList<>();
         for (String k : top.getKeys(false))
-            l.add(new String[]{top.getString(k + ".nome", "?"), String.valueOf(top.getInt(k + ".rank", 0)), String.valueOf(top.getLong(k + ".vendido", 0))});
-        l.sort((a, b) -> a[1].equals(b[1]) ? Long.compare(Long.parseLong(b[2]), Long.parseLong(a[2])) : Integer.compare(Integer.parseInt(b[1]), Integer.parseInt(a[1])));
+            l.add(new String[]{top.getString(k + ".nome", "?"), String.valueOf(top.getInt(k + ".rank", 0)), String.valueOf(top.getLong(k + ".vendido", 0)), String.valueOf(top.getInt(k + ".prest", 0))});
+        l.sort((a, b) -> {
+            int c = Integer.compare(Integer.parseInt(b[3]), Integer.parseInt(a[3]));
+            if (c != 0) return c;
+            c = Integer.compare(Integer.parseInt(b[1]), Integer.parseInt(a[1]));
+            return c != 0 ? c : Long.compare(Long.parseLong(b[2]), Long.parseLong(a[2]));
+        });
         List<String> out = new ArrayList<>();
         String[] med = {"§6①", "§7②", "§c③"};
         for (int i = 0; i < Math.min(n, l.size()); i++) {
             int r = Math.max(0, Math.min(RANKS.length - 1, Integer.parseInt(l.get(i)[1])));
-            out.add((i < 3 ? med[i] : "§8" + (i + 1) + ".") + " §f" + l.get(i)[0] + " " + RANKS[r].cor() + "[" + RANKS[r].letra() + "] §8• §7" + fmt(Long.parseLong(l.get(i)[2])) + " minérios");
+            out.add((i < 3 ? med[i] : "§8" + (i + 1) + ".") + " §f" + l.get(i)[0] + " " + estrelas(Integer.parseInt(l.get(i)[3])) + RANKS[r].cor() + "[" + RANKS[r].letra() + "] §8• §7" + fmt(Long.parseLong(l.get(i)[2])) + " minérios");
         }
         return out;
     }
@@ -1217,6 +1391,10 @@ public final class Mineracao extends JavaPlugin implements Listener {
         int r = rank(p);
         inv.setItem(0, item(Material.OAK_DOOR, "§a§lSaída", "§7Volta para o spawn do servidor."));
         inv.setItem(4, item(Material.COMPASS, "§e§lPátio da Prisão", "§7O centro: portais, kits, venda e rank up."));
+        long fd = faltaDiaria(p);
+        inv.setItem(2, item(fd == 0 ? Material.SUNFLOWER : Material.CLOCK, "§a§lRecompensa diária", "§7Ganhe " + din(valorDiaria(p)) + " §7a cada 20 h.", "§7(sobe com rank, prestígio e VIP)",
+                fd == 0 ? "§a▶ Clique para pegar" : "§eVolta em " + (fd / 3600000) + "h " + ((fd / 60000) % 60) + "min"));
+        if (r + 1 >= RANKS.length) inv.setItem(6, item(Material.NETHER_STAR, "§e§l★ Prestígio", "§7Volta para o rank A e o dinheiro zera,", "§7mas ganha §a+20% §7na venda para sempre.", "§7Custa " + din(CUSTO_PRESTIGIO) + "§7.", "§a▶ Clique (confirme duas vezes)"));
         List<String> tl = new ArrayList<>(linhasTop(5));
         if (tl.isEmpty()) tl.add("§7Ninguém ainda. Seja o primeiro!");
         int hd = getConfig().getInt("hora-dourada", 20);
@@ -1286,6 +1464,8 @@ public final class Mineracao extends JavaPlugin implements Listener {
                 for (int i = 0; i < SLOTS_MINAS.length; i++) if (SLOTS_MINAS[i] == s) { p.closeInventory(); irPara(p, minas.get(i)); return; }
                 switch (s) {
                     case 0 -> { p.closeInventory(); sair(p); }
+                    case 2 -> { p.closeInventory(); diaria(p); }
+                    case 6 -> { p.closeInventory(); fazerPrestigio(p); }
                     case 4 -> { p.closeInventory(); irCentro(p); }
                     case 24 -> { p.closeInventory(); irPara(p, minas.get(12)); }
                     case 25 -> { p.closeInventory(); if (podeIr(p)) p.teleport(salaEnc()); }
@@ -1339,7 +1519,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
     // ------------------------------------------------------------------ rank up e venda
     void rankup(Player p) {
         int r = rank(p);
-        if (r + 1 >= RANKS.length) { p.sendMessage(txt("§dVocê já está no rank máximo: " + nomeRank(r))); return; }
+        if (r + 1 >= RANKS.length) { p.sendMessage(txt("§dVocê já está no rank máximo: " + nomeRank(r) + "§d. Próximo passo: §e/prestigio §7(" + din(CUSTO_PRESTIGIO) + "§7)")); return; }
         Rank prox = RANKS[r + 1];
         long tem = dinheiro(p);
         if (tem < prox.custo()) {
@@ -1350,6 +1530,14 @@ public final class Mineracao extends JavaPlugin implements Listener {
         p.getPersistentDataContainer().set(kRank, PersistentDataType.INTEGER, r + 1);
         p.showTitle(Title.title(txt("§6§lRANK UP!"), txt(nomeRank(r + 1)), Title.Times.times(Duration.ofMillis(200), Duration.ofSeconds(3), Duration.ofMillis(500))));
         p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+        // fogos na comemoracao do rank up
+        p.getWorld().spawn(p.getLocation().add(0, 1, 0), Firework.class, fw -> {
+            org.bukkit.inventory.meta.FireworkMeta fm = fw.getFireworkMeta();
+            fm.addEffect(FireworkEffect.builder().with(FireworkEffect.Type.BALL_LARGE).withColor(Color.ORANGE, Color.YELLOW).withFade(Color.WHITE).withFlicker().build());
+            fm.setPower(0);
+            fw.setFireworkMeta(fm);
+            fw.getPersistentDataContainer().set(kEnfeite, PersistentDataType.STRING, "fogos");
+        }).detonate();
         Bukkit.broadcast(txt("§6⛓ §e" + p.getName() + " §7subiu para o rank " + nomeRank(r + 1) + " §7na Prisão!"));
         getLogger().info(p.getName() + " subiu para o rank " + prox.letra() + " (pagou $" + prox.custo() + ")");
         registrarTop(p, 0);
@@ -1376,7 +1564,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         int r = rank(p);
         int nv = vip(p);
         boolean dour = horaDourada();
-        long v = Math.max(1, Math.round(total * RANKS[r].mult() * (100 + BONUS_VIP[nv]) / 100.0 * (dour ? 2 : 1)));
+        long v = Math.max(1, Math.round(total * RANKS[r].mult() * multPrest(prestigio(p)) * (100 + BONUS_VIP[nv]) / 100.0 * (dour ? 2 : 1)));
         setDinheiro(p, dinheiro(p) + v);
         p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1.2f);
         if (auto) {
@@ -1524,6 +1712,8 @@ public final class Mineracao extends JavaPlugin implements Listener {
                 abrirMenu(p);
             }
             case "rankup" -> rankup(p);
+            case "prestigio" -> fazerPrestigio(p);
+            case "recompensa" -> diaria(p);
             case "vender" -> vender(p);
             case "picareta" -> {
                 p.sendMessage(txt("§d⛏ A picareta fica forte encantando: §fvá na §dSala de Encantamentos §f(portal sul do pátio ou §e/minas enc§f) e compre lápis na §9Loja§f."));
@@ -1575,6 +1765,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
                 s.sendMessage(p.getName() + " rank=" + RANKS[rank(p)].letra() + " dinheiro=" + dinheiro(p) + " minerio-marcado=" + marc + " mundo=" + p.getWorld().getName());
             }
             case "reconstruir" -> { construirTudo(2); s.sendMessage("reconstruido"); }
+            case "chuva" -> { sortearChuva(); s.sendMessage("chuva=" + chuvaMina); }
             case "portalspawn" -> { getConfig().set("portal-spawn.feito", false); portalDoSpawn(); s.sendMessage("portal-spawn.feito=" + getConfig().getBoolean("portal-spawn.feito")); }
             case "info" -> {
                 for (Mina m : minas) {

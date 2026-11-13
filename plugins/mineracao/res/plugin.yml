@@ -10,7 +10,7 @@ commands:
     description: Abre o menu das minas (mundo de mineracao)
     aliases: [mineracao, mina]
   rankup:
-    description: Sobe de rank na mineracao (paga coronas)
+    description: Sobe de rank na Prisao (paga com o dinheiro da Prisao)
   topminas:
     description: Ranking dos mineradores
   rank:
@@ -18,7 +18,13 @@ commands:
   picareta:
     description: Mostra como deixar a picareta forte (encantar na Sala de Encantamentos)
   vender:
-    description: Vende o minerio das minas por coronas
+    description: Vende o minerio das minas (dinheiro da Prisao)
+  prestigio:
+    description: Depois do rank L, recomeca do A com bonus de venda para sempre
+    aliases: [prestige]
+  recompensa:
+    description: Recompensa diaria da Prisao
+    aliases: [diaria]
   mineracaoadm:
     description: Admin da mineracao
     permission: mineracao.admin
