@@ -422,6 +422,18 @@ public final class LoginLobby extends JavaPlugin implements Listener {
         java.util.List<String> l = getConfig().contains("bedrock-com-senha") ? getConfig().getStringList("bedrock-com-senha")
                 : java.util.List.of(".BalmierGorgon43");
         String eu = p.getName().toLowerCase().replaceFirst("^\\.", "");
+        // 13/11 (Paulo): libera a conta sem senha quando ela vem de um IP liberado (o PC de testes): "nick;ip"
+        String ip = p.getAddress() != null && p.getAddress().getAddress() != null ? p.getAddress().getAddress().getHostAddress() : "";
+        java.util.List<String> pares = new java.util.ArrayList<>(getConfig().getStringList("bedrock-sem-senha-no-ip"));
+        java.io.File f = new java.io.File(getDataFolder(), "sem-senha-ip.txt");   // arquivo proprio: o saveConfig nao apaga
+        if (f.exists()) try { pares.addAll(java.nio.file.Files.readAllLines(f.toPath())); } catch (Exception ignored) {}
+        for (String par : pares) {
+            String[] x = par.split(";");
+            if (x.length == 2 && x[0].toLowerCase().replaceFirst("^\\.", "").equals(eu) && x[1].trim().equals(ip)) {
+                getLogger().info(p.getName() + " entrou do IP liberado (" + ip + "): sem senha.");
+                return false;
+            }
+        }
         for (String n : l) if (n.toLowerCase().replaceFirst("^\\.", "").equals(eu)) return true;
         return false;
     }
