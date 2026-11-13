@@ -49,7 +49,7 @@ import java.util.*;
 public final class Mineracao extends JavaPlugin implements Listener {
 
     static final String MUNDO = "mineracao";
-    static final int VERSAO_CONSTRUCAO = 3;
+    static final int VERSAO_CONSTRUCAO = 4;   // 4: tapetes de vender bem visiveis
     /** 13/11 (Paulo): minas em quadrado (4 x 3), perto uma da outra para todos se verem, com um vao de 10 blocos
      *  de vazio entre as bordas (ninguem pula de uma para a outra). */
     static final int GRADE_X0 = 100, GRADE_Z0 = -53, GRADE_PASSO = 2 * (Mina.RAIO + 1 + Mina.BORDA) + 1 + 10;
