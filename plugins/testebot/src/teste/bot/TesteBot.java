@@ -270,6 +270,13 @@ public final class TesteBot extends JavaPlugin implements org.bukkit.event.Liste
                 p.setSneaking(false);
                 log("TROCAR cancelado=" + ev.isCancelled());
             }
+            case "quebrar" -> {
+                // quebrar <nome> x y z: quebra o bloco como jogador (dispara BlockBreakEvent e os drops)
+                org.bukkit.block.Block bl = p.getWorld().getBlockAt(Integer.parseInt(a[2]), Integer.parseInt(a[3]), Integer.parseInt(a[4]));
+                String antes = bl.getType().name();
+                boolean ok = p.breakBlock(bl);
+                log("QUEBRAR " + antes + " -> " + bl.getType().name() + " ok=" + ok);
+            }
             case "olhar" -> {
                 Location alvo = new Location(p.getWorld(), Double.parseDouble(a[2]), Double.parseDouble(a[3]), Double.parseDouble(a[4]));
                 Location l = p.getLocation();

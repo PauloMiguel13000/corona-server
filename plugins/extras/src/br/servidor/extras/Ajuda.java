@@ -42,6 +42,7 @@ final class Ajuda implements Listener {
             new Item(25, Material.TOTEM_OF_UNDYING, "§c§lMoeda de Reviver", "reviver", "§7Volta para a partida quando você", "§7é eliminado num minigame."),
             new Item(29, Material.PLAYER_HEAD, "§d§lGrupo e clã", "grupo", "§7Jogue junto: §f/grupo convidar <nick>", "§7Clã: §f/clan criar <nome> §8| §7Chat: §f/gc §7e §f/cc"),
             new Item(30, Material.CAKE, "§e§lChame um amigo", "indicar", "§7Diga quem te chamou: os dois ganham prêmio.", "§7Endereço do servidor: §f/ip"),
+            new Item(31, Material.IRON_PICKAXE, "§7§lMineração", "minas", "§7Minas por rank (A a F) e a Mina PvP.", "§7Venda o minério: §f/vender §8| §7Suba: §f/rankup"),
             new Item(32, Material.BELL, "§9§lDiscord", "discord", "§7Novidades, avisos e a galera do servidor."),
             new Item(33, Material.OAK_SIGN, "§f§lEndereço do servidor", "ip", "§7Java e Bedrock (celular), para passar aos amigos."),
     };

@@ -1,0 +1,23 @@
+name: Mineracao
+version: 1.0
+main: br.servidor.mineracao.Mineracao
+api-version: '1.21'
+author: Corona Server
+softdepend: [GriefPrevention, Multiverse-Core]
+description: Mundo de mineracao com minas por rank (rank up com coronas), venda de minerio e mina PvP.
+commands:
+  minas:
+    description: Abre o menu das minas (mundo de mineracao)
+    aliases: [mineracao, mina]
+  rankup:
+    description: Sobe de rank na mineracao (paga coronas)
+  rank:
+    description: Mostra seu rank de mineracao
+  vender:
+    description: Vende o minerio das minas por coronas
+  mineracaoadm:
+    description: Admin da mineracao
+    permission: mineracao.admin
+permissions:
+  mineracao.admin:
+    default: op
