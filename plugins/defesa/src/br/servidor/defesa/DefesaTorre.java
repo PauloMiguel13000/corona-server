@@ -134,6 +134,7 @@ public final class DefesaTorre extends JavaPlugin implements Listener {
     NamespacedKey kNucleo;
     private NamespacedKey kVolta;
     private NamespacedKey kItemTorre;
+    private NamespacedKey kItemPoder;
     private NamespacedKey kItemMapa;
     private NamespacedKey kItemDif;
     private NamespacedKey kItemColocar;
@@ -157,6 +158,7 @@ public final class DefesaTorre extends JavaPlugin implements Listener {
         kNucleo = new NamespacedKey(this, "nucleo");
         kVolta = new NamespacedKey(this, "volta");
         kItemTorre = new NamespacedKey(this, "item_torre");
+        kItemPoder = new NamespacedKey(this, "item_poder");
         kItemMapa = new NamespacedKey(this, "item_mapa");
         kItemDif = new NamespacedKey(this, "item_dificuldade");
         kItemColocar = new NamespacedKey(this, "item_colocar");
@@ -455,6 +457,15 @@ public final class DefesaTorre extends JavaPlugin implements Listener {
         inv.setItem(25, item(pa.mapa.icone, pa.mapa.cor + "§l" + pa.mapa.nome, List.of("§7" + pa.mapa.desc1, "§7" + pa.mapa.desc2)));
         inv.setItem(22, item(pa.rapido ? Material.LIGHTNING_ROD : Material.FEATHER, pa.rapido ? "§b§lVELOCIDADE 2x §a(ligada)" : "§f§lVELOCIDADE 1x",
                 List.of("§7Acelera a partida: ondas, contagens,", "§7monstros e torres andam 2x.", "", pa.rapido ? "§eClique para voltar ao normal" : "§eClique para ligar o 2x", "§8(ou /defesa 2x)")));
+        // 13/11: poderes do defensor (slots 32, 33, 34)
+        int ps = 32;
+        for (PoderDefensor pd : PoderDefensor.values()) {
+            long falta = pa.recargaRestante(pd);
+            List<String> lore = new ArrayList<>(List.of("§7" + pd.desc1, "§7" + pd.desc2, "", "§fCusto: §d" + pd.custo + " Essência", "§fRecarga: §e" + pd.recargaSeg + " s", ""));
+            lore.add(pa.estado != Partida.Estado.ONDA ? "§7Use durante uma onda." : falta > 0 ? "§cRecarregando: " + falta + " s"
+                    : pa.essencia >= pd.custo ? "§a§lClique para LANÇAR!" : "§cFalta " + (pd.custo - pa.essencia) + " Essência");
+            inv.setItem(ps++, marcado(item(falta > 0 ? Material.GRAY_DYE : pd.icone, pd.nome, lore), kItemPoder, pd.id));
+        }
         inv.setItem(31, item(Material.BOOK, "§e§lComo jogar", List.of(
                 "§7Monstros saem do portal e andam",
                 "§7pelo caminho até o §cNúcleo§7.",
@@ -557,6 +568,12 @@ public final class DefesaTorre extends JavaPlugin implements Listener {
                 return;
             }
             if (it == null || !it.hasItemMeta()) return;
+            PoderDefensor pd = PoderDefensor.porId(String.valueOf(it.getItemMeta().getPersistentDataContainer().get(kItemPoder, PersistentDataType.STRING)));
+            if (pd != null) {
+                p.closeInventory();
+                if (!pa.usarPoder(p, pd)) p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.8f, 1f);
+                return;
+            }
             TipoTorre t = TipoTorre.porId(it.getItemMeta().getPersistentDataContainer().get(kItemTorre, PersistentDataType.STRING));
             if (t == null) return;
             if (pa.torres.size() >= pa.dif.limiteTorres) {
@@ -1160,6 +1177,14 @@ public final class DefesaTorre extends JavaPlugin implements Listener {
                 else abrirMenuMapas(p);
             }
             case "sair", "voltar" -> sair(p);
+            case "poder", "poderes", "meteoro", "nevasca", "trovao" -> {
+                Partida pa = partidaDe(p);
+                if (pa == null || aqui == null) { p.sendMessage("§eEntre numa partida primeiro (§e/defesa§e)."); return true; }
+                String id = sub.startsWith("poder") ? (args.length > 1 ? args[1] : "") : sub;
+                PoderDefensor pd = PoderDefensor.porId(id);
+                if (pd == null) { p.sendMessage("§7Poderes: §6/defesa meteoro §7• §b/defesa nevasca §7• §e/defesa trovao §8(ou na §f/defesa loja§8)"); return true; }
+                pa.usarPoder(p, pd);
+            }
             case "2x", "rapido", "velocidade", "acelerar" -> {
                 Partida pa = partidaDe(p);
                 if (pa == null) p.sendMessage("§cEntre numa partida primeiro (§e/defesa§c).");

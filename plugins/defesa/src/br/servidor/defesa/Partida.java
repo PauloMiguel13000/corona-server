@@ -128,6 +128,10 @@ final class Partida {
     private int geracao = 0;
 
     final Map<UUID, Monstro> monstros = new HashMap<>();
+    /** Poderes do defensor: quando cada um volta a ficar pronto (ms) e ate quando a nevasca segura os monstros. */
+    final Map<PoderDefensor, Long> poderPronto = new java.util.EnumMap<>(PoderDefensor.class);
+    long congeladoAte;
+    int poderesUsados;
     final Map<UUID, Torre> torres = new HashMap<>();
     private final Deque<Surgimento> fila = new ArrayDeque<>();
     private final Map<UUID, Integer> itensEssencia = new HashMap<>();
@@ -920,6 +924,12 @@ final class Partida {
                 monstros.remove(mo.id);
                 continue;
             }
+            if (System.currentTimeMillis() < congeladoAte) {   // nevasca: parados no lugar
+                m.getPathfinder().stopPathfinding();
+                mo.ultimaPos = aqui;
+                mo.parado = 0;
+                continue;
+            }
             Location alvo = mapa.ponto(mundo, mo.indice);
             double dx = aqui.getX() - alvo.getX();
             double dz = aqui.getZ() - alvo.getZ();
@@ -1051,6 +1061,9 @@ final class Partida {
 
     void resetar(boolean avisarJogadores) {
         geracao++;
+        poderPronto.clear();
+        congeladoAte = 0;
+        poderesUsados = 0;
         rapido = false;
         if (simulando) plugin.getLogger().info("[sim " + mapa.id + "] fim: onda " + onda + ", nucleo " + vidaNucleo + "/" + dif.vidaNucleo + ", venceu=" + venceu);
         simulando = false;
@@ -1106,6 +1119,134 @@ final class Partida {
         }
         lista.sort(Comparator.comparingDouble((Mob m) -> -progresso(m, monstros.get(m.getUniqueId()))));
         return lista;
+    }
+
+    // ------------------------------------------------------------------ poderes do defensor
+    long recargaRestante(PoderDefensor pd) {
+        return Math.max(0, poderPronto.getOrDefault(pd, 0L) - System.currentTimeMillis()) / 1000L;
+    }
+
+    private List<Mob> mobsVivos() {
+        List<Mob> r = new ArrayList<>();
+        for (Monstro mo : monstros.values()) {
+            Entity e = Bukkit.getEntity(mo.id);
+            if (e instanceof Mob m && m.isValid() && !m.isDead()) r.add(m);
+        }
+        return r;
+    }
+
+    private static double vidaMax(Mob m) {
+        AttributeInstance a = m.getAttribute(Attribute.MAX_HEALTH);
+        return a != null ? a.getValue() : 20;
+    }
+
+    boolean usarPoder(Player p, PoderDefensor pd) {
+        if (estado != Estado.ONDA || monstros.isEmpty()) {
+            p.sendMessage("§eOs poderes só funcionam durante uma onda, com monstros no mapa.");
+            return false;
+        }
+        long falta = recargaRestante(pd);
+        if (falta > 0) {
+            p.sendMessage(pd.nome + " §7recarregando: §f" + falta + " s");
+            return false;
+        }
+        if (essencia < pd.custo) {
+            p.sendMessage("§cFalta Essência: precisa de §d" + pd.custo + "§c, vocês têm §d" + essencia + "§c.");
+            return false;
+        }
+        essencia -= pd.custo;
+        poderPronto.put(pd, System.currentTimeMillis() + pd.recargaSeg * 1000L);
+        poderesUsados++;
+        tituloTodos(pd.nome, "§7lançado por §f" + p.getName());
+        avisar("§8[§6Defesa§8] §f" + p.getName() + " §7usou " + pd.nome + "§7!");
+        switch (pd) {
+            case METEOROS -> meteoros();
+            case NEVASCA -> nevasca();
+            case TROVAO -> trovao();
+        }
+        return true;
+    }
+
+    private void meteoros() {
+        final int ger = geracao;
+        somTodos(Sound.ENTITY_WITHER_SHOOT, 0.7f, 0.6f);
+        for (int i = 0; i < 12; i++) {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (ger != geracao || estado == Estado.FIM) return;
+                List<Mob> vivos = mobsVivos();
+                if (vivos.isEmpty()) return;
+                Location alvo = vivos.get(ThreadLocalRandom.current().nextInt(vivos.size())).getLocation();
+                // rastro de fogo descendo do ceu
+                for (int y = 14; y >= 0; y -= 2) {
+                    final int yy = y;
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> mundo.spawnParticle(Particle.FLAME, alvo.clone().add(0, yy, 0), 6, 0.25, 0.25, 0.25, 0.01), (14 - y) / 2);
+                }
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    if (ger != geracao) return;
+                    mundo.spawnParticle(Particle.EXPLOSION_EMITTER, alvo, 1);
+                    mundo.spawnParticle(Particle.LAVA, alvo, 10, 1.2, 0.3, 1.2);
+                    mundo.spawnParticle(Particle.LARGE_SMOKE, alvo, 12, 1, 0.5, 1, 0.02);
+                    mundo.playSound(alvo, Sound.ENTITY_GENERIC_EXPLODE, 1f, 0.8f);
+                    for (Mob m : mobsVivos())
+                        if (m.getLocation().distanceSquared(alvo) <= 3.5 * 3.5) {
+                            Monstro mo = monstros.get(m.getUniqueId());
+                            boolean chefe = mo != null && mo.chefe;
+                            ferir(m, vidaMax(m) * (chefe ? 0.06 : 0.35) + 4);
+                            m.setFireTicks(60);
+                        }
+                }, 8);
+            }, i * 5L);
+        }
+    }
+
+    private void nevasca() {
+        congeladoAte = System.currentTimeMillis() + 5000L;
+        somTodos(Sound.BLOCK_GLASS_BREAK, 1f, 0.5f);
+        somTodos(Sound.ENTITY_PLAYER_HURT_FREEZE, 1f, 0.8f);
+        for (Mob m : mobsVivos()) {
+            m.getPathfinder().stopPathfinding();
+            m.setVelocity(new org.bukkit.util.Vector(0, 0, 0));
+            m.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 6, false, false));
+            m.setFreezeTicks(Math.max(m.getFreezeTicks(), 200));
+            mundo.spawnParticle(Particle.SNOWFLAKE, m.getLocation().add(0, 1, 0), 25, 0.4, 0.8, 0.4, 0.02);
+            mundo.spawnParticle(Particle.BLOCK, m.getLocation().add(0, 1, 0), 15, 0.3, 0.6, 0.3, Material.ICE.createBlockData());
+        }
+        final int ger = geracao;
+        for (int k = 1; k <= 4; k++)
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (ger != geracao) return;
+                for (Mob m : mobsVivos()) mundo.spawnParticle(Particle.SNOWFLAKE, m.getLocation().add(0, 1, 0), 8, 0.4, 0.8, 0.4, 0.01);
+            }, k * 20L);
+    }
+
+    private void trovao() {
+        List<Mob> vivos = mobsVivos();
+        vivos.sort(Comparator.comparingDouble((Mob m) -> {
+            Monstro mo = monstros.get(m.getUniqueId());
+            return mo == null ? 0 : -progresso(m, mo);
+        }));
+        final int ger = geracao;
+        for (int i = 0; i < Math.min(6, vivos.size()); i++) {
+            Mob alvo = vivos.get(i);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (ger != geracao || !alvo.isValid() || alvo.isDead()) return;
+                mundo.strikeLightningEffect(alvo.getLocation());
+                mundo.spawnParticle(Particle.ELECTRIC_SPARK, alvo.getLocation().add(0, 1, 0), 30, 0.5, 1, 0.5, 0.1);
+                Monstro mo = monstros.get(alvo.getUniqueId());
+                boolean chefe = mo != null && mo.chefe;
+                ferir(alvo, vidaMax(alvo) * (chefe ? 0.10 : 0.45) + 4);
+                // o raio pula para ate 2 vizinhos (dano menor)
+                int pulos = 0;
+                for (Mob viz : mobsVivos()) {
+                    if (viz == alvo || pulos >= 2 || viz.getLocation().distanceSquared(alvo.getLocation()) > 16) continue;
+                    pulos++;
+                    Location a = alvo.getLocation().add(0, 1, 0), b = viz.getLocation().add(0, 1, 0);
+                    for (double t = 0; t <= 1; t += 0.15) mundo.spawnParticle(Particle.ELECTRIC_SPARK, a.clone().add(b.clone().subtract(a).toVector().multiply(t)), 2, 0.05, 0.05, 0.05, 0);
+                    Monstro mv = monstros.get(viz.getUniqueId());
+                    ferir(viz, vidaMax(viz) * (mv != null && mv.chefe ? 0.04 : 0.20));
+                }
+            }, i * 6L);
+        }
     }
 
     private static void ferir(Mob m, double dano) {

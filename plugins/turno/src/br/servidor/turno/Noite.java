@@ -621,7 +621,10 @@ final class Noite {
     private static final Map<String, int[][]> LUZ_CAMERA = Map.of(
             "canto_oeste", new int[][]{{-7, 4, -2, 12}, {-7, 4, 0, 12}, {-7, 4, 2, 10}},
             "canto_leste", new int[][]{{7, 4, -2, 12}, {7, 4, 0, 12}, {7, 4, 2, 10}},
-            "deposito", new int[][]{{-13, 4, -9, 13}, {-15, 4, -11, 11}, {-14, 4, -7, 11}});
+            "deposito", new int[][]{{-13, 4, -9, 13}, {-15, 4, -11, 11}, {-14, 4, -7, 11}},
+            // 13/11 (Paulo): corredor leste escuro (e o oeste, que e igual)
+            "corr_leste", new int[][]{{7, 3, -16, 13}, {8, 3, -11, 13}, {7, 3, -6, 13}, {8, 3, -1, 12}, {7, 3, 2, 11}},
+            "corr_oeste", new int[][]{{-7, 3, -16, 13}, {-8, 3, -11, 13}, {-7, 3, -6, 13}, {-8, 3, -1, 12}, {-7, 3, 2, 11}});
 
     private void tirarLuzCamera(Player p) {
         List<Location> l = luzCamera.remove(p.getUniqueId());
