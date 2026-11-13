@@ -73,7 +73,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
     final List<Mina> minas = new ArrayList<>();
     final Map<Material, Double> precos = new EnumMap<>(Material.class);
     World mundo;
-    NamespacedKey kRank, kMinerado, kGanhou, kDinheiro, kEnfeite, kAcao, kPrisao;
+    NamespacedKey kRank, kMinerado, kGanhou, kDinheiro, kEnfeite, kAcao, kPrisao, kAuto;
     static final NamespacedKey VIP_NIVEL = new NamespacedKey("extras", "vip_nivel");
     static final NamespacedKey VIP_ATE = new NamespacedKey("extras", "vip_ate");
     private final Set<String> mundosComAcesso = new HashSet<>();
@@ -98,6 +98,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         kEnfeite = new NamespacedKey(this, "enfeite");
         kAcao = new NamespacedKey(this, "acao");
         kPrisao = new NamespacedKey(this, "item_prisao");
+        kAuto = new NamespacedKey(this, "auto_venda");
         saveDefaultConfig();
         mundosComAcesso.addAll(getConfig().getStringList("mundos-com-acesso"));
         int reset = Math.max(1, getConfig().getInt("reset-minutos", 8));
@@ -182,6 +183,11 @@ public final class Mineracao extends JavaPlugin implements Listener {
             }
         }, 400L, 200L);
         Bukkit.getScheduler().runTaskLater(this, this::portalDoSpawn, 200L);
+    }
+
+    @Override
+    public void onDisable() {
+        for (Player p : Bukkit.getOnlinePlayers()) tirarPlacar(p);
     }
 
     private void M(String id, String nome, int rank, Material icone, Object... mistura) {
@@ -645,6 +651,11 @@ public final class Mineracao extends JavaPlugin implements Listener {
         return r == null ? 0 : Math.max(0, Math.min(RANKS.length - 1, r));
     }
 
+    boolean autoVenda(Player p) {
+        Byte b = p.getPersistentDataContainer().get(kAuto, PersistentDataType.BYTE);
+        return b == null || b == 1;   // VIP comeca com ela ligada
+    }
+
     long dinheiro(Player p) {
         Long v = p.getPersistentDataContainer().get(kDinheiro, PersistentDataType.LONG);
         return v == null ? 0 : v;
@@ -703,7 +714,18 @@ public final class Mineracao extends JavaPlugin implements Listener {
             cheio = true;
             it.setItemStack(sobra.values().iterator().next());
         }
-        if (cheio) p.sendActionBar(txt("§c⛏ Inventário cheio! Use §e/vender"));
+        if (cheio) {
+            if (vip(p) > 0 && autoVenda(p)) {
+                vender(p, true);
+                // o que sobrou no chao volta para o inventario
+                for (Iterator<Item> i = e.getItems().iterator(); i.hasNext(); ) {
+                    Item it = i.next();
+                    Map<Integer, ItemStack> sb = p.getInventory().addItem(it.getItemStack().clone());
+                    if (sb.isEmpty()) i.remove();
+                    else it.setItemStack(sb.values().iterator().next());
+                }
+            } else p.sendActionBar(txt("§c⛏ Inventário cheio! Use §e/vender" + (vip(p) > 0 ? " §8(ou ligue a venda automática no §e/minas§8)" : " §8(VIP tem venda automática)")));
+        }
     }
 
     ItemStack marcar(ItemStack s) {
@@ -747,7 +769,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
     public void logou(PlayerJoinEvent e) { trocouMundo.put(e.getPlayer().getUniqueId(), System.currentTimeMillis()); }
 
     @EventHandler
-    public void saiu(PlayerQuitEvent e) { trocouMundo.remove(e.getPlayer().getUniqueId()); espera.remove(e.getPlayer().getUniqueId()); naPvp.remove(e.getPlayer().getUniqueId()); }
+    public void saiu(PlayerQuitEvent e) { placares.remove(e.getPlayer().getUniqueId()); trocouMundo.remove(e.getPlayer().getUniqueId()); espera.remove(e.getPlayer().getUniqueId()); naPvp.remove(e.getPlayer().getUniqueId()); }
 
     /** Pedido do Paulo (13/11): nenhum item do /minas entra em outro mundo. A mochila da Prisao (Extras) ja separa;
      *  isto e a rede de seguranca: fora da Prisao, item marcado some (inventario, cursor e bau do fim). */
@@ -978,10 +1000,69 @@ public final class Mineracao extends JavaPlugin implements Listener {
     long resetMs;
     private final Set<UUID> naPvp = new HashSet<>();
 
+    // ------------------------------------------------------------------ placar lateral (so na prisao)
+    private final Map<UUID, org.bukkit.scoreboard.Scoreboard> placares = new HashMap<>();
+
+    void placar(Player p, Mina m) {
+        org.bukkit.scoreboard.Scoreboard sb = placares.get(p.getUniqueId());
+        if (sb == null || p.getScoreboard() != sb) {
+            if (p.getScoreboard() != Bukkit.getScoreboardManager().getMainScoreboard() && sb == null) return;   // outro plugin usando: nao mexe
+            sb = Bukkit.getScoreboardManager().getNewScoreboard();
+            org.bukkit.scoreboard.Objective o = sb.registerNewObjective("prisao", org.bukkit.scoreboard.Criteria.DUMMY, txt("§6§l⛓ PRISÃO CORONA ⛓"));
+            o.setDisplaySlot(org.bukkit.scoreboard.DisplaySlot.SIDEBAR);
+            try { o.numberFormat(io.papermc.paper.scoreboard.numbers.NumberFormat.blank()); } catch (Throwable ignored) {}
+            placares.put(p.getUniqueId(), sb);
+            p.setScoreboard(sb);
+        }
+        org.bukkit.scoreboard.Objective o = sb.getObjective("prisao");
+        if (o == null) return;
+        int r = rank(p), nv = vip(p);
+        long d = dinheiro(p);
+        List<String> l = new ArrayList<>();
+        l.add("§8 ");
+        l.add("§7Rank: " + RANKS[r].cor() + "[" + RANKS[r].letra() + "] " + RANKS[r].nome());
+        l.add("§7Dinheiro: " + din(d));
+        if (r + 1 < RANKS.length) {
+            long c = RANKS[r + 1].custo();
+            int pct = (int) Math.min(100, d * 100 / Math.max(1, c));
+            StringBuilder b = new StringBuilder();
+            for (int i = 0; i < 10; i++) b.append(i < pct / 10 ? "§a■" : "§8■");
+            l.add("§7Próximo: " + RANKS[r + 1].cor() + "[" + RANKS[r + 1].letra() + "] §7" + din(c));
+            l.add(b + " §f" + pct + "%" + (pct >= 100 ? " §a§l/rankup" : ""));
+        } else l.add("§d§lRANK MÁXIMO!");
+        l.add("§0 ");
+        if (m != null) {
+            int pm = (int) Math.min(100, m.quebrados * 100L / Mina.volume());
+            l.add((m.pvp ? "§4§l⚔ PVP §c" : "§6⛏ §f") + m.nome.split(" • ")[0]);
+            l.add("§7Minerada: §f" + pm + "%");
+        } else l.add("§7Local: §fPátio");
+        l.add("§7Bônus venda: §a+" + Math.round((RANKS[r].mult() - 1) * 100 + BONUS_VIP[nv]) + "%" + (horaDourada() ? " §6x2" : ""));
+        if (nv > 0) l.add("§7Venda auto: " + (autoVenda(p) ? "§aligada" : "§7desligada"));
+        l.add("§1 ");
+        l.add("§e/minas §8• §e/rankup §8• §e/vender");
+        Set<String> agora = new HashSet<>();
+        for (int i = 0; i < l.size(); i++) {
+            String e = l.get(i);
+            while (agora.contains(e)) e += "§r";
+            agora.add(e);
+            o.getScore(e).setScore(l.size() - i);
+        }
+        for (String e : new ArrayList<>(sb.getEntries())) if (!agora.contains(e)) sb.resetScores(e);
+    }
+
+    void tirarPlacar(Player p) {
+        org.bukkit.scoreboard.Scoreboard sb = placares.remove(p.getUniqueId());
+        if (sb != null && p.getScoreboard() == sb) p.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+    }
+
+    @EventHandler
+    public void saiuDoMundo(PlayerChangedWorldEvent e) { if (e.getFrom() == mundo) tirarPlacar(e.getPlayer()); }
+
     void barra() {
         if (mundo == null) return;
         long agora = System.currentTimeMillis();
         for (Player p : mundo.getPlayers()) {
+            try { placar(p, minaDaArea(p.getLocation())); } catch (Throwable t) { getLogger().warning("placar: " + t); }
             Mina m = minaDaArea(p.getLocation());
             int r = rank(p);
             if (m == null) {
@@ -1090,6 +1171,10 @@ public final class Mineracao extends JavaPlugin implements Listener {
                 "§7Seu rank: " + nomeRank(r), r + 1 < RANKS.length ? "§7Próximo: " + nomeRank(r + 1) + " §7por " + din(cust) : "§dVocê está no rank máximo!",
                 "§7Seu dinheiro: " + din(dinheiro(p)), "§7Bônus na venda: §a+" + Math.round((RANKS[r].mult() - 1) * 100) + "%", r + 1 < RANKS.length ? "§a▶ Clique para subir" : ""));
         inv.setItem(42, item(Material.GOLD_INGOT, "§2§lVender minério", "§7Vende todo minério das minas", "§7que estiver no inventário.", "§a▶ Clique para vender"));
+        int nvv = vip(p);
+        boolean av = autoVenda(p);
+        inv.setItem(46, item(nvv > 0 ? (av ? Material.HOPPER : Material.CHEST_MINECART) : Material.BARRIER, "§e§lVenda automática: " + (nvv == 0 ? "§cSó VIP" : av ? "§aLIGADA" : "§7DESLIGADA"),
+                "§7Quando o inventário enche, o minério", "§7é vendido sozinho (com seus bônus).", nvv > 0 ? "§a▶ Clique para " + (av ? "desligar" : "ligar") : "§7Veja os planos: §e/vip"));
         inv.setItem(44, item(Material.ANVIL, "§d§lMelhorar picareta", "§7Segure a picareta na mão.", "§7Eficiência V, Fortuna III, Inquebrável III."));
         p.openInventory(inv);
     }
@@ -1140,6 +1225,12 @@ public final class Mineracao extends JavaPlugin implements Listener {
                     case 40 -> { p.closeInventory(); rankup(p); }
                     case 42 -> { p.closeInventory(); vender(p); }
                     case 44 -> { p.closeInventory(); abrirMelhorias(p); }
+                    case 46 -> {
+                        if (vip(p) == 0) { p.sendMessage(txt("§cA venda automática é dos VIPs. §7Veja: §e/vip")); return; }
+                        p.getPersistentDataContainer().set(kAuto, PersistentDataType.BYTE, (byte) (autoVenda(p) ? 0 : 1));
+                        p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, 0.8f, 1.2f);
+                        abrirMenu(p);
+                    }
                     default -> {}
                 }
             }
@@ -1199,7 +1290,10 @@ public final class Mineracao extends JavaPlugin implements Listener {
         registrarTop(p, 0);
     }
 
-    void vender(Player p) {
+    void vender(Player p) { vender(p, false); }
+
+    /** auto = venda automatica (VIP, inventario cheio): sem chat, so a barra. */
+    void vender(Player p, boolean auto) {
         double total = 0;
         int itens = 0;
         ItemStack[] cont = p.getInventory().getStorageContents();
@@ -1212,7 +1306,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
             itens += s.getAmount();
             cont[i] = null;
         }
-        if (itens == 0) { p.sendMessage(txt("§7Você não tem minério das minas para vender. §8(só o que sai das minas da Prisão vende)")); return; }
+        if (itens == 0) { if (!auto) p.sendMessage(txt("§7Você não tem minério das minas para vender. §8(só o que sai das minas da Prisão vende)")); return; }
         p.getInventory().setStorageContents(cont);
         int r = rank(p);
         int nv = vip(p);
@@ -1220,6 +1314,11 @@ public final class Mineracao extends JavaPlugin implements Listener {
         long v = Math.max(1, Math.round(total * RANKS[r].mult() * (100 + BONUS_VIP[nv]) / 100.0 * (dour ? 2 : 1)));
         setDinheiro(p, dinheiro(p) + v);
         p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1.2f);
+        if (auto) {
+            p.sendActionBar(txt("§a⛏ Venda automática: §f" + itens + " §aminérios por " + din(v) + " §8• saldo " + din(dinheiro(p))));
+            registrarTop(p, itens);
+            return;
+        }
         p.sendMessage(txt("§a⛏ Vendeu §f" + itens + " §aminérios por " + din(v) + " §8(rank " + RANKS[r].letra()
                 + (nv > 0 ? ", " + NOME_VIP[nv] + " +" + BONUS_VIP[nv] + "%" : "") + (dour ? ", §6HORA DOURADA x2§8" : "") + ") §7— saldo: " + din(dinheiro(p))));
         registrarTop(p, itens);

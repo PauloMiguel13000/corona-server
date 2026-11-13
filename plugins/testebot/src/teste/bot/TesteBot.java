@@ -381,6 +381,14 @@ public final class TesteBot extends JavaPlugin implements org.bukkit.event.Liste
             }
             case "mao" -> log("MAO slot=" + p.getInventory().getHeldItemSlot() + " item=" + p.getInventory().getItemInMainHand().getType()
                     + " nome=" + (p.getInventory().getItemInMainHand().hasItemMeta() ? net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(p.getInventory().getItemInMainHand().getItemMeta().displayName()) : "-"));
+            case "placar" -> {
+                org.bukkit.scoreboard.Objective o = p.getScoreboard().getObjective(org.bukkit.scoreboard.DisplaySlot.SIDEBAR);
+                if (o == null) { log("PLACAR nenhum (principal=" + (p.getScoreboard() == Bukkit.getScoreboardManager().getMainScoreboard()) + ")"); return true; }
+                java.util.List<String> l = new java.util.ArrayList<>(p.getScoreboard().getEntries());
+                l.removeIf(x -> !o.getScore(x).isScoreSet());
+                l.sort((x, y) -> o.getScore(y).getScore() - o.getScore(x).getScore());
+                log("PLACAR " + String.join(" | ", l).replaceAll("§.", ""));
+            }
             case "inv" -> {
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < 36; i++) {
