@@ -202,6 +202,15 @@ public final class Masmorras extends JavaPlugin implements Listener {
                 }
             }
         conferirBlocos();
+        // 12/11 (Paulo: baus das masmorras vazios): a pendencia dos baus sumia a cada reinicio; enche todos uma vez
+        File reab = new File(getDataFolder(), "baus-reabastecidos-v1.txt");
+        if (!reab.exists()) {
+            int n = 0;
+            for (Masmorra m : todas) if (!m.demolindo && !m.baus.isEmpty()) { m.bausPendentes = true; n++; }
+            salvar();
+            try { java.nio.file.Files.writeString(reab.toPath(), "baus marcados para encher: " + n + "\n"); } catch (Exception ignored) {}
+            getLogger().info("Baus das masmorras: " + n + " masmorra(s) marcadas para encher de novo quando alguem chegar perto.");
+        }
         getServer().getPluginManager().registerEvents(this, this);
         coronas = new Coronas(this);
         loja = new Loja(this);
@@ -1294,15 +1303,14 @@ public final class Masmorras extends JavaPlugin implements Listener {
         if (w != null) {
             for (int[] b : m.baus) {
                 if (w.isChunkLoaded(b[0] >> 4, b[2] >> 4)) porBau(w, b, m.tipo.tabela, false);
-                else bausPendentes.put(m.id, true);
+                else m.bausPendentes = true;
             }
         }
         m.bossVolta = 0;
         salvar();
     }
 
-    /** Baus que nao estavam carregados na hora do reset (enche quando alguem chegar perto). */
-    private final Map<Integer, Boolean> bausPendentes = new HashMap<>();
+    /** Baus que nao estavam carregados na hora do reset enchem quando alguem chegar perto (Masmorra.bausPendentes). */
 
     // ================================================================== ciclo (a cada meio segundo)
 
@@ -1325,7 +1333,11 @@ public final class Masmorras extends JavaPlugin implements Listener {
                 continue;
             }
             m.semNinguemDesde = -1;
-            if (bausPendentes.remove(m.id) != null) for (int[] b : m.baus) porBau(w, b, m.tipo.tabela, false);
+            if (m.bausPendentes) {
+                m.bausPendentes = false;
+                for (int[] b : m.baus) porBau(w, b, m.tipo.tabela, false);
+                salvar();
+            }
             List<Player> dentro = new ArrayList<>();
             for (Player p : ps) if (p.getGameMode() != GameMode.CREATIVE && m.dentro(p.getX(), p.getY(), p.getZ())) dentro.add(p);
             for (Player p : dentro) {

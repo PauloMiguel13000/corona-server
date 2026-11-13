@@ -31,6 +31,8 @@ final class Masmorra {
     Caixa blindagem;
     /** Sendo desmanchada (versao antiga): nao protege nem enche de monstros. */
     boolean demolindo;
+    /** Baus esperando para encher (o reset foi com a area descarregada). Fica salvo: antes sumia ao reiniciar. */
+    boolean bausPendentes;
 
     // ---- so enquanto o servidor esta ligado
     boolean[] armada;
@@ -119,6 +121,7 @@ final class Masmorra {
         s.set("saida", saidaX + "," + saidaY + "," + saidaZ);
         s.set("chefe-volta", bossVolta);
         s.set("versao", versao);
+        s.set("baus-pendentes", bausPendentes ? true : null);
         List<String> l = new ArrayList<>();
         for (Caixa c : salas) l.add(c.texto());
         s.set("salas", l);
@@ -140,6 +143,7 @@ final class Masmorra {
         m.saidaZ = Integer.parseInt(sa[2].trim());
         m.bossVolta = s.getLong("chefe-volta", 0);
         m.versao = s.getInt("versao", 1);
+        m.bausPendentes = s.getBoolean("baus-pendentes", false);
         for (String c : s.getStringList("salas")) m.salas.add(Caixa.ler(c));
         for (String c : s.getStringList("protecao")) m.protecao.add(Caixa.ler(c));
         for (String b : s.getStringList("baus")) {

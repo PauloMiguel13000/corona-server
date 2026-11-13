@@ -189,6 +189,12 @@ final class Reliquias implements Listener {
         };
     }
 
+    /** Armadura (elmo, peitoral, calcas, botas) ou espada: o que sai menos dos baus. */
+    static boolean armaduraOuEspada(Material m) {
+        String n = m.name();
+        return n.endsWith("_SWORD") || n.endsWith("_HELMET") || n.endsWith("_CHESTPLATE") || n.endsWith("_LEGGINGS") || n.endsWith("_BOOTS");
+    }
+
     static Uso uso(Material m) {
         String n = m.name();
         if (n.equals("BOW") || n.equals("CROSSBOW")) return Uso.ARCO;
@@ -445,8 +451,14 @@ final class Reliquias implements Listener {
         Block b = c.getBlock();
         Masmorra m = pl.masmorraEm(b.getWorld(), b.getX(), b.getY(), b.getZ());
         if (m == null) return;
+        // 12/11 (pedido do Paulo): armadura e espada saem menos dos baus (o resto do saque continua igual)
+        double chance = pl.getConfig().getDouble("baus.chance-armadura-espada", 0.35);
         List<ItemStack> novo = new ArrayList<>();
-        for (ItemStack it : e.getLoot()) novo.add(it == null ? null : aplicar(it.clone(), m.tipo));
+        for (ItemStack it : e.getLoot()) {
+            if (it == null) continue;
+            if (armaduraOuEspada(it.getType()) && rnd().nextDouble() >= chance) continue;
+            novo.add(aplicar(it.clone(), m.tipo));
+        }
         novo.removeIf(x -> x == null);
         e.setLoot(novo);
     }
