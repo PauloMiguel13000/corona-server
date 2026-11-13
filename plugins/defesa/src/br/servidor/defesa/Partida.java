@@ -253,6 +253,11 @@ final class Partida {
         });
     }
 
+    private void darCoronas(Player p, long v) {
+        if (v <= 0 || Bukkit.getPluginManager().getPlugin("Masmorras") == null) return;
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "coronas dar " + p.getName() + " " + v);
+    }
+
     int vitorias(Dificuldade d) {
         return plugin.getConfig().getInt("vitorias." + mapa.id + "." + d.id, 0);
     }
@@ -1032,6 +1037,8 @@ final class Partida {
                     + onda + " §fno " + mapa.cor + mapa.nome + "§f!"));
         }
         plugin.getLogger().info("[" + mapa.id + "] Onda " + onda + " concluida (+" + bonus + "+" + minas + " essencia, total " + essencia + ")");
+        // 13/11: coronas por onda vencida (o minigame do dia paga em dobro no plugin das masmorras)
+        if (!simulando) for (Player p : jogadores()) darCoronas(p, 3L * onda + (onda % 5 == 0 ? 25 : 0));
         if (!dif.infinito() && onda >= dif.ondas) {
             vitoria(nomes);
             return;
@@ -1048,6 +1055,8 @@ final class Partida {
         plugin.getConfig().set("vitorias." + mapa.id + "." + dif.id, v);
         plugin.saveConfig();
         tituloTodos("§6§lVITÓRIA!", "§eVocês venceram o " + mapa.nome + " no " + dif.nome + "!");
+        long premio = switch (dif) { case FACIL -> 100; case NORMAL -> 200; case DIFICIL -> 400; default -> 0; };
+        if (!simulando && premio > 0) for (Player p : jogadores()) { darCoronas(p, premio); p.sendMessage("§6[Defesa] §eVitória! §6+" + premio + " coronas"); }
         somTodos(Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1.2f);
         somTodos(Sound.ENTITY_PLAYER_LEVELUP, 1f, 0.8f);
         for (Player p : jogadores()) p.giveExp(250 + 150 * dif.ordinal());
