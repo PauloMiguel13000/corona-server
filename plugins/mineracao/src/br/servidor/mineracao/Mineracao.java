@@ -49,7 +49,7 @@ import java.util.*;
 public final class Mineracao extends JavaPlugin implements Listener {
 
     static final String MUNDO = "mineracao";
-    static final int VERSAO_CONSTRUCAO = 8;   // 4: tapetes de vender; 5: loja de picaretas; 6: sem melhoria com $ (so encantando)
+    static final int VERSAO_CONSTRUCAO = 9;   // 9: antessala segura da Mina PvP;   // 4: tapetes de vender; 5: loja de picaretas; 6: sem melhoria com $ (so encantando)
     /** 13/11 (Paulo): minas em quadrado (4 x 3), perto uma da outra para todos se verem, com um vao de 10 blocos
      *  de vazio entre as bordas (ninguem pula de uma para a outra). */
     static final int GRADE_X0 = 100, GRADE_Z0 = -53, GRADE_PASSO = 2 * (Mina.RAIO + 1 + Mina.BORDA) + 1 + 10;
@@ -515,7 +515,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
             boolean eixoX = pt.parede() == 'n' || pt.parede() == 's';
             for (int s = -1; s <= 1; s++) for (int y = PISO + 1; y <= PISO + 5; y++) n += miolo(mundo, eixoX ? pt.x() + s : pt.x(), y, eixoX ? pt.z() : pt.z() + s, eixoX);
         }
-        for (Mina m : minas) for (int s = -1; s <= 1; s++) for (int y = Mina.TOPO + 1; y <= Mina.TOPO + 4; y++) n += miolo(mundo, m.cx + s, y, m.cz - (Mina.RAIO + 1 + Mina.BORDA), true);
+        for (Mina m : minas) for (int s = -1; s <= 1; s++) for (int y = Mina.TOPO + 1; y <= Mina.TOPO + 4; y++) n += miolo(mundo, m.cx + s, y, m.zVolta(), true);
         if (getConfig().getBoolean("portal-spawn.feito", false)) {
             World w = Bukkit.getWorld(getConfig().getString("portal-spawn.mundo", "world"));
             int cx = getConfig().getInt("portal-spawn.x", 15), z = getConfig().getInt("portal-spawn.z", -29), y0 = getConfig().getInt("portal-spawn.y", 122);
@@ -647,6 +647,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         tapetesVender(m);
         int z = m.cz - (Mina.RAIO + 1 + Mina.BORDA);
         for (int s = -3; s <= 3; s++) for (int y = Mina.TOPO + 1; y <= Mina.TOPO + 9; y++) por(m.cx + s, y, z, "minecraft:air");
+        if (m.pvp) { antessala(m); z = m.zVolta(); }
         for (int s = -2; s <= 2; s++)
             for (int y = Mina.TOPO; y <= Mina.TOPO + 6; y++) {
                 boolean miolo = Math.abs(s) <= 1 && y >= Mina.TOPO + 1 && y <= Mina.TOPO + 4;
@@ -656,7 +657,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
             texto(new Location(mundo, m.cx + 0.5, Mina.TOPO + 8, z + 1.5), "§6§l" + m.nome.split(" • ")[0].toUpperCase(Locale.ROOT) + "\n§f" + m.nome.split(" • ")[1] + "\n§a◀ portal: volta ao pátio", 1.0f);
             return;
         }
-        texto(new Location(mundo, m.cx + 0.5, Mina.TOPO + 8, z + 1.5), "§4§l⚔ MINA PVP ⚔\n§c§lAQUI TEM PVP!\n§cquem morre perde os itens\n§a◀ portal: volta ao pátio (seguro)", 1.2f);
+        texto(new Location(mundo, m.cx + 0.5, Mina.TOPO + 8, z + 1.5), "§a§l◀ VOLTAR AO PÁTIO\n§7Antessala da Mina PvP • §aárea segura", 1.0f);
         // avisos vermelhos nos 4 lados da borda e postes de redstone nas quinas
         int b = Mina.RAIO + 3;
         for (int[] o : new int[][]{{0, b}, {b, 0}, {-b, 0}, {0, -b + 1}})
@@ -666,6 +667,36 @@ public final class Mineracao extends JavaPlugin implements Listener {
             por(m.cx + sx * q, Mina.TOPO + 1, m.cz + sz * q, "minecraft:redstone_block");
             por(m.cx + sx * q, Mina.TOPO + 2, m.cz + sz * q, "minecraft:red_banner");
         }
+    }
+
+    /** Antessala da Mina PvP (13/11, Paulo): sala segura ao norte, portao com aviso e ponte ate a borda da mina. */
+    private void antessala(Mina m) {
+        int cx = m.cx, cz = m.cz, T = Mina.TOPO, zf = -Mina.ANTESSALA_Z, zp = -23;   // zf = fundo (portal), zp = parede do portao
+        for (int x = -6; x <= 6; x++)
+            for (int z = zf; z <= -22; z++) {
+                boolean ponte = z == -22, dentro = Math.abs(x) <= 6 && z <= zp;
+                if (ponte && Math.abs(x) > 3) continue;
+                for (int y = T - 3; y < T; y++) por(cx + x, y, cz + z, "minecraft:stone_bricks");
+                por(cx + x, T, cz + z, x == 0 && z > zf + 1 ? "minecraft:red_nether_bricks" : (x + z) % 2 == 0 ? "minecraft:polished_blackstone" : "minecraft:polished_blackstone_bricks");
+                for (int y = T + 1; y <= T + 7; y++) por(cx + x, y, cz + z, "minecraft:air");
+                if (ponte && Math.abs(x) == 3) por(cx + x, T + 1, cz + z, "minecraft:nether_brick_fence");
+                if (!dentro) continue;
+                boolean parede = Math.abs(x) == 6 || z == zf || z == zp;
+                boolean portao = z == zp && Math.abs(x) <= 1;
+                if (parede && !portao) for (int y = T + 1; y <= T + 5; y++) por(cx + x, y, cz + z, y == T + 5 ? "minecraft:chiseled_polished_blackstone" : "minecraft:polished_blackstone_bricks");
+                if (portao) por(cx + x, T + 5, cz + z, "minecraft:chiseled_polished_blackstone");
+                if (portao) por(cx + x, T + 4, cz + z, x == 0 ? "minecraft:redstone_block" : "minecraft:polished_blackstone_bricks");
+            }
+        // lanternas e estandartes vermelhos dos lados do portao, lanternas nas paredes
+        for (int sx : new int[]{-2, 2}) {
+            por(cx + sx, T + 1, cz + zp + 1, "minecraft:red_banner[rotation=8]");
+            por(cx + sx, T + 3, cz + zp + 1, "minecraft:lantern[hanging=false]");
+        }
+        for (int z = zf + 3; z < zp; z += 4) for (int sx : new int[]{-5, 5}) por(cx + sx, T + 3, cz + z, "minecraft:soul_lantern");
+        // bancos (degraus) para esperar
+        for (int z = zf + 4; z <= zf + 8; z++) { por(cx - 5, T + 1, cz + z, "minecraft:polished_blackstone_stairs[facing=west]"); por(cx + 5, T + 1, cz + z, "minecraft:polished_blackstone_stairs[facing=east]"); }
+        texto(new Location(mundo, cx + 0.5, T + 4.2, cz + zp + 1.6), "§4§l⚔ PORTÃO DA MINA PVP ⚔\n§cPassou daqui: §4§lTEM PVP\n§cquem morre perde os itens", 1.2f);
+        texto(new Location(mundo, cx + 0.5, T + 3.2, cz - 29 + 0.5), "§a§l✔ ÁREA SEGURA\n§7Aqui ninguém te ataca.\n§7Prepare-se e entre pelo portão §c▼", 1.0f);
     }
 
     // ------------------------------------------------------------------ enfeites (textos, icones, cliques)
@@ -832,7 +863,9 @@ public final class Mineracao extends JavaPlugin implements Listener {
         m.refazendo = true;
         for (Player p : mundo.getPlayers())
             if (m.dentroDoPoco(p.getLocation())) {
-                p.teleport(m.chegada(mundo));
+                // sobe para cima da mina no mesmo lugar (a camada de cima e a primeira a ser refeita), em vez de voltar ao portal
+                Location l = p.getLocation();
+                p.teleport(new Location(mundo, l.getX(), Mina.TOPO + 1.1, l.getZ(), l.getYaw(), l.getPitch()));
                 p.sendActionBar(txt("§e⛏ O " + m.nome + " §eestá sendo refeito!"));
             }
         List<int[]> pos = new ArrayList<>(Mina.volume());
@@ -974,6 +1007,9 @@ public final class Mineracao extends JavaPlugin implements Listener {
                 || t == Material.NETHERRACK || t == Material.BLACKSTONE) e.setDropItems(false);
         // 13/11: XP de cada minerio (a picareta so fica forte encantando, entao precisa de XP para as mesas)
         e.setExpToDrop(xpDe(t));
+        // 13/11 (Paulo: "comeca a minerar e teleporta pra tras do nada"): o relogio do reset so comeca no 1o bloco quebrado.
+        // Antes, mina parada ha mais de 20 min resetava (e tirava o jogador do poco) logo no primeiro bloco.
+        if (m.quebrados == 0) m.ultimoReset = System.currentTimeMillis();
         m.quebrados++;
         if (!m.pvp && java.util.concurrent.ThreadLocalRandom.current().nextInt(700) == 0) {
             long v = 80L * (rank(p) + 1);
@@ -1277,6 +1313,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         if (to.getBlockZ() == ENC_Z + 11 && Math.abs(to.getBlockX()) <= 1) { irPatio(p); return; }
         Mina m = minaDaArea(to);
         if (m != null) { irPatio(p); return; }
+        for (Mina mp : minas) if (mp.pvp && to.getBlockZ() == mp.zVolta() && Math.abs(to.getBlockX() - mp.cx) <= 1) { irPatio(p); return; }
         for (Portal pt : portaisPatio) {
             boolean eixoX = pt.parede() == 'n' || pt.parede() == 's';
             boolean dentro = eixoX ? (to.getBlockZ() == pt.z() && Math.abs(to.getBlockX() - pt.x()) <= 1) : (to.getBlockX() == pt.x() && Math.abs(to.getBlockZ() - pt.z()) <= 1);
@@ -1691,7 +1728,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         }
         p.teleport(m.chegada(mundo));
         p.sendMessage(txt("§2⛏ §aPara vender: §fpise num §a§ltapete verde §f(§a$ VENDA AQUI§f) na borda da mina."));
-        if (m.pvp) p.sendMessage(txt("§c§l⚠ MINA PVP §8» §7Aqui outros jogadores podem te atacar e quem morre §cperde os itens§7."));
+        if (m.pvp) p.sendMessage(txt("§a✔ Antessala segura da Mina PvP. §7Passando pelo §cportão §7tem PvP e quem morre §cperde os itens§7."));
         return true;
     }
 

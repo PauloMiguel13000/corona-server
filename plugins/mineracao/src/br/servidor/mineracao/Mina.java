@@ -63,8 +63,13 @@ final class Mina {
         return Math.abs(l.getBlockX() - cx) <= RAIO && Math.abs(l.getBlockZ() - cz) <= RAIO && l.getY() < TOPO + 2 && l.getY() > TOPO - FUNDO - 2;
     }
 
+    /** 13/11 (Paulo): na PvP o portal deixa o jogador numa antessala segura, longe da mina; ele entra pelo portao se quiser. */
+    static final int ANTESSALA_Z = 36;   // parede do fundo da antessala (portal de volta), ao norte da mina
+
+    int zVolta() { return pvp ? cz - ANTESSALA_Z : cz - (RAIO + 1 + BORDA); }
+
     Location chegada(World w) {
-        Location l = new Location(w, cx + 0.5, TOPO + 2, cz - (RAIO + 3) + 0.5);
+        Location l = pvp ? new Location(w, cx + 0.5, TOPO + 1, cz - 31 + 0.5) : new Location(w, cx + 0.5, TOPO + 2, cz - (RAIO + 3) + 0.5);
         l.setYaw(0); l.setPitch(30);
         return l;
     }
