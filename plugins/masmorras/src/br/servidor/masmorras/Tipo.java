@@ -73,6 +73,8 @@ final class Tipo {
     boolean corredorDeTeias, ponteDeLava;
     /** 13/11: Gelo (piso escorregadio), Mina (vigas e trilhos), Pantano (lama e pocas), Selva (moitas nas paredes). */
     boolean pisoDeGelo, vigasDeMina, pantanoAlagado, corredorDeFolhas;
+    /** 13/11: corredor com tema (velas, grades, tapete...) definido em Construtor.TEMAS pelo id do tipo. */
+    boolean corredorTematico;
     String[] decoPiso = {}, decoTeto = {};
     double chancePiso = 0.15, chanceTeto = 0.08;
     String tabela = "chests/simple_dungeon";
@@ -154,6 +156,7 @@ final class Tipo {
         Tipo t;
         // ----------------------------------------------------------------- mundo normal
         t = add(new Tipo("CRIPTA", "Cripta dos Mortos", "Rei Esqueleto", Onde.NORMAL, 1, Estilo.SUBTERRANEA));
+        t.corredorTematico = true;
         t.salas = 4;
         t.parede = bs("stone_bricks", "stone_bricks", "stone_bricks", "mossy_stone_bricks", "mossy_stone_bricks", "cracked_stone_bricks");
         t.piso = bs("polished_andesite", "stone_bricks", "stone_bricks", "mossy_cobblestone");
@@ -315,6 +318,7 @@ final class Tipo {
         t.ajudantes = new String[] {"BLAZE"};
 
         t = add(new Tipo("BASTIAO", "Bastião Perdido", "Chefe Piglin", Onde.NETHER, 4, Estilo.SUBTERRANEA));
+        t.corredorTematico = true;
         t.salas = 5;
         t.parede = bs("polished_blackstone_bricks", "polished_blackstone_bricks", "polished_blackstone_bricks", "blackstone", "blackstone", "gilded_blackstone", "cracked_polished_blackstone_bricks");
         t.piso = bs("polished_blackstone", "polished_blackstone", "blackstone", "polished_basalt[axis=y]");
@@ -336,6 +340,7 @@ final class Tipo {
         t.ajudantes = new String[] {"PIGLIN_BRUTE"};
 
         t = add(new Tipo("WITHER", "Fortaleza Wither", "General Wither", Onde.NETHER, 4, Estilo.SUBTERRANEA));
+        t.corredorTematico = true;
         t.salas = 5;
         t.parede = bs("nether_bricks", "nether_bricks", "nether_bricks", "nether_bricks", "cracked_nether_bricks", "cracked_nether_bricks", "red_nether_bricks", "chiseled_nether_bricks");
         t.piso = bs("nether_bricks", "nether_bricks", "soul_soil", "soul_soil");
@@ -358,6 +363,7 @@ final class Tipo {
 
         // ----------------------------------------------------------------- end
         t = add(new Tipo("CIDADELA", "Cidadela do Vazio", "Senhor do Vazio", Onde.END, 5, Estilo.TORRE));
+        t.corredorTematico = true;
         t.salas = 5;
         t.alturaSala = 6;
         t.parede = bs("purpur_block", "purpur_block", "purpur_block", "purpur_pillar[axis=y]", "end_stone_bricks", "end_stone_bricks", "obsidian");
@@ -381,6 +387,7 @@ final class Tipo {
         t.ajudantes = new String[] {"ENDERMITE", "ENDERMITE", "ENDERMAN"};
 
         t = add(new Tipo("PRISAO", "Prisão Abissal", "O Carcereiro", Onde.END, 5, Estilo.SUBTERRANEA));
+        t.corredorTematico = true;
         t.salas = 5;
         t.parede = bs("deepslate_tiles", "deepslate_tiles", "deepslate_tiles", "deepslate_bricks", "deepslate_bricks", "sculk", "polished_deepslate");
         t.piso = bs("deepslate_tiles", "deepslate_tiles", "sculk", "sculk", "polished_deepslate");
@@ -402,6 +409,7 @@ final class Tipo {
 
         // ----------------------------------------------------------------- novas (versao 2)
         t = add(new Tipo("DESERTO", "Tumba do Faraó", "Faraó", Onde.NORMAL, 2, Estilo.SUBTERRANEA));
+        t.corredorTematico = true;
         t.parede = bs("cut_sandstone", "cut_sandstone", "sandstone", "sandstone", "smooth_sandstone", "chiseled_sandstone");
         t.piso = bs("smooth_sandstone", "smooth_sandstone", "cut_sandstone", "orange_terracotta");
         t.teto = bs("cut_sandstone", "sandstone", "smooth_sandstone");
@@ -424,6 +432,7 @@ final class Tipo {
         t.biomas = new String[] {"DESERT", "BADLANDS"};
 
         t = add(new Tipo("QUARTEL", "Quartel dos Saqueadores", "Devastador", Onde.NORMAL, 3, Estilo.SUBTERRANEA));
+        t.corredorTematico = true;
         t.parede = bs("dark_oak_planks", "dark_oak_planks", "cobblestone", "cobblestone", "mossy_cobblestone", "spruce_planks");
         t.piso = bs("spruce_planks", "spruce_planks", "dark_oak_planks", "cobblestone", "coarse_dirt");
         t.teto = bs("dark_oak_planks", "dark_oak_planks", "spruce_planks");
@@ -537,6 +546,7 @@ final class Tipo {
         t.esp = Esp.CLONES;
 
         t = add(new Tipo("CASTELO", "Castelo do Carrasco", "Carrasco", Onde.NORMAL, 4, Estilo.SUBTERRANEA));
+        t.corredorTematico = true;
         t.parede = bs("deepslate_bricks", "deepslate_bricks", "cracked_deepslate_bricks", "polished_blackstone_bricks", "deepslate_tiles");
         t.piso = bs("polished_deepslate", "deepslate_tiles", "polished_blackstone", "deepslate_bricks");
         t.teto = bs("deepslate_bricks", "deepslate_tiles");
@@ -559,6 +569,7 @@ final class Tipo {
         t.esp = Esp.FURIA_TEMPO;
 
         t = add(new Tipo("COVIL", "Covil da Besta", "Besta Zoglin", Onde.NETHER, 4, Estilo.SUBTERRANEA));
+        t.corredorTematico = true;
         t.parede = bs("blackstone", "blackstone", "polished_blackstone_bricks", "basalt[axis=y]", "nether_bricks");
         t.piso = bs("crimson_nylium", "blackstone", "netherrack", "soul_soil");
         t.teto = bs("blackstone", "nether_bricks", "basalt[axis=y]");

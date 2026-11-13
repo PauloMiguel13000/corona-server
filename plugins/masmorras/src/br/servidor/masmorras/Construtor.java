@@ -148,6 +148,7 @@ final class Construtor {
         if (t.vigasDeMina) for (Caixa c : p.corredores) vigasDeMina(c);
         if (t.pantanoAlagado) for (Caixa c : p.corredores) pantanoAlagado(c);
         if (t.corredorDeFolhas) for (Caixa c : p.corredores) corredorDeFolhas(c);
+        if (t.corredorTematico && TEMAS.containsKey(t.id)) for (Caixa c : p.corredores) corredorTematico(c, TEMAS.get(t.id));
         if (t.onde == Tipo.Onde.END) {
             varanda();
             ilha(p.area());
@@ -361,6 +362,60 @@ final class Construtor {
                     por(x, y1, z, "minecraft:jungle_leaves[persistent=true]");
                     if (r < 25 && y1 + 1 < c.y2()) por(x, y1 + 1, z, "minecraft:jungle_leaves[persistent=true]");
                 } else if (r < 45) por(x, y1, z, "minecraft:moss_carpet");
+            }
+    }
+
+    /**
+     * Tema do corredor (13/11): piso (blocos com peso), linha do meio, enfeites nas laterais (com chance e altura)
+     * e coisas penduradas no teto. As laterais nunca fecham o meio, entao o caminho continua livre.
+     */
+    record Tema(String[] piso, int[] pesoPiso, String meio, String[] lado, int[] chanceLado, int alturaLado, String teto, int chanceTeto) {}
+
+    static final Map<String, Tema> TEMAS = Map.of(
+            "CRIPTA", new Tema(null, null, null,
+                    new String[]{"minecraft:candle[candles=3,lit=true]", "minecraft:bone_block[axis=y]", "minecraft:skeleton_skull[rotation=0]"}, new int[]{14, 8, 4}, 1, "minecraft:cobweb", 6),
+            "DESERTO", new Tema(new String[]{"minecraft:sand", "minecraft:smooth_sandstone", "minecraft:cut_sandstone", "minecraft:suspicious_sand"}, new int[]{45, 30, 20, 5}, null,
+                    new String[]{"minecraft:decorated_pot", "minecraft:chiseled_sandstone"}, new int[]{7, 6}, 1, null, 0),
+            "PRISAO", new Tema(null, null, null,
+                    new String[]{"minecraft:iron_bars"}, new int[]{38}, 2, "minecraft:iron_chain[axis=y]", 14),
+            "CASTELO", new Tema(null, null, "minecraft:red_carpet",
+                    new String[]{"minecraft:andesite_wall", "minecraft:lantern"}, new int[]{8, 5}, 1, null, 0),
+            "CIDADELA", new Tema(new String[]{"minecraft:end_stone_bricks", "minecraft:purpur_block"}, new int[]{70, 30}, null,
+                    new String[]{"minecraft:end_rod[facing=up]"}, new int[]{12}, 1, "minecraft:end_rod[facing=down]", 6),
+            "BASTIAO", new Tema(new String[]{"minecraft:polished_blackstone_bricks", "minecraft:cracked_polished_blackstone_bricks", "minecraft:gilded_blackstone"}, new int[]{60, 25, 15}, null,
+                    null, null, 1, "minecraft:iron_chain[axis=y]", 10),
+            "QUARTEL", new Tema(null, null, null,
+                    new String[]{"minecraft:hay_block[axis=y]", "minecraft:barrel[facing=up]", "minecraft:target"}, new int[]{10, 8, 6}, 1, null, 0),
+            "WITHER", new Tema(new String[]{"minecraft:nether_bricks", "minecraft:soul_soil"}, new int[]{70, 30}, null,
+                    new String[]{"minecraft:soul_campfire[lit=true]"}, new int[]{10}, 1, null, 0),
+            "COVIL", new Tema(new String[]{"minecraft:coarse_dirt", "minecraft:rooted_dirt", "minecraft:packed_mud"}, new int[]{45, 30, 25}, null,
+                    new String[]{"minecraft:bone_block[axis=y]"}, new int[]{12}, 1, null, 0));
+
+    private void corredorTematico(Caixa c, Tema tm) {
+        boolean noX = (c.x2() - c.x1()) >= (c.z2() - c.z1());
+        int b1 = noX ? c.z1() : c.x1(), b2 = noX ? c.z2() : c.x2();
+        List<Integer> fatias = fatiasLivres(c, noX);
+        if (fatias.size() < 3) return;
+        int y1 = c.y1(), y2 = c.y2(), meio = (b1 + b2) / 2;
+        int somaPiso = 0;
+        if (tm.piso() != null) for (int w : tm.pesoPiso()) somaPiso += w;
+        for (int a : fatias)
+            for (int b = b1; b <= b2; b++) {
+                int x = noX ? a : b, z = noX ? b : a;
+                if (tm.piso() != null) {
+                    int r = mistura(x, y1 - 1, z, p.semente) * somaPiso / 100;
+                    for (int i = 0; i < tm.piso().length; i++) { r -= tm.pesoPiso()[i]; if (r < 0) { por(x, y1 - 1, z, tm.piso()[i]); break; } }
+                }
+                boolean lado = (b == b1 || b == b2) && b2 - b1 >= 2;
+                if (tm.meio() != null && b == meio) por(x, y1, z, tm.meio());
+                if (lado && tm.lado() != null) {
+                    int r = mistura(x, y1, z, p.semente + 17);
+                    for (int i = 0; i < tm.lado().length; i++) {
+                        r -= tm.chanceLado()[i];
+                        if (r < 0) { for (int h = 0; h < tm.alturaLado() && y1 + h < y2; h++) por(x, y1 + h, z, tm.lado()[i]); break; }
+                    }
+                }
+                if (tm.teto() != null && !lado && b != meio && mistura(x, y2, z, p.semente + 31) < tm.chanceTeto()) por(x, y2, z, tm.teto());
             }
     }
 
