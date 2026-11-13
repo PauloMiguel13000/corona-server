@@ -69,6 +69,9 @@ public final class Extras extends JavaPlugin implements Listener {
         vazio = new Vazio(this);
         Bukkit.getPluginManager().registerEvents(vazio, this);
         Bukkit.getPluginManager().registerEvents(new SemPets(this), this);
+        Bukkit.getPluginManager().registerEvents(new KitsContexto(this), this);
+        tesouro = new Tesouro(this);
+        Bukkit.getPluginManager().registerEvents(tesouro, this);
         votos = new Votos(this);
         Bukkit.getPluginManager().registerEvents(votos, this);
         votos.iniciar();
@@ -839,9 +842,15 @@ public final class Extras extends JavaPlugin implements Listener {
 
     // ================================================================== comandos
 
+    Tesouro tesouro;
+
     @Override
     public boolean onCommand(CommandSender s, Command cmd, String label, String[] args) {
         if (cmd.getName().equalsIgnoreCase("vip")) return vip.comando(s, args);
+        if (cmd.getName().equalsIgnoreCase("tesouro")) {
+            if (s instanceof Player p && tesouro != null) tesouro.comando(p, args);
+            return true;
+        }
         if (cmd.getName().equalsIgnoreCase("rtp")) {
             if (!(s instanceof Player p)) {
                 s.sendMessage("Somente jogadores.");

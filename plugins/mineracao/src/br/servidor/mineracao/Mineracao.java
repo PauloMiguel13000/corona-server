@@ -1399,6 +1399,8 @@ public final class Mineracao extends JavaPlugin implements Listener {
         if (e.getPlayer().getWorld() != mundo) return;
         String c = e.getMessage().substring(1).split(" ")[0].toLowerCase(Locale.ROOT);
         if (c.contains(":")) c = c.substring(c.indexOf(':') + 1);
+        // /missoes e do Extras tambem: dentro da Prisao abre as missoes da Prisao
+        if (c.equals("missoes") || c.equals("missao") || c.equals("quests") || c.equals("missoesprisao")) { e.setCancelled(true); missoes.abrir(e.getPlayer()); return; }
         if (!BLOQUEADOS.contains(c)) return;
         e.setCancelled(true);
         if (c.startsWith("kit")) abrirKits(e.getPlayer());
@@ -1972,7 +1974,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
             case "rankup" -> rankup(p);
             case "prestigio" -> fazerPrestigio(p);
             case "recompensa" -> diaria(p);
-            case "missoes" -> { if (p.getWorld() == mundo) missoes.abrir(p); else p.sendMessage(txt("§7As missões são da §6Prisão§7: entre com §e/minas§7.")); }
+            case "missoesprisao" -> { if (p.getWorld() == mundo) missoes.abrir(p); else p.sendMessage(txt("§7As missões são da §6Prisão§7: entre com §e/minas§7.")); }
             case "vender" -> vender(p);
             case "picareta" -> {
                 p.sendMessage(txt("§d⛏ A picareta fica forte encantando: §fvá na §dSala de Encantamentos §f(portal sul do pátio ou §e/minas enc§f) e compre lápis na §9Loja§f."));

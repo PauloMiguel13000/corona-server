@@ -5,6 +5,9 @@ api-version: '1.21'
 softdepend: [GriefPrevention, WorldGuard, Geyser-Spigot, floodgate, AuthMe, BabyPets]
 description: Teleporte aleatorio (/rtp) e queda segura no spawn alto.
 commands:
+  tesouro:
+    description: Caca ao Tesouro do Survival (/tesouro mostra a direcao)
+    aliases: [cacatesouro, bautesouro]
   rtp:
     description: Teleporta para um lugar aleatorio e seguro do mapa
     aliases: [wild, tpr, aleatorio, randomtp]

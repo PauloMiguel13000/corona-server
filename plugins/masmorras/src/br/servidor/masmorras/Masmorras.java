@@ -212,6 +212,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
             getLogger().info("Baus das masmorras: " + n + " masmorra(s) marcadas para encher de novo quando alguem chegar perto.");
         }
         getServer().getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvents(new Destaque(this), this);
         coronas = new Coronas(this);
         loja = new Loja(this);
         skins = new Skins(this);
@@ -1419,7 +1420,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
                 if (dentroDe) e.getDrops().clear();
             }
             if (de != null && k != null) {
-                if (rnd.nextDouble() < getConfig().getDouble("reliquias.chance-monstro", 0.012)) {
+                if (rnd.nextDouble() < getConfig().getDouble("reliquias.chance-monstro", 0.012) * Destaque.mult(de.tipo)) {
                     ItemStack rel = item(Premios.equipamento(de.tipo.nivel, rnd));
                     if (rel != null) {
                         e.getDrops().add(reliquias.aplicar(rel, de.tipo));
@@ -1427,10 +1428,10 @@ public final class Masmorras extends JavaPlugin implements Listener {
                         k.playSound(k.getLocation(), "minecraft:block.amethyst_block.chime", 1f, 1.2f);
                     }
                 }
-                darXpClasses(k, getConfig().getDouble("xp-classes.monstro", 12) * de.tipo.nivel, false);
+                darXpClasses(k, getConfig().getDouble("xp-classes.monstro", 12) * de.tipo.nivel * Destaque.mult(de.tipo), false);
                 if (missoes != null) missoes.monstroMorto(k, de.tipo.nivel);
                 if (missoes != null) missoes.trilhaMonstro(k, de.tipo);
-                coronas.dar(k, coronas.comVip(k, getConfig().getLong("coronas.monstro", 3) * de.tipo.nivel + rnd.nextInt(de.tipo.nivel + 1)), true);
+                coronas.dar(k, coronas.comVip(k, (getConfig().getLong("coronas.monstro", 3) * de.tipo.nivel + rnd.nextInt(de.tipo.nivel + 1)) * Destaque.mult(de.tipo)), true);
             }
             return;
         }
@@ -1456,12 +1457,13 @@ public final class Masmorras extends JavaPlugin implements Listener {
         for (Player p : e.getEntity().getWorld().getPlayers())
             if (!p.isDead() && p.getGameMode() != GameMode.SPECTATOR && ar.contem(p.getX(), p.getY(), p.getZ())) lutaram.add(p);
         if (k != null) lutaram.add(k);
-        double xp = xpChefe(t.nivel) * (t.secreta ? 2 : 1);
+        double xp = xpChefe(t.nivel) * (t.secreta ? 2 : 1) * Destaque.mult(t);
         for (Player p : lutaram) darXpClasses(p, xp, true);
         if (ranking != null) for (Player p : lutaram) ranking.chefeDerrotado(p);
         if (missoes != null) for (Player p : lutaram) missoes.chefeMorto(p, t.nivel);
         if (missoes != null) for (Player p : lutaram) missoes.trilhaChefe(p, t);
-        long cor = t.secreta ? getConfig().getLong("coronas.secreta", 5000) : getConfig().getLong("coronas.chefe", 250) * t.nivel;
+        long cor = (t.secreta ? getConfig().getLong("coronas.secreta", 5000) : getConfig().getLong("coronas.chefe", 250) * t.nivel) * Destaque.mult(t);
+        if (Destaque.eh(t)) Bukkit.broadcast(txt(PREFIXO + "§6⭐ Era a masmorra em destaque: §acoronas e XP em DOBRO§7!"));
         for (Player p : lutaram) {
             coronas.dar(p, coronas.comVip(p, cor), false);
             p.sendMessage(txt(PREFIXO + "§6+" + Coronas.fmt(cor) + " coronas §7pelo chefe! Saldo: §6" + Coronas.fmt(coronas.saldo(p)) + " §7(gaste com os §6Mercadores§7)"));
