@@ -124,6 +124,7 @@ final class KitsContexto implements Listener {
         String c = e.getMessage().substring(1).split(" ")[0].toLowerCase(Locale.ROOT);
         if (c.contains(":")) c = c.substring(c.indexOf(':') + 1);
         if (!c.equals("kits") && !c.equals("kitlugar")) return;   // /kit continua sendo do PlayerKits2
+        if (true) return;   // agora /kits e comando de verdade (plugin.yml)
         Lugar l = lugar(e.getPlayer().getWorld());
         if (l == Lugar.OUTRO) return;   // fora do survival e das masmorras: deixa o /kit de sempre
         e.setCancelled(true);

@@ -54,10 +54,11 @@ final class Tesouro implements Listener {
         ThreadLocalRandom r = ThreadLocalRandom.current();
         Location sp = w.getSpawnLocation();
         int min = pl.getConfig().getInt("tesouro.raio-min", 300), max = pl.getConfig().getInt("tesouro.raio-max", 1200);
-        for (int tent = 0; tent < 30; tent++) {
+        for (int tent = 0; tent < 200; tent++) {
             double ang = r.nextDouble(Math.PI * 2), d = r.nextDouble(min, max);
             int x = sp.getBlockX() + (int) (Math.cos(ang) * d), z = sp.getBlockZ() + (int) (Math.sin(ang) * d);
             if (!w.getWorldBorder().isInside(new Location(w, x, 64, z))) continue;
+            if (!w.isChunkGenerated(x >> 4, z >> 4)) continue;   // nada de gerar chunk novo (trava o servidor)
             Block chao = w.getHighestBlockAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES);
             Material m = chao.getType();
             if (chao.isLiquid() || m == Material.ICE || m.name().contains("LEAVES") || chao.getY() < w.getSeaLevel() - 2) continue;
