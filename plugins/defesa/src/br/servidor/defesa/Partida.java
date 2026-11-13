@@ -523,6 +523,8 @@ final class Partida {
 
     // ------------------------------------------------------------------ cratera no caminho do Vulcao (13/11)
     private final Map<UUID, Integer> lancados = new HashMap<>();
+    private int totalLancados;
+    private double alturaMax;
 
     /** Quem pisa na cratera e jogado para o alto (uma vez por monstro), cai mais a frente e volta a andar. */
     private void erupcaoNoCaminho() {
@@ -533,10 +535,15 @@ final class Partida {
             Location l = m.getLocation();
             if (!Mapa.naCratera(l.getBlockX() - mapa.ox, l.getBlockZ() - mapa.oz)) continue;
             lancados.put(mo.id, tick);
+            totalLancados++;
+            final double y0 = l.getY();
+            for (int k = 4; k <= 24; k += 4) Bukkit.getScheduler().runTaskLater(plugin, () -> { if (m.isValid()) alturaMax = Math.max(alturaMax, m.getY() - y0); }, k);
             Location alvo = mapa.ponto(mundo, Math.min(mo.indice, mapa.caminho.length - 1));
             Vector dir = alvo.toVector().subtract(l.toVector()).setY(0);
             if (dir.lengthSquared() > 0.01) dir.normalize();
-            m.setVelocity(dir.multiply(mo.chefe ? 0.25 : 0.45).setY(mo.chefe ? 0.8 : 1.45));
+            m.setVelocity(dir.multiply(mo.chefe ? 0.25 : 0.4).setY(mo.chefe ? 0.7 : 1.1));
+            // desce planando (queda lenta): nao morre da queda, so volta a andar
+            m.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 50, 0, false, false));
             mundo.spawnParticle(Particle.LAVA, l.clone().add(0, 0.3, 0), 18, 0.6, 0.2, 0.6, 0);
             mundo.spawnParticle(Particle.FLAME, l.clone().add(0, 1, 0), 40, 0.4, 1.2, 0.4, 0.08);
             mundo.spawnParticle(Particle.LARGE_SMOKE, l.clone().add(0, 1.5, 0), 15, 0.4, 0.8, 0.4, 0.04);
@@ -1659,7 +1666,7 @@ final class Partida {
     String status() {
         return "[" + mapa.id + "] estado=" + estado + " dif=" + dif.id + " onda=" + onda + " nucleo=" + vidaNucleo + " essencia=" + essencia
                 + " monstros=" + monstros.size() + " fila=" + fila.size() + " torres=" + torres.size() + "/" + dif.limiteTorres
-                + " jogadores=" + jogadores().size() + " recorde=" + recorde(dif) + (mapa.tema == Mapa.Tema.CAMPOS ? " arrastados=" + arrastados : "");
+                + " jogadores=" + jogadores().size() + " recorde=" + recorde(dif) + (mapa.tema == Mapa.Tema.CAMPOS ? " arrastados=" + arrastados : "") + (mapa.tema == Mapa.Tema.VULCAO ? " lancados=" + totalLancados + " alturaMax=" + String.format("%.1f", alturaMax) : "");
     }
 
     // ================================================================== simulacao (admin, para equilibrar)

@@ -522,7 +522,7 @@ final class Mapa {
                         por(w, x, y, z, y == Y + h - 1 && d == 2 ? Material.MAGMA_BLOCK : ((x + y + z) % 3 == 0 ? Material.BLACKSTONE : Material.BASALT));
                 }
         for (int z = CRATERA_Z1; z <= CRATERA_Z2; z++)
-            for (int dx = -1; dx <= 1; dx++) por(w, CRATERA_X + dx, Y - 1, z, Material.MAGMA_BLOCK);
+            for (int dx = -1; dx <= 1; dx++) por(w, CRATERA_X + dx, Y - 1, z, (dx + z) % 2 == 0 ? Material.SHROOMLIGHT : Material.NETHERRACK);   // magma assustava os monstros (davam a volta)
     }
 
     /** Uma coluna de montanha: pedra, terra e grama (com flor ou arvore de vez em quando). */
