@@ -186,6 +186,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
             }
         }, 400L, 200L);
         Bukkit.getScheduler().runTaskLater(this, this::portalDoSpawn, 200L);
+        Bukkit.getScheduler().runTaskTimer(this, this::brilhoTapetes, 60L, 20L);
     }
 
     @Override
@@ -467,11 +468,26 @@ public final class Mineracao extends JavaPlugin implements Listener {
         for (int[] t : TAPETES) {
             for (int dx = -1; dx <= 1; dx++)
                 for (int dz = -1; dz <= 1; dz++) {
-                    por(m.cx + t[0] + dx, Mina.TOPO, m.cz + t[1] + dz, dx == 0 && dz == 0 ? "minecraft:gold_block" : "minecraft:emerald_block");
+                    por(m.cx + t[0] + dx, Mina.TOPO, m.cz + t[1] + dz, dx == 0 && dz == 0 ? "minecraft:sea_lantern" : "minecraft:emerald_block");
                     por(m.cx + t[0] + dx, Mina.TOPO + 1, m.cz + t[1] + dz, "minecraft:air");
                 }
-            texto(new Location(mundo, m.cx + t[0] + 0.5, Mina.TOPO + 2.6, m.cz + t[1] + 0.5), "§2§l⛏ VENDER\n§fpise aqui", 0.9f);
+            // 13/11 (Paulo): bem visivel - letreiro grande, moeda em cima e brilho verde (particulas) em volta
+            texto(new Location(mundo, m.cx + t[0] + 0.5, Mina.TOPO + 3.2, m.cz + t[1] + 0.5), "§a§l$ VENDA AQUI $\n§fpise no tapete verde\n§7vende todo o minério", 1.5f);
+            icone(new Location(mundo, m.cx + t[0] + 0.5, Mina.TOPO + 5.4, m.cz + t[1] + 0.5), Material.EMERALD, 1.2f);
+            por(m.cx + t[0], Mina.TOPO + 3, m.cz + t[1], "minecraft:light[level=15]");
         }
+    }
+
+    void brilhoTapetes() {
+        if (mundo == null) return;
+        Set<Mina> comGente = new HashSet<>();
+        for (Player p : mundo.getPlayers()) { Mina m = minaDaArea(p.getLocation()); if (m != null) comGente.add(m); }
+        for (Mina m : comGente)
+            for (int[] t : TAPETES) {
+                Location c = new Location(mundo, m.cx + t[0] + 0.5, Mina.TOPO + 1.2, m.cz + t[1] + 0.5);
+                mundo.spawnParticle(Particle.HAPPY_VILLAGER, c, 8, 1.0, 0.3, 1.0, 0);
+                mundo.spawnParticle(Particle.END_ROD, c.clone().add(0, 0.5, 0), 2, 0.6, 0.6, 0.6, 0.01);
+            }
     }
 
     boolean noTapete(Location l) {
@@ -1085,6 +1101,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         l.add("§7Bônus venda: §a+" + Math.round((RANKS[r].mult() - 1) * 100 + BONUS_VIP[nv]) + "%" + (horaDourada() ? " §6x2" : ""));
         if (nv > 0) l.add("§7Venda auto: " + (autoVenda(p) ? "§aligada" : "§7desligada"));
         l.add("§1 ");
+        if (m != null) l.add("§a$ Vender: §fpise no tapete verde");
         l.add("§e/minas §8• §e/rankup §8• §e/vender");
         Set<String> agora = new HashSet<>();
         for (int i = 0; i < l.size(); i++) {
@@ -1313,6 +1330,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
             return false;
         }
         p.teleport(m.chegada(mundo));
+        p.sendMessage(txt("§2⛏ §aPara vender: §fpise num §a§ltapete verde §f(§a$ VENDA AQUI§f) na borda da mina."));
         if (m.pvp) p.sendMessage(txt("§c§l⚠ MINA PVP §8» §7Aqui outros jogadores podem te atacar e quem morre §cperde os itens§7."));
         return true;
     }
