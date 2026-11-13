@@ -144,6 +144,10 @@ final class Construtor {
         if (t.tuneisDeAgua) for (Caixa c : p.corredores) tunelDeAgua(c);
         if (t.corredorDeTeias) for (Caixa c : p.corredores) corredorDeTeias(c);
         if (t.ponteDeLava) for (Caixa c : p.corredores) ponteDeLava(c);
+        if (t.pisoDeGelo) for (Caixa c : p.corredores) pisoDeGelo(c);
+        if (t.vigasDeMina) for (Caixa c : p.corredores) vigasDeMina(c);
+        if (t.pantanoAlagado) for (Caixa c : p.corredores) pantanoAlagado(c);
+        if (t.corredorDeFolhas) for (Caixa c : p.corredores) corredorDeFolhas(c);
         if (t.onde == Tipo.Onde.END) {
             varanda();
             ilha(p.area());
@@ -274,6 +278,90 @@ final class Construtor {
                 por(x, y1 - 2, z, parede(x, y1 - 2, z));
             }
         o.protecao.add(noX ? new Caixa(ini - 1, y1 - 2, b1 - 1, fim + 1, c.y2() + 1, b2 + 1) : new Caixa(b1 - 1, y1 - 2, ini - 1, b2 + 1, c.y2() + 1, fim + 1));
+    }
+
+    private static int mistura(int x, int y, int z, long semente) {
+        long h = x * 73856093L ^ y * 19349663L ^ z * 83492791L ^ semente * 2654435761L;
+        h ^= (h >>> 13); h *= 0x5bd1e995L; h ^= (h >>> 15);
+        return (int) Math.floorMod(h, 100L);
+    }
+
+    /** Fortaleza de Gelo (13/11): o piso dos corredores vira gelo azul e gelo compactado: escorrega (cuidado na luta). */
+    private void pisoDeGelo(Caixa c) {
+        boolean noX = (c.x2() - c.x1()) >= (c.z2() - c.z1());
+        int b1 = noX ? c.z1() : c.x1(), b2 = noX ? c.z2() : c.x2();
+        List<Integer> fatias = fatiasLivres(c, noX);
+        if (fatias.size() < 3) return;
+        int y = c.y1() - 1;
+        for (int a : fatias)
+            for (int b = b1; b <= b2; b++) {
+                int x = noX ? a : b, z = noX ? b : a;
+                por(x, y, z, mistura(x, y, z, p.semente) < 55 ? "minecraft:blue_ice" : "minecraft:packed_ice");
+            }
+    }
+
+    /** Mina Abandonada (13/11): vigas de madeira a cada 4 blocos (como mina de verdade) e trilho no meio do corredor. */
+    private void vigasDeMina(Caixa c) {
+        boolean noX = (c.x2() - c.x1()) >= (c.z2() - c.z1());
+        int b1 = noX ? c.z1() : c.x1(), b2 = noX ? c.z2() : c.x2();
+        List<Integer> fatias = fatiasLivres(c, noX);
+        if (fatias.size() < 4 || b2 - b1 < 2) return;
+        int y1 = c.y1(), y2 = c.y2(), meio = (b1 + b2) / 2;
+        String trilho = noX ? "minecraft:rail[shape=east_west]" : "minecraft:rail[shape=north_south]";
+        for (int k = 0; k < fatias.size(); k++) {
+            int a = fatias.get(k);
+            boolean viga = k % 4 == 2;
+            for (int b = b1; b <= b2; b++) {
+                int x = noX ? a : b, z = noX ? b : a;
+                if (viga && (b == b1 || b == b2)) for (int y = y1; y < y2; y++) por(x, y, z, "minecraft:oak_fence");
+                if (viga) por(x, y2, z, "minecraft:stripped_oak_log[axis=" + (noX ? "z" : "x") + "]");
+                if (b == meio && !(viga && (b == b1 || b == b2))) por(x, y1, z, trilho);
+            }
+            if (viga && mistura(a, y2, b1, p.semente) < 40) {
+                int x = noX ? a : b1, z = noX ? b1 : a;
+                por(x, y2 - 1, z, "minecraft:cobweb");
+            }
+        }
+    }
+
+    /** Covil da Bruxa (13/11): piso de lama com pocas de agua rasa (algumas com vitoria-regia) e musgo. */
+    private void pantanoAlagado(Caixa c) {
+        boolean noX = (c.x2() - c.x1()) >= (c.z2() - c.z1());
+        int b1 = noX ? c.z1() : c.x1(), b2 = noX ? c.z2() : c.x2();
+        List<Integer> fatias = fatiasLivres(c, noX);
+        if (fatias.size() < 3) return;
+        int y = c.y1() - 1;
+        for (int a : fatias)
+            for (int b = b1; b <= b2; b++) {
+                int x = noX ? a : b, z = noX ? b : a;
+                int r = mistura(x, y, z, p.semente);
+                por(x, y - 1, z, parede(x, y - 1, z));
+                if (r < 22) {
+                    por(x, y, z, "minecraft:water");
+                    if (r < 9) por(x, y + 1, z, "minecraft:lily_pad");
+                } else if (r < 70) por(x, y, z, "minecraft:mud");
+                else if (r < 85) por(x, y, z, "minecraft:moss_block");
+                else por(x, y, z, "minecraft:muddy_mangrove_roots[axis=y]");
+            }
+    }
+
+    /** Templo da Selva (13/11): moitas de folhas de selva nas laterais do corredor e tapete de musgo no chao. */
+    private void corredorDeFolhas(Caixa c) {
+        boolean noX = (c.x2() - c.x1()) >= (c.z2() - c.z1());
+        int b1 = noX ? c.z1() : c.x1(), b2 = noX ? c.z2() : c.x2();
+        List<Integer> fatias = fatiasLivres(c, noX);
+        if (fatias.size() < 3 || b2 - b1 < 2) return;
+        int y1 = c.y1();
+        for (int a : fatias)
+            for (int b = b1; b <= b2; b++) {
+                int x = noX ? a : b, z = noX ? b : a;
+                int r = mistura(x, y1, z, p.semente);
+                boolean lado = b == b1 || b == b2;
+                if (lado && r < 60) {
+                    por(x, y1, z, "minecraft:jungle_leaves[persistent=true]");
+                    if (r < 25 && y1 + 1 < c.y2()) por(x, y1 + 1, z, "minecraft:jungle_leaves[persistent=true]");
+                } else if (r < 45) por(x, y1, z, "minecraft:moss_carpet");
+            }
     }
 
     /** Pilares na arena, decoracao pelas bordas e no teto, luzes. */

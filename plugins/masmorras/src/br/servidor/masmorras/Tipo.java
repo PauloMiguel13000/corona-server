@@ -71,6 +71,8 @@ final class Tipo {
     boolean tuneisDeAgua;
     /** Ninho da aranha: cortinas de teia nos corredores. Forja: ponte estreita sobre lava nos corredores. */
     boolean corredorDeTeias, ponteDeLava;
+    /** 13/11: Gelo (piso escorregadio), Mina (vigas e trilhos), Pantano (lama e pocas), Selva (moitas nas paredes). */
+    boolean pisoDeGelo, vigasDeMina, pantanoAlagado, corredorDeFolhas;
     String[] decoPiso = {}, decoTeto = {};
     double chancePiso = 0.15, chanceTeto = 0.08;
     String tabela = "chests/simple_dungeon";
@@ -197,6 +199,7 @@ final class Tipo {
         t.veneno = true;
 
         t = add(new Tipo("MINA", "Mina Abandonada", "Mineiro Gigante", Onde.NORMAL, 2, Estilo.SUBTERRANEA));
+        t.vigasDeMina = true;
         t.salas = 5;
         t.parede = bs("stone", "stone", "stone", "cobbled_deepslate", "cobbled_deepslate", "deepslate", "andesite", "coal_ore", "iron_ore");
         t.piso = bs("cobblestone", "cobblestone", "stone", "stone", "coarse_dirt", "oak_planks");
@@ -218,6 +221,7 @@ final class Tipo {
         t.ajudantes = new String[] {"ZOMBIE"};
 
         t = add(new Tipo("PANTANO", "Covil da Bruxa", "Bruxa Anciã", Onde.NORMAL, 2, Estilo.SUBTERRANEA));
+        t.pantanoAlagado = true;
         t.salas = 4;
         t.parede = bs("mud_bricks", "mud_bricks", "mud_bricks", "packed_mud", "packed_mud", "dark_oak_planks", "mossy_cobblestone");
         t.piso = bs("moss_block", "moss_block", "dark_oak_planks", "dark_oak_planks", "packed_mud", "mud");
@@ -240,6 +244,7 @@ final class Tipo {
         t.biomas = new String[] {"SWAMP"};
 
         t = add(new Tipo("GELO", "Fortaleza de Gelo", "Rei do Gelo", Onde.NORMAL, 2, Estilo.SUBTERRANEA));
+        t.pisoDeGelo = true;
         t.salas = 5;
         t.parede = bs("packed_ice", "packed_ice", "packed_ice", "snow_block", "snow_block", "blue_ice");
         t.piso = bs("packed_ice", "packed_ice", "snow_block", "snow_block", "blue_ice");
@@ -508,6 +513,7 @@ final class Tipo {
         t.esp = Esp.ESCUDO_LACAIOS;
 
         t = add(new Tipo("SELVA", "Templo da Selva", "Xamã da Selva", Onde.NORMAL, 3, Estilo.SUBTERRANEA));
+        t.corredorDeFolhas = true;
         t.parede = bs("mossy_cobblestone", "mossy_cobblestone", "mossy_stone_bricks", "cobblestone", "jungle_planks");
         t.piso = bs("mossy_cobblestone", "moss_block", "coarse_dirt", "mossy_stone_bricks");
         t.teto = bs("mossy_cobblestone", "jungle_planks", "mossy_stone_bricks");
