@@ -21,7 +21,7 @@ final class Mina {
 
     final String id, nome;
     final int rank;            // rank minimo (0 = A)
-    final int cx;              // centro x (z = 0)
+    final int cx, cz;          // centro (x, z)
     final boolean pvp;
     final Material icone;
     final LinkedHashMap<Material, Integer> mistura;
@@ -31,8 +31,8 @@ final class Mina {
     long ultimoReset;
     boolean refazendo;
 
-    Mina(String id, String nome, int rank, int cx, boolean pvp, Material icone, Object... pares) {
-        this.id = id; this.nome = nome; this.rank = rank; this.cx = cx; this.pvp = pvp; this.icone = icone;
+    Mina(String id, String nome, int rank, int cx, int cz, boolean pvp, Material icone, Object... pares) {
+        this.id = id; this.nome = nome; this.rank = rank; this.cx = cx; this.cz = cz; this.pvp = pvp; this.icone = icone;
         mistura = new LinkedHashMap<>();
         int s = 0;
         for (int i = 0; i < pares.length; i += 2) { mistura.put((Material) pares[i], (Integer) pares[i + 1]); s += (Integer) pares[i + 1]; }
@@ -49,22 +49,22 @@ final class Mina {
 
     /** Dentro do miolo (onde se minera). */
     boolean noMiolo(Block b) {
-        int x = b.getX() - cx, z = b.getZ(), y = b.getY();
+        int x = b.getX() - cx, z = b.getZ() - cz, y = b.getY();
         return Math.abs(x) <= RAIO && Math.abs(z) <= RAIO && y <= TOPO && y > TOPO - FUNDO;
     }
 
     /** Area toda da mina (miolo + paredes + borda), para PvP e para tirar gente na hora do reset. */
     boolean naArea(Location l) {
         int lim = RAIO + 1 + BORDA;
-        return Math.abs(l.getBlockX() - cx) <= lim && Math.abs(l.getBlockZ()) <= lim && l.getY() > TOPO - FUNDO - 3 && l.getY() < TOPO + 30;
+        return Math.abs(l.getBlockX() - cx) <= lim && Math.abs(l.getBlockZ() - cz) <= lim && l.getY() > TOPO - FUNDO - 3 && l.getY() < TOPO + 30;
     }
 
     boolean dentroDoPoco(Location l) {
-        return Math.abs(l.getBlockX() - cx) <= RAIO && Math.abs(l.getBlockZ()) <= RAIO && l.getY() < TOPO + 2 && l.getY() > TOPO - FUNDO - 2;
+        return Math.abs(l.getBlockX() - cx) <= RAIO && Math.abs(l.getBlockZ() - cz) <= RAIO && l.getY() < TOPO + 2 && l.getY() > TOPO - FUNDO - 2;
     }
 
     Location chegada(World w) {
-        Location l = new Location(w, cx + 0.5, TOPO + 2, -(RAIO + 3) + 0.5);
+        Location l = new Location(w, cx + 0.5, TOPO + 2, cz - (RAIO + 3) + 0.5);
         l.setYaw(0); l.setPitch(30);
         return l;
     }
@@ -75,8 +75,8 @@ final class Mina {
         for (int x = -r; x <= r; x++)
             for (int z = -r; z <= r; z++) {
                 boolean parede = Math.abs(x) == r || Math.abs(z) == r;
-                if (parede) for (int y = yChao; y <= TOPO; y++) w.getBlockAt(cx + x, y, z).setType(Material.BEDROCK, false);
-                w.getBlockAt(cx + x, yChao, z).setType(Material.BEDROCK, false);
+                if (parede) for (int y = yChao; y <= TOPO; y++) w.getBlockAt(cx + x, y, cz + z).setType(Material.BEDROCK, false);
+                w.getBlockAt(cx + x, yChao, cz + z).setType(Material.BEDROCK, false);
             }
         Material piso = pvp ? Material.RED_NETHER_BRICKS : Material.POLISHED_ANDESITE;
         Material quina = pvp ? Material.CRYING_OBSIDIAN : Material.SMOOTH_STONE;
@@ -85,11 +85,15 @@ final class Mina {
             for (int z = -lim; z <= lim; z++) {
                 if (Math.abs(x) < r && Math.abs(z) < r) continue;
                 boolean beira = Math.abs(x) == lim || Math.abs(z) == lim;
-                Block b = w.getBlockAt(cx + x, TOPO, z);
+                Block b = w.getBlockAt(cx + x, TOPO, cz + z);
                 if (Math.abs(x) == r || Math.abs(z) == r) b.setType(Material.BEDROCK, false);
                 else b.setType(beira ? quina : piso, false);
-                if (beira && (x + z) % 4 == 0) w.getBlockAt(cx + x, TOPO + 1, z).setType(Material.LANTERN, false);
-                for (int y = TOPO - 3; y < TOPO; y++) if (Math.abs(x) > r || Math.abs(z) > r) w.getBlockAt(cx + x, y, z).setType(Material.STONE_BRICKS, false);
+                // grade de prisao na beira (ninguem cai sem querer); lanterna a cada 4; aberto na frente do portal de volta
+                if (beira && !(z == -lim && Math.abs(x) <= 3)) {
+                    w.getBlockAt(cx + x, TOPO + 1, cz + z).setType((x + z) % 4 == 0 ? Material.STONE_BRICK_WALL : Material.IRON_BARS, false);
+                    if ((x + z) % 4 == 0) w.getBlockAt(cx + x, TOPO + 2, cz + z).setType(Material.LANTERN, false);
+                }
+                for (int y = TOPO - 3; y < TOPO; y++) if (Math.abs(x) > r || Math.abs(z) > r) w.getBlockAt(cx + x, y, cz + z).setType(Material.STONE_BRICKS, false);
             }
     }
 }

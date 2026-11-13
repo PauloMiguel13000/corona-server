@@ -49,7 +49,10 @@ import java.util.*;
 public final class Mineracao extends JavaPlugin implements Listener {
 
     static final String MUNDO = "mineracao";
-    static final int VERSAO_CONSTRUCAO = 2;
+    static final int VERSAO_CONSTRUCAO = 3;
+    /** 13/11 (Paulo): minas em quadrado (4 x 3), perto uma da outra para todos se verem, com um vao de 10 blocos
+     *  de vazio entre as bordas (ninguem pula de uma para a outra). */
+    static final int GRADE_X0 = 100, GRADE_Z0 = -53, GRADE_PASSO = 2 * (Mina.RAIO + 1 + Mina.BORDA) + 1 + 10;
     static final int H = 30;            // patio: x,z de -30 a 30
     static final int PISO = 99;         // piso do patio (anda em y=100)
 
@@ -116,7 +119,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         M("j", "Bloco J • Bastião Negro", 9, Material.GILDED_BLACKSTONE, Material.BLACKSTONE, 30, Material.GILDED_BLACKSTONE, 20, Material.DEEPSLATE_DIAMOND_ORE, 25, Material.DEEPSLATE_EMERALD_ORE, 18, Material.ANCIENT_DEBRIS, 7);
         M("k", "Bloco K • Tesouro Imperial", 10, Material.ANCIENT_DEBRIS, Material.DEEPSLATE, 25, Material.DEEPSLATE_DIAMOND_ORE, 30, Material.DEEPSLATE_EMERALD_ORE, 25, Material.ANCIENT_DEBRIS, 12, Material.GOLD_BLOCK, 8);
         M("l", "Bloco L • Cela da Lenda", 11, Material.DIAMOND_BLOCK, Material.DEEPSLATE, 20, Material.DEEPSLATE_DIAMOND_ORE, 30, Material.DEEPSLATE_EMERALD_ORE, 25, Material.ANCIENT_DEBRIS, 15, Material.DIAMOND_BLOCK, 5, Material.EMERALD_BLOCK, 5);
-        minas.add(new Mina("pvp", "⚔ Mina PvP • TEM PVP: quem morre perde tudo", 3, -80, true, Material.NETHERITE_SWORD,
+        minas.add(new Mina("pvp", "⚔ Mina PvP • TEM PVP: quem morre perde tudo", 3, -80, 0, true, Material.NETHERITE_SWORD,
                 Material.DEEPSLATE, 30, Material.DEEPSLATE_DIAMOND_ORE, 25, Material.DEEPSLATE_EMERALD_ORE, 20, Material.DEEPSLATE_GOLD_ORE, 15, Material.ANCIENT_DEBRIS, 10));
 
         preco(1, Material.COAL, Material.COAL_ORE, Material.DEEPSLATE_COAL_ORE);
@@ -191,7 +194,8 @@ public final class Mineracao extends JavaPlugin implements Listener {
     }
 
     private void M(String id, String nome, int rank, Material icone, Object... mistura) {
-        minas.add(new Mina(id, nome, rank, 60 * (minas.size() + 1), false, icone, mistura));
+        int i = minas.size();
+        minas.add(new Mina(id, nome, rank, GRADE_X0 + (i % 4) * GRADE_PASSO, GRADE_Z0 + (i / 4) * GRADE_PASSO, false, icone, mistura));
     }
 
     private void preco(double v, Material... ms) { for (Material m : ms) precos.put(m, v); }
@@ -248,10 +252,18 @@ public final class Mineracao extends JavaPlugin implements Listener {
                 for (int x = x0; x <= x1; x++) for (int z = -1; z <= 1; z++) por(x, 99, z, "minecraft:air");
             }
         }
-        if (versaoAntiga >= 1) {
+        if (versaoAntiga == 1) {
             // molduras das minas pequenas (raio 8) da versao 1
             for (int cx : new int[]{60, 120, 180, 240, 300, 360, -80})
                 for (int x = cx - 14; x <= cx + 14; x++) for (int z = -14; z <= 14; z++) for (int y = 77; y <= 102; y++) por(x, y, z, "minecraft:air");
+        }
+        if (versaoAntiga == 2) {
+            // minas em fila da versao 2 (x = 60..720, z = 0): some tudo (poco, borda, grade e portal de volta)
+            int lim = Mina.RAIO + 1 + Mina.BORDA;
+            for (int k = 0; k < 12; k++) {
+                int cx = 60 + 60 * k;
+                for (int x = cx - lim; x <= cx + lim; x++) for (int z = -lim; z <= lim; z++) for (int y = Mina.TOPO - Mina.FUNDO - 1; y <= Mina.TOPO + 7; y++) por(x, y, z, "minecraft:air");
+            }
         }
         tirarEnfeites(mundo);
         for (int x = -H - 3; x <= H + 3; x++) for (int z = -H - 3; z <= H + 3; z++) for (int y = 95; y <= 115; y++) por(x, y, z, "minecraft:air");
@@ -424,7 +436,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
             boolean eixoX = pt.parede() == 'n' || pt.parede() == 's';
             for (int s = -1; s <= 1; s++) for (int y = PISO + 1; y <= PISO + 5; y++) n += miolo(mundo, eixoX ? pt.x() + s : pt.x(), y, eixoX ? pt.z() : pt.z() + s, eixoX);
         }
-        for (Mina m : minas) for (int s = -1; s <= 1; s++) for (int y = Mina.TOPO + 1; y <= Mina.TOPO + 4; y++) n += miolo(mundo, m.cx + s, y, -(Mina.RAIO + 1 + Mina.BORDA), true);
+        for (Mina m : minas) for (int s = -1; s <= 1; s++) for (int y = Mina.TOPO + 1; y <= Mina.TOPO + 4; y++) n += miolo(mundo, m.cx + s, y, m.cz - (Mina.RAIO + 1 + Mina.BORDA), true);
         if (getConfig().getBoolean("portal-spawn.feito", false)) {
             World w = Bukkit.getWorld(getConfig().getString("portal-spawn.mundo", "world"));
             int cx = getConfig().getInt("portal-spawn.x", 15), z = getConfig().getInt("portal-spawn.z", -29), y0 = getConfig().getInt("portal-spawn.y", 122);
@@ -448,8 +460,32 @@ public final class Mineracao extends JavaPlugin implements Listener {
     }
 
     /** Portal de volta na borda norte de cada mina. */
+    /** 13/11 (Paulo): em cada mina, 4 tapetes de VENDER na borda (3x3 de esmeralda): so pisar em cima vende o minerio. */
+    static final int[][] TAPETES = {{5, -19}, {0, 19}, {19, 0}, {-19, 0}};   // centro (dx, dz) de cada tapete
+
+    private void tapetesVender(Mina m) {
+        for (int[] t : TAPETES) {
+            for (int dx = -1; dx <= 1; dx++)
+                for (int dz = -1; dz <= 1; dz++) {
+                    por(m.cx + t[0] + dx, Mina.TOPO, m.cz + t[1] + dz, dx == 0 && dz == 0 ? "minecraft:gold_block" : "minecraft:emerald_block");
+                    por(m.cx + t[0] + dx, Mina.TOPO + 1, m.cz + t[1] + dz, "minecraft:air");
+                }
+            texto(new Location(mundo, m.cx + t[0] + 0.5, Mina.TOPO + 2.6, m.cz + t[1] + 0.5), "§2§l⛏ VENDER\n§fpise aqui", 0.9f);
+        }
+    }
+
+    boolean noTapete(Location l) {
+        if (l.getWorld() != mundo || l.getBlockY() != Mina.TOPO + 1) return false;
+        Mina m = minaDaArea(l);
+        if (m == null) return false;
+        int x = l.getBlockX() - m.cx, z = l.getBlockZ() - m.cz;
+        for (int[] t : TAPETES) if (Math.abs(x - t[0]) <= 1 && Math.abs(z - t[1]) <= 1) return true;
+        return false;
+    }
+
     private void construirVolta(Mina m) {
-        int z = -(Mina.RAIO + 1 + Mina.BORDA);
+        tapetesVender(m);
+        int z = m.cz - (Mina.RAIO + 1 + Mina.BORDA);
         for (int s = -3; s <= 3; s++) for (int y = Mina.TOPO + 1; y <= Mina.TOPO + 9; y++) por(m.cx + s, y, z, "minecraft:air");
         for (int s = -2; s <= 2; s++)
             for (int y = Mina.TOPO; y <= Mina.TOPO + 6; y++) {
@@ -464,11 +500,11 @@ public final class Mineracao extends JavaPlugin implements Listener {
         // avisos vermelhos nos 4 lados da borda e postes de redstone nas quinas
         int b = Mina.RAIO + 3;
         for (int[] o : new int[][]{{0, b}, {b, 0}, {-b, 0}, {0, -b + 1}})
-            if (!(o[0] == 0 && o[1] == -b + 1)) texto(new Location(mundo, m.cx + o[0] + 0.5, Mina.TOPO + 4, o[1] + 0.5), "§4§l⚔ ZONA PVP ⚔\n§cjogadores podem te atacar aqui", 1.1f);
+            if (!(o[0] == 0 && o[1] == -b + 1)) texto(new Location(mundo, m.cx + o[0] + 0.5, Mina.TOPO + 4, m.cz + o[1] + 0.5), "§4§l⚔ ZONA PVP ⚔\n§cjogadores podem te atacar aqui", 1.1f);
         int q = Mina.RAIO + 1 + Mina.BORDA;
         for (int sx : new int[]{-1, 1}) for (int sz : new int[]{-1, 1}) {
-            por(m.cx + sx * q, Mina.TOPO + 1, sz * q, "minecraft:redstone_block");
-            por(m.cx + sx * q, Mina.TOPO + 2, sz * q, "minecraft:red_banner");
+            por(m.cx + sx * q, Mina.TOPO + 1, m.cz + sz * q, "minecraft:redstone_block");
+            por(m.cx + sx * q, Mina.TOPO + 2, m.cz + sz * q, "minecraft:red_banner");
         }
     }
 
@@ -623,7 +659,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         List<int[]> pos = new ArrayList<>(Mina.volume());
         for (int y = Mina.TOPO; y > Mina.TOPO - Mina.FUNDO; y--)
             for (int x = -Mina.RAIO; x <= Mina.RAIO; x++)
-                for (int z = -Mina.RAIO; z <= Mina.RAIO; z++) pos.add(new int[]{m.cx + x, y, z});
+                for (int z = -Mina.RAIO; z <= Mina.RAIO; z++) pos.add(new int[]{m.cx + x, y, m.cz + z});
         Iterator<int[]> it = pos.iterator();
         Bukkit.getScheduler().runTaskTimer(this, t -> {
             for (int n = 0; n < 2500 && it.hasNext(); n++) {
@@ -876,6 +912,16 @@ public final class Mineracao extends JavaPlugin implements Listener {
                 if (mundo == null) return;
                 p.teleport(patio());
                 p.playSound(p.getLocation(), Sound.BLOCK_IRON_DOOR_CLOSE, 0.8f, 0.8f);
+            }
+            return;
+        }
+        // tapetes de vender das minas
+        if (noTapete(to)) {
+            if (!noTapete(e.getFrom()) && !esperando(p, 1500)) {
+                boolean tem = false;
+                for (ItemStack it : p.getInventory().getStorageContents()) if (marcado(it)) { tem = true; break; }
+                if (tem) vender(p);
+                else p.sendActionBar(txt("§2⛏ Tapete de venda: §7pise aqui com minério no inventário para vender"));
             }
             return;
         }
@@ -1515,8 +1561,8 @@ public final class Mineracao extends JavaPlugin implements Listener {
                     Map<Material, Integer> cont = new EnumMap<>(Material.class);
                     for (int y = Mina.TOPO; y > Mina.TOPO - Mina.FUNDO; y -= 5)
                         for (int x = -Mina.RAIO; x <= Mina.RAIO; x += 3)
-                            for (int z = -Mina.RAIO; z <= Mina.RAIO; z += 3) cont.merge(mundo.getBlockAt(m.cx + x, y, z).getType(), 1, Integer::sum);
-                    s.sendMessage("mina " + m.id + " cx=" + m.cx + " rank=" + RANKS[m.rank].letra() + " quebrados=" + m.quebrados + " amostra=" + cont);
+                            for (int z = -Mina.RAIO; z <= Mina.RAIO; z += 3) cont.merge(mundo.getBlockAt(m.cx + x, y, m.cz + z).getType(), 1, Integer::sum);
+                    s.sendMessage("mina " + m.id + " cx=" + m.cx + " cz=" + m.cz + " rank=" + RANKS[m.rank].letra() + " quebrados=" + m.quebrados + " amostra=" + cont);
                 }
             }
             default -> s.sendMessage("?");
