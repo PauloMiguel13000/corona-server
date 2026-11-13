@@ -243,6 +243,7 @@ public final class DefesaTorre extends JavaPlugin implements Listener {
                 m.construir(mundo);
                 getLogger().info("Mapa " + m.nome + " construido.");
             }
+            try { m.enfeites(mundo); } catch (Throwable t) { getLogger().warning("Enfeites do " + m.nome + ": " + t); }
         }
     }
 
@@ -404,7 +405,7 @@ public final class DefesaTorre extends JavaPlugin implements Listener {
         h.inv = inv;
         ItemStack vidro = item(Material.PURPLE_STAINED_GLASS_PANE, " ", List.of());
         for (int i = 0; i < 36; i++) inv.setItem(i, vidro);
-        int[] slots = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21};
+        int[] slots = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 28, 29, 30};
         TipoTorre[] tipos = TipoTorre.values();
         boolean cheio = pa.torres.size() >= pa.dif.limiteTorres;
         for (int i = 0; i < tipos.length && i < slots.length; i++) {
@@ -425,6 +426,9 @@ public final class DefesaTorre extends JavaPlugin implements Listener {
                     case VENENO -> " §7por segundo, em área";
                     case MORTEIRO -> " §7em área grande";
                     case TESLA -> " §7+ pula para outros";
+                    case FOGO -> " §7por golpe, em área + fogo";
+                    case TRIPLA -> " §7em 3 monstros (4 no nível 3)";
+                    case CEIFADOR -> " §7+ acaba com quem tem pouca vida";
                     default -> "";
                 };
                 lore.add("§fDano: §c" + num(t.dano) + extra);
@@ -1299,6 +1303,10 @@ public final class DefesaTorre extends JavaPlugin implements Listener {
                     pa.simular(linhas.subList(1, linhas.size()));
                     pa.iniciar(s, d);
                     s.sendMessage("Simulando " + pa.mapa.id + " no " + pa.dif.id + " com " + f.getName());
+                }
+                case "dragao" -> {
+                    pa.voarDragao();
+                    s.sendMessage("Dragao voando no " + pa.mapa.nome);
                 }
                 case "reconstruir" -> {
                     pa.resetar(true);

@@ -26,6 +26,9 @@ final class Skins {
         SKINS.put("farol", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZmI4YjJmMmEzZTBlNzgyZDY3ZGE1M2VkMDEzMWIxNDI4MDc3OTM5NmJiY2UwOWU1ZjcxMjY2ZDc0NTQ0ZGVlOCJ9fX0=");
         SKINS.put("balista", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNDAyNjBmZjBmN2FjMzU3YjdlYzIyYmQyMjAyZGI3YjY3ZGRjODk5ZWM2NmM4Y2I3MTZjZjYwMWRiNDY5NWZlNiJ9fX0=");
         SKINS.put("laser", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvM2U0YjE3NGQ0ZWY0MTQwNGExMmVmMzA5ZTQ3Yzk1MWFmMDM3Y2I5ZmI2ODg5ZTIzZjJmNDgyODEwYWE2OTA5MiJ9fX0=");
+        SKINS.put("fogo", SKINS.get("canhao"));
+        SKINS.put("tripla", SKINS.get("arqueira"));
+        SKINS.put("ceifador", SKINS.get("laser"));
     }
 
     static ResolvableProfile perfil(String id) {

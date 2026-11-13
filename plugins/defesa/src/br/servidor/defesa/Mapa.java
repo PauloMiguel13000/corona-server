@@ -16,7 +16,7 @@ import org.bukkit.entity.EntityType;
  */
 final class Mapa {
 
-    enum Tema { CAMPOS, VULCAO }
+    enum Tema { CAMPOS, VULCAO, GELO, DRAGAO }
 
     static final String MUNDO = "defesa";
     /** Altura onde se pisa (o chao fica em Y-1). */
@@ -101,7 +101,29 @@ final class Mapa {
         VULCAO.nomesTroca.put(EntityType.ZOMBIE, "Piglin Zumbi");
     }
 
-    static final List<Mapa> TODOS = List.of(CAMPOS, VULCAO);
+    static final Mapa GELEIRA = new Mapa("geleira", "Geleira", "§b", Material.BLUE_ICE,
+            "Caminho em serpente pela neve,", "lago congelado em volta. Monstros 15% mais fortes.",
+            Tema.GELO, 600, 0, -22, 22, -22, 30,
+            new int[][] {{-18, -18}, {-18, 14}, {-8, 14}, {-8, -14}, {2, -14}, {2, 14}, {12, 14}, {12, -14}, {18, -14}, {18, 20}},
+            18.5, 23.5, 6.5, 26.5, -8.5, 26.5,
+            Material.SNOW_BLOCK, Material.CALCITE, 1.15);
+
+    /** 13/11 (Paulo): fase com um dragao que passa por cima a cada 5 minutos (e queima os monstros no caminho). */
+    static final Mapa NINHO = new Mapa("ninho", "Ninho do Dragão", "§5", Material.DRAGON_HEAD,
+            "Ilha do Fim em zigue-zague. A cada 5 minutos", "o Dragão passa por cima e queima os monstros!",
+            Tema.DRAGAO, 900, 0, -22, 22, -22, 30,
+            new int[][] {{-18, -20}, {18, -20}, {18, -10}, {-10, -10}, {-10, 0}, {18, 0}, {18, 10}, {-18, 10}, {-18, 18}, {-8, 18}},
+            -5.5, 18.5, 10.5, 26.5, -10.5, 26.5,
+            Material.END_STONE, Material.PURPUR_BLOCK, 1.35);
+
+    static {
+        GELEIRA.trocas.put(EntityType.SKELETON, EntityType.STRAY);
+        GELEIRA.nomesTroca.put(EntityType.SKELETON, "Errante");
+        NINHO.trocas.put(EntityType.SPIDER, EntityType.CAVE_SPIDER);
+        NINHO.nomesTroca.put(EntityType.SPIDER, "Aranha do Fim");
+    }
+
+    static final List<Mapa> TODOS = List.of(CAMPOS, VULCAO, GELEIRA, NINHO);
 
     static Mapa porId(String s) {
         if (s == null) return null;
@@ -191,7 +213,12 @@ final class Mapa {
         int cx = (int) Math.floor(ox + nucleoX);
         int cz = (int) Math.floor(oz + nucleoZ);
         Material m = w.getBlockAt(cx, Y - 1, cz).getType();
-        return tema == Tema.VULCAO ? m == Material.GILDED_BLACKSTONE : m == Material.OBSIDIAN;
+        return switch (tema) {
+            case VULCAO -> m == Material.GILDED_BLACKSTONE;
+            case GELO -> m == Material.DIAMOND_BLOCK;
+            case DRAGAO -> m == Material.CRYING_OBSIDIAN && w.getBlockAt(cx, Y - 2, cz).getType() == Material.OBSIDIAN;
+            default -> m == Material.OBSIDIAN;
+        };
     }
 
     // ------------------------------------------------------------------ construcao
@@ -205,6 +232,8 @@ final class Mapa {
         switch (tema) {
             case CAMPOS -> construirCampos(w);
             case VULCAO -> construirVulcao(w);
+            case GELO -> construirGeleira(w);
+            case DRAGAO -> construirNinho(w);
         }
     }
 
@@ -283,6 +312,149 @@ final class Mapa {
         portal(w, Material.OBSIDIAN, Material.CRYING_OBSIDIAN, Material.SOUL_LANTERN);
         baseNucleo(w, Material.GILDED_BLACKSTONE, Material.POLISHED_BLACKSTONE_BRICKS, Material.SOUL_LANTERN);
         pads(w, Material.CRIMSON_PLANKS, Material.POLISHED_BLACKSTONE);
+    }
+
+    /** Geleira: ilha de neve com lago congelado em volta, pinheiros nevados e blocos de gelo. */
+    private void construirGeleira(World w) {
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        for (int x = minX - 4; x <= maxX + 4; x++) {
+            for (int z = minZ - 4; z <= maxZ + 4; z++) {
+                for (int y = Y; y <= Y + 10; y++) por(w, x, y, z, Material.AIR);
+                boolean ilha = x >= minX && x <= maxX && z >= minZ && z <= maxZ;
+                if (ilha) {
+                    por(w, x, Y - 1, z, noCaminho(x, z) ? trilha : chao);
+                    por(w, x, Y - 2, z, Material.SNOW_BLOCK);
+                    por(w, x, Y - 3, z, Material.STONE);
+                    if (Math.abs(x) < maxX - 3 && z > minZ + 3 && z < maxZ - 3) por(w, x, Y - 4, z, Material.PACKED_ICE);
+                } else {
+                    por(w, x, Y - 2, z, Material.PACKED_ICE);
+                    por(w, x, Y - 1, z, (x + z) % 3 == 0 ? Material.BLUE_ICE : Material.ICE);
+                }
+            }
+        }
+        for (int x = minX; x <= maxX; x++)
+            for (int z = minZ; z <= maxZ; z++)
+                if (x == minX || x == maxX || z == minZ || z == maxZ) w.getBlockAt(ox + x, Y, oz + z).setType(Material.SPRUCE_FENCE, true);
+        // pinheiros nevados nos cantos e blocos de gelo espalhados
+        int[][] cantos = {{minX + 2, minZ + 2}, {maxX - 2, minZ + 2}, {minX + 2, maxZ - 2}, {maxX - 2, maxZ - 2}};
+        for (int[] c : cantos) {
+            if (noCaminho(c[0], c[1]) || perto(c[0], c[1], caminho[0][0], caminho[0][1], 4) || perto(c[0], c[1], lobbyX, lobbyZ, 3) || perto(c[0], c[1], lojaX, lojaZ, 3) || perto(c[0], c[1], nucleoX, nucleoZ, 4)) continue;
+            for (int y = Y; y < Y + 4; y++) por(w, c[0], y, c[1], Material.SPRUCE_LOG);
+            for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) {
+                por(w, c[0] + dx, Y + 3, c[1] + dz, Material.SPRUCE_LEAVES);
+                por(w, c[0] + dx, Y + 4, c[1] + dz, dx == 0 || dz == 0 ? Material.SNOW_BLOCK : Material.AIR);
+            }
+            por(w, c[0], Y + 5, c[1], Material.SNOW_BLOCK);
+        }
+        for (int n = 0; n < 40; n++) {
+            int x = r.nextInt(minX + 2, maxX - 1);
+            int z = r.nextInt(minZ + 2, maxZ - 1);
+            if (noCaminho(x, z) || perto(x, z, nucleoX, nucleoZ, 4) || perto(x, z, lobbyX, lobbyZ, 3) || perto(x, z, lojaX, lojaZ, 3)) continue;
+            Block b = w.getBlockAt(ox + x, Y, oz + z);
+            if (b.getType() != Material.AIR) continue;
+            por(w, x, Y, z, n % 4 == 0 ? Material.POWDER_SNOW_CAULDRON : Material.SNOW);
+        }
+        portal(w, Material.PACKED_ICE, Material.BLUE_ICE, Material.SEA_LANTERN);
+        baseNucleo(w, Material.DIAMOND_BLOCK, Material.PACKED_ICE, Material.SEA_LANTERN);
+        pads(w, Material.SPRUCE_PLANKS, Material.POLISHED_DIORITE);
+    }
+
+    /** Ninho do Dragao: ilha de pedra do Fim com pilares de obsidiana e varas do Fim, borda de purpura. */
+    private void construirNinho(World w) {
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        for (int x = minX - 3; x <= maxX + 3; x++) {
+            for (int z = minZ - 3; z <= maxZ + 3; z++) {
+                for (int y = Y; y <= Y + 12; y++) por(w, x, y, z, Material.AIR);
+                boolean ilha = x >= minX && x <= maxX && z >= minZ && z <= maxZ;
+                if (ilha) {
+                    por(w, x, Y - 1, z, noCaminho(x, z) ? trilha : chao);
+                    por(w, x, Y - 2, z, Material.END_STONE);
+                    por(w, x, Y - 3, z, Material.END_STONE_BRICKS);
+                    if (Math.abs(x) < maxX - 3 && z > minZ + 3 && z < maxZ - 3) por(w, x, Y - 4, z, Material.END_STONE);
+                    if (Math.abs(x) < maxX - 8 && z > minZ + 8 && z < maxZ - 8) por(w, x, Y - 6, z, Material.END_STONE);
+                }
+            }
+        }
+        int i = 0;
+        for (int x = minX; x <= maxX; x++)
+            for (int z = minZ; z <= maxZ; z++) {
+                if (x != minX && x != maxX && z != minZ && z != maxZ) continue;
+                por(w, x, Y, z, Material.PURPUR_PILLAR);
+                if (i++ % 5 == 0) por(w, x, Y + 1, z, Material.END_ROD);
+            }
+        // pilares de obsidiana (como os do Fim), mais altos no fundo
+        int[][] pil = {{minX + 2, minZ + 2}, {maxX - 2, minZ + 2}, {minX + 2, maxZ - 6}, {maxX - 2, maxZ - 6}};
+        for (int[] c : pil) {
+            if (noCaminho(c[0], c[1]) || perto(c[0], c[1], caminho[0][0], caminho[0][1], 4)) continue;
+            int alt = 6 + r.nextInt(4);
+            for (int y = Y; y < Y + alt; y++) por(w, c[0], y, c[1], Material.OBSIDIAN);
+            por(w, c[0], Y + alt, c[1], Material.IRON_BARS);
+            por(w, c[0], Y + alt + 1, c[1], Material.END_ROD);
+        }
+        for (int n = 0; n < 30; n++) {
+            int x = r.nextInt(minX + 2, maxX - 1);
+            int z = r.nextInt(minZ + 2, maxZ - 1);
+            if (noCaminho(x, z) || perto(x, z, nucleoX, nucleoZ, 4) || perto(x, z, lobbyX, lobbyZ, 3) || perto(x, z, lojaX, lojaZ, 3)) continue;
+            Block b = w.getBlockAt(ox + x, Y, oz + z);
+            if (b.getType() != Material.AIR) continue;
+            por(w, x, Y, z, n % 3 == 0 ? Material.END_ROD : Material.SMALL_AMETHYST_BUD);
+        }
+        portal(w, Material.OBSIDIAN, Material.CRYING_OBSIDIAN, Material.END_ROD);
+        baseNucleo(w, Material.CRYING_OBSIDIAN, Material.PURPUR_BLOCK, Material.END_ROD);
+        int cx = (int) Math.floor(nucleoX), cz = (int) Math.floor(nucleoZ);
+        por(w, cx, Y - 2, cz, Material.OBSIDIAN);
+        pads(w, Material.PURPUR_BLOCK, Material.END_STONE_BRICKS);
+    }
+
+    /** Enfeites novos que entram tambem nos mapas ja construidos (so poe onde esta vazio). */
+    /** Campos (13/11, Paulo): um rio num aqueduto de pedra passa por cima da entrada dos monstros (eles saem de baixo
+     *  do rio) e no fim do aqueduto o rio cai numa cachoeira na frente do tunel: os monstros passam por baixo dela.
+     *  A agua do rio e de verdade (parada, fechada no canal); a queda e efeito (nao alaga o caminho). */
+    static final int RIO_X1 = -22, RIO_X2 = -8, RIO_Z1 = -20, RIO_Z2 = -16, RIO_ALT = 6;
+
+    void enfeites(World w) {
+        if (tema == Tema.CAMPOS) { aqueduto(w); return; }
+        if (tema != Tema.VULCAO) return;
+        // cratera ao norte, fora da ilha: anel de basalto com magma e fogueiras de sinal (fumaca alta)
+        int cx = (minX + maxX) / 2, cz = minZ - 9;
+        for (int dx = -4; dx <= 4; dx++)
+            for (int dz = -4; dz <= 4; dz++) {
+                double d = Math.sqrt(dx * dx + dz * dz);
+                if (d > 4.3) continue;
+                por(w, cx + dx, Y - 2, cz + dz, Material.BLACKSTONE);
+                por(w, cx + dx, Y - 1, cz + dz, d < 2.2 ? Material.MAGMA_BLOCK : Material.BASALT);
+                if (d >= 3.2) por(w, cx + dx, Y, cz + dz, Material.BASALT);
+                if (d >= 3.8) por(w, cx + dx, Y + 1, cz + dz, Material.BLACKSTONE);
+            }
+        if (w.getBlockAt(ox + cx, Y, oz + cz).getType() == Material.AIR) {
+            w.getBlockAt(ox + cx, Y, oz + cz).setBlockData(org.bukkit.Bukkit.createBlockData("minecraft:campfire[signal_fire=true,lit=true]"), false);
+            w.getBlockAt(ox + cx + 1, Y, oz + cz - 1).setBlockData(org.bukkit.Bukkit.createBlockData("minecraft:campfire[signal_fire=true,lit=true]"), false);
+        }
+    }
+
+    private void aqueduto(World w) {
+        if (w.getBlockAt(ox + RIO_X1 + 1, Y + RIO_ALT + 1, oz + RIO_Z1 + 1).getType() == Material.WATER) return;   // ja feito
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        // pilares dos dois lados do tunel (fora do caminho)
+        for (int px : new int[]{-21, -14, -9})
+            for (int pz : new int[]{RIO_Z1, RIO_Z2})
+                for (int y = Y; y < Y + RIO_ALT; y++) por(w, px, y, pz, r.nextInt(4) == 0 ? Material.MOSSY_STONE_BRICKS : Material.STONE_BRICKS);
+        for (int x = RIO_X1; x <= RIO_X2; x++)
+            for (int z = RIO_Z1; z <= RIO_Z2; z++) {
+                boolean borda = z == RIO_Z1 || z == RIO_Z2 || x == RIO_X1 || x == RIO_X2;
+                por(w, x, Y + RIO_ALT, z, r.nextInt(5) == 0 ? Material.MOSSY_STONE_BRICKS : Material.STONE_BRICKS);   // fundo do canal (teto do tunel)
+                por(w, x, Y + RIO_ALT + 1, z, borda ? Material.MOSSY_STONE_BRICKS : Material.WATER);
+                if (borda && (x + z) % 3 == 0) por(w, x, Y + RIO_ALT + 2, z, Material.MOSS_CARPET);
+                // arcos embaixo do canal, so nas bordas (o meio fica livre ate o teto: o boss gigante passa)
+                if ((z == RIO_Z1 || z == RIO_Z2) && w.getBlockAt(ox + x, Y + RIO_ALT - 1, oz + z).getType() == Material.AIR)
+                    w.getBlockAt(ox + x, Y + RIO_ALT - 1, oz + z).setBlockData(org.bukkit.Bukkit.createBlockData("minecraft:stone_brick_stairs[half=top,facing=" + (z == RIO_Z1 ? "south" : "north") + "]"), false);
+            }
+        // folhas e trepadeiras caindo do aqueduto
+        for (int x = RIO_X1; x <= RIO_X2; x += 2) {
+            por(w, x, Y + RIO_ALT + 2, RIO_Z1, Material.AZALEA_LEAVES);
+            Block v = w.getBlockAt(ox + x, Y + RIO_ALT - 1, oz + RIO_Z1 - 1);
+            if (x >= minX && v.getType() == Material.AIR) v.setBlockData(org.bukkit.Bukkit.createBlockData("minecraft:vine[north=false,south=true]"), false);
+        }
     }
 
     private static boolean perto(int x, int z, double cx, double cz, double raio) {

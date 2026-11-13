@@ -67,6 +67,8 @@ final class Partida {
         int nivel = 1;
         int investido;
         int recarga;
+        /** Pecas (BlockDisplay) da torre de pedra embaixo do guardiao. */
+        final List<UUID> pecas = new ArrayList<>();
 
         Torre(UUID stand, TipoTorre tipo, Location local, int investido) {
             this.stand = stand;
@@ -176,11 +178,12 @@ final class Partida {
             v.setSilent(true);
             v.setCollidable(false);
             v.setRemoveWhenFarAway(false);
-            v.setProfession(mapa.tema == Mapa.Tema.VULCAO ? Villager.Profession.WEAPONSMITH : Villager.Profession.LIBRARIAN);
+            v.setProfession(switch (mapa.tema) { case VULCAO -> Villager.Profession.WEAPONSMITH; case GELO -> Villager.Profession.FISHERMAN; case DRAGAO -> Villager.Profession.CLERIC; default -> Villager.Profession.LIBRARIAN; });
             v.customName(DefesaTorre.txt("§6§lLOJA DE TORRES §7(clique)"));
             v.setCustomNameVisible(true);
             v.getPersistentDataContainer().set(plugin.kLoja, PersistentDataType.STRING, mapa.id);
         });
+        if (mapa.tema == Mapa.Tema.CAMPOS) cortinaCachoeira();
     }
 
     // ================================================================== utilidades
@@ -331,6 +334,10 @@ final class Partida {
         if (tick % 10 == 0) moverMonstros();
         if (tick % 20 == 0) porSegundo();
         if (tick % 40 == 0 && !torres.isEmpty()) efeitosSuporte();
+        if (tick % 10 == 0 && mapa.tema == Mapa.Tema.CAMPOS) {
+            List<Player> js = jogadores();
+            if (!js.isEmpty()) efeitosCachoeira(js);
+        }
     }
 
     private void porSegundo() {
@@ -363,10 +370,13 @@ final class Partida {
             }
         }
         List<Player> js = jogadores();
-        if (mapa.tema == Mapa.Tema.VULCAO && !js.isEmpty()) {
-            mundo.spawnParticle(Particle.ASH, mapa.centro(mundo).add(0, 3, 0), 60, 16, 4, 18, 0);
-            mundo.spawnParticle(Particle.LAVA, mapa.centro(mundo), 3, 18, 0.5, 20, 0);
+        if (mapa.tema == Mapa.Tema.GELO && !js.isEmpty()) {
+            for (Player p : js) p.spawnParticle(Particle.SNOWFLAKE, mapa.centro(mundo).add(0, 6, 0), bedrock(p) ? 12 : 50, 18, 3, 20, 0.01);
+            efeitosGeleira(js);
         }
+        if (mapa.tema == Mapa.Tema.DRAGAO && !js.isEmpty()) for (Player p : js) p.spawnParticle(Particle.PORTAL, mapa.centro(mundo).add(0, 2, 0), bedrock(p) ? 10 : 40, 18, 2, 20, 0.2);
+        if (mapa.tema == Mapa.Tema.DRAGAO) dragao(js);
+        if (mapa.tema == Mapa.Tema.VULCAO && !js.isEmpty()) efeitosVulcao(js);
 
         if (estado != Estado.ESPERANDO && !forcado && js.isEmpty()) {
             plugin.getLogger().info("[" + mapa.id + "] Todos sairam: reiniciando a partida.");
@@ -399,6 +409,198 @@ final class Partida {
             atualizarBarras();
         }
         atualizarNomes();
+    }
+
+    // ------------------------------------------------------------------ cachoeira dos Campos (13/11)
+    private void cortinaCachoeira() {
+        double x = mapa.ox + Mapa.RIO_X2 + 1.02, z0 = mapa.oz + Mapa.RIO_Z1 + 1;
+        float alt = Mapa.RIO_ALT + 1.9f;
+        Location l = new Location(mundo, x, Mapa.Y, z0);
+        for (int k = 0; k < 2; k++) {
+            final int kk = k;
+            mundo.spawn(l, org.bukkit.entity.BlockDisplay.class, b -> {
+                b.setBlock((kk == 0 ? Material.LIGHT_BLUE_STAINED_GLASS : Material.WHITE_STAINED_GLASS).createBlockData());
+                b.setTransformation(new org.bukkit.util.Transformation(new org.joml.Vector3f(kk * 0.12f, 0f, 0f), new org.joml.AxisAngle4f(),
+                        new org.joml.Vector3f(kk == 0 ? 0.14f : 0.05f, alt, 3f), new org.joml.AxisAngle4f()));
+                b.setPersistent(false);
+                b.setViewRange(1.5f);
+                b.getPersistentDataContainer().set(plugin.kTorre, PersistentDataType.STRING, "cachoeira");
+            });
+        }
+    }
+
+    /** Agua caindo da cachoeira e correndo no rio (a cada meio segundo). Bedrock (celular) recebe 4x menos. */
+    private void efeitosCachoeira(List<Player> js) {
+        double x = mapa.ox + Mapa.RIO_X2 + 1.1, zc = mapa.oz + (Mapa.RIO_Z1 + Mapa.RIO_Z2) / 2.0 + 0.5;
+        Location meio = new Location(mundo, x, Mapa.Y + Mapa.RIO_ALT / 2.0 + 0.5, zc);
+        Location pe = new Location(mundo, x + 0.6, Mapa.Y + 0.2, zc);
+        Location rio = new Location(mundo, mapa.ox + (Mapa.RIO_X1 + Mapa.RIO_X2) / 2.0 + 0.5, Mapa.Y + Mapa.RIO_ALT + 1.9, zc);
+        for (Player p : js) {
+            int f = bedrock(p) ? 4 : 1;
+            p.spawnParticle(Particle.FALLING_WATER, meio, 30 / f, 0.15, Mapa.RIO_ALT / 2.0, 1.4, 0);
+            p.spawnParticle(Particle.SPLASH, pe, 25 / f, 0.8, 0.1, 1.4, 0.1);
+            p.spawnParticle(Particle.CLOUD, pe, Math.max(1, 3 / f), 0.6, 0.1, 1.2, 0.01);
+            p.spawnParticle(Particle.SPLASH, rio, 12 / f, 6, 0, 1.2, 0.05);
+            if (tick % 60 == 0) p.playSound(meio, Sound.BLOCK_WATER_AMBIENT, 0.9f, 0.8f);
+        }
+    }
+
+    // ------------------------------------------------------------------ nevasca da Geleira (13/11)
+    private int segGelo;
+    private int nevascaAte;
+
+    /** A cada 60 s uma nevasca: neve forte por 6 s e os monstros ficam lentos. Aurora no ceu o tempo todo. */
+    private void efeitosGeleira(List<Player> js) {
+        segGelo++;
+        Location c = mapa.centro(mundo);
+        Particle.DustOptions[] aurora = {new Particle.DustOptions(Color.fromRGB(80, 255, 170), 3f), new Particle.DustOptions(Color.fromRGB(120, 140, 255), 3f)};
+        for (Player p : js) {
+            int f = bedrock(p) ? 4 : 1;
+            for (int k = 0; k < 2; k++)
+                p.spawnParticle(Particle.DUST, c.clone().add(0, 26 + k * 2, -10 + 20 * k), 40 / f, 26, 1, 3, 0, aurora[k], true);
+        }
+        if (segGelo % 60 == 0) {
+            nevascaAte = tick + 120;
+            tituloTodos("§b§l❄ NEVASCA!", "§fOs monstros ficaram lentos por uns segundos");
+            somTodos(Sound.ITEM_ELYTRA_FLYING, 0.6f, 0.6f);
+            for (Monstro mo : monstros.values()) {
+                Entity e = Bukkit.getEntity(mo.id);
+                if (e instanceof Mob m) m.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 120, 1));
+            }
+        }
+        if (nevascaAte > tick) for (Player p : js)
+            p.spawnParticle(Particle.SNOWFLAKE, c.clone().add(0, 5, 0), bedrock(p) ? 60 : 250, 20, 4, 22, 0.3);
+    }
+
+    // ------------------------------------------------------------------ efeitos do Vulcao (13/11)
+    /** Jogador do celular/console (Bedrock pelo Geyser/Floodgate): UUID com a metade de cima zerada. */
+    static boolean bedrock(Player p) {
+        return p.getUniqueId().getMostSignificantBits() == 0L;
+    }
+
+    private int segVulcao;
+
+    /** Cinza e brasas no ar, fontes de lava nos cantos e uma erupcao a cada 45 s. Cada jogador recebe as particulas
+     *  so para ele: quem joga no celular (Bedrock) recebe 4x menos, para nao pesar. */
+    private void efeitosVulcao(List<Player> js) {
+        segVulcao++;
+        Location c = mapa.centro(mundo);
+        double hx = (mapa.maxX - mapa.minX) / 2.0, hz = (mapa.maxZ - mapa.minZ) / 2.0;
+        Location[] cantos = {
+                new Location(mundo, mapa.ox + mapa.minX - 1.5, Mapa.Y, mapa.oz + mapa.minZ - 1.5),
+                new Location(mundo, mapa.ox + mapa.maxX + 1.5, Mapa.Y, mapa.oz + mapa.minZ - 1.5),
+                new Location(mundo, mapa.ox + mapa.minX - 1.5, Mapa.Y, mapa.oz + mapa.maxZ + 1.5),
+                new Location(mundo, mapa.ox + mapa.maxX + 1.5, Mapa.Y, mapa.oz + mapa.maxZ + 1.5)};
+        Location cratera = new Location(mundo, mapa.ox + (mapa.minX + mapa.maxX) / 2 + 0.5, Mapa.Y + 2, mapa.oz + mapa.minZ - 9 + 0.5);
+        boolean erupcao = segVulcao % 45 == 0;
+        for (Player p : js) {
+            int f = bedrock(p) ? 4 : 1;
+            p.spawnParticle(Particle.ASH, c.clone().add(0, 3, 0), 60 / f, hx, 4, hz, 0);
+            p.spawnParticle(Particle.WHITE_ASH, c.clone().add(0, 6, 0), 20 / f, hx, 3, hz, 0);
+            p.spawnParticle(Particle.LAVA, c, Math.max(1, 3 / f), hx, 0.5, hz, 0);
+            if (segVulcao % 2 == 0) for (Location k : cantos) {
+                p.spawnParticle(Particle.LAVA, k, Math.max(1, 6 / f), 0.4, 0.2, 0.4, 0);
+                p.spawnParticle(Particle.FLAME, k.clone().add(0, 0.5, 0), 10 / f, 0.3, 1.2, 0.3, 0.03);
+            }
+            p.spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, cratera, Math.max(1, 4 / f), 2, 0.5, 2, 0.02, null, true);
+            if (erupcao) {
+                p.spawnParticle(Particle.LAVA, cratera, 40 / f, 2.5, 1, 2.5, 0, null, true);
+                p.spawnParticle(Particle.FLAME, cratera.clone().add(0, 3, 0), 60 / f, 1.5, 4, 1.5, 0.08, null, true);
+                p.spawnParticle(Particle.LARGE_SMOKE, cratera.clone().add(0, 6, 0), 40 / f, 2, 4, 2, 0.05, null, true);
+                p.playSound(cratera, Sound.ENTITY_GENERIC_EXPLODE, 0.5f, 0.5f);
+                p.playSound(p.getLocation(), Sound.BLOCK_LAVA_POP, 0.6f, 0.7f);
+            } else if (segVulcao % 8 == 0) p.playSound(p.getLocation(), Sound.BLOCK_LAVA_AMBIENT, 0.35f, 0.8f);
+        }
+        if (erupcao && estado == Estado.ONDA) avisar("§6🌋 §eO vulcão entrou em erupção!");
+    }
+
+    // ------------------------------------------------------------------ o Dragao do Ninho (13/11)
+    private long proximoDragao;
+    private boolean dragaoVoando;
+
+    /** Chamado a cada segundo no Ninho do Dragao: a cada 5 minutos (com gente no mapa) o Dragao passa por cima. */
+    private void dragao(List<Player> js) {
+        if (js.isEmpty()) { proximoDragao = 0; return; }
+        long agora = System.currentTimeMillis();
+        if (proximoDragao == 0) proximoDragao = agora + 120_000L;   // o primeiro voo 2 min depois que chega alguem
+        if (dragaoVoando || agora < proximoDragao) return;
+        proximoDragao = agora + 300_000L;
+        voarDragao();
+    }
+
+    void voarDragao() {
+        if (dragaoVoando) return;
+        dragaoVoando = true;
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        double ang = Math.toRadians(r.nextInt(360));
+        Vector dir = new Vector(Math.cos(ang), 0, Math.sin(ang));
+        // passa por cima dos monstros (o meio deles), ou do centro do mapa se ainda nao tem nenhum
+        Location c = mapa.centro(mundo);
+        double sx = 0, sz = 0;
+        int n = 0;
+        for (Monstro mo : monstros.values()) {
+            Entity e = Bukkit.getEntity(mo.id);
+            if (e == null) continue;
+            sx += e.getX(); sz += e.getZ(); n++;
+        }
+        if (n > 0) { c.setX(sx / n); c.setZ(sz / n); }
+        c.add(0, 22, 0);
+        Location de = c.clone().subtract(dir.clone().multiply(45));
+        Location ate = c.clone().add(dir.clone().multiply(45));
+        float yaw = de.clone().setDirection(dir).getYaw() + 180f;   // o modelo do dragao olha para tras do yaw
+        de.setYaw(yaw);
+        org.bukkit.entity.EnderDragon dg = mundo.spawn(de, org.bukkit.entity.EnderDragon.class, d -> {
+            d.setAI(false);
+            d.setInvulnerable(true);
+            d.setPersistent(false);
+            d.setGravity(false);
+            d.setCollidable(false);
+            try { d.setPhase(org.bukkit.entity.EnderDragon.Phase.HOVER); } catch (Throwable ignored) {}
+            d.customName(DefesaTorre.txt("§5§lDragão do Ninho"));
+            d.getPersistentDataContainer().set(plugin.kTorre, PersistentDataType.STRING, "dragao");
+        });
+        try { if (dg.getBossBar() != null) dg.getBossBar().setVisible(false); } catch (Throwable ignored) {}
+        tituloTodos("§5§l🐉 O DRAGÃO!", "§dEle passa por cima e queima os monstros!");
+        somTodos(Sound.ENTITY_ENDER_DRAGON_GROWL, 1f, 1f);
+        plugin.getLogger().info("[" + mapa.id + "] O Dragao passou.");
+        final int duracao = 200;
+        final int[] k = {0};
+        final int[] queimados = {0};
+        Bukkit.getScheduler().runTaskTimer(plugin, tarefa -> {
+            k[0]++;
+            if (!dg.isValid() || k[0] > duracao) {
+                tarefa.cancel();
+                if (dg.isValid()) {
+                    Location f = dg.getLocation();
+                    plugin.getLogger().info("[" + mapa.id + "] Dragao saiu em " + (int) f.getX() + "," + (int) f.getY() + "," + (int) f.getZ() + " (queimou " + queimados[0] + ")");
+                    dg.remove();
+                }
+                dragaoVoando = false;
+                if (queimados[0] > 0) avisar("§5🐉 §dO Dragão queimou §f" + queimados[0] + " §dmonstros!");
+                return;
+            }
+            double s = k[0] / (double) duracao;
+            Location pos = de.clone().add(ate.toVector().subtract(de.toVector()).multiply(s));
+            pos.add(0, Math.sin(s * Math.PI * 4) * 1.5, 0);
+            pos.setYaw(yaw);
+            pos.setPitch(0);
+            dg.teleport(pos);
+            mundo.spawnParticle(Particle.DRAGON_BREATH, pos.clone().add(0, -2, 0), 10, 1.5, 0.5, 1.5, 0.01, 1.0f);
+            if (k[0] == duracao / 2) somTodos(Sound.ENTITY_ENDER_DRAGON_AMBIENT, 1f, 0.8f);
+            if (k[0] % 10 != 0) return;
+            // sopro: queima os monstros embaixo do dragao
+            for (Monstro mo : new ArrayList<>(monstros.values())) {
+                Entity e = Bukkit.getEntity(mo.id);
+                if (!(e instanceof Mob m) || !m.isValid() || m.isDead()) continue;
+                double dx = m.getX() - pos.getX(), dz = m.getZ() - pos.getZ();
+                if (dx * dx + dz * dz > 8 * 8) continue;
+                double max = m.getAttribute(Attribute.MAX_HEALTH) != null ? m.getAttribute(Attribute.MAX_HEALTH).getValue() : 20;
+                ferir(m, Math.max(6, max * (mo.chefe ? 0.06 : 0.35)));
+                m.setFireTicks(60);
+                mundo.spawnParticle(Particle.DRAGON_BREATH, m.getLocation().add(0, 1, 0), 25, 0.5, 0.8, 0.5, 0.02, 1.0f);
+                queimados[0]++;
+            }
+        }, 1L, 1L);
     }
 
     private void atualizarNomes() {
@@ -745,6 +947,7 @@ final class Partida {
         }
         monstros.clear();
         for (Torre t : torres.values()) {
+            tirarPedestal(t);
             Entity e = Bukkit.getEntity(t.stand);
             if (e != null) e.remove();
         }
@@ -813,6 +1016,7 @@ final class Partida {
             Entity se = Bukkit.getEntity(t.stand);
             if (!(se instanceof Mannequin st) || !st.isValid()) {
                 torres.remove(t.stand);
+                tirarPedestal(t);
                 continue;
             }
             if (t.tipo.suporte()) continue;
@@ -909,6 +1113,41 @@ final class Partida {
                     mundo.playSound(origem, Sound.ITEM_CROSSBOW_SHOOT, 0.9f, 0.6f);
                     ferir(alvo, dano);
                 }
+                case FOGO -> {
+                    double r = t.tipo.alcanceNivel(t.nivel);
+                    mundo.spawnParticle(Particle.FLAME, st.getLocation().add(0, 0.5, 0), 30, r * 0.45, 0.3, r * 0.45, 0.03);
+                    for (Mob m : alvos) {
+                        ferir(m, dano);
+                        m.setFireTicks(Math.max(m.getFireTicks(), 40 + 20 * t.nivel));
+                        mundo.spawnParticle(Particle.FLAME, m.getLocation().add(0, 1, 0), 5, 0.3, 0.4, 0.3, 0.02);
+                    }
+                    if (tick % 20 == 0) mundo.playSound(origem, Sound.ITEM_FIRECHARGE_USE, 0.4f, 0.8f);
+                }
+                case TRIPLA -> {
+                    int n = Math.min(alvos.size(), t.nivel >= 3 ? 4 : 3);
+                    for (int i = 0; i < n; i++) {
+                        Mob m = alvos.get(i);
+                        linha(origem, m.getLocation().add(0, m.getHeight() * 0.6, 0), Particle.CRIT);
+                        ferir(m, dano);
+                    }
+                    mundo.playSound(origem, Sound.ITEM_CROSSBOW_SHOOT, 0.7f, 1.3f);
+                }
+                case CEIFADOR -> {
+                    linhaCor(origem, la, Color.fromRGB(90, 0, 140), 1.3f);
+                    mundo.spawnParticle(Particle.SOUL, la, 12, 0.3, 0.5, 0.3, 0.02);
+                    Monstro mo = monstros.get(alvo.getUniqueId());
+                    ferir(alvo, dano);
+                    double max = alvo.getAttribute(Attribute.MAX_HEALTH) != null ? alvo.getAttribute(Attribute.MAX_HEALTH).getValue() : 20;
+                    double limite = t.nivel >= 3 ? 0.35 : t.nivel == 2 ? 0.3 : 0.25;
+                    if (mo != null && !mo.chefe && alvo.isValid() && !alvo.isDead() && alvo.getHealth() <= max * limite) {
+                        mundo.spawnParticle(Particle.SCULK_SOUL, alvo.getLocation().add(0, 1, 0), 15, 0.3, 0.6, 0.3, 0.05);
+                        ferir(alvo, alvo.getHealth() + 1);
+                        mundo.playSound(la, Sound.ENTITY_WITHER_SHOOT, 0.4f, 1.6f);
+                    } else {
+                        alvo.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 60, 0));
+                        mundo.playSound(origem, Sound.ENTITY_PHANTOM_BITE, 0.5f, 0.7f);
+                    }
+                }
                 case LASER -> {
                     linhaCor(origem, la, Color.RED, 1.1f);
                     ferir(alvo, dano);
@@ -982,16 +1221,16 @@ final class Partida {
     private void efeitosSuporte() {
         for (Torre f : torres.values()) {
             if (f.tipo == TipoTorre.MINA) {
-                mundo.spawnParticle(Particle.WITCH, f.local.clone().add(0, 1.8, 0), 4, 0.25, 0.25, 0.25, 0.02);
+                mundo.spawnParticle(Particle.WITCH, f.local.clone().add(0, 1.8 + ALTURA_PEDESTAL, 0), 4, 0.25, 0.25, 0.25, 0.02);
                 continue;
             }
             if (f.tipo != TipoTorre.FAROL) continue;
             double r = f.tipo.alcanceNivel(f.nivel);
-            Location topo = f.local.clone().add(0, 1.9, 0);
+            Location topo = f.local.clone().add(0, 1.9 + ALTURA_PEDESTAL, 0);
             mundo.spawnParticle(Particle.END_ROD, topo, 3, 0.1, 0.3, 0.1, 0.01);
             for (Torre t : torres.values()) {
                 if (t == f || t.tipo.suporte() || t.local.distanceSquared(f.local) > r * r) continue;
-                linha(topo, t.local.clone().add(0, 1.9, 0), Particle.END_ROD);
+                linha(topo, t.local.clone().add(0, 1.9 + ALTURA_PEDESTAL, 0), Particle.END_ROD);
             }
         }
     }
@@ -1019,7 +1258,7 @@ final class Partida {
             return false;
         }
         if (chao.getType() != mapa.chao) {
-            if (p != null) p.sendMessage("§cAqui não dá. Coloque a torre no chão de " + (mapa.chao == Material.GRASS_BLOCK ? "grama" : "nylium vermelho") + ".");
+            if (p != null) p.sendMessage("§cAqui não dá. Coloque a torre no chão de " + (switch (mapa.tema) { case VULCAO -> "nylium vermelho"; case GELO -> "neve"; case DRAGAO -> "pedra do Fim"; default -> "grama"; }) + ".");
             return false;
         }
         if (torres.size() >= dif.limiteTorres) {
@@ -1045,14 +1284,16 @@ final class Partida {
             return false;
         }
         l.setYaw(p != null ? p.getLocation().getYaw() + 180f : 0f);
-        Mannequin st = mundo.spawn(l, Mannequin.class, a -> montarGuardiao(a, tipo));
+        Mannequin st = mundo.spawn(l.clone().add(0, ALTURA_PEDESTAL, 0), Mannequin.class, a -> montarGuardiao(a, tipo));
         if (!st.isValid()) {
             if (p != null) p.sendMessage("§cNão consegui colocar a torre aqui.");
             return false;
         }
         int pago = gratis ? 0 : tipo.custo;
         essencia -= pago;
-        torres.put(st.getUniqueId(), new Torre(st.getUniqueId(), tipo, l, Math.max(pago, tipo.custo / 2)));
+        Torre nova = new Torre(st.getUniqueId(), tipo, l, Math.max(pago, tipo.custo / 2));
+        torres.put(st.getUniqueId(), nova);
+        montarPedestal(nova);
         mundo.playSound(l, Sound.BLOCK_ANVIL_PLACE, 0.7f, 1.3f);
         mundo.spawnParticle(Particle.HAPPY_VILLAGER, l.clone().add(0, 1, 0), 20, 0.4, 0.6, 0.4, 0.02);
         if (p != null) {
@@ -1062,6 +1303,70 @@ final class Partida {
         plugin.getLogger().info("[" + mapa.id + "] " + tipo.nome + " colocada em " + rx + "," + rz + (p != null ? " por " + p.getName() : ""));
         atualizarPlacar();
         return true;
+    }
+
+    // ------------------------------------------------------------------ desenho das torres (13/11)
+    /** O guardiao fica em cima de uma torrezinha de blocos (BlockDisplay: nao e bloco de verdade, some com a torre). */
+    static final double ALTURA_PEDESTAL = 1.25;
+
+    /** base, coluna, topo, detalhe (anel do nivel 2 e brilho do nivel 3). */
+    private static Material[] materiais(TipoTorre t) {
+        return switch (t) {
+            case ARQUEIRA -> new Material[]{Material.MOSSY_STONE_BRICKS, Material.OAK_LOG, Material.SPRUCE_PLANKS, Material.LIME_WOOL};
+            case CANHAO -> new Material[]{Material.POLISHED_BLACKSTONE_BRICKS, Material.BLAST_FURNACE, Material.IRON_BLOCK, Material.ORANGE_CONCRETE};
+            case GELO -> new Material[]{Material.SNOW_BLOCK, Material.PACKED_ICE, Material.BLUE_ICE, Material.LIGHT_BLUE_CONCRETE};
+            case VENENO -> new Material[]{Material.MOSSY_COBBLESTONE, Material.SLIME_BLOCK, Material.GREEN_TERRACOTTA, Material.LIME_CONCRETE};
+            case MINA -> new Material[]{Material.DEEPSLATE_BRICKS, Material.AMETHYST_BLOCK, Material.GOLD_BLOCK, Material.PURPLE_CONCRETE};
+            case FOGO -> new Material[]{Material.RED_NETHER_BRICKS, Material.MAGMA_BLOCK, Material.POLISHED_BLACKSTONE, Material.ORANGE_CONCRETE};
+            case MORTEIRO -> new Material[]{Material.STONE_BRICKS, Material.POLISHED_ANDESITE, Material.IRON_BLOCK, Material.GRAY_CONCRETE};
+            case TESLA -> new Material[]{Material.POLISHED_DEEPSLATE, Material.WAXED_COPPER_BLOCK, Material.WAXED_CUT_COPPER, Material.YELLOW_CONCRETE};
+            case FAROL -> new Material[]{Material.QUARTZ_BRICKS, Material.QUARTZ_PILLAR, Material.SEA_LANTERN, Material.WHITE_CONCRETE};
+            case TRIPLA -> new Material[]{Material.COBBLESTONE, Material.BIRCH_LOG, Material.BIRCH_PLANKS, Material.CYAN_CONCRETE};
+            case BALISTA -> new Material[]{Material.NETHER_BRICKS, Material.DARK_OAK_LOG, Material.RED_NETHER_BRICKS, Material.RED_CONCRETE};
+            case CEIFADOR -> new Material[]{Material.BLACKSTONE, Material.CRYING_OBSIDIAN, Material.POLISHED_BLACKSTONE_BRICKS, Material.PURPLE_CONCRETE};
+            case LASER -> new Material[]{Material.OBSIDIAN, Material.CRYING_OBSIDIAN, Material.BEACON, Material.RED_CONCRETE};
+        };
+    }
+
+    private void peca(Torre t, Material m, float x, float y, float z, float sx, float sy, float sz, boolean brilho) {
+        org.bukkit.entity.BlockDisplay d = mundo.spawn(t.local, org.bukkit.entity.BlockDisplay.class, b -> {
+            b.setBlock(m.createBlockData());
+            b.setTransformation(new org.bukkit.util.Transformation(new org.joml.Vector3f(x, y, z), new org.joml.AxisAngle4f(),
+                    new org.joml.Vector3f(sx, sy, sz), new org.joml.AxisAngle4f()));
+            b.setPersistent(false);
+            b.setViewRange(1.2f);
+            if (brilho) {
+                b.setGlowing(true);
+                b.setGlowColorOverride(t.tipo.corArmadura);
+            }
+            b.getPersistentDataContainer().set(plugin.kTorre, PersistentDataType.STRING, "peca");
+        });
+        t.pecas.add(d.getUniqueId());
+    }
+
+    void tirarPedestal(Torre t) {
+        for (UUID id : t.pecas) {
+            Entity e = Bukkit.getEntity(id);
+            if (e != null) e.remove();
+        }
+        t.pecas.clear();
+    }
+
+    /** Torrezinha: base, coluna, plataforma com ameias. Nv 2 ganha anel colorido; Nv 3 brilha na cor da torre e ganha bandeirolas. */
+    void montarPedestal(Torre t) {
+        tirarPedestal(t);
+        Material[] m = materiais(t.tipo);
+        boolean n3 = t.nivel >= 3;
+        peca(t, m[0], -0.5f, 0f, -0.5f, 1f, 0.35f, 1f, false);                     // base
+        peca(t, m[1], -0.35f, 0.35f, -0.35f, 0.7f, 0.75f, 0.7f, false);            // coluna
+        peca(t, m[2], -0.55f, 1.1f, -0.55f, 1.1f, 0.15f, 1.1f, n3);                // plataforma
+        for (float[] c : new float[][]{{-0.55f, -0.55f}, {0.33f, -0.55f}, {-0.55f, 0.33f}, {0.33f, 0.33f}})
+            peca(t, m[2], c[0], 1.25f, c[1], 0.22f, 0.22f, 0.22f, n3);               // ameias
+        if (t.nivel >= 2) peca(t, m[3], -0.4f, 0.62f, -0.4f, 0.8f, 0.14f, 0.8f, n3); // anel do nivel
+        if (n3) {
+            for (float[] c : new float[][]{{-0.6f, -0.05f}, {0.5f, -0.05f}})
+                peca(t, m[3], c[0], 0.2f, c[1], 0.1f, 0.6f, 0.1f, true);           // bandeirolas
+        }
     }
 
     /** Tamanho do guardiao da torre: cresce a cada nivel (Nv 1 menorzinho, Nv 3 tamanho de jogador). */
@@ -1125,6 +1430,17 @@ final class Partida {
                 yield it;
             }
             case LASER -> new ItemStack(Material.BLAZE_ROD);
+            case FOGO -> new ItemStack(Material.BLAZE_POWDER);
+            case TRIPLA -> {
+                ItemStack it = new ItemStack(Material.CROSSBOW);
+                if (it.getItemMeta() instanceof CrossbowMeta cm) {
+                    cm.addChargedProjectile(new ItemStack(Material.ARROW));
+                    it.setItemMeta(cm);
+                }
+                it.addUnsafeEnchantment(org.bukkit.enchantments.Enchantment.MULTISHOT, 1);
+                yield it;
+            }
+            case CEIFADOR -> new ItemStack(Material.NETHERITE_HOE);
         };
     }
 
@@ -1142,6 +1458,7 @@ final class Partida {
         Entity e = Bukkit.getEntity(t.stand);
         if (e == null) return;
         e.customName(DefesaTorre.txt(nomeTorre(t)));
+        montarPedestal(t);
         if (e instanceof Mannequin m) {
             AttributeInstance sc = m.getAttribute(Attribute.SCALE);
             if (sc != null) sc.setBaseValue(escalaTorre(t.nivel));
@@ -1175,6 +1492,7 @@ final class Partida {
         int volta = t.investido / 2;
         essencia += volta;
         torres.remove(t.stand);
+        tirarPedestal(t);
         Entity e = Bukkit.getEntity(t.stand);
         if (e != null) {
             mundo.spawnParticle(Particle.POOF, e.getLocation().add(0, 1, 0), 15, 0.3, 0.5, 0.3, 0.02);
