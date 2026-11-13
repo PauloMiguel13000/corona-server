@@ -49,7 +49,7 @@ import java.util.*;
 public final class Mineracao extends JavaPlugin implements Listener {
 
     static final String MUNDO = "mineracao";
-    static final int VERSAO_CONSTRUCAO = 6;   // 4: tapetes de vender; 5: loja de picaretas; 6: sem melhoria com $ (so encantando)
+    static final int VERSAO_CONSTRUCAO = 7;   // 4: tapetes de vender; 5: loja de picaretas; 6: sem melhoria com $ (so encantando)
     /** 13/11 (Paulo): minas em quadrado (4 x 3), perto uma da outra para todos se verem, com um vao de 10 blocos
      *  de vazio entre as bordas (ninguem pula de uma para a outra). */
     static final int GRADE_X0 = 100, GRADE_Z0 = -53, GRADE_PASSO = 2 * (Mina.RAIO + 1 + Mina.BORDA) + 1 + 10;
@@ -76,7 +76,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
     final List<Mina> minas = new ArrayList<>();
     final Map<Material, Double> precos = new EnumMap<>(Material.class);
     World mundo;
-    NamespacedKey kRank, kMinerado, kGanhou, kDinheiro, kEnfeite, kAcao, kPrisao, kAuto, kPrest, kDiaria;
+    NamespacedKey kRank, kMinerado, kGanhou, kDinheiro, kEnfeite, kAcao, kPrisao, kAuto, kPrest, kDiaria, kVersao;
     static final NamespacedKey VIP_NIVEL = new NamespacedKey("extras", "vip_nivel");
     static final NamespacedKey VIP_ATE = new NamespacedKey("extras", "vip_ate");
     private final Set<String> mundosComAcesso = new HashSet<>();
@@ -104,6 +104,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         kAuto = new NamespacedKey(this, "auto_venda");
         kPrest = new NamespacedKey(this, "prestigio");
         kDiaria = new NamespacedKey(this, "diaria");
+        kVersao = new NamespacedKey(this, "versao");
         saveDefaultConfig();
         mundosComAcesso.addAll(getConfig().getStringList("mundos-com-acesso"));
         int reset = Math.max(1, getConfig().getInt("reset-minutos", 8));
@@ -384,8 +385,54 @@ public final class Mineracao extends JavaPlugin implements Listener {
         totem(0, 9, Material.CHEST, "§b§lKITS", "§7kits da prisão (24 h)", "kits", "minecraft:diamond_block", 0, 7);
         // 13/11 (Paulo): picareta so fica forte encantando na mesa (nada de melhorar com $)
         totem(0, -9, Material.ENCHANTING_TABLE, "§d§lENCANTAMENTOS", "§7leva para a sala das mesas", "enc", "minecraft:amethyst_block", 0, -7);
-        totem(-9, -9, Material.DIAMOND_PICKAXE, "§b§lLOJA", "§7picaretas e lápis-lazúli", "loja", "minecraft:diamond_block", -7, -7);
+        banca(-9, -10, 0, 1);   // loja do patio, de frente para o sul (tapete em -9,-8)
+        for (int[] b : new int[][]{{-13, -10}, {-13, -8}}) por(b[0], PISO + 1, b[1], "minecraft:anvil[facing=north]");
+        texto(new Location(mundo, -12.5, PISO + 2.6, -8.5), "§7§lBIGORNAS", 0.8f);
     }
+
+    /** Banca da loja: balcao de barris, picaretas e lapis em cima, toldo listrado azul e branco, lanterna e letreiro.
+     *  (fx, fz) = para onde a frente olha; o tapete fica 2 blocos na frente. */
+    private void banca(int cx, int cz, int fx, int fz) {
+        int px = -fz, pz = fx;   // lado
+        for (int sd = -1; sd <= 1; sd++)
+            for (int d = -1; d <= 0; d++)
+                for (int y = PISO + 1; y <= PISO + 5; y++) por(cx + sd * px + d * fx, y, cz + sd * pz + d * fz, "minecraft:air");
+        for (int sd = -1; sd <= 1; sd++) {
+            int x = cx + sd * px, z = cz + sd * pz;
+            por(x, PISO + 1, z, sd == 0 ? "minecraft:spruce_planks" : "minecraft:barrel[facing=up]");
+            if (sd != 0) {
+                por(x, PISO + 2, z, "minecraft:spruce_fence");
+                por(x, PISO + 3, z, "minecraft:spruce_fence");
+                por(x - fx, PISO + 1, z - fz, "minecraft:spruce_fence");
+                por(x - fx, PISO + 2, z - fz, "minecraft:spruce_fence");
+                por(x - fx, PISO + 3, z - fz, "minecraft:spruce_fence");
+            }
+            for (int d = -1; d <= 0; d++) por(x + d * fx, PISO + 4, z + d * fz, (sd + 1) % 2 == 0 ? "minecraft:blue_wool" : "minecraft:white_wool");
+        }
+        por(cx - fx, PISO + 1, cz - fz, "minecraft:chest[facing=" + face(fx, fz) + "]");
+        por(cx - fx, PISO + 3, cz - fz, "minecraft:lantern[hanging=true]");
+        // mercadoria deitada no balcao
+        Material[] merc = {Material.IRON_PICKAXE, Material.DIAMOND_PICKAXE, Material.LAPIS_LAZULI};
+        for (int sd = -1; sd <= 1; sd++) {
+            Material mm = merc[sd + 1];
+            Location l = new Location(mundo, cx + sd * px + 0.5, PISO + 2.03, cz + sd * pz + 0.5);
+            mundo.spawn(l, ItemDisplay.class, d -> {
+                d.setItemStack(new ItemStack(mm));
+                d.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f((float) (Math.PI / 2), 1, 0, 0), new Vector3f(0.7f), new AxisAngle4f()));
+                d.setPersistent(true);
+                d.getPersistentDataContainer().set(kEnfeite, PersistentDataType.STRING, "icone");
+                d.getPersistentDataContainer().set(kVersao, PersistentDataType.INTEGER, VERSAO_CONSTRUCAO);
+            });
+        }
+        texto(new Location(mundo, cx + 0.5 + fx * 0.6, PISO + 5.4, cz + 0.5 + fz * 0.6), "§b§l⛏ LOJA ⛏\n§fpicaretas e lápis-lazúli\n§7pise no tapete ou clique", 1.0f);
+        interacao(new Location(mundo, cx + 0.5, PISO + 1, cz + 0.5), "loja", 3f, 2.5f);
+        por(cx + 2 * fx, PISO, cz + 2 * fz, "minecraft:light_blue_glazed_terracotta");
+        lojas.add(new int[]{cx + 2 * fx, cz + 2 * fz});
+    }
+
+    final List<int[]> lojas = new ArrayList<>();
+
+    static String face(int fx, int fz) { return fx > 0 ? "east" : fx < 0 ? "west" : fz > 0 ? "south" : "north"; }
 
     private void totem(int x, int z, Material icone, String nome, String sub, String acao, String bloco, int tx, int tz) {
         por(x, PISO + 1, z, "minecraft:polished_blackstone_bricks");
@@ -429,7 +476,8 @@ public final class Mineracao extends JavaPlugin implements Listener {
         }
         consertarBigornas();
         por(0, PISO + 1, z0 + 1, "minecraft:grindstone[face=floor,facing=south]");
-        totem(8, ENC_Z - 7, Material.LAPIS_LAZULI, "§9§lLOJA DE LÁPIS", "§7lápis-lazúli e picaretas", "loja", "minecraft:lapis_block", 8, ENC_Z - 5);
+        banca(8, ENC_Z - 7, -1, 0);   // loja da sala, de frente para o oeste (tapete em 6, ENC_Z-7)
+        texto(new Location(mundo, -5.5, PISO + 2.8, ENC_Z - 7.5), "§7§lBIGORNAS §8(use à vontade)", 0.8f);
         texto(new Location(mundo, 0.5, PISO + 5.2, ENC_Z - 2 + 0.5), "§d§lSALA DE ENCANTAMENTOS\n§7Lápis + XP nas mesas • bigornas • rebolo", 1.0f);
         // portal de volta ao patio (parede sul)
         construirPortal(new Portal(0, z1 + 1, 's', "patio", "§a§l◀ VOLTAR AO PÁTIO", "§7Prisão Corona", "minecraft:emerald_block"));
@@ -466,6 +514,9 @@ public final class Mineracao extends JavaPlugin implements Listener {
         if (mundo == null) return;
         por(-8, PISO + 1, ENC_Z + 6, "minecraft:anvil[facing=east]");
         por(8, PISO + 1, ENC_Z + 6, "minecraft:anvil[facing=west]");
+        for (int x : new int[]{-8, -6, -4}) por(x, PISO + 1, ENC_Z - 8, "minecraft:anvil[facing=south]");
+        if (getConfig().getInt("construido", 0) >= 7)
+            for (int[] b : new int[][]{{-13, -10}, {-13, -8}}) por(b[0], PISO + 1, b[1], "minecraft:anvil[facing=north]");
     }
 
     /** Portal de volta na borda norte de cada mina. */
@@ -606,6 +657,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
             d.setViewRange(0.8f);
             d.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(esc), new AxisAngle4f()));
             d.getPersistentDataContainer().set(kEnfeite, PersistentDataType.STRING, "texto");
+            d.getPersistentDataContainer().set(kVersao, PersistentDataType.INTEGER, VERSAO_CONSTRUCAO);
         });
     }
 
@@ -616,6 +668,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
             d.setPersistent(true);
             d.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(esc), new AxisAngle4f()));
             d.getPersistentDataContainer().set(kEnfeite, PersistentDataType.STRING, "icone");
+            d.getPersistentDataContainer().set(kVersao, PersistentDataType.INTEGER, VERSAO_CONSTRUCAO);
         });
     }
 
@@ -626,8 +679,25 @@ public final class Mineracao extends JavaPlugin implements Listener {
             i.setResponsive(true);
             i.setPersistent(true);
             i.getPersistentDataContainer().set(kEnfeite, PersistentDataType.STRING, "clique");
+            i.getPersistentDataContainer().set(kVersao, PersistentDataType.INTEGER, VERSAO_CONSTRUCAO);
             i.getPersistentDataContainer().set(kAcao, PersistentDataType.STRING, acao);
         });
+    }
+
+    /** Enfeite de uma construcao antiga (ficou num chunk que nao estava carregado quando refiz tudo). */
+    boolean enfeiteVelho(Entity e) {
+        PersistentDataContainer c = e.getPersistentDataContainer();
+        if (!c.has(kEnfeite, PersistentDataType.STRING)) return false;
+        Integer v = c.get(kVersao, PersistentDataType.INTEGER);
+        return v == null || v != VERSAO_CONSTRUCAO;
+    }
+
+    @EventHandler
+    public void chunkCarregou(org.bukkit.event.world.EntitiesLoadEvent e) {
+        if (e.getWorld() != mundo) return;
+        int n = 0;
+        for (Entity en : e.getEntities()) if (enfeiteVelho(en)) { en.remove(); n++; }
+        if (n > 0) getLogger().info("Enfeites velhos tirados ao carregar o chunk: " + n);
     }
 
     void tirarEnfeites(World w) {
@@ -883,6 +953,13 @@ public final class Mineracao extends JavaPlugin implements Listener {
         // 13/11: XP de cada minerio (a picareta so fica forte encantando, entao precisa de XP para as mesas)
         e.setExpToDrop(xpDe(t));
         m.quebrados++;
+        if (!m.pvp && java.util.concurrent.ThreadLocalRandom.current().nextInt(700) == 0) {
+            long v = 80L * (rank(p) + 1);
+            setDinheiro(p, dinheiro(p) + v);
+            p.sendMessage(txt("§6§l✦ Tesouro escondido! §eVocê achou " + din(v) + " §eno meio das pedras."));
+            p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.8f);
+            p.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, e.getBlock().getLocation().add(0.5, 0.5, 0.5), 25, 0.3, 0.3, 0.3, 0.2);
+        }
     }
 
     static int xpDe(Material t) {
@@ -973,6 +1050,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
     }
 
     private final Map<UUID, Long> trocouMundo = new HashMap<>();
+    static final Set<String> MUNDOS_OUTRA_MOCHILA = Set.of("world", "world_nether", "world_the_end", "plots", "masmorras_mundo", "masmorras_nether", "masmorras_end");
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void trocou(PlayerChangedWorldEvent e) { trocouMundo.put(e.getPlayer().getUniqueId(), System.currentTimeMillis()); }
@@ -988,22 +1066,58 @@ public final class Mineracao extends JavaPlugin implements Listener {
     void varrerItens() {
         long agora = System.currentTimeMillis();
         for (Player p : Bukkit.getOnlinePlayers()) {
-            if (p.getWorld() == mundo) continue;
+            // 13/11 (correcao): so onde a mochila e outra (survival/masmorras). No lobby do /login e nos minigames o
+            // inventario da Prisao ainda esta na mao do jogador e NAO pode ser mexido.
+            String wn = p.getWorld().getName();
+            if (p.getWorld() == mundo || !MUNDOS_OUTRA_MOCHILA.contains(wn)) continue;
             Long t = trocouMundo.get(p.getUniqueId());
-            if (t != null && agora - t < 4000) continue;   // a troca de mochila ainda pode estar acontecendo
-            int n = 0;
+            if (t == null || agora - t < 10000) continue;   // a troca de mochila ainda pode estar acontecendo
+            // nada e apagado: vai para um guarda-volumes e volta para o jogador quando ele entra na Prisao
+            List<ItemStack> tirados = new ArrayList<>();
             ItemStack[] c = p.getInventory().getContents();
-            for (int i = 0; i < c.length; i++) if (ehDaPrisao(c[i])) { n += c[i].getAmount(); c[i] = null; }
-            if (n > 0) p.getInventory().setContents(c);
-            if (ehDaPrisao(p.getItemOnCursor())) { n += p.getItemOnCursor().getAmount(); p.setItemOnCursor(null); }
+            for (int i = 0; i < c.length; i++) if (ehDaPrisao(c[i])) { tirados.add(c[i]); c[i] = null; }
+            if (!tirados.isEmpty()) p.getInventory().setContents(c);
+            if (ehDaPrisao(p.getItemOnCursor())) { tirados.add(p.getItemOnCursor()); p.setItemOnCursor(null); }
             ItemStack[] ec = p.getEnderChest().getContents();
-            int m = 0;
-            for (int i = 0; i < ec.length; i++) if (ehDaPrisao(ec[i])) { m += ec[i].getAmount(); ec[i] = null; }
-            if (m > 0) p.getEnderChest().setContents(ec);
-            if (n + m > 0) {
-                getLogger().info("Itens da Prisao fora dela tirados de " + p.getName() + ": " + (n + m) + " (mundo " + p.getWorld().getName() + ")");
-                p.sendMessage(txt("§8⛓ §7Itens da Prisão não saem dela: §f" + (n + m) + " §7foram recolhidos."));
+            boolean mudouEc = false;
+            for (int i = 0; i < ec.length; i++) if (ehDaPrisao(ec[i])) { tirados.add(ec[i]); ec[i] = null; mudouEc = true; }
+            if (mudouEc) p.getEnderChest().setContents(ec);
+            if (!tirados.isEmpty()) {
+                guardar(p, tirados);
+                int n = 0;
+                for (ItemStack it : tirados) n += it.getAmount();
+                getLogger().info("Itens da Prisao fora dela guardados de " + p.getName() + ": " + n + " (mundo " + p.getWorld().getName() + ")");
+                p.sendMessage(txt("§8⛓ §7Itens da Prisão não saem dela: §f" + n + " §7foram guardados e voltam quando você entrar na Prisão."));
             }
+        }
+    }
+
+    private NamespacedKey kGuardados() { return new NamespacedKey(this, "guardados"); }
+
+    void guardar(Player p, List<ItemStack> novos) {
+        List<ItemStack> todos = new ArrayList<>();
+        byte[] b = p.getPersistentDataContainer().get(kGuardados(), PersistentDataType.BYTE_ARRAY);
+        if (b != null) try { for (ItemStack it : ItemStack.deserializeItemsFromBytes(b)) if (it != null && !it.getType().isAir()) todos.add(it); } catch (Exception ignored) {}
+        todos.addAll(novos);
+        p.getPersistentDataContainer().set(kGuardados(), PersistentDataType.BYTE_ARRAY, ItemStack.serializeItemsAsBytes(todos));
+    }
+
+    /** Devolve o que foi guardado (ao entrar na Prisao). */
+    void devolverGuardados(Player p) {
+        byte[] b = p.getPersistentDataContainer().get(kGuardados(), PersistentDataType.BYTE_ARRAY);
+        if (b == null) return;
+        p.getPersistentDataContainer().remove(kGuardados());
+        int n = 0;
+        try {
+            for (ItemStack it : ItemStack.deserializeItemsFromBytes(b)) {
+                if (it == null || it.getType().isAir()) continue;
+                n += it.getAmount();
+                p.getInventory().addItem(it).values().forEach(x -> p.getWorld().dropItemNaturally(p.getLocation(), x));
+            }
+        } catch (Exception ex) { getLogger().warning("Guardados de " + p.getName() + ": " + ex); }
+        if (n > 0) {
+            p.sendMessage(txt("§a⛓ Seus itens da Prisão voltaram: §f" + n));
+            getLogger().info("Guardados devolvidos para " + p.getName() + ": " + n);
         }
     }
 
@@ -1049,6 +1163,16 @@ public final class Mineracao extends JavaPlugin implements Listener {
         Mina mv = minaDaArea(v.getLocation()), ma = minaDaArea(a.getLocation());
         if (mv != null && mv.pvp && ma == mv) return;
         e.setCancelled(true);
+    }
+
+    /** Na Mina PvP o PvP vale sempre: a protecao de "recem-nascido" do GriefPrevention nao segura quem esta la dentro. */
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void pvpLiberado(EntityDamageByEntityEvent e) {
+        if (!e.isCancelled() || e.getEntity().getWorld() != mundo || !(e.getEntity() instanceof Player v)) return;
+        Player a = atacante(e);
+        if (a == null || a == v) return;
+        Mina mv = minaDaArea(v.getLocation()), ma = minaDaArea(a.getLocation());
+        if (mv != null && mv.pvp && ma == mv) e.setCancelled(false);
     }
 
     @EventHandler
@@ -1107,7 +1231,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         if (to.getBlockY() == PISO + 1) {
             int x = to.getBlockX(), z = to.getBlockZ();
             String a = x == -7 && z == 0 ? "rankup" : x == 7 && z == 0 ? "vender" : x == 0 && z == 7 ? "kits" : x == 0 && z == -7 ? "enc"
-                    : (x == -7 && z == -7) || (x == 8 && z == ENC_Z - 5) ? "loja" : null;
+                    : (x == -9 && z == -8) || (x == 6 && z == ENC_Z - 7) ? "loja" : null;
             if (a != null && !esperando(p, 3000)) { acao(p, a); return; }
         }
         if (to.getBlock().getType() != Material.NETHER_PORTAL) return;
@@ -1182,7 +1306,21 @@ public final class Mineracao extends JavaPlugin implements Listener {
         if (p.getWorld() != mundo) return;
         Mina m = minaDaArea(p.getLocation());
         if (m != null && m.pvp) {
-            e.deathMessage(txt("§c⚔ " + p.getName() + " §7caiu na §cMina PvP" + (p.getKiller() != null ? " §7para §c" + p.getKiller().getName() : "") + "§7!"));
+            Player k = p.getKiller();
+            e.deathMessage(txt("§c⚔ " + p.getName() + " §7caiu na §cMina PvP" + (k != null ? " §7para §c" + k.getName() : "") + "§7!"));
+            int sv = sequencia.getOrDefault(p.getUniqueId(), 0);
+            sequencia.remove(p.getUniqueId());
+            if (k != null && k != p && k.getWorld() == mundo) {
+                // recompensa: $ pelo rank de quem caiu; quem derruba alguem numa sequencia de 5+ ganha o dobro (cabeca a premio)
+                long v = 150L * (rank(p) + 1) * (sv >= 5 ? 2 : 1);
+                setDinheiro(k, dinheiro(k) + v);
+                int sk = sequencia.merge(k.getUniqueId(), 1, Integer::sum);
+                k.sendMessage(txt("§c⚔ §7Você derrubou §f" + p.getName() + " §7e ganhou " + din(v) + (sv >= 5 ? " §6(cabeça a prêmio!)" : "") + " §8• sequência: §c" + sk));
+                k.playSound(k.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.6f);
+                if (sk == 3 || sk == 5 || sk == 10 || (sk > 10 && sk % 5 == 0))
+                    Bukkit.broadcast(txt("§4§l⚔ §c" + k.getName() + " §7está numa sequência de §c§l" + sk + " §7na Mina PvP!" + (sk >= 5 ? " §6Cabeça a prêmio: vale o dobro!" : "")));
+                if (sv >= 5) Bukkit.broadcast(txt("§6⚔ §e" + k.getName() + " §7acabou com a sequência de §c" + sv + " §7de §f" + p.getName() + "§7!"));
+            }
             return;
         }
         e.setKeepInventory(true);
@@ -1190,6 +1328,8 @@ public final class Mineracao extends JavaPlugin implements Listener {
         e.setKeepLevel(true);
         e.setDroppedExp(0);
     }
+
+    private final Map<UUID, Integer> sequencia = new HashMap<>();
 
     @EventHandler
     public void renascer(PlayerRespawnEvent e) {
@@ -1206,6 +1346,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         // depois da troca de mochila (Extras), para a picareta ficar na mochila da prisao
         Bukkit.getScheduler().runTaskLater(this, () -> {
             if (!p.isOnline() || p.getWorld() != mundo) return;
+            devolverGuardados(p);
             PersistentDataContainer c = p.getPersistentDataContainer();
             if (c.has(kGanhou, PersistentDataType.BYTE)) return;
             c.set(kGanhou, PersistentDataType.BYTE, (byte) 1);
