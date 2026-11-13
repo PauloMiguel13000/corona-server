@@ -75,6 +75,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
 
     final List<Mina> minas = new ArrayList<>();
     Missoes missoes;
+    GolemMina golem;
     final Map<Material, Double> precos = new EnumMap<>(Material.class);
     World mundo;
     NamespacedKey kRank, kMinerado, kGanhou, kDinheiro, kEnfeite, kAcao, kPrisao, kAuto, kPrest, kDiaria, kVersao;
@@ -171,6 +172,8 @@ public final class Mineracao extends JavaPlugin implements Listener {
         }
         for (int i = 0; i < minas.size(); i++) { Mina m = minas.get(i); Bukkit.getScheduler().runTaskLater(this, () -> refazer(m), 40L + 30L * i); }
         getServer().getPluginManager().registerEvents(this, this);
+        golem = new GolemMina(this);
+        getServer().getPluginManager().registerEvents(golem, this);
         if (getServer().getPluginManager().getPlugin("GriefPrevention") != null) {
             try { getServer().getPluginManager().registerEvents(new SemTerreno(), this); }
             catch (Throwable t) { getLogger().warning("GriefPrevention sem o evento de terreno: " + t); }
@@ -2027,6 +2030,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
             }
             case "reconstruir" -> { construirTudo(2); s.sendMessage("reconstruido"); }
             case "chuva" -> { sortearChuva(); s.sendMessage("chuva=" + chuvaMina); }
+            case "golem" -> { if (s instanceof Player gp) golem.forcar(gp); else golem.talvezSurgir(); }
             case "portalspawn" -> { getConfig().set("portal-spawn.feito", false); portalDoSpawn(); s.sendMessage("portal-spawn.feito=" + getConfig().getBoolean("portal-spawn.feito")); }
             case "info" -> {
                 for (Mina m : minas) {
