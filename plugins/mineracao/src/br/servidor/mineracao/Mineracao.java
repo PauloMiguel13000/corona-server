@@ -124,6 +124,8 @@ public final class Mineracao extends JavaPlugin implements Listener {
             catch (Throwable t) { getLogger().warning("GriefPrevention sem o evento de terreno: " + t); }
         }
         long ms = reset * 60_000L;
+        resetMs = ms;
+        Bukkit.getScheduler().runTaskTimer(this, this::barra, 40L, 30L);
         Bukkit.getScheduler().runTaskTimer(this, () -> {
             long agora = System.currentTimeMillis();
             for (Mina m : minas) {
@@ -131,6 +133,26 @@ public final class Mineracao extends JavaPlugin implements Listener {
                 if (m.quebrados >= Mina.volume() * pct || agora - m.ultimoReset >= ms) refazer(m);
             }
         }, 400L, 200L);
+    }
+
+    long resetMs;
+
+    /** Barra de status (13/11): mostra a mina, quanto ja foi minerado e quando ela se refaz. */
+    void barra() {
+        if (mundo == null) return;
+        long agora = System.currentTimeMillis();
+        for (Player p : mundo.getPlayers()) {
+            Mina m = minaDaArea(p.getLocation());
+            int r = rank(p);
+            if (m == null) {
+                p.sendActionBar(txt("§6⛏ Rank " + RANKS[r].cor() + RANKS[r].letra() + " §8• §6" + fmt(coronas(p)) + " coronas §8• §e/minas §7/rankup §7/vender"));
+                continue;
+            }
+            int pct = (int) Math.min(100, m.quebrados * 100L / Mina.volume());
+            long falta = m.quebrados == 0 ? -1 : Math.max(0, resetMs - (agora - m.ultimoReset));
+            String quando = m.refazendo ? "§erefazendo..." : falta < 0 ? "§acheia" : "§7refaz em §f" + (falta / 60000) + ":" + String.format("%02d", (falta / 1000) % 60);
+            p.sendActionBar(txt((m.pvp ? "§c⚔ " : "§6⛏ ") + m.nome + " §8• §f" + pct + "% §7minerada §8• " + quando + " §8• §7rank " + RANKS[r].cor() + RANKS[r].letra()));
+        }
     }
 
     private void preco(double v, Material... ms) { for (Material m : ms) precos.put(m, v); }
@@ -280,11 +302,20 @@ public final class Mineracao extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void soltou(BlockDropItemEvent e) {
         if (e.getBlock().getWorld() != mundo || minaDoBloco(e.getBlock()) == null) return;
-        for (Item it : e.getItems()) {
+        Player p = e.getPlayer();
+        boolean cheio = false;
+        for (Iterator<Item> i = e.getItems().iterator(); i.hasNext(); ) {
+            Item it = i.next();
             ItemStack s = it.getItemStack();
             if (!precos.containsKey(s.getType())) continue;
-            it.setItemStack(marcar(s));
+            ItemStack m = marcar(s);
+            // coleta automatica (13/11): vai direto pro inventario; o que nao couber cai no chao
+            Map<Integer, ItemStack> sobra = p.getInventory().addItem(m.clone());
+            if (sobra.isEmpty()) { i.remove(); continue; }
+            cheio = true;
+            it.setItemStack(sobra.values().iterator().next());
         }
+        if (cheio) p.sendActionBar(txt("§c⛏ Inventário cheio! Use §e/vender"));
     }
 
     ItemStack marcar(ItemStack s) {
@@ -392,6 +423,8 @@ public final class Mineracao extends JavaPlugin implements Listener {
         inv.setItem(22, item(Material.EXPERIENCE_BOTTLE, "§6§lRank Up",
                 "§7Seu rank: " + nomeRank(r), r + 1 < RANKS.length ? "§7Próximo: " + nomeRank(r + 1) + " §7por §6" + fmt(cust) + " coronas" : "§dVocê está no rank máximo!",
                 "§7Suas coronas: §6" + fmt(coronas(p)), "§7Bônus na venda: §a+" + Math.round((RANKS[r].mult() - 1) * 100) + "%", r + 1 < RANKS.length ? "§a▶ Clique para subir" : ""));
+        inv.setItem(18, item(Material.ANVIL, "§b§lMelhorar picareta", "§7Segure a picareta na mão e clique.",
+                "§7Eficiência até V, Fortuna até III,", "§7Inquebrável até III (custa coronas).", "§a▶ Clique para ver os preços"));
         inv.setItem(26, item(Material.GOLD_INGOT, "§e§lVender minério", "§7Vende todo minério das minas", "§7que estiver no inventário.", "§a▶ Clique para vender"));
         p.openInventory(inv);
     }
@@ -430,11 +463,70 @@ public final class Mineracao extends JavaPlugin implements Listener {
         else if (s == 16) { p.closeInventory(); irPara(p, minas.get(6)); }
         else if (s == 22) { p.closeInventory(); rankup(p); }
         else if (s == 26) { p.closeInventory(); vender(p); }
+        else if (s == 18) { p.closeInventory(); abrirMelhorias(p); }
     }
 
     @EventHandler
     public void arrastar(InventoryDragEvent e) {
-        if (e.getView().getTopInventory().getHolder() instanceof Menu) e.setCancelled(true);
+        if (e.getView().getTopInventory().getHolder() instanceof Menu || e.getView().getTopInventory().getHolder() instanceof Bigorna) e.setCancelled(true);
+    }
+
+    // ------------------------------------------------------------------ melhorias da picareta (13/11)
+    record Melhoria(Enchantment enc, String nome, Material icone, long[] custo) {}
+    static final Melhoria[] MELHORIAS = {
+            new Melhoria(Enchantment.EFFICIENCY, "Eficiência", Material.GOLDEN_PICKAXE, new long[]{300, 600, 1200, 2500, 5000}),
+            new Melhoria(Enchantment.FORTUNE, "Fortuna", Material.EMERALD, new long[]{2000, 6000, 15000}),
+            new Melhoria(Enchantment.UNBREAKING, "Inquebrável", Material.OBSIDIAN, new long[]{400, 900, 2000})};
+
+    static final class Bigorna implements InventoryHolder {
+        Inventory inv;
+        @Override public Inventory getInventory() { return inv; }
+    }
+
+    static boolean picareta(ItemStack s) { return s != null && s.getType().name().endsWith("_PICKAXE"); }
+
+    void abrirMelhorias(Player p) {
+        ItemStack mao = p.getInventory().getItemInMainHand();
+        if (!picareta(mao)) { p.sendMessage(txt("§cSegure uma picareta na mão para melhorar.")); return; }
+        Bigorna h = new Bigorna();
+        Inventory inv = Bukkit.createInventory(h, 9, txt("§8⚒ Melhorar picareta"));
+        h.inv = inv;
+        for (int i = 0; i < MELHORIAS.length; i++) {
+            Melhoria m = MELHORIAS[i];
+            int nv = mao.getEnchantmentLevel(m.enc());
+            if (nv >= m.custo().length) inv.setItem(2 + i * 2, item(m.icone(), "§a" + m.nome() + " " + romano(nv), "§7Já está no máximo."));
+            else inv.setItem(2 + i * 2, item(m.icone(), "§b" + m.nome() + " " + romano(nv) + " §7→ §b" + romano(nv + 1),
+                    "§7Custa §6" + fmt(m.custo()[nv]) + " coronas", "§7Você tem §6" + fmt(coronas(p)), "§a▶ Clique para melhorar"));
+        }
+        p.openInventory(inv);
+    }
+
+    static String romano(int n) { return n <= 0 ? "0" : new String[]{"I", "II", "III", "IV", "V"}[Math.min(5, n) - 1]; }
+
+    @EventHandler
+    public void cliqueBigorna(InventoryClickEvent e) {
+        if (!(e.getView().getTopInventory().getHolder() instanceof Bigorna)) return;
+        e.setCancelled(true);
+        if (!(e.getWhoClicked() instanceof Player p) || e.getClickedInventory() != e.getView().getTopInventory()) return;
+        int i = (e.getSlot() - 2) / 2;
+        if (e.getSlot() < 2 || (e.getSlot() - 2) % 2 != 0 || i >= MELHORIAS.length) return;
+        melhorar(p, MELHORIAS[i]);
+        abrirMelhorias(p);
+    }
+
+    void melhorar(Player p, Melhoria m) {
+        ItemStack mao = p.getInventory().getItemInMainHand();
+        if (!picareta(mao)) { p.closeInventory(); p.sendMessage(txt("§cSegure a picareta na mão.")); return; }
+        int nv = mao.getEnchantmentLevel(m.enc());
+        if (nv >= m.custo().length) { p.sendMessage(txt("§a" + m.nome() + " já está no máximo.")); return; }
+        long c = m.custo()[nv], tem = coronas(p);
+        if (tem < c) { p.sendMessage(txt("§cFaltam §6" + fmt(c - tem) + " coronas §cpara " + m.nome() + " " + romano(nv + 1) + ".")); return; }
+        setCoronas(p, tem - c);
+        ItemMeta im = mao.getItemMeta();
+        im.addEnchant(m.enc(), nv + 1, true);
+        mao.setItemMeta(im);
+        p.playSound(p.getLocation(), Sound.BLOCK_ANVIL_USE, 0.8f, 1.2f);
+        p.sendMessage(txt("§b⚒ Picareta melhorada: §f" + m.nome() + " " + romano(nv + 1) + " §7(-" + fmt(c) + " coronas)"));
     }
 
     boolean podeSair(Player p) {
@@ -512,6 +604,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
             }
             case "rankup" -> rankup(p);
             case "vender" -> vender(p);
+            case "picareta" -> abrirMelhorias(p);
             case "rank" -> {
                 int r = rank(p);
                 p.sendMessage(txt("§6⛏ Seu rank: " + nomeRank(r) + " §8| §7coronas: §6" + fmt(coronas(p))

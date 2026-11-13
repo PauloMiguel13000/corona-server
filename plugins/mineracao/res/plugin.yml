@@ -13,6 +13,8 @@ commands:
     description: Sobe de rank na mineracao (paga coronas)
   rank:
     description: Mostra seu rank de mineracao
+  picareta:
+    description: Melhora a picareta com coronas (segure a picareta)
   vender:
     description: Vende o minerio das minas por coronas
   mineracaoadm:
