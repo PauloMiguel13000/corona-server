@@ -131,6 +131,7 @@ final class Partida {
     /** Poderes do defensor: quando cada um volta a ficar pronto (ms) e ate quando a nevasca segura os monstros. */
     final Map<PoderDefensor, Long> poderPronto = new java.util.EnumMap<>(PoderDefensor.class);
     long congeladoAte;
+    DesafioDia desafio = DesafioDia.hoje();
     int poderesUsados;
     final Map<UUID, Torre> torres = new HashMap<>();
     private final Deque<Surgimento> fila = new ArrayDeque<>();
@@ -289,14 +290,17 @@ final class Partida {
         };
     }
 
+    int nucleoMax() { return estado == Estado.ESPERANDO ? dif.vidaNucleo : Math.max(1, (int) Math.round(dif.vidaNucleo * desafio.nucleo)); }
+
     void atualizarPlacar() {
         List<String> linhas = new ArrayList<>();
         linhas.add("§8§m          ");
         linhas.add(mapa.cor + "§l" + mapa.nome);
         linhas.add("§fDificuldade: " + dif.cor + dif.nome);
+        linhas.add("§fDesafio: " + desafio.nome);
         linhas.add("§f" + estadoTexto());
         linhas.add("§fOnda: §e" + ondaTexto() + (onda > 0 && onda % 5 == 0 && estado == Estado.ONDA ? " §5§lBOSS" : ""));
-        linhas.add("§fNúcleo: §c" + Math.max(0, vidaNucleo) + "§7/" + dif.vidaNucleo);
+        linhas.add("§fNúcleo: §c" + Math.max(0, vidaNucleo) + "§7/" + nucleoMax());
         linhas.add("§fEssência: §d" + essencia);
         linhas.add("§fMonstros: §e" + monstros.size() + (fila.isEmpty() ? "" : " §7(+" + fila.size() + ")"));
         linhas.add("§fTorres: §a" + torres.size() + "§7/" + dif.limiteTorres);
@@ -313,9 +317,9 @@ final class Partida {
     }
 
     private void atualizarBarras() {
-        float prog = Math.max(0f, Math.min(1f, vidaNucleo / (float) dif.vidaNucleo));
+        float prog = Math.max(0f, Math.min(1f, vidaNucleo / (float) nucleoMax()));
         barraNucleo.progress(prog);
-        barraNucleo.name(DefesaTorre.txt("§c§lNÚCLEO §f" + Math.max(0, vidaNucleo) + "/" + dif.vidaNucleo
+        barraNucleo.name(DefesaTorre.txt("§c§lNÚCLEO §f" + Math.max(0, vidaNucleo) + "/" + nucleoMax()
                 + (onda > 0 ? "  §7|  §eOnda " + ondaTexto() : "") + "  §7|  " + dif.cor + dif.nome));
         barraNucleo.color(prog > 0.5f ? BossBar.Color.GREEN : prog > 0.25f ? BossBar.Color.YELLOW : BossBar.Color.RED);
         if (chefeId != null) {
@@ -734,6 +738,8 @@ final class Partida {
             return false;
         }
         if (d != null) definirDificuldade(d);
+        desafio = DesafioDia.hoje();
+        vidaNucleo = Math.max(1, (int) Math.round(dif.vidaNucleo * desafio.nucleo));
         estado = Estado.CONTAGEM;
         contagem = 10;
         String fim = dif.infinito() ? "§5sem fim: até o Núcleo cair" : "§fvençam §e" + dif.ondas + " ondas";
@@ -741,6 +747,8 @@ final class Partida {
                 + dif.cor + "§l" + dif.nome + "§f!");
         avisar("§7Objetivo: " + fim + "§7. Limite de §a" + dif.limiteTorres + " torres§7. Primeira onda em 10s.");
         avisar("§7Dica: compre torres na §6Loja §7(o aldeão) ou com §e/defesa loja§7.");
+        avisar("§e⚑ Desafio do dia: " + desafio.nome + " §8» §f" + desafio.desc);
+        tituloTodos(desafio.nome, "§f" + desafio.desc);
         plugin.getLogger().info("[" + mapa.id + "] Partida iniciada por " + quem.getName() + " (" + dif.id + ")" + (forcado ? " (forcada)" : ""));
         return true;
     }
@@ -807,7 +815,7 @@ final class Partida {
         double m = (1.0 + 0.2 * (onda - 1)) * dif.vidaMonstros * mapa.vidaMult * dif.rampaVida(onda);
         // no Infinito, depois da onda 30 fica 3% mais dificil a cada onda
         if (dif.infinito() && onda > 30) m *= Math.pow(1.03, onda - 30);
-        return m;
+        return m * desafio.vida;
     }
 
     @SuppressWarnings("unchecked")
@@ -817,7 +825,7 @@ final class Partida {
         if (s.chefe) {
             int numChefe = onda / 5;
             TipoChefe c = TipoChefe.values()[(numChefe - 1) % TipoChefe.values().length];
-            double vida = Math.min(5000.0, c.vida * (1.0 + 0.35 * (numChefe - 1)) * dif.vidaMonstros * mapa.vidaMult);
+            double vida = Math.min(5000.0, c.vida * (1.0 + 0.35 * (numChefe - 1)) * dif.vidaMonstros * mapa.vidaMult * desafio.vida);
             EntityType tipo = mapa.trocas.getOrDefault(c.tipo, c.tipo);
             String nome = mapa.trocas.containsKey(c.tipo) ? c.nome.replace("Zumbi", "Piglin") : c.nome;
             Class<Mob> cls = (Class<Mob>) tipo.getEntityClass();
@@ -842,8 +850,8 @@ final class Partida {
         String nome = mapa.nomesTroca.getOrDefault(t.tipo, t.nome);
         Class<Mob> cls = (Class<Mob>) tipo.getEntityClass();
         Mob m = mundo.spawn(loc, cls, false, mob -> configurar(mob, "§c" + nome, vida, 1.0));
-        int ess = Math.max(1, (int) Math.round(t.essencia * dif.essenciaDrop));
-        monstros.put(m.getUniqueId(), new Monstro(m.getUniqueId(), nome, t.danoNucleo, ess, t.velocidade, false));
+        int ess = Math.max(1, (int) Math.round(t.essencia * dif.essenciaDrop * desafio.essencia));
+        monstros.put(m.getUniqueId(), new Monstro(m.getUniqueId(), nome, t.danoNucleo, ess, t.velocidade * desafio.velocidade, false));
         mundo.spawnParticle(Particle.PORTAL, loc.clone().add(0, 1, 0), 30, 0.4, 0.8, 0.4, 0.3);
         limparNivel(m, vida, "§c" + nome);
     }
