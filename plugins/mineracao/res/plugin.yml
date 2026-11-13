@@ -16,7 +16,7 @@ commands:
   rank:
     description: Mostra seu rank de mineracao
   picareta:
-    description: Melhora a picareta com coronas (segure a picareta)
+    description: Mostra como deixar a picareta forte (encantar na Sala de Encantamentos)
   vender:
     description: Vende o minerio das minas por coronas
   mineracaoadm:

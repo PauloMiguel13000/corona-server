@@ -49,7 +49,7 @@ import java.util.*;
 public final class Mineracao extends JavaPlugin implements Listener {
 
     static final String MUNDO = "mineracao";
-    static final int VERSAO_CONSTRUCAO = 5;   // 4: tapetes de vender bem visiveis; 5: loja de picaretas
+    static final int VERSAO_CONSTRUCAO = 6;   // 4: tapetes de vender; 5: loja de picaretas; 6: sem melhoria com $ (so encantando)
     /** 13/11 (Paulo): minas em quadrado (4 x 3), perto uma da outra para todos se verem, com um vao de 10 blocos
      *  de vazio entre as bordas (ninguem pula de uma para a outra). */
     static final int GRADE_X0 = 100, GRADE_Z0 = -53, GRADE_PASSO = 2 * (Mina.RAIO + 1 + Mina.BORDA) + 1 + 10;
@@ -377,8 +377,9 @@ public final class Mineracao extends JavaPlugin implements Listener {
         totem(-9, 0, Material.EXPERIENCE_BOTTLE, "§6§lRANK UP", "§7suba de rank com $", "rankup", "minecraft:gold_block", -7, 0);
         totem(9, 0, Material.GOLD_INGOT, "§2§lVENDER", "§7venda o minério das minas", "vender", "minecraft:emerald_block", 7, 0);
         totem(0, 9, Material.CHEST, "§b§lKITS", "§7kits da prisão (24 h)", "kits", "minecraft:diamond_block", 0, 7);
-        totem(0, -9, Material.ANVIL, "§d§lPICARETA", "§7melhore com $", "picareta", "minecraft:amethyst_block", 0, -7);
-        totem(-9, -9, Material.DIAMOND_PICKAXE, "§b§lLOJA DE PICARETAS", "§7compre com $ e encante!", "loja", "minecraft:diamond_block", -7, -7);
+        // 13/11 (Paulo): picareta so fica forte encantando na mesa (nada de melhorar com $)
+        totem(0, -9, Material.ENCHANTING_TABLE, "§d§lENCANTAMENTOS", "§7leva para a sala das mesas", "enc", "minecraft:amethyst_block", 0, -7);
+        totem(-9, -9, Material.DIAMOND_PICKAXE, "§b§lLOJA", "§7picaretas e lápis-lazúli", "loja", "minecraft:diamond_block", -7, -7);
     }
 
     private void totem(int x, int z, Material icone, String nome, String sub, String acao, String bloco, int tx, int tz) {
@@ -423,7 +424,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         }
         consertarBigornas();
         por(0, PISO + 1, z0 + 1, "minecraft:grindstone[face=floor,facing=south]");
-        totem(8, ENC_Z - 7, Material.DIAMOND_PICKAXE, "§b§lLOJA DE PICARETAS", "§7compre aqui e encante na mesa", "loja", "minecraft:diamond_block", 8, ENC_Z - 5);
+        totem(8, ENC_Z - 7, Material.LAPIS_LAZULI, "§9§lLOJA DE LÁPIS", "§7lápis-lazúli e picaretas", "loja", "minecraft:lapis_block", 8, ENC_Z - 5);
         texto(new Location(mundo, 0.5, PISO + 5.2, ENC_Z - 2 + 0.5), "§d§lSALA DE ENCANTAMENTOS\n§7Lápis + XP nas mesas • bigornas • rebolo", 1.0f);
         // portal de volta ao patio (parede sul)
         construirPortal(new Portal(0, z1 + 1, 's', "patio", "§a§l◀ VOLTAR AO PÁTIO", "§7Prisão Corona", "minecraft:emerald_block"));
@@ -907,7 +908,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
             case "rankup" -> rankup(p);
             case "vender" -> vender(p);
             case "kits" -> abrirKits(p);
-            case "picareta" -> abrirMelhorias(p);
+            case "enc" -> { p.teleport(salaEnc()); p.playSound(p.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 0.8f, 1f); }
             case "loja" -> abrirLoja(p);
             default -> {}
         }
@@ -947,7 +948,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         // tapetes dos totens (Bedrock: pisar funciona como clicar)
         if (to.getBlockY() == PISO + 1) {
             int x = to.getBlockX(), z = to.getBlockZ();
-            String a = x == -7 && z == 0 ? "rankup" : x == 7 && z == 0 ? "vender" : x == 0 && z == 7 ? "kits" : x == 0 && z == -7 ? "picareta"
+            String a = x == -7 && z == 0 ? "rankup" : x == 7 && z == 0 ? "vender" : x == 0 && z == 7 ? "kits" : x == 0 && z == -7 ? "enc"
                     : (x == -7 && z == -7) || (x == 8 && z == ENC_Z - 5) ? "loja" : null;
             if (a != null && !esperando(p, 3000)) { acao(p, a); return; }
         }
@@ -1243,7 +1244,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         boolean av = autoVenda(p);
         inv.setItem(46, item(nvv > 0 ? (av ? Material.HOPPER : Material.CHEST_MINECART) : Material.BARRIER, "§e§lVenda automática: " + (nvv == 0 ? "§cSó VIP" : av ? "§aLIGADA" : "§7DESLIGADA"),
                 "§7Quando o inventário enche, o minério", "§7é vendido sozinho (com seus bônus).", nvv > 0 ? "§a▶ Clique para " + (av ? "desligar" : "ligar") : "§7Veja os planos: §e/vip"));
-        inv.setItem(44, item(Material.ANVIL, "§d§lMelhorar picareta", "§7Segure a picareta na mão.", "§7Eficiência V, Fortuna III, Inquebrável III."));
+        inv.setItem(44, item(Material.ENCHANTED_BOOK, "§d§lComo deixar a picareta forte?", "§7Encante nas mesas da §dSala de Encantamentos§7:", "§7lápis-lazúli (compre na §9Loja§7) + XP da mineração.", "§7Junte livros e picaretas na bigorna."));
         p.openInventory(inv);
     }
 
@@ -1293,7 +1294,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
                     case 38 -> abrirKits(p);
                     case 40 -> { p.closeInventory(); rankup(p); }
                     case 42 -> { p.closeInventory(); vender(p); }
-                    case 44 -> { p.closeInventory(); abrirMelhorias(p); }
+                    case 44 -> { p.closeInventory(); if (podeIr(p)) p.teleport(salaEnc()); }
                     case 46 -> {
                         if (vip(p) == 0) { p.sendMessage(txt("§cA venda automática é dos VIPs. §7Veja: §e/vip")); return; }
                         p.getPersistentDataContainer().set(kAuto, PersistentDataType.BYTE, (byte) (autoVenda(p) ? 0 : 1));
@@ -1305,12 +1306,6 @@ public final class Mineracao extends JavaPlugin implements Listener {
             }
             case "kits" -> { if (s >= 0 && s < KITS.length * 2 && s % 2 == 0) pegarKit(p, KITS[s / 2]); }
             case "loja" -> { for (Oferta o : LOJA) if (o.slot() == s) { comprar(p, o); abrirLoja(p); } }
-            case "bigorna" -> {
-                int i = (s - 2) / 2;
-                if (s < 2 || (s - 2) % 2 != 0 || i >= MELHORIAS.length) return;
-                melhorar(p, MELHORIAS[i]);
-                abrirMelhorias(p);
-            }
             default -> {}
         }
     }
@@ -1474,14 +1469,16 @@ public final class Mineracao extends JavaPlugin implements Listener {
     record Oferta(int slot, Material m, int qtd, String nome, long preco) {}
     static final Oferta[] LOJA = {
             new Oferta(10, Material.STONE_PICKAXE, 1, "§7Picareta de Pedra", 50),
-            new Oferta(12, Material.IRON_PICKAXE, 1, "§fPicareta de Ferro", 400),
-            new Oferta(14, Material.DIAMOND_PICKAXE, 1, "§bPicareta de Diamante", 3000),
-            new Oferta(16, Material.LAPIS_LAZULI, 16, "§9Lápis-lazúli x16 §7(para encantar)", 120)};
+            new Oferta(11, Material.IRON_PICKAXE, 1, "§fPicareta de Ferro", 400),
+            new Oferta(12, Material.DIAMOND_PICKAXE, 1, "§bPicareta de Diamante", 3000),
+            new Oferta(14, Material.LAPIS_LAZULI, 8, "§9Lápis-lazúli x8", 60),
+            new Oferta(15, Material.LAPIS_LAZULI, 32, "§9Lápis-lazúli x32", 220),
+            new Oferta(16, Material.LAPIS_LAZULI, 64, "§9Lápis-lazúli x64", 400)};
 
     void abrirLoja(Player p) {
         if (p.getWorld() != mundo) { p.sendMessage(txt("§cA loja de picaretas fica dentro da Prisão.")); return; }
         Tela h = new Tela("loja");
-        Inventory inv = Bukkit.createInventory(h, 27, txt("§8⛏ Loja de picaretas • $" + fmt(dinheiro(p))));
+        Inventory inv = Bukkit.createInventory(h, 27, txt("§8⛏ Loja • picaretas e lápis • $" + fmt(dinheiro(p))));
         h.inv = inv;
         long tem = dinheiro(p);
         for (Oferta o : LOJA) {
@@ -1490,7 +1487,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
             it.setAmount(o.qtd());
             inv.setItem(o.slot(), it);
         }
-        inv.setItem(22, item(Material.ENCHANTING_TABLE, "§d§lComo deixar forte?", "§7Encante na §dSala de Encantamentos §7(portal sul)", "§7com lápis + XP da mineração, use a bigorna,", "§7ou melhore com $ no totem §dPICARETA§7."));
+        inv.setItem(22, item(Material.ENCHANTING_TABLE, "§d§lComo deixar forte?", "§7Encante na §dSala de Encantamentos §7(portal sul)", "§7com lápis + XP da mineração.", "§7Junte livros e picaretas na bigorna."));
         p.openInventory(inv);
     }
 
@@ -1504,48 +1501,6 @@ public final class Mineracao extends JavaPlugin implements Listener {
         p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_YES, 0.7f, 1.1f);
         p.sendMessage(txt("§a+ " + o.nome() + " §7(-" + din(o.preco()) + "§7) §8• saldo " + din(dinheiro(p))));
         getLogger().info(p.getName() + " comprou " + o.m() + " x" + o.qtd() + " por $" + o.preco());
-    }
-
-    // ------------------------------------------------------------------ melhorias da picareta ($)
-    record Melhoria(Enchantment enc, String nome, Material icone, long[] custo) {}
-    static final Melhoria[] MELHORIAS = {
-            new Melhoria(Enchantment.EFFICIENCY, "Eficiência", Material.GOLDEN_PICKAXE, new long[]{300, 800, 2000, 5000, 12000}),
-            new Melhoria(Enchantment.FORTUNE, "Fortuna", Material.EMERALD, new long[]{3000, 10000, 30000}),
-            new Melhoria(Enchantment.UNBREAKING, "Inquebrável", Material.OBSIDIAN, new long[]{500, 1500, 4000})};
-
-    static boolean picareta(ItemStack s) { return s != null && s.getType().name().endsWith("_PICKAXE"); }
-
-    void abrirMelhorias(Player p) {
-        ItemStack mao = p.getInventory().getItemInMainHand();
-        if (!picareta(mao)) { p.sendMessage(txt("§cSegure uma picareta na mão para melhorar.")); return; }
-        Tela h = new Tela("bigorna");
-        Inventory inv = Bukkit.createInventory(h, 9, txt("§8⚒ Melhorar picareta • $" + fmt(dinheiro(p))));
-        h.inv = inv;
-        for (int i = 0; i < MELHORIAS.length; i++) {
-            Melhoria m = MELHORIAS[i];
-            int nv = mao.getEnchantmentLevel(m.enc());
-            if (nv >= m.custo().length) inv.setItem(2 + i * 2, item(m.icone(), "§a" + m.nome() + " " + romano(nv), "§7Já está no máximo."));
-            else inv.setItem(2 + i * 2, item(m.icone(), "§b" + m.nome() + " " + romano(nv) + " §7→ §b" + romano(nv + 1),
-                    "§7Custa " + din(m.custo()[nv]), "§7Você tem " + din(dinheiro(p)), "§a▶ Clique para melhorar"));
-        }
-        p.openInventory(inv);
-    }
-
-    static String romano(int n) { return n <= 0 ? "0" : new String[]{"I", "II", "III", "IV", "V"}[Math.min(5, n) - 1]; }
-
-    void melhorar(Player p, Melhoria m) {
-        ItemStack mao = p.getInventory().getItemInMainHand();
-        if (!picareta(mao)) { p.closeInventory(); p.sendMessage(txt("§cSegure a picareta na mão.")); return; }
-        int nv = mao.getEnchantmentLevel(m.enc());
-        if (nv >= m.custo().length) { p.sendMessage(txt("§a" + m.nome() + " já está no máximo.")); return; }
-        long c = m.custo()[nv], tem = dinheiro(p);
-        if (tem < c) { p.sendMessage(txt("§cFaltam " + din(c - tem) + " §cpara " + m.nome() + " " + romano(nv + 1) + ".")); return; }
-        setDinheiro(p, tem - c);
-        ItemMeta im = mao.getItemMeta();
-        im.addEnchant(m.enc(), nv + 1, true);
-        mao.setItemMeta(im);
-        p.playSound(p.getLocation(), Sound.BLOCK_ANVIL_USE, 0.8f, 1.2f);
-        p.sendMessage(txt("§b⚒ Picareta melhorada: §f" + m.nome() + " " + romano(nv + 1) + " §7(-" + din(c) + "§7)"));
     }
 
     // ------------------------------------------------------------------ comandos
@@ -1571,7 +1526,10 @@ public final class Mineracao extends JavaPlugin implements Listener {
             }
             case "rankup" -> rankup(p);
             case "vender" -> vender(p);
-            case "picareta" -> abrirMelhorias(p);
+            case "picareta" -> {
+                p.sendMessage(txt("§d⛏ A picareta fica forte encantando: §fvá na §dSala de Encantamentos §f(portal sul do pátio ou §e/minas enc§f) e compre lápis na §9Loja§f."));
+                if (p.getWorld() == mundo) p.teleport(salaEnc());
+            }
             case "topminas" -> {
                 p.sendMessage(txt("§6§l⛓ Top da Prisão"));
                 List<String> tl = linhasTop(10);
