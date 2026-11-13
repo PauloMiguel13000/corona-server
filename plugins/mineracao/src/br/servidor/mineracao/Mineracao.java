@@ -49,7 +49,7 @@ import java.util.*;
 public final class Mineracao extends JavaPlugin implements Listener {
 
     static final String MUNDO = "mineracao";
-    static final int VERSAO_CONSTRUCAO = 4;   // 4: tapetes de vender bem visiveis
+    static final int VERSAO_CONSTRUCAO = 5;   // 4: tapetes de vender bem visiveis; 5: loja de picaretas
     /** 13/11 (Paulo): minas em quadrado (4 x 3), perto uma da outra para todos se verem, com um vao de 10 blocos
      *  de vazio entre as bordas (ninguem pula de uma para a outra). */
     static final int GRADE_X0 = 100, GRADE_Z0 = -53, GRADE_PASSO = 2 * (Mina.RAIO + 1 + Mina.BORDA) + 1 + 10;
@@ -378,6 +378,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         totem(9, 0, Material.GOLD_INGOT, "§2§lVENDER", "§7venda o minério das minas", "vender", "minecraft:emerald_block", 7, 0);
         totem(0, 9, Material.CHEST, "§b§lKITS", "§7kits da prisão (24 h)", "kits", "minecraft:diamond_block", 0, 7);
         totem(0, -9, Material.ANVIL, "§d§lPICARETA", "§7melhore com $", "picareta", "minecraft:amethyst_block", 0, -7);
+        totem(-9, -9, Material.DIAMOND_PICKAXE, "§b§lLOJA DE PICARETAS", "§7compre com $ e encante!", "loja", "minecraft:diamond_block", -7, -7);
     }
 
     private void totem(int x, int z, Material icone, String nome, String sub, String acao, String bloco, int tx, int tz) {
@@ -422,6 +423,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         }
         consertarBigornas();
         por(0, PISO + 1, z0 + 1, "minecraft:grindstone[face=floor,facing=south]");
+        totem(8, ENC_Z - 7, Material.DIAMOND_PICKAXE, "§b§lLOJA DE PICARETAS", "§7compre aqui e encante na mesa", "loja", "minecraft:diamond_block", 8, ENC_Z - 5);
         texto(new Location(mundo, 0.5, PISO + 5.2, ENC_Z - 2 + 0.5), "§d§lSALA DE ENCANTAMENTOS\n§7Lápis + XP nas mesas • bigornas • rebolo", 1.0f);
         // portal de volta ao patio (parede sul)
         construirPortal(new Portal(0, z1 + 1, 's', "patio", "§a§l◀ VOLTAR AO PÁTIO", "§7Prisão Corona", "minecraft:emerald_block"));
@@ -906,6 +908,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
             case "vender" -> vender(p);
             case "kits" -> abrirKits(p);
             case "picareta" -> abrirMelhorias(p);
+            case "loja" -> abrirLoja(p);
             default -> {}
         }
     }
@@ -944,7 +947,8 @@ public final class Mineracao extends JavaPlugin implements Listener {
         // tapetes dos totens (Bedrock: pisar funciona como clicar)
         if (to.getBlockY() == PISO + 1) {
             int x = to.getBlockX(), z = to.getBlockZ();
-            String a = x == -7 && z == 0 ? "rankup" : x == 7 && z == 0 ? "vender" : x == 0 && z == 7 ? "kits" : x == 0 && z == -7 ? "picareta" : null;
+            String a = x == -7 && z == 0 ? "rankup" : x == 7 && z == 0 ? "vender" : x == 0 && z == 7 ? "kits" : x == 0 && z == -7 ? "picareta"
+                    : (x == -7 && z == -7) || (x == 8 && z == ENC_Z - 5) ? "loja" : null;
             if (a != null && !esperando(p, 3000)) { acao(p, a); return; }
         }
         if (to.getBlock().getType() != Material.NETHER_PORTAL) return;
@@ -1228,6 +1232,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         inv.setItem(24, item(r >= pv.rank ? Material.NETHERITE_SWORD : Material.IRON_BARS, "§c§l" + pv.nome,
                 "§7Rank: " + nomeRank(pv.rank), "§7Minérios: §f" + resumo(pv), "§c⚠ PvP ligado: quem morre", "§c   perde os itens!", r >= pv.rank ? "§a▶ Clique para ir" : "§c✖ Precisa do rank " + RANKS[pv.rank].letra()));
         inv.setItem(25, item(Material.ENCHANTING_TABLE, "§d§lSala de Encantamentos", "§7Mesas com 15 estantes, bigornas", "§7e rebolo. §a▶ Clique para ir"));
+        inv.setItem(36, item(Material.DIAMOND_PICKAXE, "§b§lLoja de picaretas", "§7Picaretas com o dinheiro da Prisão", "§7(até a de diamante, sem encantamento).", "§7Encante na Sala de Encantamentos!", "§a▶ Clique para ver"));
         inv.setItem(38, item(Material.CHEST, "§b§lKits da Prisão", "§7Kit do Detento para todos e", "§7kits VIP (24 h cada).", "§a▶ Clique para ver"));
         long cust = r + 1 < RANKS.length ? RANKS[r + 1].custo() : 0;
         inv.setItem(40, item(Material.EXPERIENCE_BOTTLE, "§6§lRank Up",
@@ -1284,6 +1289,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
                     case 4 -> { p.closeInventory(); irCentro(p); }
                     case 24 -> { p.closeInventory(); irPara(p, minas.get(12)); }
                     case 25 -> { p.closeInventory(); if (podeIr(p)) p.teleport(salaEnc()); }
+                    case 36 -> abrirLoja(p);
                     case 38 -> abrirKits(p);
                     case 40 -> { p.closeInventory(); rankup(p); }
                     case 42 -> { p.closeInventory(); vender(p); }
@@ -1298,6 +1304,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
                 }
             }
             case "kits" -> { if (s >= 0 && s < KITS.length * 2 && s % 2 == 0) pegarKit(p, KITS[s / 2]); }
+            case "loja" -> { for (Oferta o : LOJA) if (o.slot() == s) { comprar(p, o); abrirLoja(p); } }
             case "bigorna" -> {
                 int i = (s - 2) / 2;
                 if (s < 2 || (s - 2) % 2 != 0 || i >= MELHORIAS.length) return;
@@ -1459,6 +1466,44 @@ public final class Mineracao extends JavaPlugin implements Listener {
         for (int i = 0; i + 1 < encs.length; i += 2) im.addEnchant((Enchantment) encs[i], (Integer) encs[i + 1], true);
         s.setItemMeta(im);
         return s;
+    }
+
+    // ------------------------------------------------------------------ loja de picaretas ($)
+    /** 13/11 (Paulo): picaretas compradas com o dinheiro das minas, no maximo a de diamante pura (sem encantamento):
+     *  para ficarem fortes o jogador encanta (mesa, bigorna ou melhorias). Lapis para quem ainda nao chega no Bloco C. */
+    record Oferta(int slot, Material m, int qtd, String nome, long preco) {}
+    static final Oferta[] LOJA = {
+            new Oferta(10, Material.STONE_PICKAXE, 1, "§7Picareta de Pedra", 50),
+            new Oferta(12, Material.IRON_PICKAXE, 1, "§fPicareta de Ferro", 400),
+            new Oferta(14, Material.DIAMOND_PICKAXE, 1, "§bPicareta de Diamante", 3000),
+            new Oferta(16, Material.LAPIS_LAZULI, 16, "§9Lápis-lazúli x16 §7(para encantar)", 120)};
+
+    void abrirLoja(Player p) {
+        if (p.getWorld() != mundo) { p.sendMessage(txt("§cA loja de picaretas fica dentro da Prisão.")); return; }
+        Tela h = new Tela("loja");
+        Inventory inv = Bukkit.createInventory(h, 27, txt("§8⛏ Loja de picaretas • $" + fmt(dinheiro(p))));
+        h.inv = inv;
+        long tem = dinheiro(p);
+        for (Oferta o : LOJA) {
+            ItemStack it = item(o.m(), o.nome(), "§7Preço: " + din(o.preco()), o.m() == Material.LAPIS_LAZULI ? "§7Use na mesa de encantamento." : "§7Sem encantamento: §fencante você mesmo!",
+                    tem >= o.preco() ? "§a▶ Clique para comprar" : "§c✖ Faltam " + din(o.preco() - tem));
+            it.setAmount(o.qtd());
+            inv.setItem(o.slot(), it);
+        }
+        inv.setItem(22, item(Material.ENCHANTING_TABLE, "§d§lComo deixar forte?", "§7Encante na §dSala de Encantamentos §7(portal sul)", "§7com lápis + XP da mineração, use a bigorna,", "§7ou melhore com $ no totem §dPICARETA§7."));
+        p.openInventory(inv);
+    }
+
+    void comprar(Player p, Oferta o) {
+        long tem = dinheiro(p);
+        if (tem < o.preco()) { p.sendMessage(txt("§cFaltam " + din(o.preco() - tem) + " §cpara comprar " + o.nome() + "§c.")); p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.7f, 1f); return; }
+        if (p.getInventory().firstEmpty() < 0) { p.sendMessage(txt("§cInventário cheio. Venda o minério primeiro.")); return; }
+        setDinheiro(p, tem - o.preco());
+        ItemStack it = daPrisao(new ItemStack(o.m(), o.qtd()));
+        p.getInventory().addItem(it);
+        p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_YES, 0.7f, 1.1f);
+        p.sendMessage(txt("§a+ " + o.nome() + " §7(-" + din(o.preco()) + "§7) §8• saldo " + din(dinheiro(p))));
+        getLogger().info(p.getName() + " comprou " + o.m() + " x" + o.qtd() + " por $" + o.preco());
     }
 
     // ------------------------------------------------------------------ melhorias da picareta ($)
