@@ -214,6 +214,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(new Destaque(this), this);
         getServer().getPluginManager().registerEvents(new Mimico(this), this);
+        getServer().getPluginManager().registerEvents(new Elite(this), this);
         coronas = new Coronas(this);
         loja = new Loja(this);
         skins = new Skins(this);
