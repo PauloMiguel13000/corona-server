@@ -63,7 +63,9 @@ final class Divulgacao implements Listener {
             "&6&l>> &eMissões do dia: 3 missões novas todo dia valendo coronas. &f/missoes",
             "&6&l>> &eNão sabe por onde começar? &f/ajuda &7abre o guia com tudo o que tem no servidor",
             "&6&l>> &eTurno da Noite agora em grupo: &f/turno coop <nick> &7(até 3 vigias na mesma sala)",
-            "&6&l>> &eJogos de terror: Hotel, Backrooms, Casa da Vovó, Não Chore, Turno, Fábrica e Floresta. &f/terror");
+            "&6&l>> &eJogos de terror: Hotel, Backrooms, Casa da Vovó, Não Chore, Turno, Fábrica e Floresta. &f/terror",
+            "&6&l>> &eNOVO: Mundo de Mineração! &f/minas &7— minere, venda com &f/vender &7e suba de rank com &f/rankup",
+            "&6&l>> &eCoragem? A &cMina PvP &e(rank C) tem o melhor minério, mas lá quem morre perde os itens. &f/minas");
 
     private void dica() {
         List<String> l = new java.util.ArrayList<>(pl.getConfig().getStringList("divulgacao.dicas"));
