@@ -1051,15 +1051,14 @@ public final class Mineracao extends JavaPlugin implements Listener {
             PersistentDataContainer c = p.getPersistentDataContainer();
             if (c.has(kGanhou, PersistentDataType.BYTE)) return;
             c.set(kGanhou, PersistentDataType.BYTE, (byte) 1);
+            // 13/11 (Paulo): picareta de ferro padrao, sem encantamento (fica forte encantando na mesa)
             ItemStack pic = new ItemStack(Material.IRON_PICKAXE);
             ItemMeta im = pic.getItemMeta();
-            im.displayName(txt("§6Picareta do Detento"));
-            im.addEnchant(Enchantment.EFFICIENCY, 2, true);
-            im.addEnchant(Enchantment.UNBREAKING, 2, true);
+            im.displayName(txt("§fPicareta do Detento"));
             pic.setItemMeta(im);
             daPrisao(pic);
             p.getInventory().addItem(pic).values().forEach(s -> p.getWorld().dropItemNaturally(p.getLocation(), s));
-            p.sendMessage(txt("§a+ Picareta do Detento §7(presente da primeira visita)"));
+            p.sendMessage(txt("§a+ Picareta de ferro §7(presente de quem chega na Prisão) §8— §dencante na Sala de Encantamentos para deixar forte!"));
         }, 30L);
     }
 
