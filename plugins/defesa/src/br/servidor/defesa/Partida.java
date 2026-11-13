@@ -229,6 +229,29 @@ final class Partida {
         return plugin.getConfig().getString("recordes-jogadores." + mapa.id + "." + d.id, "");
     }
 
+    /** 13/11 (Paulo): placar de recordes (Hall da Fama) flutuando sobre o lobby de cada mapa. */
+    void atualizarFama() {
+        Location l = mapa.lobby(mundo).add(0, 4.2, 0);
+        if (!l.getChunk().isLoaded()) return;
+        for (Entity e : mundo.getNearbyEntities(l, 3, 4, 3))
+            if (e instanceof org.bukkit.entity.TextDisplay && e.getScoreboardTags().contains("defesa_fama")) e.remove();
+        StringBuilder t = new StringBuilder("§6§l★ HALL DA FAMA ★\n" + mapa.cor + "§l" + mapa.nome);
+        for (Dificuldade d : Dificuldade.values()) {
+            int r = recorde(d);
+            String quem = recordistas(d);
+            t.append("\n").append(d.cor).append(d.nome).append("§8: ")
+                    .append(r == 0 ? "§7ninguém ainda" : "§fonda §e" + r + " §7" + (quem.length() > 28 ? quem.substring(0, 27) + "…" : quem));
+        }
+        mundo.spawn(l, org.bukkit.entity.TextDisplay.class, d -> {
+            d.text(DefesaTorre.txt(t.toString()));
+            d.setBillboard(org.bukkit.entity.Display.Billboard.CENTER);
+            d.setShadowed(true);
+            d.setBackgroundColor(Color.fromARGB(150, 0, 0, 0));
+            d.setPersistent(true);
+            d.addScoreboardTag("defesa_fama");
+        });
+    }
+
     int vitorias(Dificuldade d) {
         return plugin.getConfig().getInt("vitorias." + mapa.id + "." + d.id, 0);
     }
@@ -990,6 +1013,7 @@ final class Partida {
             plugin.getConfig().set(chaveRecorde(dif), onda);
             plugin.getConfig().set("recordes-jogadores." + mapa.id + "." + dif.id, String.join(", ", nomes));
             plugin.saveConfig();
+            atualizarFama();
             if (!nomes.isEmpty() && (dif.infinito() || onda % 5 == 0)) {
                 Bukkit.broadcast(DefesaTorre.txt("§6[Defesa da Torre] §e" + String.join(", ", nomes) + " §fbateram o recorde do "
                         + mapa.cor + mapa.nome + " §f(" + dif.cor + dif.nome + "§f): §6onda " + onda + "§f!"));

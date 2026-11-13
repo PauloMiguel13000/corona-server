@@ -167,6 +167,7 @@ public final class DefesaTorre extends JavaPlugin implements Listener {
         criarMundo();
         if (mundo == null) return;
         for (Mapa m : Mapa.TODOS) partidas.put(m.id, new Partida(this, m, mundo));
+        Bukkit.getScheduler().runTaskLater(this, () -> { for (Partida pa : partidas.values()) { pa.mundo.getChunkAt(pa.mapa.lobby(pa.mundo)).load(); pa.atualizarFama(); } }, 100L);
 
         Bukkit.getPluginManager().registerEvents(this, this);
         // espera as entidades carregarem para limpar e montar Nucleo e loja de cada mapa
