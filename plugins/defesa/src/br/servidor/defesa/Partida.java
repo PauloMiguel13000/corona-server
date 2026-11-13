@@ -342,6 +342,7 @@ final class Partida {
 
     private void porSegundo() {
         long agora = System.currentTimeMillis();
+        if (tick % 60 == 0 && !monstros.isEmpty()) bruxasCuram();
         monstros.keySet().removeIf(id -> {
             Entity e = Bukkit.getEntity(id);
             return e == null || !e.isValid() || e.isDead();
@@ -760,6 +761,33 @@ final class Partida {
             z.setShouldBurnInDay(false);
         }
         if (m instanceof AbstractSkeleton sk) sk.setShouldBurnInDay(false);
+        if (m instanceof org.bukkit.entity.PiglinAbstract pa) pa.setImmuneToZombification(true);
+    }
+
+    /** Bruxas curam os monstros perto (a cada 3 s). */
+    private void bruxasCuram() {
+        Particle.DustOptions verde = new Particle.DustOptions(Color.fromRGB(150, 60, 200), 1.2f);
+        for (Monstro mo : new ArrayList<>(monstros.values())) {
+            Entity e = Bukkit.getEntity(mo.id);
+            if (!(e instanceof org.bukkit.entity.Witch w) || !w.isValid()) continue;
+            int curados = 0;
+            for (Monstro outro : monstros.values()) {
+                if (outro == mo) continue;
+                Entity oe = Bukkit.getEntity(outro.id);
+                if (!(oe instanceof LivingEntity le) || !le.isValid() || le.getLocation().distanceSquared(w.getLocation()) > 16) continue;
+                AttributeInstance mx = le.getAttribute(Attribute.MAX_HEALTH);
+                double max = mx != null ? mx.getValue() : le.getHealth();
+                double cura = outro.chefe ? 6 : 4;
+                if (le.getHealth() >= max) continue;
+                le.setHealth(Math.min(max, le.getHealth() + cura));
+                mundo.spawnParticle(Particle.DUST, le.getLocation().add(0, le.getHeight() + 0.2, 0), 6, 0.3, 0.2, 0.3, 0, verde);
+                curados++;
+            }
+            if (curados > 0) {
+                mundo.spawnParticle(Particle.WITCH, w.getLocation().add(0, 2, 0), 12, 0.4, 0.3, 0.4, 0.02);
+                mundo.playSound(w.getLocation(), Sound.ENTITY_WITCH_DRINK, 0.4f, 1.2f);
+            }
+        }
     }
 
     /** Se outro plugin (ex.: LevelledMobs) mexer na vida/velocidade do monstro, desfaz. */

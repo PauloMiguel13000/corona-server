@@ -6,7 +6,8 @@ import org.bukkit.entity.EntityType;
 enum TipoChefe {
     ZUMBI_GIGANTE(EntityType.ZOMBIE, "Zumbi Gigante", 150, 2.5),
     DEVASTADOR(EntityType.RAVAGER, "Devastador", 250, 1.3),
-    COLOSSO(EntityType.IRON_GOLEM, "Colosso de Ferro", 400, 1.5);
+    COLOSSO(EntityType.IRON_GOLEM, "Colosso de Ferro", 400, 1.5),
+    RAINHA_ARANHA(EntityType.SPIDER, "Rainha Aranha", 320, 3.0);
 
     final EntityType tipo;
     final String nome;
