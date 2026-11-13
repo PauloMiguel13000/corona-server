@@ -407,14 +407,24 @@ final class Mapa {
     }
 
     /** Enfeites novos que entram tambem nos mapas ja construidos (so poe onde esta vazio). */
-    /** Campos (13/11, Paulo): um rio num aqueduto de pedra passa por cima da entrada dos monstros (eles saem de baixo
-     *  do rio) e no fim do aqueduto o rio cai numa cachoeira na frente do tunel: os monstros passam por baixo dela.
-     *  A agua do rio e de verdade (parada, fechada no canal); a queda e efeito (nao alaga o caminho). */
-    static final int RIO_X1 = -22, RIO_X2 = -8, RIO_Z1 = -20, RIO_Z2 = -16, RIO_ALT = 6;
+    /** Campos (13/11, v2 a pedido do Paulo): montanha ao norte com uma CACHOEIRA de verdade que cai num rio que corta o
+     *  mapa de norte a sul (atravessa 3 trechos do caminho) e termina num lago. A correnteza arrasta os monstros rio
+     *  abaixo e depois os joga de volta no chao (Partida.correnteza). Morrinhos enfeitam os lados de fora do mapa. */
+    static final int RIO_X1 = 6, RIO_X2 = 8, RIO_Z1 = -23, RIO_Z2 = 4;      // canal do rio (agua no nivel do chao)
+    static final int LAGO_X1 = 4, LAGO_X2 = 10, LAGO_Z1 = 4, LAGO_Z2 = 9;   // lago no fim do rio
+    static final int QUEDA_TOPO = 10;                                       // a agua cai de Y+10
+    // aqueduto antigo (v1), so para desmontar
+    private static final int V1_X1 = -22, V1_X2 = -8, V1_Z1 = -20, V1_Z2 = -16;
+
+    /** Esta dentro do rio ou do lago (x, z relativos). */
+    static boolean noRio(int x, int z) {
+        return (x >= RIO_X1 && x <= RIO_X2 && z >= RIO_Z1 && z <= RIO_Z2) || (x >= LAGO_X1 && x <= LAGO_X2 && z >= LAGO_Z1 && z <= LAGO_Z2);
+    }
 
     void enfeites(World w) {
-        if (tema == Tema.CAMPOS) { aqueduto(w); return; }
+        if (tema == Tema.CAMPOS) { cachoeira(w); return; }
         if (tema != Tema.VULCAO) return;
+        vulcaoNoCaminho(w);
         // cratera ao norte, fora da ilha: anel de basalto com magma e fogueiras de sinal (fumaca alta)
         int cx = (minX + maxX) / 2, cz = minZ - 9;
         for (int dx = -4; dx <= 4; dx++)
@@ -432,29 +442,110 @@ final class Mapa {
         }
     }
 
-    private void aqueduto(World w) {
-        if (w.getBlockAt(ox + RIO_X1 + 1, Y + RIO_ALT + 1, oz + RIO_Z1 + 1).getType() == Material.WATER) return;   // ja feito
-        ThreadLocalRandom r = ThreadLocalRandom.current();
-        // pilares dos dois lados do tunel (fora do caminho)
-        for (int px : new int[]{-21, -14, -9})
-            for (int pz : new int[]{RIO_Z1, RIO_Z2})
-                for (int y = Y; y < Y + RIO_ALT; y++) por(w, px, y, pz, r.nextInt(4) == 0 ? Material.MOSSY_STONE_BRICKS : Material.STONE_BRICKS);
-        for (int x = RIO_X1; x <= RIO_X2; x++)
-            for (int z = RIO_Z1; z <= RIO_Z2; z++) {
-                boolean borda = z == RIO_Z1 || z == RIO_Z2 || x == RIO_X1 || x == RIO_X2;
-                por(w, x, Y + RIO_ALT, z, r.nextInt(5) == 0 ? Material.MOSSY_STONE_BRICKS : Material.STONE_BRICKS);   // fundo do canal (teto do tunel)
-                por(w, x, Y + RIO_ALT + 1, z, borda ? Material.MOSSY_STONE_BRICKS : Material.WATER);
-                if (borda && (x + z) % 3 == 0) por(w, x, Y + RIO_ALT + 2, z, Material.MOSS_CARPET);
-                // arcos embaixo do canal, so nas bordas (o meio fica livre ate o teto: o boss gigante passa)
-                if ((z == RIO_Z1 || z == RIO_Z2) && w.getBlockAt(ox + x, Y + RIO_ALT - 1, oz + z).getType() == Material.AIR)
-                    w.getBlockAt(ox + x, Y + RIO_ALT - 1, oz + z).setBlockData(org.bukkit.Bukkit.createBlockData("minecraft:stone_brick_stairs[half=top,facing=" + (z == RIO_Z1 ? "south" : "north") + "]"), false);
+    private void cachoeira(World w) {
+        if (w.getBlockAt(ox + 7, Y + QUEDA_TOPO, oz - 25).getType() == Material.WATER) return;   // ja feita
+        // 1) desmonta o aqueduto antigo (v1)
+        for (int x = V1_X1 - 1; x <= V1_X2 + 1; x++)
+            for (int z = V1_Z1 - 1; z <= V1_Z2 + 1; z++)
+                for (int y = Y + 1; y <= Y + 10; y++) por(w, x, y, z, Material.AIR);
+        for (int x = V1_X1 + 1; x <= V1_X2 + 1; x++)
+            for (int z = V1_Z1 - 1; z <= V1_Z2 + 1; z++) por(w, x, Y, z, Material.AIR);
+        java.util.Random r = new java.util.Random(77);
+        // 2) montanha do norte (fora da cerca) com a fenda da cachoeira
+        for (int x = -16; x <= 30; x++)
+            for (int z = -40; z <= -24; z++) {
+                double h = 12 - Math.abs(z + 31) * 0.95 - Math.abs(x - 7) * 0.32 + Math.sin(x * 0.7) * 1.2 + Math.cos(z * 0.9 + x * 0.3) * 0.9;
+                if (x >= 4 && x <= 10 && z >= -27) h = Math.max(h, QUEDA_TOPO + 1);   // o paredao atras da queda
+                montanha(w, x, z, (int) Math.round(h), r);
             }
-        // folhas e trepadeiras caindo do aqueduto
-        for (int x = RIO_X1; x <= RIO_X2; x += 2) {
-            por(w, x, Y + RIO_ALT + 2, RIO_Z1, Material.AZALEA_LEAVES);
-            Block v = w.getBlockAt(ox + x, Y + RIO_ALT - 1, oz + RIO_Z1 - 1);
-            if (x >= minX && v.getType() == Material.AIR) v.setBlockData(org.bukkit.Bukkit.createBlockData("minecraft:vine[north=false,south=true]"), false);
+        // fenda da cachoeira: canal no topo com a nascente, agua corre para a beira e despenca
+        for (int x = RIO_X1 - 1; x <= RIO_X2 + 1; x++) {
+            boolean parede = x < RIO_X1 || x > RIO_X2;
+            for (int z = -27; z <= -24; z++) {
+                por(w, x, Y + QUEDA_TOPO - 1, z, Material.MOSSY_COBBLESTONE);
+                por(w, x, Y + QUEDA_TOPO, z, parede || z == -27 ? Material.MOSSY_COBBLESTONE : Material.AIR);
+                por(w, x, Y + QUEDA_TOPO + 1, z, parede || z == -27 ? Material.MOSSY_COBBLESTONE : Material.AIR);
+                for (int y = Y + QUEDA_TOPO + 2; y <= Y + 16; y++) if (!parede) por(w, x, y, z, Material.AIR);
+            }
+            // a frente da queda (z = -23) fica livre do chao ate o topo
+            for (int y = Y; y <= Y + 16; y++) por(w, x, y, -23, parede && y <= Y + QUEDA_TOPO + 1 ? Material.MOSSY_STONE_BRICKS : Material.AIR);
         }
+        // poco embaixo da queda + rio + lago (agua parada no nivel do chao, fundo de pedra)
+        for (int x = LAGO_X1 - 1; x <= LAGO_X2 + 1; x++)
+            for (int z = RIO_Z1 - 1; z <= LAGO_Z2 + 1; z++) {
+                boolean agua = noRio(x, z);
+                if (agua) {
+                    por(w, x, Y - 3, z, Material.STONE);
+                    por(w, x, Y - 2, z, z % 4 == 0 ? Material.GRAVEL : Material.SAND);
+                    por(w, x, Y - 1, z, Material.WATER);
+                    if (z < minZ) for (int y = Y; y <= Y + 1; y++) if (x >= RIO_X1 && x <= RIO_X2) por(w, x, y, z, Material.AIR);
+                } else if (z < minZ && (x == RIO_X1 - 1 || x == RIO_X2 + 1)) {
+                    por(w, x, Y - 2, z, Material.STONE);
+                    por(w, x, Y - 1, z, Material.MOSSY_COBBLESTONE);
+                }
+            }
+        // nascente: agua parada no topo (ela escorre ate a beira e cai em cascata ate o poco)
+        for (int x = RIO_X1; x <= RIO_X2; x++) por(w, x, Y + QUEDA_TOPO, -26, Material.WATER);
+        for (int x = RIO_X1; x <= RIO_X2; x++) por(w, x, Y + QUEDA_TOPO, -25, Material.WATER);
+        // vitorias-regias e pedras na beira do lago
+        for (int n = 0; n < 6; n++) {
+            int x = LAGO_X1 + r.nextInt(LAGO_X2 - LAGO_X1 + 1), z = LAGO_Z1 + 1 + r.nextInt(LAGO_Z2 - LAGO_Z1);
+            if (w.getBlockAt(ox + x, Y, oz + z).getType() == Material.AIR) por(w, x, Y, z, Material.LILY_PAD);
+        }
+        // 3) morrinhos dos lados de fora (oeste, leste e sul)
+        for (int x = -40; x <= 40; x++)
+            for (int z = -24; z <= 34; z++) {
+                boolean oeste = x <= -25, leste = x >= 25, sul = z >= 26 && Math.abs(x) <= 24;
+                if (!oeste && !leste && !sul) continue;
+                if (sul && (z < 27)) continue;
+                double d = oeste ? -25 - x : leste ? x - 25 : z - 26;
+                double h = 2 + d * 0.55 + Math.sin(z * 0.45 + x * 0.2) * 2.0 + Math.cos(x * 0.35) * 1.5;
+                if (sul) h = Math.min(h, 4 + Math.sin(x * 0.4) * 2);
+                montanha(w, x, z, (int) Math.round(Math.min(h, 9)), r);
+            }
+    }
+
+    /** Vulcao (13/11, Paulo): um vulcaozinho rachado ao meio no caminho do leste; os monstros passam pela cratera,
+     *  sao jogados para o alto pela erupcao e voltam a andar (Partida.erupcaoNoCaminho). */
+    static final int CRATERA_X = 18, CRATERA_Z1 = -2, CRATERA_Z2 = 2;
+
+    static boolean naCratera(int x, int z) { return Math.abs(x - CRATERA_X) <= 1 && z >= CRATERA_Z1 && z <= CRATERA_Z2; }
+
+    private void vulcaoNoCaminho(World w) {
+        for (int z = -5; z <= 5; z++)
+            for (int lado : new int[]{-1, 1})
+                for (int d = 2; d <= 4; d++) {   // distancia do meio do caminho
+                    int x = CRATERA_X + lado * d;
+                    if (x >= maxX) continue;
+                    int h = (int) Math.round(5.5 - Math.abs(z) * 0.8 - (d - 2) * 1.3);
+                    for (int y = Y; y < Y + h; y++)
+                        por(w, x, y, z, y == Y + h - 1 && d == 2 ? Material.MAGMA_BLOCK : ((x + y + z) % 3 == 0 ? Material.BLACKSTONE : Material.BASALT));
+                }
+        for (int z = CRATERA_Z1; z <= CRATERA_Z2; z++)
+            for (int dx = -1; dx <= 1; dx++) por(w, CRATERA_X + dx, Y - 1, z, Material.MAGMA_BLOCK);
+    }
+
+    /** Uma coluna de montanha: pedra, terra e grama (com flor ou arvore de vez em quando). */
+    private void montanha(World w, int x, int z, int h, java.util.Random r) {
+        if (h <= 0) return;
+        int topo = Y - 1 + h;
+        for (int y = Y - 4; y <= topo; y++) {
+            Material m = y == topo ? (h > 9 ? Material.STONE : Material.GRASS_BLOCK) : y >= topo - 2 ? (h > 9 ? Material.STONE : Material.DIRT)
+                    : (r.nextInt(9) == 0 ? Material.ANDESITE : Material.STONE);
+            if (y < topo - 3 && r.nextInt(14) == 0) m = Material.MOSSY_COBBLESTONE;
+            por(w, x, y, z, m);
+        }
+        if (h > 9) return;
+        int s = r.nextInt(60);
+        if (s < 3) {   // arvore
+            for (int y = topo + 1; y <= topo + 4; y++) por(w, x, y, z, Material.OAK_LOG);
+            for (int dx = -2; dx <= 2; dx++)
+                for (int dz = -2; dz <= 2; dz++)
+                    for (int y = topo + 3; y <= topo + 5; y++) {
+                        if (Math.abs(dx) + Math.abs(dz) + (y - topo - 3) > 3) continue;
+                        if (w.getBlockAt(ox + x + dx, y, oz + z + dz).getType() == Material.AIR) por(w, x + dx, y, z + dz, Material.OAK_LEAVES);
+                    }
+        } else if (s < 9) por(w, x, topo + 1, z, s < 6 ? Material.SHORT_GRASS : (s == 6 ? Material.POPPY : s == 7 ? Material.DANDELION : Material.CORNFLOWER));
     }
 
     private static boolean perto(int x, int z, double cx, double cz, double raio) {

@@ -183,7 +183,7 @@ final class Partida {
             v.setCustomNameVisible(true);
             v.getPersistentDataContainer().set(plugin.kLoja, PersistentDataType.STRING, mapa.id);
         });
-        if (mapa.tema == Mapa.Tema.CAMPOS) cortinaCachoeira();
+
     }
 
     // ================================================================== utilidades
@@ -334,9 +334,13 @@ final class Partida {
         if (tick % 10 == 0) moverMonstros();
         if (tick % 20 == 0) porSegundo();
         if (tick % 40 == 0 && !torres.isEmpty()) efeitosSuporte();
-        if (tick % 10 == 0 && mapa.tema == Mapa.Tema.CAMPOS) {
-            List<Player> js = jogadores();
-            if (!js.isEmpty()) efeitosCachoeira(js);
+        if (mapa.tema == Mapa.Tema.VULCAO && !monstros.isEmpty()) erupcaoNoCaminho();
+        if (mapa.tema == Mapa.Tema.CAMPOS) {
+            if (!monstros.isEmpty()) correnteza();
+            if (tick % 10 == 0) {
+                List<Player> js = jogadores();
+                if (!js.isEmpty()) efeitosCachoeira(js);
+            }
         }
     }
 
@@ -412,37 +416,81 @@ final class Partida {
         atualizarNomes();
     }
 
-    // ------------------------------------------------------------------ cachoeira dos Campos (13/11)
-    private void cortinaCachoeira() {
-        double x = mapa.ox + Mapa.RIO_X2 + 1.02, z0 = mapa.oz + Mapa.RIO_Z1 + 1;
-        float alt = Mapa.RIO_ALT + 1.9f;
-        Location l = new Location(mundo, x, Mapa.Y, z0);
-        for (int k = 0; k < 2; k++) {
-            final int kk = k;
-            mundo.spawn(l, org.bukkit.entity.BlockDisplay.class, b -> {
-                b.setBlock((kk == 0 ? Material.LIGHT_BLUE_STAINED_GLASS : Material.WHITE_STAINED_GLASS).createBlockData());
-                b.setTransformation(new org.bukkit.util.Transformation(new org.joml.Vector3f(kk * 0.12f, 0f, 0f), new org.joml.AxisAngle4f(),
-                        new org.joml.Vector3f(kk == 0 ? 0.14f : 0.05f, alt, 3f), new org.joml.AxisAngle4f()));
-                b.setPersistent(false);
-                b.setViewRange(1.5f);
-                b.getPersistentDataContainer().set(plugin.kTorre, PersistentDataType.STRING, "cachoeira");
-            });
+    // ------------------------------------------------------------------ cachoeira e correnteza dos Campos (13/11, v2)
+    /** Nevoa e respingos no pe da cachoeira e bolhas correndo no rio. Bedrock (celular) recebe 4x menos. */
+    private void efeitosCachoeira(List<Player> js) {
+        double xc = mapa.ox + (Mapa.RIO_X1 + Mapa.RIO_X2) / 2.0 + 0.5;
+        Location pe = new Location(mundo, xc, Mapa.Y + 0.1, mapa.oz + Mapa.RIO_Z1 + 0.5);
+        Location queda = new Location(mundo, xc, Mapa.Y + Mapa.QUEDA_TOPO / 2.0, mapa.oz + Mapa.RIO_Z1 + 0.5);
+        for (Player p : js) {
+            int f = bedrock(p) ? 4 : 1;
+            p.spawnParticle(Particle.CLOUD, pe, Math.max(1, 6 / f), 1.3, 0.4, 0.6, 0.02);
+            p.spawnParticle(Particle.SPLASH, pe, 30 / f, 1.4, 0.2, 0.8, 0.2);
+            p.spawnParticle(Particle.FALLING_WATER, queda, 12 / f, 1.3, Mapa.QUEDA_TOPO / 2.0, 0.3, 0);
+            for (int k = 0; k < 3; k++) {
+                Location rio = new Location(mundo, xc, Mapa.Y - 0.3, mapa.oz + Mapa.RIO_Z1 + 4 + ThreadLocalRandom.current().nextInt(Mapa.RIO_Z2 - Mapa.RIO_Z1 - 2));
+                p.spawnParticle(Particle.BUBBLE_POP, rio, Math.max(1, 6 / f), 1.0, 0.1, 1.5, 0.02);
+            }
+            if (tick % 40 == 0) p.playSound(pe, Sound.BLOCK_WATER_AMBIENT, 1f, 0.7f);
         }
     }
 
-    /** Agua caindo da cachoeira e correndo no rio (a cada meio segundo). Bedrock (celular) recebe 4x menos. */
-    private void efeitosCachoeira(List<Player> js) {
-        double x = mapa.ox + Mapa.RIO_X2 + 1.1, zc = mapa.oz + (Mapa.RIO_Z1 + Mapa.RIO_Z2) / 2.0 + 0.5;
-        Location meio = new Location(mundo, x, Mapa.Y + Mapa.RIO_ALT / 2.0 + 0.5, zc);
-        Location pe = new Location(mundo, x + 0.6, Mapa.Y + 0.2, zc);
-        Location rio = new Location(mundo, mapa.ox + (Mapa.RIO_X1 + Mapa.RIO_X2) / 2.0 + 0.5, Mapa.Y + Mapa.RIO_ALT + 1.9, zc);
-        for (Player p : js) {
-            int f = bedrock(p) ? 4 : 1;
-            p.spawnParticle(Particle.FALLING_WATER, meio, 30 / f, 0.15, Mapa.RIO_ALT / 2.0, 1.4, 0);
-            p.spawnParticle(Particle.SPLASH, pe, 25 / f, 0.8, 0.1, 1.4, 0.1);
-            p.spawnParticle(Particle.CLOUD, pe, Math.max(1, 3 / f), 0.6, 0.1, 1.2, 0.01);
-            p.spawnParticle(Particle.SPLASH, rio, 12 / f, 6, 0, 1.2, 0.05);
-            if (tick % 60 == 0) p.playSound(meio, Sound.BLOCK_WATER_AMBIENT, 0.9f, 0.8f);
+    /** Correnteza: monstro que pisa no rio e arrastado rio abaixo (~1,5 s) e depois jogado de volta no chao, do lado
+     *  para onde ele ia. Boss e pesado: a agua so empurra um pouco. */
+    private final Set<UUID> naCorrenteza = new HashSet<>();
+    private int arrastados;
+    private final Map<UUID, Integer> correntezaAte = new HashMap<>();
+
+    private void correnteza() {
+        for (Monstro mo : new ArrayList<>(monstros.values())) {
+            if (naCorrenteza.contains(mo.id)) continue;
+            Integer trecho = correntezaAte.get(mo.id);
+            if (trecho != null && trecho == mo.indice) continue;   // ja foi arrastado neste trecho
+            if (mo.indice < 1) continue;
+            Entity e = Bukkit.getEntity(mo.id);
+            if (!(e instanceof Mob m) || !m.isValid()) continue;
+            Location l = m.getLocation();
+            int rx = l.getBlockX() - mapa.ox, rz = l.getBlockZ() - mapa.oz;
+            if (!Mapa.noRio(rx, rz) || l.getY() > Mapa.Y + 0.5) continue;
+            naCorrenteza.add(mo.id);
+            arrastados++;
+            final double forca = mo.chefe ? 0.12 : 0.42;
+            final int ger = geracao;
+            mundo.playSound(l, Sound.ENTITY_PLAYER_SPLASH, 0.6f, 1.2f);
+            mundo.spawnParticle(Particle.SPLASH, l.clone().add(0, 0.5, 0), 20, 0.4, 0.2, 0.4, 0.2);
+            final int[] k = {0};
+            Bukkit.getScheduler().runTaskTimer(plugin, t -> {
+                k[0]++;
+                if (ger != geracao || !m.isValid() || m.isDead() || k[0] > 32) {
+                    t.cancel();
+                    naCorrenteza.remove(mo.id);
+                    correntezaAte.put(mo.id, mo.indice);
+                    if (m.isValid() && !m.isDead() && ger == geracao) {
+                        // de volta para o chao: sai na margem do lado do proximo ponto do caminho (ja atravessou o rio)
+                        Location alvo = mapa.ponto(mundo, Math.min(mo.indice, mapa.caminho.length - 1));
+                        Location a = m.getLocation();
+                        int az = a.getBlockZ() - mapa.oz;
+                        boolean lago = az >= Mapa.LAGO_Z1;
+                        double lado = Math.signum(alvo.getX() - a.getX());
+                        if (lado == 0) lado = 1;
+                        double bx = mapa.ox + (lado > 0 ? (lago ? Mapa.LAGO_X2 : Mapa.RIO_X2) + 1.5 : (lago ? Mapa.LAGO_X1 : Mapa.RIO_X1) - 0.5);
+                        Location saida = new Location(mundo, bx, Mapa.Y + 0.6, a.getZ(), a.getYaw(), a.getPitch());
+                        m.teleport(saida);
+                        m.setVelocity(new Vector(lado * 0.25, 0.35, 0));
+                        mundo.spawnParticle(Particle.SPLASH, m.getLocation().add(0, 0.5, 0), 25, 0.4, 0.3, 0.4, 0.2);
+                        mundo.playSound(m.getLocation(), Sound.ENTITY_GENERIC_SPLASH, 0.6f, 0.9f);
+                    }
+                    return;
+                }
+                Location a = m.getLocation();
+                int ax = a.getBlockX() - mapa.ox, az = a.getBlockZ() - mapa.oz;
+                if (!Mapa.noRio(ax, az)) return;
+                // empurra rio abaixo (sul) e puxa para o meio do canal
+                double meio = mapa.ox + (Mapa.RIO_X1 + Mapa.RIO_X2) / 2.0 + 0.5;
+                double vx = (meio - a.getX()) * 0.15;
+                m.setVelocity(new Vector(vx, Math.min(0.05, m.getVelocity().getY()), forca));
+                if (k[0] % 4 == 0) mundo.spawnParticle(Particle.BUBBLE_POP, a.clone().add(0, 0.6, 0), 6, 0.3, 0.2, 0.3, 0.05);
+            }, 1L, 1L);
         }
     }
 
@@ -471,6 +519,37 @@ final class Partida {
         }
         if (nevascaAte > tick) for (Player p : js)
             p.spawnParticle(Particle.SNOWFLAKE, c.clone().add(0, 5, 0), bedrock(p) ? 60 : 250, 20, 4, 22, 0.3);
+    }
+
+    // ------------------------------------------------------------------ cratera no caminho do Vulcao (13/11)
+    private final Map<UUID, Integer> lancados = new HashMap<>();
+
+    /** Quem pisa na cratera e jogado para o alto (uma vez por monstro), cai mais a frente e volta a andar. */
+    private void erupcaoNoCaminho() {
+        for (Monstro mo : new ArrayList<>(monstros.values())) {
+            if (lancados.containsKey(mo.id)) continue;
+            Entity e = Bukkit.getEntity(mo.id);
+            if (!(e instanceof Mob m) || !m.isValid()) continue;
+            Location l = m.getLocation();
+            if (!Mapa.naCratera(l.getBlockX() - mapa.ox, l.getBlockZ() - mapa.oz)) continue;
+            lancados.put(mo.id, tick);
+            Location alvo = mapa.ponto(mundo, Math.min(mo.indice, mapa.caminho.length - 1));
+            Vector dir = alvo.toVector().subtract(l.toVector()).setY(0);
+            if (dir.lengthSquared() > 0.01) dir.normalize();
+            m.setVelocity(dir.multiply(mo.chefe ? 0.25 : 0.45).setY(mo.chefe ? 0.8 : 1.45));
+            mundo.spawnParticle(Particle.LAVA, l.clone().add(0, 0.3, 0), 18, 0.6, 0.2, 0.6, 0);
+            mundo.spawnParticle(Particle.FLAME, l.clone().add(0, 1, 0), 40, 0.4, 1.2, 0.4, 0.08);
+            mundo.spawnParticle(Particle.LARGE_SMOKE, l.clone().add(0, 1.5, 0), 15, 0.4, 0.8, 0.4, 0.04);
+            mundo.playSound(l, Sound.ENTITY_GENERIC_EXPLODE, 0.6f, 0.6f);
+            mundo.playSound(l, Sound.BLOCK_LAVA_POP, 1f, 0.8f);
+        }
+        if (tick % 20 == 0) {   // fumaca e brasas saindo das duas metades do vulcao
+            for (int lado : new int[]{-1, 1}) {
+                Location topo = new Location(mundo, mapa.ox + Mapa.CRATERA_X + lado * 2 + 0.5, Mapa.Y + 5.3, mapa.oz + 0.5);
+                mundo.spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, topo, 2, 0.3, 0.2, 0.6, 0.01);
+                mundo.spawnParticle(Particle.LAVA, topo, 1, 0.3, 0.1, 0.6, 0);
+            }
+        }
     }
 
     // ------------------------------------------------------------------ efeitos do Vulcao (13/11)
@@ -974,6 +1053,9 @@ final class Partida {
             if (e != null) e.remove();
         }
         monstros.clear();
+        lancados.clear();
+        correntezaAte.clear();
+        naCorrenteza.clear();
         for (Torre t : torres.values()) {
             tirarPedestal(t);
             Entity e = Bukkit.getEntity(t.stand);
@@ -1577,7 +1659,7 @@ final class Partida {
     String status() {
         return "[" + mapa.id + "] estado=" + estado + " dif=" + dif.id + " onda=" + onda + " nucleo=" + vidaNucleo + " essencia=" + essencia
                 + " monstros=" + monstros.size() + " fila=" + fila.size() + " torres=" + torres.size() + "/" + dif.limiteTorres
-                + " jogadores=" + jogadores().size() + " recorde=" + recorde(dif);
+                + " jogadores=" + jogadores().size() + " recorde=" + recorde(dif) + (mapa.tema == Mapa.Tema.CAMPOS ? " arrastados=" + arrastados : "");
     }
 
     // ================================================================== simulacao (admin, para equilibrar)
