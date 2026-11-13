@@ -74,6 +74,9 @@ public final class Extras extends JavaPlugin implements Listener {
         tesouro = new Tesouro(this);
         Bukkit.getPluginManager().registerEvents(tesouro, this);
         new PainelDia(this);
+        Bukkit.getPluginManager().registerEvents(new LoginDiario(this), this);
+        luaDeSangue = new LuaDeSangue(this);
+        Bukkit.getPluginManager().registerEvents(luaDeSangue, this);
         votos = new Votos(this);
         Bukkit.getPluginManager().registerEvents(votos, this);
         votos.iniciar();
@@ -845,6 +848,7 @@ public final class Extras extends JavaPlugin implements Listener {
     // ================================================================== comandos
 
     Tesouro tesouro;
+    LuaDeSangue luaDeSangue;
     KitsContexto kitsContexto;
 
     @Override
@@ -852,6 +856,10 @@ public final class Extras extends JavaPlugin implements Listener {
         if (cmd.getName().equalsIgnoreCase("vip")) return vip.comando(s, args);
         if (cmd.getName().equalsIgnoreCase("kits")) {
             if (s instanceof Player p && kitsContexto != null) kitsContexto.abrir(p);
+            return true;
+        }
+        if (cmd.getName().equalsIgnoreCase("tesouro") && args.length > 0 && args[0].equalsIgnoreCase("lua") && s.hasPermission("extras.admin")) {
+            luaDeSangue.forcar();
             return true;
         }
         if (cmd.getName().equalsIgnoreCase("tesouro")) {

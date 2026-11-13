@@ -50,6 +50,7 @@ final class PainelDia {
         if (mg != null) t.append("\n§d🎮 Minigame do dia: §f").append(mg).append(" §a(coronas x2)");
         t.append("\n§6⛏ Prisão: §f3 missões novas §7(/minas → /missoes)");
         t.append("\n§e✦ Tesouro: ").append(pl.tesouro != null && pl.tesouro.ativo() ? "§a§lATIVO! §7use §e/tesouro" : "§7aparece de tempos em tempos no Survival");
+        if (pl.luaDeSangue != null && pl.luaDeSangue.ativa()) t.append("\n§4§l☾ LUA DE SANGUE §cno Survival agora!");
         t.append("\n§b🎁 §f/kits §7no Survival e nas Masmorras");
         return t.toString();
     }
