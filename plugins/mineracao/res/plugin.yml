@@ -4,7 +4,7 @@ main: br.servidor.mineracao.Mineracao
 api-version: '1.21'
 author: Corona Server
 softdepend: [GriefPrevention, Multiverse-Core]
-description: Mundo de mineracao com minas por rank (rank up com coronas), venda de minerio e mina PvP.
+description: Prisao (Rank Up) - mundo a parte com 12 minas, Mina PvP, dinheiro proprio, kits e encantamentos.
 commands:
   minas:
     description: Abre o menu das minas (mundo de mineracao)

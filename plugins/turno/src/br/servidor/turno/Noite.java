@@ -1,6 +1,9 @@
 package br.servidor.turno;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import org.bukkit.block.Block;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -612,8 +615,37 @@ final class Noite {
         }
     }
 
+    /** 13/11 (Paulo): cantos e deposito estavam escuros demais na camera. Luz so para quem olha a camera
+     *  (bloco de luz falso, so no cliente dele): da porta continua escuro, quem ilumina ali e o botao de luz. */
+    private final Map<java.util.UUID, List<Location>> luzCamera = new HashMap<>();
+    private static final Map<String, int[][]> LUZ_CAMERA = Map.of(
+            "canto_oeste", new int[][]{{-7, 4, -2, 12}, {-7, 4, 0, 12}, {-7, 4, 2, 10}},
+            "canto_leste", new int[][]{{7, 4, -2, 12}, {7, 4, 0, 12}, {7, 4, 2, 10}},
+            "deposito", new int[][]{{-13, 4, -9, 13}, {-15, 4, -11, 11}, {-14, 4, -7, 11}});
+
+    private void tirarLuzCamera(Player p) {
+        List<Location> l = luzCamera.remove(p.getUniqueId());
+        if (l == null) return;
+        for (Location x : l) p.sendBlockChange(x, x.getBlock().getBlockData());
+    }
+
+    private void porLuzCamera(Player p, String id) {
+        tirarLuzCamera(p);
+        int[][] ls = LUZ_CAMERA.get(id);
+        if (ls == null) return;
+        List<Location> l = new ArrayList<>();
+        for (int[] q : ls) {
+            Block b = mapa.bloco(q[0], Mapa.Y + q[1], q[2]);
+            if (!b.getType().isAir() && b.getType() != Material.LIGHT) continue;
+            p.sendBlockChange(b.getLocation(), Bukkit.createBlockData("minecraft:light[level=" + q[3] + "]"));
+            l.add(b.getLocation());
+        }
+        luzCamera.put(p.getUniqueId(), l);
+    }
+
     private void mostrarCamera(Vigia v, Player p, int i) {
         v.camera = i;
+        porLuzCamera(p, Mapa.CAMERAS[i]);
         visivel(p, false);
         Location c = mapa.camera(i);
         if (c == null) {
@@ -647,6 +679,7 @@ final class Noite {
         Vigia v = vigia(p);
         if (v == null || v.camera < 0) return;
         v.camera = -1;
+        tirarLuzCamera(p);
         p.teleport(v.lugar);
         p.removePotionEffect(PotionEffectType.NIGHT_VISION);
         visivel(p, true);

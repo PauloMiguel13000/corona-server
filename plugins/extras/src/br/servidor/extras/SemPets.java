@@ -32,6 +32,9 @@ final class SemPets implements Listener {
     }
 
     private boolean permitido(String mundo) {
+        // 13/11: a Prisao (Rank Up) e um mundo a parte, sem pets (mesmo que esteja na lista do survival)
+        List<String> min = pl.getConfig().getStringList("mochilas.mineracao");
+        if (mundo.equals("mineracao") || min.contains(mundo)) return false;
         List<String> l = pl.getConfig().getStringList("pets.mundos-permitidos");
         if (!l.isEmpty()) return l.contains(mundo);
         return mundo.equals("masmorras_spawn") || pl.getConfig().getStringList("mochilas.survival").contains(mundo)

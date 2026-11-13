@@ -166,7 +166,7 @@ final class TrajeRei implements Listener {
         Bukkit.getScheduler().runTaskLater(pl, () -> {
             if (!p.isOnline() || !pode(p)) return;
             String n = p.getWorld().getName();
-            if (!n.startsWith("masmorras") && !n.equals("world") && !n.equals("world_nether") && !n.equals("world_the_end") && !n.equals("plots")) return;
+            if (!n.startsWith("masmorras") && !n.equals("world") && !n.equals("world_nether") && !n.equals("world_the_end") && !n.equals("plots") && !n.equals("mineracao")) return;
             int dadas = entregar(p, false, true);
             if (dadas > 0) p.sendActionBar(Extras.txt("§6Traje do Rei §7veio com você §8(" + dadas + " peça" + (dadas > 1 ? "s" : "") + ")"));
         }, 30L);

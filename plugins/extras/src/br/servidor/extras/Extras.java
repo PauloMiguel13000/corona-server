@@ -627,6 +627,8 @@ public final class Extras extends JavaPlugin implements Listener {
             Bukkit.getScheduler().runTaskLater(this, () -> {
                 Byte w = p.getPersistentDataContainer().get(chaveRecebeu, org.bukkit.persistence.PersistentDataType.BYTE);
                 if (!p.isOnline() || (w != null && w >= VERSAO_ITENS)) return;
+                // 13/11: a Prisao (Rank Up) tem mochila propria; nada de fora entra nela (fica para a proxima entrada)
+                if ("mineracao".equals(mochilas == null ? null : mochilas.grupo(p.getWorld()))) return;
                 if (novo) {
                     darItens(p);
                     if (getConfig().getBoolean("kit-inicial", true)) {

@@ -453,7 +453,7 @@ public final class Poderes extends JavaPlugin implements Listener {
     }
 
     /** Minigames (e o login/lobby de minigames): sem habilidades. A lista do config soma com estes. */
-    static final List<String> SEM_PODERES_SEMPRE = List.of("defesa", "slender", "vovo", "backrooms", "hotel", "login", "minigames", "naochore", "turno_noite", "fabrica", "terror", "galeria");
+    static final List<String> SEM_PODERES_SEMPRE = List.of("defesa", "slender", "vovo", "backrooms", "hotel", "login", "minigames", "naochore", "turno_noite", "fabrica", "terror", "galeria", "mineracao");
 
     /** Mundo onde os poderes acertam qualquer jogador (Arena PvP). */
     boolean pvpLivre(org.bukkit.World w) {

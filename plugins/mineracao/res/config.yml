@@ -5,6 +5,14 @@ reset-minutos: 8
 reset-quando-minerado: 0.7
 # de quais mundos o /minas leva para a mineracao (dos minigames nao)
 mundos-com-acesso: [world, world_nether, world_the_end, plots, masmorras_mundo, masmorras_nether, masmorras_end, masmorras_spawn, mineracao]
+# portal da Prisao no spawn principal (nordeste, perto do portal das masmorras). Tenta os lugares em ordem e so
+# constroi num lugar livre (nao estraga nada). x/z = onde ficou (preenchido sozinho).
+portal-spawn:
+  ativo: true
+  mundo: world
+  y: 122
+  lugares: ["16,-23", "-4,-23", "16,-20", "-4,-20"]
+  feito: false
 # hora dourada: todo dia nessa hora (0-23, horario de Brasilia) a venda paga em dobro; -1 desliga
 hora-dourada: 20
 # versao das construcoes ja feitas (nao mexer)

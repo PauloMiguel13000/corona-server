@@ -8,9 +8,7 @@ import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Item;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Projectile;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -18,11 +16,12 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityPortalEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.event.player.PlayerChangedWorldEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -31,93 +30,137 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.Transformation;
+import org.joml.AxisAngle4f;
+import org.joml.Vector3f;
 
 import java.time.Duration;
 import java.util.*;
 
 /**
- * Mundo de mineracao do Corona Server: 6 minas por rank (A a F) + 1 mina PvP. Sobe de rank com coronas (/rankup),
- * vende o minerio das minas (/vender) e as minas se refazem sozinhas. So o minerio tirado das minas vende
- * (fica marcado), entao ninguem transforma diamante do survival em coronas.
+ * Rank Up do Corona Server (13/11, pedido do Paulo): um mundo a parte com tema de PRISAO.
+ * - Patio da prisao (spawn proprio) com um portal para cada lugar: 12 minas (Blocos A a L), Mina PvP, Sala de
+ *   Encantamentos e a Saida para o spawn. Cada mina tem o portal de volta.
+ * - Dinheiro proprio ($, nao e corona): ganha vendendo o minerio das minas; paga o rank up, os kits nao.
+ * - Mochila propria (Extras: grupo "mineracao"): nada entra nem sai; so o Traje do Rei (VIP) acompanha.
+ * - Sem poderes (Poderes), sem pets, sem fome; kits so daqui (jogador e VIPs), a cada 24 h.
+ * - No spawn principal: um portal com cara de cadeia ao lado do portal das masmorras.
  */
 public final class Mineracao extends JavaPlugin implements Listener {
 
     static final String MUNDO = "mineracao";
-    static final int VERSAO_CONSTRUCAO = 1;
+    static final int VERSAO_CONSTRUCAO = 2;
+    static final int H = 30;            // patio: x,z de -30 a 30
+    static final int PISO = 99;         // piso do patio (anda em y=100)
 
     record Rank(String letra, String nome, String cor, long custo, double mult) {}
     static final Rank[] RANKS = {
-            new Rank("A", "Aprendiz", "§7", 0, 1.0),
-            new Rank("B", "Mineiro", "§a", 1500, 1.1),
-            new Rank("C", "Escavador", "§b", 5000, 1.25),
-            new Rank("D", "Veterano", "§9", 15000, 1.4),
-            new Rank("E", "Mestre", "§6", 40000, 1.6),
-            new Rank("F", "Lenda da Mina", "§d", 100000, 2.0)};
+            new Rank("A", "Novato", "§7", 0, 1.0),
+            new Rank("B", "Detento", "§f", 1_000, 1.1),
+            new Rank("C", "Ladrão", "§a", 3_000, 1.2),
+            new Rank("D", "Fugitivo", "§2", 7_000, 1.3),
+            new Rank("E", "Bandido", "§b", 15_000, 1.45),
+            new Rank("F", "Contrabandista", "§3", 30_000, 1.6),
+            new Rank("G", "Chefe de Cela", "§9", 55_000, 1.75),
+            new Rank("H", "Carcereiro", "§e", 90_000, 1.9),
+            new Rank("I", "Xerife", "§6", 140_000, 2.1),
+            new Rank("J", "Diretor", "§c", 220_000, 2.3),
+            new Rank("K", "Imperador", "§5", 350_000, 2.6),
+            new Rank("L", "Lenda da Prisão", "§d", 600_000, 3.0)};
     static final int[] BONUS_VIP = {0, 10, 25, 35, 50};
+    static final String[] NOME_VIP = {"", "VIP", "VIP+", "MVP", "LENDA"};
 
     final List<Mina> minas = new ArrayList<>();
     final Map<Material, Double> precos = new EnumMap<>(Material.class);
     World mundo;
-    NamespacedKey kRank, kMinerado, kGanhou;
-    static final NamespacedKey CORONAS = new NamespacedKey("masmorras", "coronas");
+    NamespacedKey kRank, kMinerado, kGanhou, kDinheiro, kEnfeite, kAcao, kPrisao;
     static final NamespacedKey VIP_NIVEL = new NamespacedKey("extras", "vip_nivel");
     static final NamespacedKey VIP_ATE = new NamespacedKey("extras", "vip_ate");
     private final Set<String> mundosComAcesso = new HashSet<>();
+    private final Map<UUID, Long> espera = new HashMap<>();
 
     static Component txt(String s) { return LegacyComponentSerializer.legacySection().deserialize(s); }
+
+    // ------------------------------------------------------------------ portais
+    /** Portal: centro (x,z), parede (n/s/l/o), acao (id da mina, "pvp", "enc", "saida", "patio"). */
+    record Portal(int x, int z, char parede, String acao, String nome, String linha2, String topo) {}
+    final List<Portal> portaisPatio = new ArrayList<>();
+
+    // sala de encantamentos
+    static final int ENC_Z = -120;
 
     @Override
     public void onEnable() {
         kRank = new NamespacedKey(this, "rank");
         kMinerado = new NamespacedKey(this, "minerado");
-        kGanhou = new NamespacedKey(this, "picareta");
+        kGanhou = new NamespacedKey(this, "picareta2");
+        kDinheiro = new NamespacedKey(this, "dinheiro");
+        kEnfeite = new NamespacedKey(this, "enfeite");
+        kAcao = new NamespacedKey(this, "acao");
+        kPrisao = new NamespacedKey(this, "item_prisao");
         saveDefaultConfig();
         mundosComAcesso.addAll(getConfig().getStringList("mundos-com-acesso"));
         int reset = Math.max(1, getConfig().getInt("reset-minutos", 8));
         double pct = getConfig().getDouble("reset-quando-minerado", 0.7);
 
-        minas.add(new Mina("a", "Mina A • Pedreira", 0, 60, false, Material.COAL_ORE,
-                Material.STONE, 55, Material.COAL_ORE, 25, Material.COPPER_ORE, 20));
-        minas.add(new Mina("b", "Mina B • Veio de Ferro", 1, 120, false, Material.IRON_ORE,
-                Material.STONE, 40, Material.COAL_ORE, 20, Material.COPPER_ORE, 15, Material.IRON_ORE, 25));
-        minas.add(new Mina("c", "Mina C • Gruta Dourada", 2, 180, false, Material.GOLD_ORE,
-                Material.STONE, 35, Material.IRON_ORE, 25, Material.GOLD_ORE, 15, Material.REDSTONE_ORE, 15, Material.LAPIS_ORE, 10));
-        minas.add(new Mina("d", "Mina D • Abismo", 3, 240, false, Material.DEEPSLATE_DIAMOND_ORE,
-                Material.DEEPSLATE, 35, Material.DEEPSLATE_IRON_ORE, 20, Material.DEEPSLATE_GOLD_ORE, 15,
-                Material.DEEPSLATE_REDSTONE_ORE, 10, Material.DEEPSLATE_LAPIS_ORE, 10, Material.DEEPSLATE_DIAMOND_ORE, 10));
-        minas.add(new Mina("e", "Mina E • Coração da Terra", 4, 300, false, Material.EMERALD_ORE,
-                Material.DEEPSLATE, 30, Material.DEEPSLATE_GOLD_ORE, 20, Material.DEEPSLATE_DIAMOND_ORE, 22,
-                Material.DEEPSLATE_EMERALD_ORE, 13, Material.DEEPSLATE_REDSTONE_ORE, 15));
-        minas.add(new Mina("f", "Mina F • Tesouro Lendário", 5, 360, false, Material.ANCIENT_DEBRIS,
-                Material.DEEPSLATE, 25, Material.DEEPSLATE_DIAMOND_ORE, 35, Material.DEEPSLATE_EMERALD_ORE, 25,
-                Material.ANCIENT_DEBRIS, 5, Material.DEEPSLATE_GOLD_ORE, 10));
-        minas.add(new Mina("pvp", "Mina PvP • Arena do Minério", 2, -80, true, Material.NETHERITE_SWORD,
-                Material.DEEPSLATE, 30, Material.DEEPSLATE_DIAMOND_ORE, 25, Material.DEEPSLATE_EMERALD_ORE, 20,
-                Material.DEEPSLATE_GOLD_ORE, 15, Material.ANCIENT_DEBRIS, 10));
+        M("a", "Bloco A • Pedreira", 0, Material.COAL_ORE, Material.STONE, 55, Material.COAL_ORE, 25, Material.COPPER_ORE, 20);
+        M("b", "Bloco B • Galeria do Ferro", 1, Material.IRON_ORE, Material.STONE, 45, Material.COAL_ORE, 20, Material.COPPER_ORE, 15, Material.IRON_ORE, 20);
+        M("c", "Bloco C • Poço Azul", 2, Material.LAPIS_ORE, Material.STONE, 40, Material.IRON_ORE, 25, Material.COAL_ORE, 15, Material.LAPIS_ORE, 20);
+        M("d", "Bloco D • Veio Vermelho", 3, Material.REDSTONE_ORE, Material.ANDESITE, 35, Material.IRON_ORE, 25, Material.GOLD_ORE, 15, Material.REDSTONE_ORE, 25);
+        M("e", "Bloco E • Gruta Dourada", 4, Material.GOLD_ORE, Material.STONE, 30, Material.GOLD_ORE, 25, Material.IRON_ORE, 20, Material.REDSTONE_ORE, 15, Material.LAPIS_ORE, 10);
+        M("f", "Bloco F • Primeiro Brilho", 5, Material.DIAMOND_ORE, Material.DEEPSLATE, 40, Material.DEEPSLATE_IRON_ORE, 25, Material.DEEPSLATE_GOLD_ORE, 25, Material.DEEPSLATE_DIAMOND_ORE, 10);
+        M("g", "Bloco G • Abismo", 6, Material.DEEPSLATE_DIAMOND_ORE, Material.DEEPSLATE, 35, Material.DEEPSLATE_GOLD_ORE, 25, Material.DEEPSLATE_DIAMOND_ORE, 18, Material.DEEPSLATE_REDSTONE_ORE, 22);
+        M("h", "Bloco H • Cofre Verde", 7, Material.EMERALD_ORE, Material.DEEPSLATE, 30, Material.DEEPSLATE_DIAMOND_ORE, 25, Material.DEEPSLATE_EMERALD_ORE, 15, Material.DEEPSLATE_GOLD_ORE, 30);
+        M("i", "Bloco I • Forno do Nether", 8, Material.NETHER_QUARTZ_ORE, Material.NETHERRACK, 30, Material.NETHER_QUARTZ_ORE, 25, Material.NETHER_GOLD_ORE, 20, Material.DEEPSLATE_DIAMOND_ORE, 15, Material.DEEPSLATE_EMERALD_ORE, 10);
+        M("j", "Bloco J • Bastião Negro", 9, Material.GILDED_BLACKSTONE, Material.BLACKSTONE, 30, Material.GILDED_BLACKSTONE, 20, Material.DEEPSLATE_DIAMOND_ORE, 25, Material.DEEPSLATE_EMERALD_ORE, 18, Material.ANCIENT_DEBRIS, 7);
+        M("k", "Bloco K • Tesouro Imperial", 10, Material.ANCIENT_DEBRIS, Material.DEEPSLATE, 25, Material.DEEPSLATE_DIAMOND_ORE, 30, Material.DEEPSLATE_EMERALD_ORE, 25, Material.ANCIENT_DEBRIS, 12, Material.GOLD_BLOCK, 8);
+        M("l", "Bloco L • Cela da Lenda", 11, Material.DIAMOND_BLOCK, Material.DEEPSLATE, 20, Material.DEEPSLATE_DIAMOND_ORE, 30, Material.DEEPSLATE_EMERALD_ORE, 25, Material.ANCIENT_DEBRIS, 15, Material.DIAMOND_BLOCK, 5, Material.EMERALD_BLOCK, 5);
+        minas.add(new Mina("pvp", "⚔ Mina PvP • TEM PVP: quem morre perde tudo", 3, -80, true, Material.NETHERITE_SWORD,
+                Material.DEEPSLATE, 30, Material.DEEPSLATE_DIAMOND_ORE, 25, Material.DEEPSLATE_EMERALD_ORE, 20, Material.DEEPSLATE_GOLD_ORE, 15, Material.ANCIENT_DEBRIS, 10));
 
         preco(1, Material.COAL, Material.COAL_ORE, Material.DEEPSLATE_COAL_ORE);
         preco(0.3, Material.RAW_COPPER, Material.COPPER_INGOT);
         preco(1.5, Material.COPPER_ORE, Material.DEEPSLATE_COPPER_ORE);
         preco(2, Material.RAW_IRON, Material.IRON_INGOT, Material.IRON_ORE, Material.DEEPSLATE_IRON_ORE);
         preco(3, Material.RAW_GOLD, Material.GOLD_INGOT, Material.GOLD_ORE, Material.DEEPSLATE_GOLD_ORE);
-        preco(0.3, Material.REDSTONE);
-        preco(1.5, Material.REDSTONE_ORE, Material.DEEPSLATE_REDSTONE_ORE);
+        preco(0.3, Material.REDSTONE, Material.GOLD_NUGGET);
+        preco(1.5, Material.REDSTONE_ORE, Material.DEEPSLATE_REDSTONE_ORE, Material.NETHER_GOLD_ORE, Material.NETHER_QUARTZ_ORE);
         preco(0.25, Material.LAPIS_LAZULI);
         preco(1.5, Material.LAPIS_ORE, Material.DEEPSLATE_LAPIS_ORE);
+        preco(0.8, Material.QUARTZ);
+        preco(2, Material.GILDED_BLACKSTONE);
         preco(10, Material.DIAMOND, Material.DIAMOND_ORE, Material.DEEPSLATE_DIAMOND_ORE);
         preco(14, Material.EMERALD, Material.EMERALD_ORE, Material.DEEPSLATE_EMERALD_ORE);
         preco(30, Material.ANCIENT_DEBRIS, Material.NETHERITE_SCRAP);
+        preco(27, Material.GOLD_BLOCK);
+        preco(90, Material.DIAMOND_BLOCK);
+        preco(126, Material.EMERALD_BLOCK);
+
+        // portais do patio: norte A-E, leste F-J, sul K, L, PvP, Encantamentos; oeste a saida
+        String[] cores = {"minecraft:white_concrete", "minecraft:light_gray_concrete", "minecraft:lime_concrete", "minecraft:green_concrete", "minecraft:light_blue_concrete",
+                "minecraft:cyan_concrete", "minecraft:blue_concrete", "minecraft:yellow_concrete", "minecraft:orange_concrete", "minecraft:red_concrete", "minecraft:purple_concrete", "minecraft:magenta_concrete"};
+        int[] pos = {-20, -10, 0, 10, 20};
+        for (int i = 0; i < 12; i++) {
+            Mina m = minas.get(i);
+            char parede = i < 5 ? 'n' : i < 10 ? 'l' : 's';
+            int p = i < 5 ? pos[i] : i < 10 ? pos[i - 5] : pos[i - 10];
+            int x = parede == 'l' ? H : p, z = parede == 'n' ? -H : parede == 's' ? H : p;
+            String[] nm = m.nome.split(" • ");
+            portaisPatio.add(new Portal(x, z, parede, m.id, RANKS[m.rank].cor() + "§l" + nm[0].toUpperCase(Locale.ROOT), "§f" + nm[1] + "\n§8rank " + RANKS[m.rank].letra(), cores[i]));
+        }
+        portaisPatio.add(new Portal(10, H, 's', "pvp", "§4§l⚔ MINA PVP ⚔\n§c§lAQUI TEM PVP!", "§cOutros jogadores podem te matar\n§cquem morre §4§lPERDE OS ITENS\n§8rank " + RANKS[minas.get(12).rank].letra(), "minecraft:redstone_block"));
+        portaisPatio.add(new Portal(20, H, 's', "enc", "§d§lENCANTAMENTOS", "§7mesas, bigornas e rebolo", "minecraft:amethyst_block"));
+        portaisPatio.add(new Portal(-H, 0, 'o', "saida", "§a§lSAÍDA", "§7volta para o spawn", "minecraft:emerald_block"));
 
         criarMundo();
         if (mundo == null) { getLogger().severe("Nao consegui criar o mundo da mineracao."); return; }
         if (getConfig().getInt("construido", 0) < VERSAO_CONSTRUCAO) {
-            construirCentro();
-            for (Mina m : minas) m.construirMoldura(mundo);
+            int v = getConfig().getInt("construido", 0);
+            construirTudo(v);
             getConfig().set("construido", VERSAO_CONSTRUCAO);
             saveConfig();
-            getLogger().info("Mundo de mineracao construido (centro + " + minas.size() + " minas).");
         }
-        for (Mina m : minas) refazer(m);
+        for (int i = 0; i < minas.size(); i++) { Mina m = minas.get(i); Bukkit.getScheduler().runTaskLater(this, () -> refazer(m), 40L + 30L * i); }
         getServer().getPluginManager().registerEvents(this, this);
         if (getServer().getPluginManager().getPlugin("GriefPrevention") != null) {
             try { getServer().getPluginManager().registerEvents(new SemTerreno(), this); }
@@ -128,6 +171,9 @@ public final class Mineracao extends JavaPlugin implements Listener {
         Bukkit.getScheduler().runTaskTimer(this, this::barra, 40L, 30L);
         carregarTop();
         Bukkit.getScheduler().runTaskTimer(this, this::avisoDourada, 200L, 600L);
+        Bukkit.getScheduler().runTaskTimer(this, this::atualizarPainel, 100L, 1200L);
+        Bukkit.getScheduler().runTaskTimer(this, () -> { consertarBigornas(); consertarPortais(); }, 600L, 6000L);
+        Bukkit.getScheduler().runTaskTimer(this, this::varrerItens, 100L, 100L);
         Bukkit.getScheduler().runTaskTimer(this, () -> {
             long agora = System.currentTimeMillis();
             for (Mina m : minas) {
@@ -135,11 +181,827 @@ public final class Mineracao extends JavaPlugin implements Listener {
                 if (m.quebrados >= Mina.volume() * pct || agora - m.ultimoReset >= ms) refazer(m);
             }
         }, 400L, 200L);
+        Bukkit.getScheduler().runTaskLater(this, this::portalDoSpawn, 200L);
     }
 
-    long resetMs;
+    private void M(String id, String nome, int rank, Material icone, Object... mistura) {
+        minas.add(new Mina(id, nome, rank, 60 * (minas.size() + 1), false, icone, mistura));
+    }
 
-    // ------------------------------------------------------------------ ranking e hora dourada (13/11)
+    private void preco(double v, Material... ms) { for (Material m : ms) precos.put(m, v); }
+
+    Mina mina(String id) { for (Mina m : minas) if (m.id.equals(id)) return m; return null; }
+
+    // ------------------------------------------------------------------ mundo
+    private void criarMundo() {
+        mundo = Bukkit.getWorld(MUNDO);
+        if (mundo == null) mundo = new WorldCreator(MUNDO).generator(new Vazio()).environment(World.Environment.NORMAL).generateStructures(false).createWorld();
+        if (mundo == null) return;
+        mundo.setDifficulty(Difficulty.EASY);
+        mundo.setGameRule(GameRules.SPAWN_MOBS, false);
+        mundo.setGameRule(GameRules.SPAWN_MONSTERS, false);
+        mundo.setGameRule(GameRules.SPAWN_PHANTOMS, false);
+        mundo.setGameRule(GameRules.SPAWN_PATROLS, false);
+        mundo.setGameRule(GameRules.SPAWN_WANDERING_TRADERS, false);
+        mundo.setGameRule(GameRules.ADVANCE_TIME, false);
+        mundo.setGameRule(GameRules.ADVANCE_WEATHER, false);
+        mundo.setGameRule(GameRules.KEEP_INVENTORY, false);
+        mundo.setGameRule(GameRules.MOB_GRIEFING, false);
+        mundo.setGameRule(GameRules.PVP, true);
+        mundo.setGameRule(GameRules.FALL_DAMAGE, false);
+        mundo.setGameRule(GameRules.IMMEDIATE_RESPAWN, true);
+        mundo.setGameRule(GameRules.SHOW_ADVANCEMENT_MESSAGES, false);
+        mundo.setTime(6000);
+        mundo.setStorm(false);
+        mundo.setSpawnLocation(patio());
+    }
+
+    static final class Vazio extends ChunkGenerator {
+        @Override public boolean shouldGenerateNoise() { return false; }
+        @Override public boolean shouldGenerateSurface() { return false; }
+        @Override public boolean shouldGenerateCaves() { return false; }
+        @Override public boolean shouldGenerateDecorations() { return false; }
+        @Override public boolean shouldGenerateMobs() { return false; }
+        @Override public boolean shouldGenerateStructures() { return false; }
+    }
+
+    Location patio() { return new Location(mundo, 0.5, PISO + 1, 14.5, 180, 0); }
+    Location salaEnc() { return new Location(mundo, 0.5, PISO + 1, ENC_Z + 8.5, 180, 0); }
+
+    private void por(World w, int x, int y, int z, String b) { w.getBlockAt(x, y, z).setBlockData(Bukkit.createBlockData(b), false); }
+    private void por(int x, int y, int z, String b) { por(mundo, x, y, z, b); }
+
+    // ------------------------------------------------------------------ construcao
+    private void construirTudo(int versaoAntiga) {
+        long t0 = System.currentTimeMillis();
+        // tira o patio e os caminhos da versao 1
+        if (versaoAntiga == 1) {
+            for (int x = -70; x <= 47; x++) for (int z = -1; z <= 1; z++) por(x, 99, z, "minecraft:air");
+            for (int i = 0; i + 1 < 6; i++) {
+                int x0 = 60 + i * 60 + Mina.RAIO + 1 + Mina.BORDA + 1, x1 = 60 + (i + 1) * 60 - Mina.RAIO - 1 - Mina.BORDA - 1;
+                for (int x = x0; x <= x1; x++) for (int z = -1; z <= 1; z++) por(x, 99, z, "minecraft:air");
+            }
+        }
+        if (versaoAntiga >= 1) {
+            // molduras das minas pequenas (raio 8) da versao 1
+            for (int cx : new int[]{60, 120, 180, 240, 300, 360, -80})
+                for (int x = cx - 14; x <= cx + 14; x++) for (int z = -14; z <= 14; z++) for (int y = 77; y <= 102; y++) por(x, y, z, "minecraft:air");
+        }
+        tirarEnfeites(mundo);
+        for (int x = -H - 3; x <= H + 3; x++) for (int z = -H - 3; z <= H + 3; z++) for (int y = 95; y <= 115; y++) por(x, y, z, "minecraft:air");
+        construirPatio();
+        for (Portal p : portaisPatio) construirPortal(p);
+        construirCentro();
+        construirSalaEnc();
+        for (Mina m : minas) {
+            m.construirMoldura(mundo);
+            construirVolta(m);
+        }
+        getLogger().info("Prisao (Rank Up) construida: patio + " + portaisPatio.size() + " portais + sala de encantamentos + " + minas.size() + " minas (" + (System.currentTimeMillis() - t0) + " ms).");
+    }
+
+    private void construirPatio() {
+        Random r = new Random(13);
+        for (int x = -H; x <= H; x++)
+            for (int z = -H; z <= H; z++) {
+                for (int y = 95; y < PISO; y++) por(x, y, z, "minecraft:deepslate_bricks");
+                double d = Math.sqrt(x * x + z * z);
+                String b;
+                if (d <= 5.5) b = (x + z) % 2 == 0 ? "minecraft:polished_deepslate" : "minecraft:deepslate_tiles";
+                else if (d <= 6.5) b = "minecraft:chiseled_deepslate";
+                else if (Math.abs(x) <= 1 || Math.abs(z) <= 1) b = "minecraft:polished_blackstone_bricks";
+                else {
+                    int q = r.nextInt(100);
+                    b = q < 8 ? "minecraft:cracked_stone_bricks" : q < 12 ? "minecraft:mossy_stone_bricks" : ((Math.floorDiv(x, 3) + Math.floorDiv(z, 3)) % 2 == 0 ? "minecraft:stone_bricks" : "minecraft:polished_andesite");
+                }
+                por(x, PISO, z, b);
+                boolean parede = Math.abs(x) == H || Math.abs(z) == H;
+                if (parede) {
+                    for (int y = PISO + 1; y <= PISO + 7; y++) {
+                        boolean janela = (y == PISO + 3 || y == PISO + 4) && Math.floorMod(x + z, 5) == 0;
+                        por(x, y, z, janela ? "minecraft:iron_bars" : y == PISO + 7 ? "minecraft:chiseled_stone_bricks" : "minecraft:stone_bricks");
+                    }
+                    if ((x + z) % 2 == 0) por(x, PISO + 8, z, "minecraft:stone_brick_wall");
+                }
+            }
+        // torres nos 4 cantos (guardas)
+        for (int sx : new int[]{-1, 1})
+            for (int sz : new int[]{-1, 1}) {
+                int cx = sx * H, cz = sz * H;
+                for (int x = cx - 2; x <= cx + 2; x++)
+                    for (int z = cz - 2; z <= cz + 2; z++) {
+                        for (int y = 95; y <= PISO + 12; y++) por(x, y, z, y >= PISO + 11 && (Math.abs(x - cx) < 2 && Math.abs(z - cz) < 2) && y == PISO + 12 ? "minecraft:air" : "minecraft:deepslate_bricks");
+                        if ((Math.abs(x - cx) == 2 || Math.abs(z - cz) == 2) && (x + z) % 2 == 0) por(x, PISO + 13, z, "minecraft:deepslate_brick_wall");
+                    }
+                por(cx, PISO + 12, cz, "minecraft:soul_campfire[lit=true,signal_fire=false]");
+                for (int[] o : new int[][]{{2, 0}, {-2, 0}, {0, 2}, {0, -2}}) por(cx + o[0], PISO + 14, cz + o[1], "minecraft:soul_lantern");
+            }
+        // postes de luz pelo patio (longe dos portais) e luz invisivel
+        for (int x = -H + 5; x <= H - 5; x += 10)
+            for (int z = -H + 5; z <= H - 5; z += 10) {
+                if (Math.abs(x) < 8 && Math.abs(z) < 8) continue;
+                por(x, PISO + 1, z, "minecraft:stone_brick_wall");
+                por(x, PISO + 2, z, "minecraft:stone_brick_wall");
+                por(x, PISO + 3, z, "minecraft:lantern");
+            }
+        for (int x = -H + 3; x <= H - 3; x += 6) for (int z = -H + 3; z <= H - 3; z += 6) por(x, PISO + 6, z, "minecraft:light[level=15]");
+        // celas decorativas no oeste (dos lados da saida)
+        for (int sz : new int[]{-1, 1})
+            for (int k = 0; k < 2; k++) {
+                int z0 = sz * (6 + k * 8);
+                for (int x = -H + 1; x <= -H + 5; x++)
+                    for (int z = z0 - 2; z <= z0 + 2; z++)
+                        for (int y = PISO + 1; y <= PISO + 4; y++) {
+                            boolean frente = x == -H + 5, lado = Math.abs(z - z0) == 2, teto = y == PISO + 4;
+                            if (teto) por(x, y, z, "minecraft:stone_bricks");
+                            else if (frente && !lado) por(x, y, z, "minecraft:iron_bars");
+                            else if (lado) por(x, y, z, "minecraft:stone_bricks");
+                        }
+                por(-H + 2, PISO + 1, z0, "minecraft:red_bed[facing=east,part=foot]");
+                por(-H + 1, PISO + 1, z0, "minecraft:red_bed[facing=east,part=head]");
+                por(-H + 2, PISO + 3, z0 + 1, "minecraft:iron_chain[axis=y]");
+            }
+    }
+
+    /** Portal na parede: moldura 5x8 de blackstone, miolo 3x5 de portal, cor do bloco no topo e letreiro dentro do patio. */
+    private void construirPortal(Portal p) {
+        boolean eixoX = p.parede() == 'n' || p.parede() == 's';
+        for (int s = -2; s <= 2; s++)
+            for (int y = PISO; y <= PISO + 7; y++) {
+                int x = eixoX ? p.x() + s : p.x(), z = eixoX ? p.z() : p.z() + s;
+                boolean miolo = Math.abs(s) <= 1 && y >= PISO + 1 && y <= PISO + 5;
+                String b = miolo ? "minecraft:nether_portal[axis=" + (eixoX ? "x" : "z") + "]"
+                        : y == PISO + 7 && s == 0 ? p.topo()
+                        : y == PISO + 6 ? "minecraft:chiseled_polished_blackstone"
+                        : "minecraft:polished_blackstone_bricks";
+                por(x, y, z, b);
+            }
+        int dx = p.parede() == 'l' ? -1 : p.parede() == 'o' ? 1 : 0, dz = p.parede() == 'n' ? 1 : p.parede() == 's' ? -1 : 0;
+        texto(new Location(mundo, p.x() + 0.5 + dx * 1.2, PISO + 9.2, p.z() + 0.5 + dz * 1.2), p.nome() + "\n" + p.linha2(), 1.0f);
+        // tapete na frente (marca onde fica a entrada)
+        for (int s = -1; s <= 1; s++) {
+            int x = eixoX ? p.x() + s : p.x() + dx, z = eixoX ? p.z() + dz : p.z() + s;
+            por(x, PISO, z, "minecraft:polished_blackstone");
+        }
+    }
+
+    /** Totem do centro + 4 totens de servico (com tapete na frente: pisar tambem funciona, bom para o Bedrock). */
+    private void construirCentro() {
+        for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++) por(x, PISO + 1, z, "minecraft:chiseled_stone_bricks");
+        por(0, PISO + 2, 0, "minecraft:polished_deepslate_wall");
+        por(0, PISO + 3, 0, "minecraft:polished_deepslate_wall");
+        por(0, PISO + 4, 0, "minecraft:gold_block");
+        for (int[] o : new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) por(o[0], PISO + 4, o[1], "minecraft:iron_chain[axis=" + (o[0] != 0 ? "x" : "z") + "]");
+        icone(new Location(mundo, 0.5, PISO + 6.2, 0.5), Material.DIAMOND_PICKAXE, 1.4f);
+        texto(new Location(mundo, 0.5, PISO + 8.6, 0.5), "§8§l⛓ §6§lPRISÃO CORONA §8§l⛓\n§7Minere, venda e suba de rank\n§e/minas §7• §e/rankup §7• §e/vender", 1.3f);
+        interacao(new Location(mundo, 0.5, PISO + 1, 0.5), "menu", 2f, 4f);
+        totem(-9, 0, Material.EXPERIENCE_BOTTLE, "§6§lRANK UP", "§7suba de rank com $", "rankup", "minecraft:gold_block", -7, 0);
+        totem(9, 0, Material.GOLD_INGOT, "§2§lVENDER", "§7venda o minério das minas", "vender", "minecraft:emerald_block", 7, 0);
+        totem(0, 9, Material.CHEST, "§b§lKITS", "§7kits da prisão (24 h)", "kits", "minecraft:diamond_block", 0, 7);
+        totem(0, -9, Material.ANVIL, "§d§lPICARETA", "§7melhore com $", "picareta", "minecraft:amethyst_block", 0, -7);
+    }
+
+    private void totem(int x, int z, Material icone, String nome, String sub, String acao, String bloco, int tx, int tz) {
+        por(x, PISO + 1, z, "minecraft:polished_blackstone_bricks");
+        por(x, PISO + 2, z, bloco);
+        por(x, PISO + 3, z, "minecraft:polished_blackstone_wall");
+        icone(new Location(mundo, x + 0.5, PISO + 4.6, z + 0.5), icone, 0.9f);
+        texto(new Location(mundo, x + 0.5, PISO + 5.8, z + 0.5), nome + "\n" + sub, 0.9f);
+        interacao(new Location(mundo, x + 0.5, PISO + 1, z + 0.5), acao, 1.2f, 3.2f);
+        por(tx, PISO, tz, "minecraft:red_glazed_terracotta");
+    }
+
+    /** Sala de encantamentos: biblioteca da prisao com 2 mesas completas (15 estantes), 2 bigornas e um rebolo. */
+    private void construirSalaEnc() {
+        int z0 = ENC_Z - 10, z1 = ENC_Z + 10;
+        for (int x = -11; x <= 11; x++)
+            for (int z = z0 - 1; z <= z1 + 1; z++)
+                for (int y = 95; y <= PISO + 8; y++) {
+                    boolean borda = Math.abs(x) == 11 || z == z0 - 1 || z == z1 + 1;
+                    String b;
+                    if (y < PISO) b = "minecraft:deepslate_bricks";
+                    else if (y == PISO) b = borda ? "minecraft:deepslate_bricks" : ((x + z) % 2 == 0 ? "minecraft:dark_oak_planks" : "minecraft:spruce_planks");
+                    else if (y == PISO + 8) b = "minecraft:dark_oak_planks";
+                    else if (borda) b = (y == PISO + 3 || y == PISO + 4) && Math.abs(x) != 11 ? "minecraft:bookshelf" : (y == PISO + 3 || y == PISO + 4) ? "minecraft:bookshelf" : "minecraft:stone_bricks";
+                    else b = "minecraft:air";
+                    por(x, y, z, b);
+                }
+        for (int x = -9; x <= 9; x += 6) for (int z = z0 + 2; z <= z1 - 2; z += 6) por(x, PISO + 7, z, "minecraft:light[level=15]");
+        for (int cx : new int[]{-5, 5}) {
+            por(cx, PISO + 1, ENC_Z - 2, "minecraft:enchanting_table");
+            for (int dx = -2; dx <= 2; dx++)
+                for (int dz = -2; dz <= 2; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != 2) continue;
+                    if (dz == 2 && Math.abs(dx) <= 1) continue;   // entrada pela frente (sul)
+                    por(cx + dx, PISO + 1, ENC_Z - 2 + dz, "minecraft:bookshelf");
+                    if (Math.abs(dx) + Math.abs(dz) < 4) por(cx + dx, PISO + 2, ENC_Z - 2 + dz, "minecraft:bookshelf");
+                }
+            por(cx, PISO + 4, ENC_Z - 2, "minecraft:lantern[hanging=true]");
+            por(cx, PISO + 5, ENC_Z - 2, "minecraft:iron_chain[axis=y]");
+            por(cx, PISO + 6, ENC_Z - 2, "minecraft:iron_chain[axis=y]");
+            por(cx, PISO + 7, ENC_Z - 2, "minecraft:iron_chain[axis=y]");
+        }
+        consertarBigornas();
+        por(0, PISO + 1, z0 + 1, "minecraft:grindstone[face=floor,facing=south]");
+        texto(new Location(mundo, 0.5, PISO + 5.2, ENC_Z - 2 + 0.5), "§d§lSALA DE ENCANTAMENTOS\n§7Lápis + XP nas mesas • bigornas • rebolo", 1.0f);
+        // portal de volta ao patio (parede sul)
+        construirPortal(new Portal(0, z1 + 1, 's', "patio", "§a§l◀ VOLTAR AO PÁTIO", "§7Prisão Corona", "minecraft:emerald_block"));
+    }
+
+    /** Portais sem moldura de obsidiana podem sumir com uma atualizacao de bloco: recoloca o miolo (so em chunk carregado). */
+    void consertarPortais() {
+        if (mundo == null) return;
+        int n = 0;
+        List<Portal> todos = new ArrayList<>(portaisPatio);
+        todos.add(new Portal(0, ENC_Z + 11, 's', "patio", "", "", ""));
+        for (Portal pt : todos) {
+            boolean eixoX = pt.parede() == 'n' || pt.parede() == 's';
+            for (int s = -1; s <= 1; s++) for (int y = PISO + 1; y <= PISO + 5; y++) n += miolo(mundo, eixoX ? pt.x() + s : pt.x(), y, eixoX ? pt.z() : pt.z() + s, eixoX);
+        }
+        for (Mina m : minas) for (int s = -1; s <= 1; s++) for (int y = Mina.TOPO + 1; y <= Mina.TOPO + 4; y++) n += miolo(mundo, m.cx + s, y, -(Mina.RAIO + 1 + Mina.BORDA), true);
+        if (getConfig().getBoolean("portal-spawn.feito", false)) {
+            World w = Bukkit.getWorld(getConfig().getString("portal-spawn.mundo", "world"));
+            int cx = getConfig().getInt("portal-spawn.x", 15), z = getConfig().getInt("portal-spawn.z", -29), y0 = getConfig().getInt("portal-spawn.y", 122);
+            if (w != null) for (int s = -1; s <= 1; s++) for (int y = y0 + 1; y <= y0 + 5; y++) n += miolo(w, cx + s, y, z, true);
+        }
+        if (n > 0) getLogger().info("Portais consertados: " + n + " blocos.");
+    }
+
+    private int miolo(World w, int x, int y, int z, boolean eixoX) {
+        if (!w.isChunkLoaded(x >> 4, z >> 4)) return 0;
+        Block b = w.getBlockAt(x, y, z);
+        if (b.getType() == Material.NETHER_PORTAL || !b.getType().isAir()) return 0;
+        b.setBlockData(Bukkit.createBlockData("minecraft:nether_portal[axis=" + (eixoX ? "x" : "z") + "]"), false);
+        return 1;
+    }
+
+    void consertarBigornas() {
+        if (mundo == null) return;
+        por(-8, PISO + 1, ENC_Z + 6, "minecraft:anvil[facing=east]");
+        por(8, PISO + 1, ENC_Z + 6, "minecraft:anvil[facing=west]");
+    }
+
+    /** Portal de volta na borda norte de cada mina. */
+    private void construirVolta(Mina m) {
+        int z = -(Mina.RAIO + 1 + Mina.BORDA);
+        for (int s = -3; s <= 3; s++) for (int y = Mina.TOPO + 1; y <= Mina.TOPO + 9; y++) por(m.cx + s, y, z, "minecraft:air");
+        for (int s = -2; s <= 2; s++)
+            for (int y = Mina.TOPO; y <= Mina.TOPO + 6; y++) {
+                boolean miolo = Math.abs(s) <= 1 && y >= Mina.TOPO + 1 && y <= Mina.TOPO + 4;
+                por(m.cx + s, y, z, miolo ? "minecraft:nether_portal[axis=x]" : y == Mina.TOPO + 6 && s == 0 ? "minecraft:emerald_block" : "minecraft:polished_blackstone_bricks");
+            }
+        if (!m.pvp) {
+            texto(new Location(mundo, m.cx + 0.5, Mina.TOPO + 8, z + 1.5), "§6§l" + m.nome.split(" • ")[0].toUpperCase(Locale.ROOT) + "\n§f" + m.nome.split(" • ")[1] + "\n§a◀ portal: volta ao pátio", 1.0f);
+            return;
+        }
+        texto(new Location(mundo, m.cx + 0.5, Mina.TOPO + 8, z + 1.5), "§4§l⚔ MINA PVP ⚔\n§c§lAQUI TEM PVP!\n§cquem morre perde os itens\n§a◀ portal: volta ao pátio (seguro)", 1.2f);
+        // avisos vermelhos nos 4 lados da borda e postes de redstone nas quinas
+        int b = Mina.RAIO + 3;
+        for (int[] o : new int[][]{{0, b}, {b, 0}, {-b, 0}, {0, -b + 1}})
+            if (!(o[0] == 0 && o[1] == -b + 1)) texto(new Location(mundo, m.cx + o[0] + 0.5, Mina.TOPO + 4, o[1] + 0.5), "§4§l⚔ ZONA PVP ⚔\n§cjogadores podem te atacar aqui", 1.1f);
+        int q = Mina.RAIO + 1 + Mina.BORDA;
+        for (int sx : new int[]{-1, 1}) for (int sz : new int[]{-1, 1}) {
+            por(m.cx + sx * q, Mina.TOPO + 1, sz * q, "minecraft:redstone_block");
+            por(m.cx + sx * q, Mina.TOPO + 2, sz * q, "minecraft:red_banner");
+        }
+    }
+
+    // ------------------------------------------------------------------ enfeites (textos, icones, cliques)
+    TextDisplay texto(Location l, String t, float esc) {
+        return l.getWorld().spawn(l, TextDisplay.class, d -> {
+            d.text(txt(t));
+            d.setBillboard(Display.Billboard.CENTER);
+            d.setShadowed(true);
+            d.setBackgroundColor(Color.fromARGB(140, 0, 0, 0));
+            d.setPersistent(true);
+            d.setViewRange(0.8f);
+            d.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(esc), new AxisAngle4f()));
+            d.getPersistentDataContainer().set(kEnfeite, PersistentDataType.STRING, "texto");
+        });
+    }
+
+    void icone(Location l, Material m, float esc) {
+        l.getWorld().spawn(l, ItemDisplay.class, d -> {
+            d.setItemStack(new ItemStack(m));
+            d.setBillboard(Display.Billboard.VERTICAL);
+            d.setPersistent(true);
+            d.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(esc), new AxisAngle4f()));
+            d.getPersistentDataContainer().set(kEnfeite, PersistentDataType.STRING, "icone");
+        });
+    }
+
+    void interacao(Location l, String acao, float larg, float alt) {
+        l.getWorld().spawn(l, Interaction.class, i -> {
+            i.setInteractionWidth(larg);
+            i.setInteractionHeight(alt);
+            i.setResponsive(true);
+            i.setPersistent(true);
+            i.getPersistentDataContainer().set(kEnfeite, PersistentDataType.STRING, "clique");
+            i.getPersistentDataContainer().set(kAcao, PersistentDataType.STRING, acao);
+        });
+    }
+
+    void tirarEnfeites(World w) {
+        int n = 0;
+        for (Entity e : w.getEntities()) if (e.getPersistentDataContainer().has(kEnfeite, PersistentDataType.STRING)) { e.remove(); n++; }
+        if (n > 0) getLogger().info("Enfeites antigos tirados: " + n);
+    }
+
+    private TextDisplay painelTop;
+
+    void atualizarPainel() {
+        if (mundo == null) return;
+        if (painelTop == null || !painelTop.isValid()) {
+            for (Entity e : mundo.getNearbyEntities(new Location(mundo, 0.5, PISO + 4, -15.5), 2, 3, 2))
+                if (e instanceof TextDisplay t && "top".equals(t.getPersistentDataContainer().get(kEnfeite, PersistentDataType.STRING))) painelTop = t;
+            if (painelTop == null || !painelTop.isValid()) {
+                if (!mundo.isChunkLoaded(0, -1)) return;
+                painelTop = texto(new Location(mundo, 0.5, PISO + 4.5, -15.5), "", 0.9f);
+                painelTop.getPersistentDataContainer().set(kEnfeite, PersistentDataType.STRING, "top");
+            }
+        }
+        List<String> l = linhasTop(5);
+        StringBuilder sb = new StringBuilder("§6§l⛏ TOP DA PRISÃO ⛏");
+        if (l.isEmpty()) sb.append("\n§7ninguém ainda — seja o primeiro!");
+        for (String s : l) sb.append("\n").append(s);
+        int hd = getConfig().getInt("hora-dourada", 20);
+        if (hd >= 0) sb.append(horaDourada() ? "\n§6§l✦ HORA DOURADA: venda x2!" : "\n§8hora dourada: todo dia às " + hd + "h (venda x2)");
+        painelTop.text(txt(sb.toString()));
+    }
+
+    // ------------------------------------------------------------------ portal no spawn principal
+    void portalDoSpawn() {
+        if (getConfig().getBoolean("portal-spawn.feito", false) || !getConfig().getBoolean("portal-spawn.ativo", true)) return;
+        World w = Bukkit.getWorld(getConfig().getString("portal-spawn.mundo", "world"));
+        if (w == null) return;
+        int y0 = getConfig().getInt("portal-spawn.y", 122);
+        // lugares em ordem de preferencia (x,z do centro); o primeiro livre ganha o portal
+        List<String> lugares = getConfig().getStringList("portal-spawn.lugares");
+        if (lugares.isEmpty()) lugares = List.of("16,-23", "-4,-23", "16,-20", "-4,-20");
+        int cx = 0, z = 0;
+        boolean achou = false;
+        StringBuilder motivos = new StringBuilder();
+        for (String lg : lugares) {
+            String[] xz = lg.split(",");
+            int tx, tz;
+            try { tx = Integer.parseInt(xz[0].trim()); tz = Integer.parseInt(xz[1].trim()); } catch (Exception ex) { continue; }
+            String m = ocupado(w, tx, tz, y0);
+            if (m == null) { cx = tx; z = tz; achou = true; break; }
+            motivos.append(" [").append(lg).append(": ").append(m).append("]");
+        }
+        if (!achou) {
+            getLogger().warning("Portal da Prisao no spawn NAO construido: nenhum lugar livre." + motivos);
+            return;
+        }
+        for (int s = -2; s <= 2; s++)
+            for (int y = 0; y <= 7; y++) {
+                boolean miolo = Math.abs(s) <= 1 && y >= 1 && y <= 5;
+                String b = miolo ? "minecraft:nether_portal[axis=x]" : y == 7 && s == 0 ? "minecraft:gold_block" : y == 6 ? "minecraft:chiseled_polished_blackstone"
+                        : (Math.abs(s) == 2 && y % 2 == 0) ? "minecraft:deepslate_bricks" : "minecraft:polished_blackstone_bricks";
+                por(w, cx + s, y0 + y, z, b);
+            }
+        for (int s : new int[]{-3, 3}) {
+            por(w, cx + s, y0 + 1, z, "minecraft:iron_bars");
+            por(w, cx + s, y0 + 2, z, "minecraft:iron_bars");
+            por(w, cx + s, y0 + 3, z, "minecraft:stone_brick_wall");
+            por(w, cx + s, y0 + 4, z, "minecraft:soul_lantern");
+        }
+        por(w, cx, y0 + 8, z, "minecraft:iron_chain[axis=y]");
+        w.spawn(new Location(w, cx + 0.5, y0 + 9.4, z + 1.1), TextDisplay.class, d -> {
+            d.text(txt("§8§l⛓ §6§lPRISÃO • RANK UP §8§l⛓\n§712 minas • Mina PvP • kits e encantamentos\n§fdinheiro próprio e mochila própria"));
+            d.setBillboard(Display.Billboard.CENTER);
+            d.setShadowed(true);
+            d.setBackgroundColor(Color.fromARGB(140, 0, 0, 0));
+            d.setPersistent(true);
+            d.setViewRange(0.8f);
+            d.getPersistentDataContainer().set(kEnfeite, PersistentDataType.STRING, "spawn");
+        });
+        getConfig().set("portal-spawn.x", cx);
+        getConfig().set("portal-spawn.z", z);
+        getConfig().set("portal-spawn.feito", true);
+        saveConfig();
+        getLogger().info("Portal da Prisao construido no spawn principal em " + cx + "," + y0 + "," + z + ".");
+    }
+
+    /** null = livre; senao o motivo. Pede piso inteiro e nada em cima (7 x 5 em volta, 9 de altura). */
+    private String ocupado(World w, int cx, int z, int y0) {
+        for (int x = cx - 3; x <= cx + 3; x++)
+            for (int zz = z - 2; zz <= z + 2; zz++) {
+                if (w.getBlockAt(x, y0, zz).getType().isAir()) return "sem piso em " + x + "," + y0 + "," + zz;
+                for (int y = y0 + 1; y <= y0 + 9; y++) {
+                    Material t = w.getBlockAt(x, y, zz).getType();
+                    if (!t.isAir() && t != Material.LIGHT) return t + " em " + x + "," + y + "," + zz;
+                }
+            }
+        for (Entity e : w.getNearbyEntities(new Location(w, cx + 0.5, y0 + 5, z + 0.5), 3.5, 5, 2.5))
+            if (!(e instanceof Player)) return "entidade " + e.getType();
+        return null;
+    }
+
+    boolean noPortalDoSpawn(Location l) {
+        if (!getConfig().getBoolean("portal-spawn.feito", false)) return false;
+        if (!l.getWorld().getName().equals(getConfig().getString("portal-spawn.mundo", "world"))) return false;
+        int cx = getConfig().getInt("portal-spawn.x", 15), z = getConfig().getInt("portal-spawn.z", -29), y0 = getConfig().getInt("portal-spawn.y", 122);
+        return Math.abs(l.getBlockX() - cx) <= 1 && l.getBlockZ() == z && l.getBlockY() >= y0 + 1 && l.getBlockY() <= y0 + 5;
+    }
+
+    // ------------------------------------------------------------------ reset das minas
+    void refazer(Mina m) {
+        if (mundo == null || m.refazendo) return;
+        m.refazendo = true;
+        for (Player p : mundo.getPlayers())
+            if (m.dentroDoPoco(p.getLocation())) {
+                p.teleport(m.chegada(mundo));
+                p.sendActionBar(txt("§e⛏ O " + m.nome + " §eestá sendo refeito!"));
+            }
+        List<int[]> pos = new ArrayList<>(Mina.volume());
+        for (int y = Mina.TOPO; y > Mina.TOPO - Mina.FUNDO; y--)
+            for (int x = -Mina.RAIO; x <= Mina.RAIO; x++)
+                for (int z = -Mina.RAIO; z <= Mina.RAIO; z++) pos.add(new int[]{m.cx + x, y, z});
+        Iterator<int[]> it = pos.iterator();
+        Bukkit.getScheduler().runTaskTimer(this, t -> {
+            for (int n = 0; n < 2500 && it.hasNext(); n++) {
+                int[] b = it.next();
+                mundo.getBlockAt(b[0], b[1], b[2]).setType(m.sortear(), false);
+            }
+            if (!it.hasNext()) {
+                t.cancel();
+                m.quebrados = 0;
+                m.ultimoReset = System.currentTimeMillis();
+                m.refazendo = false;
+                for (Player p : mundo.getPlayers())
+                    if (m.naArea(p.getLocation())) p.sendActionBar(txt("§a⛏ O " + m.nome + " §afoi refeito!"));
+            }
+        }, 1L, 1L);
+    }
+
+    Mina minaDoBloco(Block b) { for (Mina m : minas) if (m.noMiolo(b)) return m; return null; }
+
+    Mina minaDaArea(Location l) { for (Mina m : minas) if (m.naArea(l)) return m; return null; }
+
+    // ------------------------------------------------------------------ rank e dinheiro proprio
+    int rank(Player p) {
+        Integer r = p.getPersistentDataContainer().get(kRank, PersistentDataType.INTEGER);
+        return r == null ? 0 : Math.max(0, Math.min(RANKS.length - 1, r));
+    }
+
+    long dinheiro(Player p) {
+        Long v = p.getPersistentDataContainer().get(kDinheiro, PersistentDataType.LONG);
+        return v == null ? 0 : v;
+    }
+
+    void setDinheiro(Player p, long v) { p.getPersistentDataContainer().set(kDinheiro, PersistentDataType.LONG, Math.max(0, v)); }
+
+    static int vip(Player p) {
+        PersistentDataContainer c = p.getPersistentDataContainer();
+        Integer n = c.get(VIP_NIVEL, PersistentDataType.INTEGER);
+        Long ate = c.get(VIP_ATE, PersistentDataType.LONG);
+        if (n == null || n <= 0 || ate == null || ate < System.currentTimeMillis()) return 0;
+        return Math.min(n, BONUS_VIP.length - 1);
+    }
+
+    static String fmt(long v) { return String.format(Locale.ROOT, "%,d", v).replace(',', '.'); }
+
+    static String din(long v) { return "§2$" + fmt(v); }
+
+    String nomeRank(int r) { return RANKS[r].cor() + "[" + RANKS[r].letra() + "] " + RANKS[r].nome(); }
+
+    // ------------------------------------------------------------------ eventos do mundo
+    boolean admin(Player p) { return p.hasPermission("mineracao.admin") && p.getGameMode() == GameMode.CREATIVE; }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void quebrar(BlockBreakEvent e) {
+        if (e.getBlock().getWorld() != mundo) return;
+        Player p = e.getPlayer();
+        if (admin(p)) return;
+        Mina m = minaDoBloco(e.getBlock());
+        if (m == null || m.refazendo) { e.setCancelled(true); return; }
+        if (rank(p) < m.rank) {
+            e.setCancelled(true);
+            p.sendActionBar(txt("§cPrecisa do rank " + nomeRank(m.rank) + " §cpara minerar aqui. §e/rankup"));
+            return;
+        }
+        Material t = e.getBlock().getType();
+        if (t == Material.STONE || t == Material.DEEPSLATE || t == Material.COBBLESTONE || t == Material.COBBLED_DEEPSLATE || t == Material.ANDESITE
+                || t == Material.NETHERRACK || t == Material.BLACKSTONE) e.setDropItems(false);
+        e.setExpToDrop(Math.min(e.getExpToDrop(), 3));
+        m.quebrados++;
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void soltou(BlockDropItemEvent e) {
+        if (e.getBlock().getWorld() != mundo || minaDoBloco(e.getBlock()) == null) return;
+        Player p = e.getPlayer();
+        boolean cheio = false;
+        for (Iterator<Item> i = e.getItems().iterator(); i.hasNext(); ) {
+            Item it = i.next();
+            ItemStack s = it.getItemStack();
+            if (!precos.containsKey(s.getType())) continue;
+            ItemStack m = marcar(s);
+            Map<Integer, ItemStack> sobra = p.getInventory().addItem(m.clone());
+            if (sobra.isEmpty()) { i.remove(); continue; }
+            cheio = true;
+            it.setItemStack(sobra.values().iterator().next());
+        }
+        if (cheio) p.sendActionBar(txt("§c⛏ Inventário cheio! Use §e/vender"));
+    }
+
+    ItemStack marcar(ItemStack s) {
+        ItemMeta im = s.getItemMeta();
+        if (im == null) return s;
+        im.getPersistentDataContainer().set(kMinerado, PersistentDataType.BYTE, (byte) 1);
+        im.lore(List.of(txt("§8⛏ Minério da Prisão §7— §e/vender")));
+        s.setItemMeta(im);
+        return s;
+    }
+
+    boolean marcado(ItemStack s) {
+        if (s == null || !s.hasItemMeta()) return false;
+        return s.getItemMeta().getPersistentDataContainer().has(kMinerado, PersistentDataType.BYTE);
+    }
+
+    /** Item que nasceu na Prisao (kits, picaretas): nao pode sair dela. */
+    ItemStack daPrisao(ItemStack s) {
+        ItemMeta im = s.getItemMeta();
+        if (im == null) return s;
+        im.getPersistentDataContainer().set(kPrisao, PersistentDataType.BYTE, (byte) 1);
+        List<Component> l = im.hasLore() && im.lore() != null ? new ArrayList<>(im.lore()) : new ArrayList<>();
+        l.add(txt("§8⛓ Item da Prisão (não sai daqui)"));
+        im.lore(l);
+        s.setItemMeta(im);
+        return s;
+    }
+
+    boolean ehDaPrisao(ItemStack s) {
+        if (s == null || !s.hasItemMeta()) return false;
+        PersistentDataContainer c = s.getItemMeta().getPersistentDataContainer();
+        return c.has(kPrisao, PersistentDataType.BYTE) || c.has(kMinerado, PersistentDataType.BYTE);
+    }
+
+    private final Map<UUID, Long> trocouMundo = new HashMap<>();
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void trocou(PlayerChangedWorldEvent e) { trocouMundo.put(e.getPlayer().getUniqueId(), System.currentTimeMillis()); }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void logou(PlayerJoinEvent e) { trocouMundo.put(e.getPlayer().getUniqueId(), System.currentTimeMillis()); }
+
+    @EventHandler
+    public void saiu(PlayerQuitEvent e) { trocouMundo.remove(e.getPlayer().getUniqueId()); espera.remove(e.getPlayer().getUniqueId()); naPvp.remove(e.getPlayer().getUniqueId()); }
+
+    /** Pedido do Paulo (13/11): nenhum item do /minas entra em outro mundo. A mochila da Prisao (Extras) ja separa;
+     *  isto e a rede de seguranca: fora da Prisao, item marcado some (inventario, cursor e bau do fim). */
+    void varrerItens() {
+        long agora = System.currentTimeMillis();
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (p.getWorld() == mundo) continue;
+            Long t = trocouMundo.get(p.getUniqueId());
+            if (t != null && agora - t < 4000) continue;   // a troca de mochila ainda pode estar acontecendo
+            int n = 0;
+            ItemStack[] c = p.getInventory().getContents();
+            for (int i = 0; i < c.length; i++) if (ehDaPrisao(c[i])) { n += c[i].getAmount(); c[i] = null; }
+            if (n > 0) p.getInventory().setContents(c);
+            if (ehDaPrisao(p.getItemOnCursor())) { n += p.getItemOnCursor().getAmount(); p.setItemOnCursor(null); }
+            ItemStack[] ec = p.getEnderChest().getContents();
+            int m = 0;
+            for (int i = 0; i < ec.length; i++) if (ehDaPrisao(ec[i])) { m += ec[i].getAmount(); ec[i] = null; }
+            if (m > 0) p.getEnderChest().setContents(ec);
+            if (n + m > 0) {
+                getLogger().info("Itens da Prisao fora dela tirados de " + p.getName() + ": " + (n + m) + " (mundo " + p.getWorld().getName() + ")");
+                p.sendMessage(txt("§8⛓ §7Itens da Prisão não saem dela: §f" + (n + m) + " §7foram recolhidos."));
+            }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void semBauDoFim(org.bukkit.event.inventory.InventoryOpenEvent e) {
+        if (e.getPlayer().getWorld() == mundo && e.getInventory().getType() == org.bukkit.event.inventory.InventoryType.ENDER_CHEST) {
+            e.setCancelled(true);
+            e.getPlayer().sendMessage(txt("§cNa Prisão não tem baú do fim: aqui é um mundo à parte."));
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void semFabricar(org.bukkit.event.inventory.CraftItemEvent e) {
+        if (e.getWhoClicked().getWorld() != mundo || admin((Player) e.getWhoClicked())) return;
+        e.setCancelled(true);
+        e.getWhoClicked().sendMessage(txt("§cNa Prisão não dá para fabricar itens. Venda o minério com §e/vender§c."));
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void colocar(BlockPlaceEvent e) {
+        if (e.getBlock().getWorld() == mundo && !admin(e.getPlayer())) e.setCancelled(true);
+    }
+
+    static Player atacante(EntityDamageByEntityEvent e) {
+        if (e.getDamager() instanceof Player p) return p;
+        if (e.getDamager() instanceof Projectile pr && pr.getShooter() instanceof Player p) return p;
+        return null;
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void pvp(EntityDamageByEntityEvent e) {
+        if (e.getEntity().getWorld() != mundo) return;
+        if (e.getEntity() instanceof Interaction i && e.getDamager() instanceof Player p) {   // clique esquerdo no totem
+            e.setCancelled(true);
+            String a = i.getPersistentDataContainer().get(kAcao, PersistentDataType.STRING);
+            if (a != null && !esperando(p, 600)) acao(p, a);
+            return;
+        }
+        if (!(e.getEntity() instanceof Player v)) return;
+        Player a = atacante(e);
+        if (a == null || a == v) return;
+        Mina mv = minaDaArea(v.getLocation()), ma = minaDaArea(a.getLocation());
+        if (mv != null && mv.pvp && ma == mv) return;
+        e.setCancelled(true);
+    }
+
+    @EventHandler
+    public void cliqueTotem(PlayerInteractEntityEvent e) {
+        if (!(e.getRightClicked() instanceof Interaction i)) return;
+        String a = i.getPersistentDataContainer().get(kAcao, PersistentDataType.STRING);
+        if (a == null) return;
+        e.setCancelled(true);
+        if (!esperando(e.getPlayer(), 600)) acao(e.getPlayer(), a);
+    }
+
+    void acao(Player p, String a) {
+        switch (a) {
+            case "menu" -> abrirMenu(p);
+            case "rankup" -> rankup(p);
+            case "vender" -> vender(p);
+            case "kits" -> abrirKits(p);
+            case "picareta" -> abrirMelhorias(p);
+            default -> {}
+        }
+    }
+
+    boolean esperando(Player p, long ms) {
+        long agora = System.currentTimeMillis();
+        Long ult = espera.get(p.getUniqueId());
+        if (ult != null && agora - ult < ms) return true;
+        espera.put(p.getUniqueId(), agora);
+        return false;
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void andar(PlayerMoveEvent e) {
+        Location to = e.getTo();
+        if (to.getBlockX() == e.getFrom().getBlockX() && to.getBlockY() == e.getFrom().getBlockY() && to.getBlockZ() == e.getFrom().getBlockZ()) return;
+        Player p = e.getPlayer();
+        if (to.getWorld() != mundo) {
+            if (noPortalDoSpawn(to) && !esperando(p, 2500)) {
+                if (mundo == null) return;
+                p.teleport(patio());
+                p.playSound(p.getLocation(), Sound.BLOCK_IRON_DOOR_CLOSE, 0.8f, 0.8f);
+            }
+            return;
+        }
+        // tapetes dos totens (Bedrock: pisar funciona como clicar)
+        if (to.getBlockY() == PISO + 1) {
+            int x = to.getBlockX(), z = to.getBlockZ();
+            String a = x == -7 && z == 0 ? "rankup" : x == 7 && z == 0 ? "vender" : x == 0 && z == 7 ? "kits" : x == 0 && z == -7 ? "picareta" : null;
+            if (a != null && !esperando(p, 3000)) { acao(p, a); return; }
+        }
+        if (to.getBlock().getType() != Material.NETHER_PORTAL) return;
+        if (esperando(p, 1500)) return;
+        // portal de volta (minas e sala de encantamentos)
+        if (to.getBlockZ() == ENC_Z + 11 && Math.abs(to.getBlockX()) <= 1) { irPatio(p); return; }
+        Mina m = minaDaArea(to);
+        if (m != null) { irPatio(p); return; }
+        for (Portal pt : portaisPatio) {
+            boolean eixoX = pt.parede() == 'n' || pt.parede() == 's';
+            boolean dentro = eixoX ? (to.getBlockZ() == pt.z() && Math.abs(to.getBlockX() - pt.x()) <= 1) : (to.getBlockX() == pt.x() && Math.abs(to.getBlockZ() - pt.z()) <= 1);
+            if (!dentro) continue;
+            switch (pt.acao()) {
+                case "saida" -> sair(p);
+                case "enc" -> { p.teleport(salaEnc()); p.playSound(p.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 0.8f, 1f); }
+                default -> {
+                    Mina mm = mina(pt.acao());
+                    if (mm != null && !irPara(p, mm)) {
+                        // empurra de volta para o patio
+                        int dx = pt.parede() == 'l' ? -2 : pt.parede() == 'o' ? 2 : 0, dz = pt.parede() == 'n' ? 2 : pt.parede() == 's' ? -2 : 0;
+                        p.teleport(new Location(mundo, pt.x() + 0.5 + dx, PISO + 1, pt.z() + 0.5 + dz, p.getLocation().getYaw(), p.getLocation().getPitch()));
+                    }
+                }
+            }
+            return;
+        }
+    }
+
+    void irPatio(Player p) {
+        p.teleport(patio());
+        p.playSound(p.getLocation(), Sound.BLOCK_IRON_DOOR_CLOSE, 0.8f, 1f);
+    }
+
+    void sair(Player p) {
+        if (!p.performCommand("spawn")) {
+            World w = Bukkit.getWorld("world");
+            if (w != null) p.teleport(w.getSpawnLocation());
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void semNether(PlayerPortalEvent e) {
+        if (e.getFrom().getWorld() == mundo || noPortalDoSpawn(e.getFrom())) e.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void semNether2(EntityPortalEvent e) {
+        if (e.getFrom().getWorld() == mundo) e.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void semFome(FoodLevelChangeEvent e) {
+        if (e.getEntity().getWorld() == mundo && e.getFoodLevel() < e.getEntity().getFoodLevel()) e.setCancelled(true);
+    }
+
+    static final Set<String> BLOQUEADOS = Set.of("kit", "kits", "pet", "pets", "poderes", "habilidades", "classe", "classes", "ec", "enderchest", "echest", "bauender");
+
+    @EventHandler(ignoreCancelled = true)
+    public void comando(PlayerCommandPreprocessEvent e) {
+        if (e.getPlayer().getWorld() != mundo) return;
+        String c = e.getMessage().substring(1).split(" ")[0].toLowerCase(Locale.ROOT);
+        if (c.contains(":")) c = c.substring(c.indexOf(':') + 1);
+        if (!BLOQUEADOS.contains(c)) return;
+        e.setCancelled(true);
+        if (c.startsWith("kit")) abrirKits(e.getPlayer());
+        else e.getPlayer().sendMessage(txt("§cNa Prisão isso não funciona: aqui é um mundo à parte."));
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void morte(PlayerDeathEvent e) {
+        Player p = e.getEntity();
+        if (p.getWorld() != mundo) return;
+        Mina m = minaDaArea(p.getLocation());
+        if (m != null && m.pvp) {
+            e.deathMessage(txt("§c⚔ " + p.getName() + " §7caiu na §cMina PvP" + (p.getKiller() != null ? " §7para §c" + p.getKiller().getName() : "") + "§7!"));
+            return;
+        }
+        e.setKeepInventory(true);
+        e.getDrops().clear();
+        e.setKeepLevel(true);
+        e.setDroppedExp(0);
+    }
+
+    @EventHandler
+    public void renascer(PlayerRespawnEvent e) {
+        if (e.getPlayer().getWorld() == mundo && mundo != null) e.setRespawnLocation(patio());
+    }
+
+    @EventHandler
+    public void entrou(PlayerChangedWorldEvent e) {
+        Player p = e.getPlayer();
+        if (p.getWorld() != mundo) return;
+        p.showTitle(Title.title(txt("§6⛓ Prisão Corona ⛓"), txt("§7Rank " + nomeRank(rank(p)) + " §8• " + din(dinheiro(p))),
+                Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(3), Duration.ofMillis(600))));
+        p.sendMessage(txt("§6§l⛓ Prisão §8» §7Mundo à parte: mochila e dinheiro próprios. Entre nos portais dos blocos, venda com §e/vender §7e suba com §e/rankup§7. Kits: §e/kit§7."));
+        // depois da troca de mochila (Extras), para a picareta ficar na mochila da prisao
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            if (!p.isOnline() || p.getWorld() != mundo) return;
+            PersistentDataContainer c = p.getPersistentDataContainer();
+            if (c.has(kGanhou, PersistentDataType.BYTE)) return;
+            c.set(kGanhou, PersistentDataType.BYTE, (byte) 1);
+            ItemStack pic = new ItemStack(Material.IRON_PICKAXE);
+            ItemMeta im = pic.getItemMeta();
+            im.displayName(txt("§6Picareta do Detento"));
+            im.addEnchant(Enchantment.EFFICIENCY, 2, true);
+            im.addEnchant(Enchantment.UNBREAKING, 2, true);
+            pic.setItemMeta(im);
+            daPrisao(pic);
+            p.getInventory().addItem(pic).values().forEach(s -> p.getWorld().dropItemNaturally(p.getLocation(), s));
+            p.sendMessage(txt("§a+ Picareta do Detento §7(presente da primeira visita)"));
+        }, 30L);
+    }
+
+    // ------------------------------------------------------------------ barra, ranking e hora dourada
+    long resetMs;
+    private final Set<UUID> naPvp = new HashSet<>();
+
+    void barra() {
+        if (mundo == null) return;
+        long agora = System.currentTimeMillis();
+        for (Player p : mundo.getPlayers()) {
+            Mina m = minaDaArea(p.getLocation());
+            int r = rank(p);
+            if (m == null) {
+                naPvp.remove(p.getUniqueId());
+                p.sendActionBar(txt((horaDourada() ? "§6§l✦ VENDA x2 §8• " : "") + "§6⛓ Rank " + RANKS[r].cor() + RANKS[r].letra() + " §8• " + din(dinheiro(p)) + " §8• §e/minas §7/rankup §7/vender"));
+                continue;
+            }
+            if (m.pvp && naPvp.add(p.getUniqueId())) {
+                p.showTitle(Title.title(txt("§4§l⚔ ZONA PVP ⚔"), txt("§cAqui outros jogadores podem te atacar — quem morre perde os itens!"),
+                        Title.Times.times(Duration.ofMillis(200), Duration.ofSeconds(3), Duration.ofMillis(500))));
+                p.playSound(p.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.5f, 1.5f);
+            }
+            if (!m.pvp) naPvp.remove(p.getUniqueId());
+            int pct = (int) Math.min(100, m.quebrados * 100L / Mina.volume());
+            long falta = m.quebrados == 0 ? -1 : Math.max(0, resetMs - (agora - m.ultimoReset));
+            String quando = m.refazendo ? "§erefazendo..." : falta < 0 ? "§acheia" : "§7refaz em §f" + (falta / 60000) + ":" + String.format("%02d", (falta / 1000) % 60);
+            p.sendActionBar(txt((m.pvp ? "§4§l⚔ PVP LIGADO ⚔ §c" : "§6⛏ ") + m.nome + " §8• §f" + pct + "% §7minerada §8• " + quando + " §8• " + din(dinheiro(p))));
+        }
+    }
+
     private java.io.File arqTop;
     private org.bukkit.configuration.file.YamlConfiguration top;
     private boolean topSujo;
@@ -166,13 +1028,12 @@ public final class Mineracao extends JavaPlugin implements Listener {
         List<String> out = new ArrayList<>();
         String[] med = {"§6①", "§7②", "§c③"};
         for (int i = 0; i < Math.min(n, l.size()); i++) {
-            int r = Integer.parseInt(l.get(i)[1]);
-            out.add((i < 3 ? med[i] : "§8" + (i + 1) + ".") + " §f" + l.get(i)[0] + " " + RANKS[r].cor() + "[" + RANKS[r].letra() + "] §8• §6" + fmt(Long.parseLong(l.get(i)[2])) + " vendidos");
+            int r = Math.max(0, Math.min(RANKS.length - 1, Integer.parseInt(l.get(i)[1])));
+            out.add((i < 3 ? med[i] : "§8" + (i + 1) + ".") + " §f" + l.get(i)[0] + " " + RANKS[r].cor() + "[" + RANKS[r].letra() + "] §8• §7" + fmt(Long.parseLong(l.get(i)[2])) + " minérios");
         }
         return out;
     }
 
-    /** Hora dourada: todo dia num horario (config), a venda paga em dobro por 1 hora. */
     boolean horaDourada() {
         int h = getConfig().getInt("hora-dourada", 20);
         if (h < 0) return false;
@@ -183,319 +1044,69 @@ public final class Mineracao extends JavaPlugin implements Listener {
     void avisoDourada() {
         boolean d = horaDourada();
         if (d && !avisouDourada) {
-            Bukkit.broadcast(txt("§6§l✦ HORA DOURADA NA MINERAÇÃO! §eDurante 1 hora o minério vende em §6§lDOBRO§e. §f/minas"));
+            Bukkit.broadcast(txt("§6§l✦ HORA DOURADA NA PRISÃO! §eDurante 1 hora o minério vende em §6§lDOBRO§e. §f/minas"));
             for (Player p : Bukkit.getOnlinePlayers()) p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.4f);
+            atualizarPainel();
         }
-        if (!d && avisouDourada) Bukkit.broadcast(txt("§7A hora dourada da mineração acabou. Volta amanhã!"));
+        if (!d && avisouDourada) { Bukkit.broadcast(txt("§7A hora dourada da Prisão acabou. Volta amanhã!")); atualizarPainel(); }
         avisouDourada = d;
     }
 
-    /** Barra de status (13/11): mostra a mina, quanto ja foi minerado e quando ela se refaz. */
-    void barra() {
-        if (mundo == null) return;
-        long agora = System.currentTimeMillis();
-        for (Player p : mundo.getPlayers()) {
-            Mina m = minaDaArea(p.getLocation());
-            int r = rank(p);
-            if (m == null) {
-                p.sendActionBar(txt((horaDourada() ? "§6§l✦ VENDA x2 §8• " : "") + "§6⛏ Rank " + RANKS[r].cor() + RANKS[r].letra() + " §8• §6" + fmt(coronas(p)) + " coronas §8• §e/minas §7/rankup §7/vender"));
-                continue;
-            }
-            int pct = (int) Math.min(100, m.quebrados * 100L / Mina.volume());
-            long falta = m.quebrados == 0 ? -1 : Math.max(0, resetMs - (agora - m.ultimoReset));
-            String quando = m.refazendo ? "§erefazendo..." : falta < 0 ? "§acheia" : "§7refaz em §f" + (falta / 60000) + ":" + String.format("%02d", (falta / 1000) % 60);
-            p.sendActionBar(txt((m.pvp ? "§c⚔ " : "§6⛏ ") + m.nome + " §8• §f" + pct + "% §7minerada §8• " + quando + " §8• §7rank " + RANKS[r].cor() + RANKS[r].letra()));
-        }
-    }
-
-    private void preco(double v, Material... ms) { for (Material m : ms) precos.put(m, v); }
-
-    // ------------------------------------------------------------------ mundo
-    private void criarMundo() {
-        mundo = Bukkit.getWorld(MUNDO);
-        if (mundo == null) mundo = new WorldCreator(MUNDO).generator(new Vazio()).environment(World.Environment.NORMAL).generateStructures(false).createWorld();
-        if (mundo == null) return;
-        mundo.setDifficulty(Difficulty.EASY);
-        mundo.setGameRule(GameRules.SPAWN_MOBS, false);
-        mundo.setGameRule(GameRules.SPAWN_MONSTERS, false);
-        mundo.setGameRule(GameRules.SPAWN_PHANTOMS, false);
-        mundo.setGameRule(GameRules.SPAWN_PATROLS, false);
-        mundo.setGameRule(GameRules.SPAWN_WANDERING_TRADERS, false);
-        mundo.setGameRule(GameRules.ADVANCE_TIME, false);
-        mundo.setGameRule(GameRules.ADVANCE_WEATHER, false);
-        mundo.setGameRule(GameRules.KEEP_INVENTORY, false);
-        mundo.setGameRule(GameRules.MOB_GRIEFING, false);
-        mundo.setGameRule(GameRules.PVP, true);
-        mundo.setGameRule(GameRules.FALL_DAMAGE, false);
-        mundo.setGameRule(GameRules.IMMEDIATE_RESPAWN, true);
-        mundo.setGameRule(GameRules.SHOW_ADVANCEMENT_MESSAGES, false);
-        mundo.setTime(6000);
-        mundo.setStorm(false);
-        mundo.setSpawnLocation(new Location(mundo, 0.5, 100, 0.5));
-    }
-
-    static final class Vazio extends ChunkGenerator {
-        @Override public boolean shouldGenerateNoise() { return false; }
-        @Override public boolean shouldGenerateSurface() { return false; }
-        @Override public boolean shouldGenerateCaves() { return false; }
-        @Override public boolean shouldGenerateDecorations() { return false; }
-        @Override public boolean shouldGenerateMobs() { return false; }
-        @Override public boolean shouldGenerateStructures() { return false; }
-    }
-
-    Location centro() { Location l = new Location(mundo, 0.5, 100, 0.5); l.setYaw(-90); return l; }
-
-    private void construirCentro() {
-        for (int x = -8; x <= 8; x++)
-            for (int z = -8; z <= 8; z++) {
-                boolean beira = Math.abs(x) == 8 || Math.abs(z) == 8;
-                boolean cruz = x == 0 || z == 0;
-                mundo.getBlockAt(x, 99, z).setType(beira ? Material.POLISHED_BLACKSTONE_BRICKS : cruz ? Material.GOLD_BLOCK : Material.POLISHED_DEEPSLATE, false);
-                for (int y = 96; y < 99; y++) mundo.getBlockAt(x, y, z).setType(Material.DEEPSLATE_BRICKS, false);
-                if (beira && Math.abs(x) == Math.abs(z)) {
-                    mundo.getBlockAt(x, 100, z).setType(Material.POLISHED_BLACKSTONE_WALL, false);
-                    mundo.getBlockAt(x, 101, z).setType(Material.LANTERN, false);
-                }
-            }
-        // caminho para a mina PvP (vermelho) e para as minas normais (pedra)
-        for (int x = 9; x <= 47; x++) for (int z = -1; z <= 1; z++) mundo.getBlockAt(x, 99, z).setType(z == 0 ? Material.SMOOTH_STONE : Material.STONE_BRICKS, false);
-        for (int x = -66; x <= -9; x++) for (int z = -1; z <= 1; z++) mundo.getBlockAt(x, 99, z).setType(z == 0 ? Material.RED_NETHER_BRICKS : Material.NETHER_BRICKS, false);
-        for (int i = 0; i + 1 < 6; i++) {
-            int x0 = 60 + i * 60 + Mina.RAIO + 1 + Mina.BORDA + 1, x1 = 60 + (i + 1) * 60 - Mina.RAIO - 1 - Mina.BORDA - 1;
-            for (int x = x0; x <= x1; x++) for (int z = -1; z <= 1; z++) mundo.getBlockAt(x, 99, z).setType(z == 0 ? Material.SMOOTH_STONE : Material.STONE_BRICKS, false);
-        }
-    }
-
-    // ------------------------------------------------------------------ reset das minas
-    void refazer(Mina m) {
-        if (mundo == null || m.refazendo) return;
-        m.refazendo = true;
-        for (Player p : mundo.getPlayers())
-            if (m.dentroDoPoco(p.getLocation())) {
-                p.teleport(m.chegada(mundo));
-                p.sendActionBar(txt("§e⛏ A " + m.nome + " §eestá sendo refeita!"));
-            }
-        List<int[]> pos = new ArrayList<>(Mina.volume());
-        for (int y = Mina.TOPO; y > Mina.TOPO - Mina.FUNDO; y--)
-            for (int x = -Mina.RAIO; x <= Mina.RAIO; x++)
-                for (int z = -Mina.RAIO; z <= Mina.RAIO; z++) pos.add(new int[]{m.cx + x, y, z});
-        Iterator<int[]> it = pos.iterator();
-        Bukkit.getScheduler().runTaskTimer(this, t -> {
-            for (int n = 0; n < 2500 && it.hasNext(); n++) {
-                int[] b = it.next();
-                mundo.getBlockAt(b[0], b[1], b[2]).setType(m.sortear(), false);
-            }
-            if (!it.hasNext()) {
-                t.cancel();
-                m.quebrados = 0;
-                m.ultimoReset = System.currentTimeMillis();
-                m.refazendo = false;
-                for (Player p : mundo.getPlayers())
-                    if (m.naArea(p.getLocation())) p.sendActionBar(txt("§a⛏ A " + m.nome + " §afoi refeita!"));
-            }
-        }, 1L, 1L);
-    }
-
-    Mina minaDoBloco(Block b) {
-        for (Mina m : minas) if (m.noMiolo(b)) return m;
-        return null;
-    }
-
-    Mina minaDaArea(Location l) {
-        for (Mina m : minas) if (m.naArea(l)) return m;
-        return null;
-    }
-
-    // ------------------------------------------------------------------ rank, coronas
-    int rank(Player p) {
-        Integer r = p.getPersistentDataContainer().get(kRank, PersistentDataType.INTEGER);
-        return r == null ? 0 : Math.max(0, Math.min(RANKS.length - 1, r));
-    }
-
-    static long coronas(Player p) {
-        Long v = p.getPersistentDataContainer().get(CORONAS, PersistentDataType.LONG);
-        return v == null ? 0 : v;
-    }
-
-    static void setCoronas(Player p, long v) { p.getPersistentDataContainer().set(CORONAS, PersistentDataType.LONG, Math.max(0, v)); }
-
-    static int vip(Player p) {
-        PersistentDataContainer c = p.getPersistentDataContainer();
-        Integer n = c.get(VIP_NIVEL, PersistentDataType.INTEGER);
-        Long ate = c.get(VIP_ATE, PersistentDataType.LONG);
-        if (n == null || n <= 0 || ate == null || ate < System.currentTimeMillis()) return 0;
-        return Math.min(n, BONUS_VIP.length - 1);
-    }
-
-    static String fmt(long v) { return String.format(Locale.ROOT, "%,d", v).replace(',', '.'); }
-
-    String nomeRank(int r) { return RANKS[r].cor() + "[" + RANKS[r].letra() + "] " + RANKS[r].nome(); }
-
-    // ------------------------------------------------------------------ eventos
-    boolean admin(Player p) { return p.hasPermission("mineracao.admin") && p.getGameMode() == GameMode.CREATIVE; }
-
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void quebrar(BlockBreakEvent e) {
-        if (e.getBlock().getWorld() != mundo) return;
-        Player p = e.getPlayer();
-        if (admin(p)) return;
-        Mina m = minaDoBloco(e.getBlock());
-        if (m == null || m.refazendo) { e.setCancelled(true); return; }
-        if (rank(p) < m.rank) {
-            e.setCancelled(true);
-            p.sendActionBar(txt("§cPrecisa do rank " + nomeRank(m.rank) + " §cpara minerar aqui. §e/rankup"));
-            return;
-        }
-        Material t = e.getBlock().getType();
-        if (t == Material.STONE || t == Material.DEEPSLATE || t == Material.COBBLESTONE || t == Material.COBBLED_DEEPSLATE) e.setDropItems(false);
-        e.setExpToDrop(Math.min(e.getExpToDrop(), 3));
-        m.quebrados++;
-    }
-
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void soltou(BlockDropItemEvent e) {
-        if (e.getBlock().getWorld() != mundo || minaDoBloco(e.getBlock()) == null) return;
-        Player p = e.getPlayer();
-        boolean cheio = false;
-        for (Iterator<Item> i = e.getItems().iterator(); i.hasNext(); ) {
-            Item it = i.next();
-            ItemStack s = it.getItemStack();
-            if (!precos.containsKey(s.getType())) continue;
-            ItemStack m = marcar(s);
-            // coleta automatica (13/11): vai direto pro inventario; o que nao couber cai no chao
-            Map<Integer, ItemStack> sobra = p.getInventory().addItem(m.clone());
-            if (sobra.isEmpty()) { i.remove(); continue; }
-            cheio = true;
-            it.setItemStack(sobra.values().iterator().next());
-        }
-        if (cheio) p.sendActionBar(txt("§c⛏ Inventário cheio! Use §e/vender"));
-    }
-
-    ItemStack marcar(ItemStack s) {
-        ItemMeta im = s.getItemMeta();
-        if (im == null) return s;
-        im.getPersistentDataContainer().set(kMinerado, PersistentDataType.BYTE, (byte) 1);
-        im.lore(List.of(txt("§8⛏ Minério da Mina §7— §e/vender")));
-        s.setItemMeta(im);
-        return s;
-    }
-
-    boolean marcado(ItemStack s) {
-        if (s == null || !s.hasItemMeta()) return false;
-        return s.getItemMeta().getPersistentDataContainer().has(kMinerado, PersistentDataType.BYTE);
-    }
-
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void colocar(BlockPlaceEvent e) {
-        if (e.getBlock().getWorld() == mundo && !admin(e.getPlayer())) e.setCancelled(true);
-    }
-
-    static Player atacante(EntityDamageByEntityEvent e) {
-        if (e.getDamager() instanceof Player p) return p;
-        if (e.getDamager() instanceof Projectile pr && pr.getShooter() instanceof Player p) return p;
-        return null;
-    }
-
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void pvp(EntityDamageByEntityEvent e) {
-        if (!(e.getEntity() instanceof Player v) || v.getWorld() != mundo) return;
-        Player a = atacante(e);
-        if (a == null || a == v) return;
-        Mina mv = minaDaArea(v.getLocation()), ma = minaDaArea(a.getLocation());
-        if (mv != null && mv.pvp && ma == mv) return;   // PvP liberado so dentro da mina PvP
-        e.setCancelled(true);
-    }
-
-    @EventHandler(priority = EventPriority.HIGH)
-    public void morte(PlayerDeathEvent e) {
-        Player p = e.getEntity();
-        if (p.getWorld() != mundo) return;
-        Mina m = minaDaArea(p.getLocation());
-        if (m != null && m.pvp) {
-            e.deathMessage(txt("§c⚔ " + p.getName() + " §7caiu na §cMina PvP" + (p.getKiller() != null ? " §7para §c" + p.getKiller().getName() : "") + "§7!"));
-            return;   // na mina PvP os itens caem
-        }
-        e.setKeepInventory(true);
-        e.getDrops().clear();
-        e.setKeepLevel(true);
-        e.setDroppedExp(0);
-    }
-
-    @EventHandler
-    public void renascer(PlayerRespawnEvent e) {
-        if (e.getPlayer().getWorld() == mundo && mundo != null) e.setRespawnLocation(centro());
-    }
-
-    @EventHandler
-    public void entrou(PlayerChangedWorldEvent e) {
-        Player p = e.getPlayer();
-        if (p.getWorld() != mundo) return;
-        p.showTitle(Title.title(txt("§6⛏ Mundo de Mineração"), txt("§e/minas §7escolher mina §8• §e/rankup §7subir de rank"),
-                Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(3), Duration.ofMillis(600))));
-        p.sendMessage(txt("§6§l⛏ Mineração §8» §7Seu rank: " + nomeRank(rank(p)) + "§7. Minere, use §e/vender §7e suba com §e/rankup§7. A §cMina PvP §7(rank C) tem o melhor minério, mas lá os itens caem."));
-        PersistentDataContainer c = p.getPersistentDataContainer();
-        if (!c.has(kGanhou, PersistentDataType.BYTE)) {
-            c.set(kGanhou, PersistentDataType.BYTE, (byte) 1);
-            ItemStack pic = new ItemStack(Material.IRON_PICKAXE);
-            ItemMeta im = pic.getItemMeta();
-            im.displayName(txt("§6Picareta do Mineiro"));
-            im.addEnchant(Enchantment.EFFICIENCY, 2, true);
-            im.addEnchant(Enchantment.UNBREAKING, 2, true);
-            pic.setItemMeta(im);
-            p.getInventory().addItem(pic).values().forEach(s -> p.getWorld().dropItemNaturally(p.getLocation(), s));
-            p.sendMessage(txt("§a+ Picareta do Mineiro §7(presente da primeira visita)"));
-        }
-    }
-
-    // ------------------------------------------------------------------ menu
-    static final class Menu implements InventoryHolder {
+    // ------------------------------------------------------------------ menus
+    static class Tela implements InventoryHolder {
+        final String tipo;
         Inventory inv;
+        Tela(String tipo) { this.tipo = tipo; }
         @Override public Inventory getInventory() { return inv; }
     }
 
+    static final int[] SLOTS_MINAS = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23};
+
     void abrirMenu(Player p) {
-        Menu h = new Menu();
-        Inventory inv = Bukkit.createInventory(h, 27, txt("§8⛏ Minas • seu rank: " + RANKS[rank(p)].letra()));
+        Tela h = new Tela("menu");
+        Inventory inv = Bukkit.createInventory(h, 54, txt("§8⛓ Prisão • rank " + RANKS[rank(p)].letra() + " • $" + fmt(dinheiro(p))));
         h.inv = inv;
-        inv.setItem(4, item(Material.COMPASS, "§e§lCentro da Mineração", "§7Ir para o centro do mundo de mineração."));
-        int[] slots = {10, 11, 12, 13, 14, 15};
         int r = rank(p);
-        for (int i = 0; i < 6; i++) {
-            Mina m = minas.get(i);
-            boolean ok = r >= m.rank;
-            List<String> lore = new ArrayList<>();
-            lore.add("§7Rank: " + nomeRank(m.rank));
-            lore.add("§7Minérios: §f" + resumo(m));
-            lore.add(ok ? "§a▶ Clique para ir" : "§c✖ Precisa do rank " + RANKS[m.rank].letra() + " §8(/rankup)");
-            inv.setItem(slots[i], item(ok ? m.icone : Material.BARRIER, (ok ? "§a" : "§c") + m.nome, lore.toArray(new String[0])));
-        }
-        Mina pv = minas.get(6);
-        inv.setItem(16, item(r >= pv.rank ? Material.NETHERITE_SWORD : Material.BARRIER, "§c§l" + pv.nome,
-                "§7Rank: " + nomeRank(pv.rank), "§7Minérios: §f" + resumo(pv), "§c⚠ PvP ligado: quem morre lá", "§c   perde os itens!", r >= pv.rank ? "§a▶ Clique para ir" : "§c✖ Precisa do rank C"));
-        long cust = r + 1 < RANKS.length ? RANKS[r + 1].custo() : 0;
-        inv.setItem(22, item(Material.EXPERIENCE_BOTTLE, "§6§lRank Up",
-                "§7Seu rank: " + nomeRank(r), r + 1 < RANKS.length ? "§7Próximo: " + nomeRank(r + 1) + " §7por §6" + fmt(cust) + " coronas" : "§dVocê está no rank máximo!",
-                "§7Suas coronas: §6" + fmt(coronas(p)), "§7Bônus na venda: §a+" + Math.round((RANKS[r].mult() - 1) * 100) + "%", r + 1 < RANKS.length ? "§a▶ Clique para subir" : ""));
+        inv.setItem(0, item(Material.OAK_DOOR, "§a§lSaída", "§7Volta para o spawn do servidor."));
+        inv.setItem(4, item(Material.COMPASS, "§e§lPátio da Prisão", "§7O centro: portais, kits, venda e rank up."));
         List<String> tl = new ArrayList<>(linhasTop(5));
         if (tl.isEmpty()) tl.add("§7Ninguém ainda. Seja o primeiro!");
-        tl.add("§8Ordem: rank, depois minério vendido");
         int hd = getConfig().getInt("hora-dourada", 20);
-        if (hd >= 0) tl.add((horaDourada() ? "§6§l✦ HORA DOURADA AGORA: venda x2!" : "§6✦ Hora dourada: todo dia às " + hd + "h (venda x2)"));
-        inv.setItem(8, item(Material.GOLDEN_HELMET, "§6§lTop Mineradores", tl.toArray(new String[0])));
-        inv.setItem(18, item(Material.ANVIL, "§b§lMelhorar picareta", "§7Segure a picareta na mão e clique.",
-                "§7Eficiência até V, Fortuna até III,", "§7Inquebrável até III (custa coronas).", "§a▶ Clique para ver os preços"));
-        inv.setItem(26, item(Material.GOLD_INGOT, "§e§lVender minério", "§7Vende todo minério das minas", "§7que estiver no inventário.", "§a▶ Clique para vender"));
+        if (hd >= 0) tl.add(horaDourada() ? "§6§l✦ HORA DOURADA AGORA: venda x2!" : "§6✦ Hora dourada: todo dia às " + hd + "h (venda x2)");
+        inv.setItem(8, item(Material.GOLDEN_HELMET, "§6§lTop da Prisão", tl.toArray(new String[0])));
+        for (int i = 0; i < 12; i++) {
+            Mina m = minas.get(i);
+            boolean ok = r >= m.rank;
+            inv.setItem(SLOTS_MINAS[i], item(ok ? m.icone : Material.IRON_BARS, (ok ? "§a" : "§c") + m.nome,
+                    "§7Rank: " + nomeRank(m.rank), "§7Minérios: §f" + resumo(m), ok ? "§a▶ Clique para ir" : "§c✖ Precisa do rank " + RANKS[m.rank].letra() + " §8(/rankup)"));
+        }
+        Mina pv = minas.get(12);
+        inv.setItem(24, item(r >= pv.rank ? Material.NETHERITE_SWORD : Material.IRON_BARS, "§c§l" + pv.nome,
+                "§7Rank: " + nomeRank(pv.rank), "§7Minérios: §f" + resumo(pv), "§c⚠ PvP ligado: quem morre", "§c   perde os itens!", r >= pv.rank ? "§a▶ Clique para ir" : "§c✖ Precisa do rank " + RANKS[pv.rank].letra()));
+        inv.setItem(25, item(Material.ENCHANTING_TABLE, "§d§lSala de Encantamentos", "§7Mesas com 15 estantes, bigornas", "§7e rebolo. §a▶ Clique para ir"));
+        inv.setItem(38, item(Material.CHEST, "§b§lKits da Prisão", "§7Kit do Detento para todos e", "§7kits VIP (24 h cada).", "§a▶ Clique para ver"));
+        long cust = r + 1 < RANKS.length ? RANKS[r + 1].custo() : 0;
+        inv.setItem(40, item(Material.EXPERIENCE_BOTTLE, "§6§lRank Up",
+                "§7Seu rank: " + nomeRank(r), r + 1 < RANKS.length ? "§7Próximo: " + nomeRank(r + 1) + " §7por " + din(cust) : "§dVocê está no rank máximo!",
+                "§7Seu dinheiro: " + din(dinheiro(p)), "§7Bônus na venda: §a+" + Math.round((RANKS[r].mult() - 1) * 100) + "%", r + 1 < RANKS.length ? "§a▶ Clique para subir" : ""));
+        inv.setItem(42, item(Material.GOLD_INGOT, "§2§lVender minério", "§7Vende todo minério das minas", "§7que estiver no inventário.", "§a▶ Clique para vender"));
+        inv.setItem(44, item(Material.ANVIL, "§d§lMelhorar picareta", "§7Segure a picareta na mão.", "§7Eficiência V, Fortuna III, Inquebrável III."));
         p.openInventory(inv);
     }
 
     String resumo(Mina m) {
         StringBuilder sb = new StringBuilder();
         for (Material mt : m.mistura.keySet()) {
-            String n = mt.name().replace("DEEPSLATE_", "").replace("_ORE", "").replace("ANCIENT_DEBRIS", "NETHERITA");
-            if (n.equals("STONE") || n.equals("DEEPSLATE")) continue;
+            String n = switch (mt) {
+                case COAL_ORE -> "carvão"; case COPPER_ORE -> "cobre"; case IRON_ORE, DEEPSLATE_IRON_ORE -> "ferro"; case GOLD_ORE, DEEPSLATE_GOLD_ORE -> "ouro";
+                case REDSTONE_ORE, DEEPSLATE_REDSTONE_ORE -> "redstone"; case LAPIS_ORE, DEEPSLATE_LAPIS_ORE -> "lápis"; case DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE -> "diamante";
+                case EMERALD_ORE, DEEPSLATE_EMERALD_ORE -> "esmeralda"; case ANCIENT_DEBRIS -> "netherita"; case NETHER_QUARTZ_ORE -> "quartzo"; case NETHER_GOLD_ORE -> "ouro do Nether";
+                case GILDED_BLACKSTONE -> "pedra dourada"; case GOLD_BLOCK -> "bloco de ouro"; case DIAMOND_BLOCK -> "bloco de diamante"; case EMERALD_BLOCK -> "bloco de esmeralda";
+                default -> null;
+            };
+            if (n == null) continue;
             if (sb.length() > 0) sb.append(", ");
-            sb.append(switch (n) { case "COAL" -> "carvão"; case "COPPER" -> "cobre"; case "IRON" -> "ferro"; case "GOLD" -> "ouro";
-                case "REDSTONE" -> "redstone"; case "LAPIS" -> "lápis"; case "DIAMOND" -> "diamante"; case "EMERALD" -> "esmeralda"; default -> "netherita"; });
+            sb.append(n);
         }
         return sb.toString();
     }
@@ -513,109 +1124,78 @@ public final class Mineracao extends JavaPlugin implements Listener {
 
     @EventHandler
     public void clique(InventoryClickEvent e) {
-        if (!(e.getView().getTopInventory().getHolder() instanceof Menu)) return;
+        if (!(e.getView().getTopInventory().getHolder() instanceof Tela t)) return;
         e.setCancelled(true);
         if (!(e.getWhoClicked() instanceof Player p) || e.getClickedInventory() != e.getView().getTopInventory()) return;
         int s = e.getSlot();
-        if (s == 4) { p.closeInventory(); irPara(p, null); }
-        else if (s >= 10 && s <= 15) { p.closeInventory(); irPara(p, minas.get(s - 10)); }
-        else if (s == 16) { p.closeInventory(); irPara(p, minas.get(6)); }
-        else if (s == 22) { p.closeInventory(); rankup(p); }
-        else if (s == 26) { p.closeInventory(); vender(p); }
-        else if (s == 18) { p.closeInventory(); abrirMelhorias(p); }
+        switch (t.tipo) {
+            case "menu" -> {
+                for (int i = 0; i < SLOTS_MINAS.length; i++) if (SLOTS_MINAS[i] == s) { p.closeInventory(); irPara(p, minas.get(i)); return; }
+                switch (s) {
+                    case 0 -> { p.closeInventory(); sair(p); }
+                    case 4 -> { p.closeInventory(); irCentro(p); }
+                    case 24 -> { p.closeInventory(); irPara(p, minas.get(12)); }
+                    case 25 -> { p.closeInventory(); if (podeIr(p)) p.teleport(salaEnc()); }
+                    case 38 -> abrirKits(p);
+                    case 40 -> { p.closeInventory(); rankup(p); }
+                    case 42 -> { p.closeInventory(); vender(p); }
+                    case 44 -> { p.closeInventory(); abrirMelhorias(p); }
+                    default -> {}
+                }
+            }
+            case "kits" -> { if (s >= 0 && s < KITS.length * 2 && s % 2 == 0) pegarKit(p, KITS[s / 2]); }
+            case "bigorna" -> {
+                int i = (s - 2) / 2;
+                if (s < 2 || (s - 2) % 2 != 0 || i >= MELHORIAS.length) return;
+                melhorar(p, MELHORIAS[i]);
+                abrirMelhorias(p);
+            }
+            default -> {}
+        }
     }
 
     @EventHandler
     public void arrastar(InventoryDragEvent e) {
-        if (e.getView().getTopInventory().getHolder() instanceof Menu || e.getView().getTopInventory().getHolder() instanceof Bigorna) e.setCancelled(true);
+        if (e.getView().getTopInventory().getHolder() instanceof Tela) e.setCancelled(true);
     }
 
-    // ------------------------------------------------------------------ melhorias da picareta (13/11)
-    record Melhoria(Enchantment enc, String nome, Material icone, long[] custo) {}
-    static final Melhoria[] MELHORIAS = {
-            new Melhoria(Enchantment.EFFICIENCY, "Eficiência", Material.GOLDEN_PICKAXE, new long[]{300, 600, 1200, 2500, 5000}),
-            new Melhoria(Enchantment.FORTUNE, "Fortuna", Material.EMERALD, new long[]{2000, 6000, 15000}),
-            new Melhoria(Enchantment.UNBREAKING, "Inquebrável", Material.OBSIDIAN, new long[]{400, 900, 2000})};
-
-    static final class Bigorna implements InventoryHolder {
-        Inventory inv;
-        @Override public Inventory getInventory() { return inv; }
-    }
-
-    static boolean picareta(ItemStack s) { return s != null && s.getType().name().endsWith("_PICKAXE"); }
-
-    void abrirMelhorias(Player p) {
-        ItemStack mao = p.getInventory().getItemInMainHand();
-        if (!picareta(mao)) { p.sendMessage(txt("§cSegure uma picareta na mão para melhorar.")); return; }
-        Bigorna h = new Bigorna();
-        Inventory inv = Bukkit.createInventory(h, 9, txt("§8⚒ Melhorar picareta"));
-        h.inv = inv;
-        for (int i = 0; i < MELHORIAS.length; i++) {
-            Melhoria m = MELHORIAS[i];
-            int nv = mao.getEnchantmentLevel(m.enc());
-            if (nv >= m.custo().length) inv.setItem(2 + i * 2, item(m.icone(), "§a" + m.nome() + " " + romano(nv), "§7Já está no máximo."));
-            else inv.setItem(2 + i * 2, item(m.icone(), "§b" + m.nome() + " " + romano(nv) + " §7→ §b" + romano(nv + 1),
-                    "§7Custa §6" + fmt(m.custo()[nv]) + " coronas", "§7Você tem §6" + fmt(coronas(p)), "§a▶ Clique para melhorar"));
-        }
-        p.openInventory(inv);
-    }
-
-    static String romano(int n) { return n <= 0 ? "0" : new String[]{"I", "II", "III", "IV", "V"}[Math.min(5, n) - 1]; }
-
-    @EventHandler
-    public void cliqueBigorna(InventoryClickEvent e) {
-        if (!(e.getView().getTopInventory().getHolder() instanceof Bigorna)) return;
-        e.setCancelled(true);
-        if (!(e.getWhoClicked() instanceof Player p) || e.getClickedInventory() != e.getView().getTopInventory()) return;
-        int i = (e.getSlot() - 2) / 2;
-        if (e.getSlot() < 2 || (e.getSlot() - 2) % 2 != 0 || i >= MELHORIAS.length) return;
-        melhorar(p, MELHORIAS[i]);
-        abrirMelhorias(p);
-    }
-
-    void melhorar(Player p, Melhoria m) {
-        ItemStack mao = p.getInventory().getItemInMainHand();
-        if (!picareta(mao)) { p.closeInventory(); p.sendMessage(txt("§cSegure a picareta na mão.")); return; }
-        int nv = mao.getEnchantmentLevel(m.enc());
-        if (nv >= m.custo().length) { p.sendMessage(txt("§a" + m.nome() + " já está no máximo.")); return; }
-        long c = m.custo()[nv], tem = coronas(p);
-        if (tem < c) { p.sendMessage(txt("§cFaltam §6" + fmt(c - tem) + " coronas §cpara " + m.nome() + " " + romano(nv + 1) + ".")); return; }
-        setCoronas(p, tem - c);
-        ItemMeta im = mao.getItemMeta();
-        im.addEnchant(m.enc(), nv + 1, true);
-        mao.setItemMeta(im);
-        p.playSound(p.getLocation(), Sound.BLOCK_ANVIL_USE, 0.8f, 1.2f);
-        p.sendMessage(txt("§b⚒ Picareta melhorada: §f" + m.nome() + " " + romano(nv + 1) + " §7(-" + fmt(c) + " coronas)"));
-    }
-
-    boolean podeSair(Player p) {
+    boolean podeIr(Player p) {
         String w = p.getWorld().getName();
-        return p.getWorld() == mundo || mundosComAcesso.contains(w) || p.hasPermission("mineracao.admin");
+        if (p.getWorld() == mundo || mundosComAcesso.contains(w) || p.hasPermission("mineracao.admin")) return true;
+        p.sendMessage(txt("§cDaqui não dá para ir para a Prisão. Volte ao spawn primeiro."));
+        return false;
     }
 
-    void irPara(Player p, Mina m) {
-        if (!podeSair(p)) { p.sendMessage(txt("§cDaqui não dá para ir para a mineração. Volte ao spawn primeiro.")); return; }
-        if (m == null) { p.teleport(centro()); return; }
-        if (rank(p) < m.rank) { p.sendMessage(txt("§cA " + m.nome + " §cprecisa do rank " + nomeRank(m.rank) + "§c. Use §e/rankup§c.")); return; }
+    void irCentro(Player p) { if (podeIr(p)) p.teleport(patio()); }
+
+    boolean irPara(Player p, Mina m) {
+        if (!podeIr(p)) return false;
+        if (rank(p) < m.rank) {
+            p.sendMessage(txt("§cO " + m.nome + " §cprecisa do rank " + nomeRank(m.rank) + "§c. Use §e/rankup§c."));
+            p.playSound(p.getLocation(), Sound.BLOCK_IRON_DOOR_CLOSE, 0.8f, 0.6f);
+            return false;
+        }
         p.teleport(m.chegada(mundo));
         if (m.pvp) p.sendMessage(txt("§c§l⚠ MINA PVP §8» §7Aqui outros jogadores podem te atacar e quem morre §cperde os itens§7."));
+        return true;
     }
 
+    // ------------------------------------------------------------------ rank up e venda
     void rankup(Player p) {
         int r = rank(p);
         if (r + 1 >= RANKS.length) { p.sendMessage(txt("§dVocê já está no rank máximo: " + nomeRank(r))); return; }
         Rank prox = RANKS[r + 1];
-        long tem = coronas(p);
+        long tem = dinheiro(p);
         if (tem < prox.custo()) {
-            p.sendMessage(txt("§cFaltam §6" + fmt(prox.custo() - tem) + " coronas §cpara o rank " + nomeRank(r + 1) + "§c. Venda minério com §e/vender§c."));
+            p.sendMessage(txt("§cFaltam " + din(prox.custo() - tem) + " §cpara o rank " + nomeRank(r + 1) + "§c. Venda minério com §e/vender§c."));
             return;
         }
-        setCoronas(p, tem - prox.custo());
+        setDinheiro(p, tem - prox.custo());
         p.getPersistentDataContainer().set(kRank, PersistentDataType.INTEGER, r + 1);
         p.showTitle(Title.title(txt("§6§lRANK UP!"), txt(nomeRank(r + 1)), Title.Times.times(Duration.ofMillis(200), Duration.ofSeconds(3), Duration.ofMillis(500))));
         p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
-        Bukkit.broadcast(txt("§6⛏ §e" + p.getName() + " §7subiu para o rank " + nomeRank(r + 1) + " §7na mineração!"));
-        getLogger().info(p.getName() + " subiu para o rank " + prox.letra() + " (pagou " + prox.custo() + ")");
+        Bukkit.broadcast(txt("§6⛓ §e" + p.getName() + " §7subiu para o rank " + nomeRank(r + 1) + " §7na Prisão!"));
+        getLogger().info(p.getName() + " subiu para o rank " + prox.letra() + " (pagou $" + prox.custo() + ")");
         registrarTop(p, 0);
     }
 
@@ -632,18 +1212,132 @@ public final class Mineracao extends JavaPlugin implements Listener {
             itens += s.getAmount();
             cont[i] = null;
         }
-        if (itens == 0) { p.sendMessage(txt("§7Você não tem minério das minas para vender. §8(só o que sai das minas vende)")); return; }
+        if (itens == 0) { p.sendMessage(txt("§7Você não tem minério das minas para vender. §8(só o que sai das minas da Prisão vende)")); return; }
         p.getInventory().setStorageContents(cont);
         int r = rank(p);
-        double comRank = total * RANKS[r].mult();
         int nv = vip(p);
         boolean dour = horaDourada();
-        long v = Math.max(1, Math.round(comRank * (100 + BONUS_VIP[nv]) / 100.0 * (dour ? 2 : 1)));
-        setCoronas(p, coronas(p) + v);
+        long v = Math.max(1, Math.round(total * RANKS[r].mult() * (100 + BONUS_VIP[nv]) / 100.0 * (dour ? 2 : 1)));
+        setDinheiro(p, dinheiro(p) + v);
         p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1.2f);
-        p.sendMessage(txt("§a⛏ Vendeu §f" + itens + " §aminérios por §6" + fmt(v) + " coronas §8(rank " + RANKS[r].letra()
-                + (nv > 0 ? ", VIP +" + BONUS_VIP[nv] + "%" : "") + (dour ? ", §6HORA DOURADA x2§8" : "") + ") §7— saldo: §6" + fmt(coronas(p))));
+        p.sendMessage(txt("§a⛏ Vendeu §f" + itens + " §aminérios por " + din(v) + " §8(rank " + RANKS[r].letra()
+                + (nv > 0 ? ", " + NOME_VIP[nv] + " +" + BONUS_VIP[nv] + "%" : "") + (dour ? ", §6HORA DOURADA x2§8" : "") + ") §7— saldo: " + din(dinheiro(p))));
         registrarTop(p, itens);
+    }
+
+    // ------------------------------------------------------------------ kits (so na prisao)
+    record Kit(String id, String nome, int vipMin, Material icone, String desc) {}
+    static final Kit[] KITS = {
+            new Kit("detento", "§7§lKit Detento", 0, Material.STONE_PICKAXE, "§7Picareta de ferro (Eficiência I)"),
+            new Kit("vip", "§a§lKit VIP", 1, Material.IRON_PICKAXE, "§7Picareta de diamante (Efic. III, Fortuna I)"),
+            new Kit("vipmais", "§b§lKit VIP+", 2, Material.DIAMOND_PICKAXE, "§7Picareta de diamante (Efic. IV, Fortuna II)\n§7+ armadura de ferro"),
+            new Kit("mvp", "§6§lKit MVP", 3, Material.NETHERITE_PICKAXE, "§7Picareta de netherita (Efic. V, Fortuna II)\n§7+ armadura de diamante (Proteção II)"),
+            new Kit("lenda", "§d§lKit LENDA", 4, Material.NETHER_STAR, "§7Picareta de netherita (Efic. V, Fortuna III, Remendo)\n§7+ armadura de diamante (Proteção III) + 4 maçãs douradas")};
+
+    void abrirKits(Player p) {
+        if (p.getWorld() != mundo) { p.sendMessage(txt("§cOs kits da Prisão só saem dentro da Prisão.")); return; }
+        Tela h = new Tela("kits");
+        Inventory inv = Bukkit.createInventory(h, 9, txt("§8⛓ Kits da Prisão (24 h)"));
+        h.inv = inv;
+        int nv = vip(p);
+        for (int i = 0; i < KITS.length; i++) {
+            Kit k = KITS[i];
+            long falta = faltaKit(p, k);
+            List<String> lore = new ArrayList<>(Arrays.asList(k.desc().split("\n")));
+            if (nv < k.vipMin()) lore.add("§c✖ Só para " + NOME_VIP[k.vipMin()] + " ou acima §8(/vip)");
+            else if (falta > 0) lore.add("§e⏳ Disponível em " + (falta / 3600000) + "h " + ((falta / 60000) % 60) + "min");
+            else lore.add("§a▶ Clique para pegar");
+            inv.setItem(i * 2, item(nv >= k.vipMin() ? k.icone() : Material.BARRIER, k.nome(), lore.toArray(new String[0])));
+        }
+        p.openInventory(inv);
+    }
+
+    long faltaKit(Player p, Kit k) {
+        Long ult = p.getPersistentDataContainer().get(new NamespacedKey(this, "kit_" + k.id()), PersistentDataType.LONG);
+        if (ult == null) return 0;
+        return Math.max(0, ult + 24 * 3600_000L - System.currentTimeMillis());
+    }
+
+    void pegarKit(Player p, Kit k) {
+        if (p.getWorld() != mundo) return;
+        if (vip(p) < k.vipMin()) { p.sendMessage(txt("§cEsse kit é só para " + NOME_VIP[k.vipMin()] + " ou acima. §7Veja: §e/vip")); return; }
+        long falta = faltaKit(p, k);
+        if (falta > 0) { p.sendMessage(txt("§eEsse kit volta em " + (falta / 3600000) + "h " + ((falta / 60000) % 60) + "min.")); return; }
+        List<ItemStack> l = new ArrayList<>();
+        switch (k.id()) {
+            case "detento" -> l.add(ench(Material.IRON_PICKAXE, "§7Picareta do Detento", Enchantment.EFFICIENCY, 1));
+            case "vip" -> l.add(ench(Material.DIAMOND_PICKAXE, "§aPicareta VIP", Enchantment.EFFICIENCY, 3, Enchantment.FORTUNE, 1, Enchantment.UNBREAKING, 2));
+            case "vipmais" -> {
+                l.add(ench(Material.DIAMOND_PICKAXE, "§bPicareta VIP+", Enchantment.EFFICIENCY, 4, Enchantment.FORTUNE, 2, Enchantment.UNBREAKING, 3));
+                for (Material m : new Material[]{Material.IRON_HELMET, Material.IRON_CHESTPLATE, Material.IRON_LEGGINGS, Material.IRON_BOOTS}) l.add(new ItemStack(m));
+            }
+            case "mvp" -> {
+                l.add(ench(Material.NETHERITE_PICKAXE, "§6Picareta MVP", Enchantment.EFFICIENCY, 5, Enchantment.FORTUNE, 2, Enchantment.UNBREAKING, 3));
+                for (Material m : new Material[]{Material.DIAMOND_HELMET, Material.DIAMOND_CHESTPLATE, Material.DIAMOND_LEGGINGS, Material.DIAMOND_BOOTS}) l.add(ench(m, null, Enchantment.PROTECTION, 2));
+            }
+            case "lenda" -> {
+                l.add(ench(Material.NETHERITE_PICKAXE, "§dPicareta da Lenda", Enchantment.EFFICIENCY, 5, Enchantment.FORTUNE, 3, Enchantment.UNBREAKING, 3, Enchantment.MENDING, 1));
+                for (Material m : new Material[]{Material.DIAMOND_HELMET, Material.DIAMOND_CHESTPLATE, Material.DIAMOND_LEGGINGS, Material.DIAMOND_BOOTS}) l.add(ench(m, null, Enchantment.PROTECTION, 3));
+                l.add(new ItemStack(Material.GOLDEN_APPLE, 4));
+            }
+            default -> {}
+        }
+        for (ItemStack s : l) p.getInventory().addItem(daPrisao(s)).values().forEach(x -> p.getWorld().dropItemNaturally(p.getLocation(), x));
+        p.getPersistentDataContainer().set(new NamespacedKey(this, "kit_" + k.id()), PersistentDataType.LONG, System.currentTimeMillis());
+        p.playSound(p.getLocation(), Sound.ITEM_ARMOR_EQUIP_DIAMOND, 1f, 1f);
+        p.sendMessage(txt("§a+ " + k.nome() + " §7(volta em 24 h)"));
+        p.closeInventory();
+    }
+
+    static ItemStack ench(Material m, String nome, Object... encs) {
+        ItemStack s = new ItemStack(m);
+        ItemMeta im = s.getItemMeta();
+        if (nome != null) im.displayName(txt(nome));
+        for (int i = 0; i + 1 < encs.length; i += 2) im.addEnchant((Enchantment) encs[i], (Integer) encs[i + 1], true);
+        s.setItemMeta(im);
+        return s;
+    }
+
+    // ------------------------------------------------------------------ melhorias da picareta ($)
+    record Melhoria(Enchantment enc, String nome, Material icone, long[] custo) {}
+    static final Melhoria[] MELHORIAS = {
+            new Melhoria(Enchantment.EFFICIENCY, "Eficiência", Material.GOLDEN_PICKAXE, new long[]{300, 800, 2000, 5000, 12000}),
+            new Melhoria(Enchantment.FORTUNE, "Fortuna", Material.EMERALD, new long[]{3000, 10000, 30000}),
+            new Melhoria(Enchantment.UNBREAKING, "Inquebrável", Material.OBSIDIAN, new long[]{500, 1500, 4000})};
+
+    static boolean picareta(ItemStack s) { return s != null && s.getType().name().endsWith("_PICKAXE"); }
+
+    void abrirMelhorias(Player p) {
+        ItemStack mao = p.getInventory().getItemInMainHand();
+        if (!picareta(mao)) { p.sendMessage(txt("§cSegure uma picareta na mão para melhorar.")); return; }
+        Tela h = new Tela("bigorna");
+        Inventory inv = Bukkit.createInventory(h, 9, txt("§8⚒ Melhorar picareta • $" + fmt(dinheiro(p))));
+        h.inv = inv;
+        for (int i = 0; i < MELHORIAS.length; i++) {
+            Melhoria m = MELHORIAS[i];
+            int nv = mao.getEnchantmentLevel(m.enc());
+            if (nv >= m.custo().length) inv.setItem(2 + i * 2, item(m.icone(), "§a" + m.nome() + " " + romano(nv), "§7Já está no máximo."));
+            else inv.setItem(2 + i * 2, item(m.icone(), "§b" + m.nome() + " " + romano(nv) + " §7→ §b" + romano(nv + 1),
+                    "§7Custa " + din(m.custo()[nv]), "§7Você tem " + din(dinheiro(p)), "§a▶ Clique para melhorar"));
+        }
+        p.openInventory(inv);
+    }
+
+    static String romano(int n) { return n <= 0 ? "0" : new String[]{"I", "II", "III", "IV", "V"}[Math.min(5, n) - 1]; }
+
+    void melhorar(Player p, Melhoria m) {
+        ItemStack mao = p.getInventory().getItemInMainHand();
+        if (!picareta(mao)) { p.closeInventory(); p.sendMessage(txt("§cSegure a picareta na mão.")); return; }
+        int nv = mao.getEnchantmentLevel(m.enc());
+        if (nv >= m.custo().length) { p.sendMessage(txt("§a" + m.nome() + " já está no máximo.")); return; }
+        long c = m.custo()[nv], tem = dinheiro(p);
+        if (tem < c) { p.sendMessage(txt("§cFaltam " + din(c - tem) + " §cpara " + m.nome() + " " + romano(nv + 1) + ".")); return; }
+        setDinheiro(p, tem - c);
+        ItemMeta im = mao.getItemMeta();
+        im.addEnchant(m.enc(), nv + 1, true);
+        mao.setItemMeta(im);
+        p.playSound(p.getLocation(), Sound.BLOCK_ANVIL_USE, 0.8f, 1.2f);
+        p.sendMessage(txt("§b⚒ Picareta melhorada: §f" + m.nome() + " " + romano(nv + 1) + " §7(-" + din(c) + "§7)"));
     }
 
     // ------------------------------------------------------------------ comandos
@@ -652,38 +1346,42 @@ public final class Mineracao extends JavaPlugin implements Listener {
         String n = cmd.getName().toLowerCase(Locale.ROOT);
         if (n.equals("mineracaoadm")) return adm(s, a);
         if (!(s instanceof Player p)) { s.sendMessage("So jogador."); return true; }
-        if (mundo == null) { p.sendMessage(txt("§cA mineração não está disponível agora.")); return true; }
+        if (mundo == null) { p.sendMessage(txt("§cA Prisão não está disponível agora.")); return true; }
         switch (n) {
             case "minas" -> {
                 if (a.length > 0) {
                     String id = a[0].toLowerCase(Locale.ROOT);
-                    if (id.equals("centro")) { irPara(p, null); return true; }
-                    for (Mina m : minas) if (m.id.equals(id)) { irPara(p, m); return true; }
-                    p.sendMessage(txt("§7Minas: §ea b c d e f pvp centro"));
+                    if (id.equals("centro") || id.equals("patio")) { irCentro(p); return true; }
+                    if (id.equals("enc") || id.startsWith("encant")) { if (podeIr(p)) p.teleport(salaEnc()); return true; }
+                    Mina m = mina(id);
+                    if (m != null) { irPara(p, m); return true; }
+                    p.sendMessage(txt("§7Use: §e/minas §7(menu) ou §e/minas a..l | pvp | enc | centro"));
                     return true;
                 }
+                if (p.getWorld() != mundo) { irCentro(p); return true; }
                 abrirMenu(p);
             }
             case "rankup" -> rankup(p);
             case "vender" -> vender(p);
             case "picareta" -> abrirMelhorias(p);
             case "topminas" -> {
-                p.sendMessage(txt("§6§l⛏ Top Mineradores"));
+                p.sendMessage(txt("§6§l⛓ Top da Prisão"));
                 List<String> tl = linhasTop(10);
                 if (tl.isEmpty()) p.sendMessage(txt("§7Ninguém ainda."));
                 for (String x : tl) p.sendMessage(txt(x));
             }
             case "rank" -> {
                 int r = rank(p);
-                p.sendMessage(txt("§6⛏ Seu rank: " + nomeRank(r) + " §8| §7coronas: §6" + fmt(coronas(p))
-                        + (r + 1 < RANKS.length ? " §8| §7próximo: " + nomeRank(r + 1) + " §7por §6" + fmt(RANKS[r + 1].custo()) : "")));
+                p.sendMessage(txt("§6⛓ Seu rank: " + nomeRank(r) + " §8| §7dinheiro: " + din(dinheiro(p))
+                        + (r + 1 < RANKS.length ? " §8| §7próximo: " + nomeRank(r + 1) + " §7por " + din(RANKS[r + 1].custo()) : "")));
             }
+            default -> {}
         }
         return true;
     }
 
     private boolean adm(CommandSender s, String[] a) {
-        if (a.length == 0) { s.sendMessage("/mineracaoadm resetar <a..f|pvp|todas> | rank <nick> <A-F> | ver <nick> | info"); return true; }
+        if (a.length == 0) { s.sendMessage("/mineracaoadm resetar <id|todas> | rank <nick> <A-L> | dinheiro <nick> <valor> | ver <nick> | info | reconstruir | portalspawn"); return true; }
         switch (a[0].toLowerCase(Locale.ROOT)) {
             case "resetar" -> {
                 String id = a.length > 1 ? a[1].toLowerCase(Locale.ROOT) : "todas";
@@ -693,25 +1391,33 @@ public final class Mineracao extends JavaPlugin implements Listener {
             case "rank" -> {
                 Player p = a.length > 2 ? Bukkit.getPlayerExact(a[1]) : null;
                 if (p == null) { s.sendMessage("jogador offline"); return true; }
-                int r = "ABCDEF".indexOf(a[2].toUpperCase(Locale.ROOT));
-                if (r < 0) { s.sendMessage("rank A-F"); return true; }
+                int r = "ABCDEFGHIJKL".indexOf(a[2].toUpperCase(Locale.ROOT));
+                if (r < 0) { s.sendMessage("rank A-L"); return true; }
                 p.getPersistentDataContainer().set(kRank, PersistentDataType.INTEGER, r);
                 s.sendMessage(p.getName() + " agora e rank " + RANKS[r].letra());
+            }
+            case "dinheiro" -> {
+                Player p = a.length > 2 ? Bukkit.getPlayerExact(a[1]) : null;
+                if (p == null) { s.sendMessage("jogador offline"); return true; }
+                try { setDinheiro(p, dinheiro(p) + Long.parseLong(a[2])); } catch (NumberFormatException ex) { s.sendMessage("valor?"); return true; }
+                s.sendMessage(p.getName() + " dinheiro=" + dinheiro(p));
             }
             case "ver" -> {
                 Player p = a.length > 1 ? Bukkit.getPlayerExact(a[1]) : null;
                 if (p == null) { s.sendMessage("jogador offline"); return true; }
                 int marc = 0;
                 for (ItemStack it : p.getInventory().getStorageContents()) if (marcado(it)) marc += it.getAmount();
-                s.sendMessage(p.getName() + " rank=" + RANKS[rank(p)].letra() + " coronas=" + coronas(p) + " minerio-marcado=" + marc);
+                s.sendMessage(p.getName() + " rank=" + RANKS[rank(p)].letra() + " dinheiro=" + dinheiro(p) + " minerio-marcado=" + marc + " mundo=" + p.getWorld().getName());
             }
+            case "reconstruir" -> { construirTudo(2); s.sendMessage("reconstruido"); }
+            case "portalspawn" -> { getConfig().set("portal-spawn.feito", false); portalDoSpawn(); s.sendMessage("portal-spawn.feito=" + getConfig().getBoolean("portal-spawn.feito")); }
             case "info" -> {
                 for (Mina m : minas) {
                     Map<Material, Integer> cont = new EnumMap<>(Material.class);
-                    for (int y = Mina.TOPO; y > Mina.TOPO - Mina.FUNDO; y -= 4)
-                        for (int x = -Mina.RAIO; x <= Mina.RAIO; x += 2)
-                            for (int z = -Mina.RAIO; z <= Mina.RAIO; z += 2) cont.merge(mundo.getBlockAt(m.cx + x, y, z).getType(), 1, Integer::sum);
-                    s.sendMessage("mina " + m.id + " rank=" + RANKS[m.rank].letra() + " quebrados=" + m.quebrados + " amostra=" + cont);
+                    for (int y = Mina.TOPO; y > Mina.TOPO - Mina.FUNDO; y -= 5)
+                        for (int x = -Mina.RAIO; x <= Mina.RAIO; x += 3)
+                            for (int z = -Mina.RAIO; z <= Mina.RAIO; z += 3) cont.merge(mundo.getBlockAt(m.cx + x, y, z).getType(), 1, Integer::sum);
+                    s.sendMessage("mina " + m.id + " cx=" + m.cx + " rank=" + RANKS[m.rank].letra() + " quebrados=" + m.quebrados + " amostra=" + cont);
                 }
             }
             default -> s.sendMessage("?");

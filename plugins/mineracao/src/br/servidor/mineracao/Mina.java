@@ -10,12 +10,12 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Uma mina: um poco quadrado (17x17, 20 de fundo) cercado de bedrock, com uma borda larga em volta para ficar em pe.
+ * Uma mina: um poco quadrado (33x33, 30 de fundo) cercado de bedrock, com uma borda larga em volta para ficar em pe.
  * O miolo e preenchido com a mistura de blocos (pesos) e se refaz sozinho.
  */
 final class Mina {
-    static final int RAIO = 8;          // miolo: centro +- 8 = 17 blocos
-    static final int FUNDO = 20;        // altura do miolo
+    static final int RAIO = 16;         // miolo: centro +- 16 = 33 blocos (13/11: o Paulo pediu minas maiores)
+    static final int FUNDO = 30;        // altura do miolo
     static final int TOPO = 99;         // ultima camada do miolo
     static final int BORDA = 4;         // largura da borda para andar em volta
 

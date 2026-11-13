@@ -42,6 +42,10 @@ final class Mochilas implements Listener {
     String grupo(World w) {
         if (w == null) return null;
         String n = w.getName();
+        // 13/11 (Paulo): o Rank Up (mundo de mineracao) e um mundo a parte, com mochila propria: nada entra nem sai
+        List<String> min = pl.getConfig().getStringList("mochilas.mineracao");
+        if (min.isEmpty()) min = List.of("mineracao");
+        if (min.contains(n)) return "mineracao";
         List<String> surv = pl.getConfig().getStringList("mochilas.survival");
         if (surv.isEmpty()) surv = List.of("world", "world_nether", "world_the_end", "plots");
         List<String> mas = pl.getConfig().getStringList("mochilas.masmorras");
@@ -91,7 +95,8 @@ final class Mochilas implements Listener {
                     if (p.isOnline()) pl.darItens(p);
                 }, 5L);
             }
-            p.sendActionBar(Extras.txt(novo.equals("masmorras") ? "§dMochila das masmorras aberta §7(a do survival ficou guardada)" : "§aMochila do survival aberta §7(a das masmorras ficou guardada)"));
+            p.sendActionBar(Extras.txt(novo.equals("masmorras") ? "§dMochila das masmorras aberta §7(a outra ficou guardada)"
+                    : novo.equals("mineracao") ? "§6Mochila da Prisão (Rank Up) aberta §7(a outra ficou guardada)" : "§aMochila do survival aberta §7(a outra ficou guardada)"));
             p.playSound(p.getLocation(), "minecraft:item.bundle.insert", 0.8f, 1f);
         } catch (Throwable t) {
             pl.getLogger().warning("Mochila de " + p.getName() + " (" + atual + " -> " + novo + "): " + t);
