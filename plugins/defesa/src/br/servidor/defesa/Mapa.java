@@ -422,7 +422,7 @@ final class Mapa {
     }
 
     void enfeites(World w) {
-        if (tema == Tema.CAMPOS) { cachoeira(w); return; }
+        if (tema == Tema.CAMPOS) { cachoeira(w); garantirQueda(w); return; }
         if (tema != Tema.VULCAO) return;
         vulcaoNoCaminho(w);
         // cratera ao norte, fora da ilha: anel de basalto com magma e fogueiras de sinal (fumaca alta)
@@ -439,6 +439,18 @@ final class Mapa {
         if (w.getBlockAt(ox + cx, Y, oz + cz).getType() == Material.AIR) {
             w.getBlockAt(ox + cx, Y, oz + cz).setBlockData(org.bukkit.Bukkit.createBlockData("minecraft:campfire[signal_fire=true,lit=true]"), false);
             w.getBlockAt(ox + cx + 1, Y, oz + cz - 1).setBlockData(org.bukkit.Bukkit.createBlockData("minecraft:campfire[signal_fire=true,lit=true]"), false);
+        }
+    }
+
+    /** 13/11: agua posta sem fisica nao escorria - a cortina caindo e montada explicitamente (agua "caindo", nivel 8). */
+    private void garantirQueda(World w) {
+        org.bukkit.block.data.BlockData caindo = org.bukkit.Bukkit.createBlockData("minecraft:water[level=8]");
+        for (int x = RIO_X1; x <= RIO_X2; x++) {
+            por(w, x, Y + QUEDA_TOPO, -24, Material.WATER);
+            for (int y = Y; y <= Y + QUEDA_TOPO; y++) {
+                Block b = w.getBlockAt(ox + x, y, oz - 23);
+                if (b.getType() == Material.AIR || b.getType() == Material.WATER) b.setBlockData(caindo, false);
+            }
         }
     }
 
