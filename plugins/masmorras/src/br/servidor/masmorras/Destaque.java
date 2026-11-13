@@ -22,6 +22,7 @@ final class Destaque implements Listener {
             Tipo t = hoje();
             if (t != null) Bukkit.broadcast(Masmorras.txt("§6⭐ Masmorra em destaque hoje: §e" + t.nome + " §7(nível " + t.nivel
                     + ") §8» §acoronas, XP e relíquias em DOBRO§7! §e/masmorras"));
+            Bukkit.broadcast(Masmorras.txt("§d🎮 Minigame do dia: §f" + minigameNome() + " §8» §acoronas em DOBRO §7jogando ele hoje! §e/minigames"));
         }, 20L * 60 * 5, 20L * 60 * 30);
     }
 
@@ -32,6 +33,16 @@ final class Destaque implements Listener {
         l.sort(Comparator.comparing(t -> t.id));
         return l.get(LocalDate.now(ZoneId.of("America/Sao_Paulo")).getDayOfYear() % l.size());
     }
+
+    /** Minigame do dia: coronas ganhas dentro do mundo dele valem em dobro. */
+    static final String[][] MINIGAMES = {{"turno_noite", "Turno da Noite"}, {"hotel", "Hotel"}, {"slender", "Floresta (Slender)"}, {"vovo", "Casa da Vovó"},
+            {"backrooms", "Backrooms"}, {"fabrica", "Fábrica da Alegria"}, {"naochore", "Não Chore"}, {"defesa", "Defesa da Torre"}};
+
+    static String[] minigameHoje() {
+        return MINIGAMES[(LocalDate.now(ZoneId.of("America/Sao_Paulo")).getDayOfYear() + 3) % MINIGAMES.length];
+    }
+
+    static String minigameNome() { return minigameHoje()[1]; }
 
     static boolean eh(Tipo t) { return t != null && t == hoje(); }
 

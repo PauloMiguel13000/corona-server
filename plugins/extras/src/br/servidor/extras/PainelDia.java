@@ -46,6 +46,8 @@ final class PainelDia {
         if (mas != null) t.append("\n§c⚔ Masmorra em destaque: §f").append(mas).append(" §a(coronas e XP x2)");
         String des = deOutro("DefesaTorre", "br.servidor.defesa.DesafioDia", "hoje", "nome");
         if (des != null) t.append("\n§5🏰 Defesa da Torre: ").append(des);
+        String mg = deOutro("Masmorras", "br.servidor.masmorras.Destaque", "minigameNome", null);
+        if (mg != null) t.append("\n§d🎮 Minigame do dia: §f").append(mg).append(" §a(coronas x2)");
         t.append("\n§6⛏ Prisão: §f3 missões novas §7(/minas → /missoes)");
         t.append("\n§e✦ Tesouro: ").append(pl.tesouro != null && pl.tesouro.ativo() ? "§a§lATIVO! §7use §e/tesouro" : "§7aparece de tempos em tempos no Survival");
         t.append("\n§b🎁 §f/kits §7no Survival e nas Masmorras");
