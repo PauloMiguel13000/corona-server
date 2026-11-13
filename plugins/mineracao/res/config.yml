@@ -17,3 +17,6 @@ portal-spawn:
 hora-dourada: 20
 # versao das construcoes ja feitas (nao mexer)
 construido: 0
+
+# reembolso unico (kits liberados + $1000) para quem perdeu itens no bug de 13/11; o nick sai da lista ao receber
+reembolso: []

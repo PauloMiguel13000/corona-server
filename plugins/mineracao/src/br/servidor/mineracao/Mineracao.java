@@ -1102,6 +1102,21 @@ public final class Mineracao extends JavaPlugin implements Listener {
         p.getPersistentDataContainer().set(kGuardados(), PersistentDataType.BYTE_ARRAY, ItemStack.serializeItemsAsBytes(todos));
     }
 
+    /** Reembolso de quem perdeu itens no bug da varredura (13/11): libera de novo todos os kits e da um dinheiro.
+     *  Lista no config (reembolso: [nick, ...]); cada nick sai da lista quando recebe. */
+    void reembolso(Player p) {
+        List<String> l = new ArrayList<>(getConfig().getStringList("reembolso"));
+        if (!l.removeIf(n -> n.equalsIgnoreCase(p.getName()))) return;
+        getConfig().set("reembolso", l);
+        saveConfig();
+        for (Kit k : KITS) p.getPersistentDataContainer().remove(new NamespacedKey(this, "kit_" + k.id()));
+        long v = 1000;
+        setDinheiro(p, dinheiro(p) + v);
+        p.sendMessage(txt("§a§l⛓ Desculpe! §fUm erro sumiu com itens da sua mochila da Prisão ao entrar no servidor. §7Já foi corrigido: "
+                + "seus §bkits §7foram liberados de novo §8(/kit) §7e você ganhou " + din(v) + "§7."));
+        getLogger().info("Reembolso para " + p.getName() + ": kits liberados + $" + v);
+    }
+
     /** Devolve o que foi guardado (ao entrar na Prisao). */
     void devolverGuardados(Player p) {
         byte[] b = p.getPersistentDataContainer().get(kGuardados(), PersistentDataType.BYTE_ARRAY);
@@ -1347,6 +1362,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         Bukkit.getScheduler().runTaskLater(this, () -> {
             if (!p.isOnline() || p.getWorld() != mundo) return;
             devolverGuardados(p);
+            reembolso(p);
             PersistentDataContainer c = p.getPersistentDataContainer();
             if (c.has(kGanhou, PersistentDataType.BYTE)) return;
             c.set(kGanhou, PersistentDataType.BYTE, (byte) 1);
