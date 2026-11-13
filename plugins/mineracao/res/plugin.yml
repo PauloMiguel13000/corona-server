@@ -25,6 +25,9 @@ commands:
   recompensa:
     description: Recompensa diaria da Prisao
     aliases: [diaria]
+  missoes:
+    description: Missoes do dia da Prisao
+    aliases: [missao, quests]
   mineracaoadm:
     description: Admin da mineracao
     permission: mineracao.admin

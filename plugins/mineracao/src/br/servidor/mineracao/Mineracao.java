@@ -74,6 +74,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
     static final String[] NOME_VIP = {"", "VIP", "VIP+", "MVP", "LENDA"};
 
     final List<Mina> minas = new ArrayList<>();
+    Missoes missoes;
     final Map<Material, Double> precos = new EnumMap<>(Material.class);
     World mundo;
     NamespacedKey kRank, kMinerado, kGanhou, kDinheiro, kEnfeite, kAcao, kPrisao, kAuto, kPrest, kDiaria, kVersao;
@@ -105,6 +106,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         kPrest = new NamespacedKey(this, "prestigio");
         kDiaria = new NamespacedKey(this, "diaria");
         kVersao = new NamespacedKey(this, "versao");
+        missoes = new Missoes(this);
         saveDefaultConfig();
         mundosComAcesso.addAll(getConfig().getStringList("mundos-com-acesso"));
         int reset = Math.max(1, getConfig().getInt("reset-minutos", 8));
@@ -1037,6 +1039,9 @@ public final class Mineracao extends JavaPlugin implements Listener {
         // Antes, mina parada ha mais de 20 min resetava (e tirava o jogador do poco) logo no primeiro bloco.
         if (m.quebrados == 0) m.ultimoReset = System.currentTimeMillis();
         m.quebrados++;
+        missoes.somar(p, Missoes.Tipo.QUEBRAR, 1);
+        if (!(t == Material.STONE || t == Material.DEEPSLATE || t == Material.COBBLESTONE || t == Material.COBBLED_DEEPSLATE || t == Material.ANDESITE
+                || t == Material.NETHERRACK || t == Material.BLACKSTONE)) missoes.somar(p, Missoes.Tipo.MINERIO, 1);
         if (!m.pvp && java.util.concurrent.ThreadLocalRandom.current().nextInt(700) == 0) {
             long v = 80L * (rank(p) + 1);
             setDinheiro(p, dinheiro(p) + v);
@@ -1400,6 +1405,11 @@ public final class Mineracao extends JavaPlugin implements Listener {
         else e.getPlayer().sendMessage(txt("§cNa Prisão isso não funciona: aqui é um mundo à parte."));
     }
 
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    public void encantou(org.bukkit.event.enchantment.EnchantItemEvent e) {
+        if (e.getEnchanter().getWorld() == mundo) missoes.somar(e.getEnchanter(), Missoes.Tipo.ENCANTAR, 1);
+    }
+
     @EventHandler(priority = EventPriority.HIGH)
     public void morte(PlayerDeathEvent e) {
         Player p = e.getEntity();
@@ -1414,6 +1424,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
                 // recompensa: $ pelo rank de quem caiu; quem derruba alguem numa sequencia de 5+ ganha o dobro (cabeca a premio)
                 long v = 150L * (rank(p) + 1) * (sv >= 5 ? 2 : 1);
                 setDinheiro(k, dinheiro(k) + v);
+                missoes.somar(k, Missoes.Tipo.PVP, 1);
                 int sk = sequencia.merge(k.getUniqueId(), 1, Integer::sum);
                 k.sendMessage(txt("§c⚔ §7Você derrubou §f" + p.getName() + " §7e ganhou " + din(v) + (sv >= 5 ? " §6(cabeça a prêmio!)" : "") + " §8• sequência: §c" + sk));
                 k.playSound(k.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.6f);
@@ -1448,6 +1459,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
             if (!p.isOnline() || p.getWorld() != mundo) return;
             devolverGuardados(p);
             reembolso(p);
+            p.sendMessage(txt("§6📜 Missões do dia §8» §73 missões com prêmio em $ — veja com §e/missoes§7."));
             PersistentDataContainer c = p.getPersistentDataContainer();
             if (c.has(kGanhou, PersistentDataType.BYTE)) return;
             c.set(kGanhou, PersistentDataType.BYTE, (byte) 1);
@@ -1651,6 +1663,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         Mina pv = minas.get(12);
         inv.setItem(24, item(r >= pv.rank ? Material.NETHERITE_SWORD : Material.IRON_BARS, "§c§l" + pv.nome,
                 "§7Rank: " + nomeRank(pv.rank), "§7Minérios: §f" + resumo(pv), "§c⚠ PvP ligado: quem morre", "§c   perde os itens!", r >= pv.rank ? "§a▶ Clique para ir" : "§c✖ Precisa do rank " + RANKS[pv.rank].letra()));
+        inv.setItem(49, item(Material.WRITABLE_BOOK, "§6§l📜 Missões do dia", "§73 missões com prêmio em $", "§7e bônus por completar todas.", "§a▶ Clique para ver"));
         inv.setItem(25, item(Material.ENCHANTING_TABLE, "§d§lSala de Encantamentos", "§7Mesas com 15 estantes, bigornas", "§7e rebolo. §a▶ Clique para ir"));
         inv.setItem(36, item(Material.DIAMOND_PICKAXE, "§b§lLoja de picaretas", "§7Picaretas com o dinheiro da Prisão", "§7(até a de diamante, sem encantamento).", "§7Encante na Sala de Encantamentos!", "§a▶ Clique para ver"));
         inv.setItem(38, item(Material.CHEST, "§b§lKits da Prisão", "§7Kit do Detento para todos e", "§7kits VIP (24 h cada).", "§a▶ Clique para ver"));
@@ -1707,6 +1720,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
                 switch (s) {
                     case 0 -> { p.closeInventory(); sair(p); }
                     case 2 -> { p.closeInventory(); diaria(p); }
+                    case 49 -> { p.closeInventory(); Bukkit.getScheduler().runTask(this, () -> missoes.abrir(p)); }
                     case 6 -> { p.closeInventory(); fazerPrestigio(p); }
                     case 4 -> { p.closeInventory(); irCentro(p); }
                     case 24 -> { p.closeInventory(); irPara(p, minas.get(12)); }
@@ -1809,6 +1823,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         boolean dour = horaDourada();
         long v = Math.max(1, Math.round(total * RANKS[r].mult() * multPrest(prestigio(p)) * (100 + BONUS_VIP[nv]) / 100.0 * (dour ? 2 : 1)));
         setDinheiro(p, dinheiro(p) + v);
+        missoes.somar(p, Missoes.Tipo.VENDER, v);
         p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1.2f);
         if (auto) {
             p.sendActionBar(txt("§a⛏ Venda automática: §f" + itens + " §aminérios por " + din(v) + " §8• saldo " + din(dinheiro(p))));
@@ -1957,6 +1972,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
             case "rankup" -> rankup(p);
             case "prestigio" -> fazerPrestigio(p);
             case "recompensa" -> diaria(p);
+            case "missoes" -> { if (p.getWorld() == mundo) missoes.abrir(p); else p.sendMessage(txt("§7As missões são da §6Prisão§7: entre com §e/minas§7.")); }
             case "vender" -> vender(p);
             case "picareta" -> {
                 p.sendMessage(txt("§d⛏ A picareta fica forte encantando: §fvá na §dSala de Encantamentos §f(portal sul do pátio ou §e/minas enc§f) e compre lápis na §9Loja§f."));
