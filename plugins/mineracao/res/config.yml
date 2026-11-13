@@ -1,8 +1,8 @@
 # Mundo de mineracao (plugin Mineracao)
 # minutos ate a mina se refazer sozinha (se alguem minerou nela)
-reset-minutos: 8
+reset-minutos: 20
 # refaz antes se essa fracao da mina ja foi minerada (0.7 = 70%)
-reset-quando-minerado: 0.7
+reset-quando-minerado: 0.85
 # de quais mundos o /minas leva para a mineracao (dos minigames nao)
 mundos-com-acesso: [world, world_nether, world_the_end, plots, masmorras_mundo, masmorras_nether, masmorras_end, masmorras_spawn, mineracao]
 # portal da Prisao no spawn principal (nordeste, perto do portal das masmorras). Tenta os lugares em ordem e so
