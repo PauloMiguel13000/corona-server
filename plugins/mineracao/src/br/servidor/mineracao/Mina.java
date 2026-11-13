@@ -28,6 +28,7 @@ final class Mina {
     private final int soma;
 
     int quebrados;             // blocos quebrados desde o ultimo reset
+    int avisado = -1;          // ultimo aviso de reset dado (segundos que faltavam)
     long ultimoReset;
     boolean refazendo;
 

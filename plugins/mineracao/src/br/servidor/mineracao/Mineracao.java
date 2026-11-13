@@ -185,7 +185,8 @@ public final class Mineracao extends JavaPlugin implements Listener {
             long agora = System.currentTimeMillis();
             for (Mina m : minas) {
                 if (m.refazendo || m.quebrados == 0) continue;
-                if (m.quebrados >= Mina.volume() * pct || agora - m.ultimoReset >= ms) refazer(m);
+                if (m.quebrados >= Mina.volume() * pct || agora - m.ultimoReset >= ms) { refazer(m); continue; }
+                avisarReset(m, (ms - (agora - m.ultimoReset)) / 1000L, m.quebrados * 100.0 / (Mina.volume() * pct));
             }
         }, 400L, 200L);
         Bukkit.getScheduler().runTaskLater(this, this::portalDoSpawn, 200L);
@@ -882,11 +883,36 @@ public final class Mineracao extends JavaPlugin implements Listener {
                 t.cancel();
                 m.quebrados = 0;
                 m.ultimoReset = System.currentTimeMillis();
+                m.avisado = -1;
                 m.refazendo = false;
                 for (Player p : mundo.getPlayers())
                     if (m.naArea(p.getLocation())) p.sendActionBar(txt("§a⛏ O " + m.nome + " §afoi refeito!"));
             }
         }, 1L, 1L);
+    }
+
+    /** 13/11 (Paulo): avisa quem esta na mina quantos minutos faltam para ela ser refeita (5 min, 1 min e 10 s antes). */
+    void avisarReset(Mina m, long falta, double pctAteEsvaziar) {
+        int[] marcas = {300, 60, 10};
+        for (int marca : marcas) {
+            if (falta > marca || falta <= marca - 10 || m.avisado == marca) continue;
+            m.avisado = marca;
+            String quando = marca >= 60 ? (marca / 60) + (marca == 60 ? " minuto" : " minutos") : marca + " segundos";
+            for (Player p : mundo.getPlayers())
+                if (m.naArea(p.getLocation())) {
+                    p.sendMessage(txt("§e⏱ Reset da mina §f" + m.nome.split(" • ")[0] + " §eem §f§l" + quando + "§e!"
+                            + (marca == 10 ? " §7(quem estiver no poço sobe para cima da mina)" : "")));
+                    p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 0.8f, marca == 10 ? 2f : 1.2f);
+                }
+        }
+    }
+
+    /** Texto do tempo ate o reset, para quem chega na mina. */
+    String tempoReset(Mina m) {
+        if (m.refazendo) return "§eestá sendo refeita agora";
+        if (m.quebrados == 0) return "§acheia §7(o relógio de §f" + (resetMs / 60000) + " min §7começa no 1º bloco quebrado)";
+        long falta = Math.max(0, resetMs - (System.currentTimeMillis() - m.ultimoReset)) / 1000L;
+        return "§7refaz em §f§l" + (falta / 60) + " min " + String.format("%02d", falta % 60) + " s §7(ou antes, se esvaziar)";
     }
 
     Mina minaDoBloco(Block b) { for (Mina m : minas) if (m.noMiolo(b)) return m; return null; }
@@ -1728,6 +1754,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         }
         p.teleport(m.chegada(mundo));
         p.sendMessage(txt("§2⛏ §aPara vender: §fpise num §a§ltapete verde §f(§a$ VENDA AQUI§f) na borda da mina."));
+        p.sendMessage(txt("§e⏱ " + m.nome.split(" • ")[0] + "§7: " + tempoReset(m)));
         if (m.pvp) p.sendMessage(txt("§a✔ Antessala segura da Mina PvP. §7Passando pelo §cportão §7tem PvP e quem morre §cperde os itens§7."));
         return true;
     }
