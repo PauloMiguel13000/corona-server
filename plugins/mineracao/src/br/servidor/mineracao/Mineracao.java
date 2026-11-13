@@ -126,6 +126,8 @@ public final class Mineracao extends JavaPlugin implements Listener {
         long ms = reset * 60_000L;
         resetMs = ms;
         Bukkit.getScheduler().runTaskTimer(this, this::barra, 40L, 30L);
+        carregarTop();
+        Bukkit.getScheduler().runTaskTimer(this, this::avisoDourada, 200L, 600L);
         Bukkit.getScheduler().runTaskTimer(this, () -> {
             long agora = System.currentTimeMillis();
             for (Mina m : minas) {
@@ -137,6 +139,57 @@ public final class Mineracao extends JavaPlugin implements Listener {
 
     long resetMs;
 
+    // ------------------------------------------------------------------ ranking e hora dourada (13/11)
+    private java.io.File arqTop;
+    private org.bukkit.configuration.file.YamlConfiguration top;
+    private boolean topSujo;
+
+    void carregarTop() {
+        arqTop = new java.io.File(getDataFolder(), "ranking.yml");
+        top = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(arqTop);
+        Bukkit.getScheduler().runTaskTimer(this, () -> { if (topSujo) { topSujo = false; try { top.save(arqTop); } catch (Exception ignored) {} } }, 1200L, 1200L);
+    }
+
+    void registrarTop(Player p, long vendeu) {
+        String k = p.getUniqueId().toString();
+        top.set(k + ".nome", p.getName());
+        top.set(k + ".rank", rank(p));
+        top.set(k + ".vendido", top.getLong(k + ".vendido", 0) + Math.max(0, vendeu));
+        topSujo = true;
+    }
+
+    List<String> linhasTop(int n) {
+        List<String[]> l = new ArrayList<>();
+        for (String k : top.getKeys(false))
+            l.add(new String[]{top.getString(k + ".nome", "?"), String.valueOf(top.getInt(k + ".rank", 0)), String.valueOf(top.getLong(k + ".vendido", 0))});
+        l.sort((a, b) -> a[1].equals(b[1]) ? Long.compare(Long.parseLong(b[2]), Long.parseLong(a[2])) : Integer.compare(Integer.parseInt(b[1]), Integer.parseInt(a[1])));
+        List<String> out = new ArrayList<>();
+        String[] med = {"§6①", "§7②", "§c③"};
+        for (int i = 0; i < Math.min(n, l.size()); i++) {
+            int r = Integer.parseInt(l.get(i)[1]);
+            out.add((i < 3 ? med[i] : "§8" + (i + 1) + ".") + " §f" + l.get(i)[0] + " " + RANKS[r].cor() + "[" + RANKS[r].letra() + "] §8• §6" + fmt(Long.parseLong(l.get(i)[2])) + " vendidos");
+        }
+        return out;
+    }
+
+    /** Hora dourada: todo dia num horario (config), a venda paga em dobro por 1 hora. */
+    boolean horaDourada() {
+        int h = getConfig().getInt("hora-dourada", 20);
+        if (h < 0) return false;
+        return java.time.LocalTime.now(java.time.ZoneId.of("America/Sao_Paulo")).getHour() == h;
+    }
+    private boolean avisouDourada;
+
+    void avisoDourada() {
+        boolean d = horaDourada();
+        if (d && !avisouDourada) {
+            Bukkit.broadcast(txt("§6§l✦ HORA DOURADA NA MINERAÇÃO! §eDurante 1 hora o minério vende em §6§lDOBRO§e. §f/minas"));
+            for (Player p : Bukkit.getOnlinePlayers()) p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.4f);
+        }
+        if (!d && avisouDourada) Bukkit.broadcast(txt("§7A hora dourada da mineração acabou. Volta amanhã!"));
+        avisouDourada = d;
+    }
+
     /** Barra de status (13/11): mostra a mina, quanto ja foi minerado e quando ela se refaz. */
     void barra() {
         if (mundo == null) return;
@@ -145,7 +198,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
             Mina m = minaDaArea(p.getLocation());
             int r = rank(p);
             if (m == null) {
-                p.sendActionBar(txt("§6⛏ Rank " + RANKS[r].cor() + RANKS[r].letra() + " §8• §6" + fmt(coronas(p)) + " coronas §8• §e/minas §7/rankup §7/vender"));
+                p.sendActionBar(txt((horaDourada() ? "§6§l✦ VENDA x2 §8• " : "") + "§6⛏ Rank " + RANKS[r].cor() + RANKS[r].letra() + " §8• §6" + fmt(coronas(p)) + " coronas §8• §e/minas §7/rankup §7/vender"));
                 continue;
             }
             int pct = (int) Math.min(100, m.quebrados * 100L / Mina.volume());
@@ -423,6 +476,12 @@ public final class Mineracao extends JavaPlugin implements Listener {
         inv.setItem(22, item(Material.EXPERIENCE_BOTTLE, "§6§lRank Up",
                 "§7Seu rank: " + nomeRank(r), r + 1 < RANKS.length ? "§7Próximo: " + nomeRank(r + 1) + " §7por §6" + fmt(cust) + " coronas" : "§dVocê está no rank máximo!",
                 "§7Suas coronas: §6" + fmt(coronas(p)), "§7Bônus na venda: §a+" + Math.round((RANKS[r].mult() - 1) * 100) + "%", r + 1 < RANKS.length ? "§a▶ Clique para subir" : ""));
+        List<String> tl = new ArrayList<>(linhasTop(5));
+        if (tl.isEmpty()) tl.add("§7Ninguém ainda. Seja o primeiro!");
+        tl.add("§8Ordem: rank, depois minério vendido");
+        int hd = getConfig().getInt("hora-dourada", 20);
+        if (hd >= 0) tl.add((horaDourada() ? "§6§l✦ HORA DOURADA AGORA: venda x2!" : "§6✦ Hora dourada: todo dia às " + hd + "h (venda x2)"));
+        inv.setItem(8, item(Material.GOLDEN_HELMET, "§6§lTop Mineradores", tl.toArray(new String[0])));
         inv.setItem(18, item(Material.ANVIL, "§b§lMelhorar picareta", "§7Segure a picareta na mão e clique.",
                 "§7Eficiência até V, Fortuna até III,", "§7Inquebrável até III (custa coronas).", "§a▶ Clique para ver os preços"));
         inv.setItem(26, item(Material.GOLD_INGOT, "§e§lVender minério", "§7Vende todo minério das minas", "§7que estiver no inventário.", "§a▶ Clique para vender"));
@@ -557,6 +616,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
         Bukkit.broadcast(txt("§6⛏ §e" + p.getName() + " §7subiu para o rank " + nomeRank(r + 1) + " §7na mineração!"));
         getLogger().info(p.getName() + " subiu para o rank " + prox.letra() + " (pagou " + prox.custo() + ")");
+        registrarTop(p, 0);
     }
 
     void vender(Player p) {
@@ -577,11 +637,13 @@ public final class Mineracao extends JavaPlugin implements Listener {
         int r = rank(p);
         double comRank = total * RANKS[r].mult();
         int nv = vip(p);
-        long v = Math.max(1, Math.round(comRank * (100 + BONUS_VIP[nv]) / 100.0));
+        boolean dour = horaDourada();
+        long v = Math.max(1, Math.round(comRank * (100 + BONUS_VIP[nv]) / 100.0 * (dour ? 2 : 1)));
         setCoronas(p, coronas(p) + v);
         p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1.2f);
         p.sendMessage(txt("§a⛏ Vendeu §f" + itens + " §aminérios por §6" + fmt(v) + " coronas §8(rank " + RANKS[r].letra()
-                + (nv > 0 ? ", VIP +" + BONUS_VIP[nv] + "%" : "") + ") §7— saldo: §6" + fmt(coronas(p))));
+                + (nv > 0 ? ", VIP +" + BONUS_VIP[nv] + "%" : "") + (dour ? ", §6HORA DOURADA x2§8" : "") + ") §7— saldo: §6" + fmt(coronas(p))));
+        registrarTop(p, itens);
     }
 
     // ------------------------------------------------------------------ comandos
@@ -605,6 +667,12 @@ public final class Mineracao extends JavaPlugin implements Listener {
             case "rankup" -> rankup(p);
             case "vender" -> vender(p);
             case "picareta" -> abrirMelhorias(p);
+            case "topminas" -> {
+                p.sendMessage(txt("§6§l⛏ Top Mineradores"));
+                List<String> tl = linhasTop(10);
+                if (tl.isEmpty()) p.sendMessage(txt("§7Ninguém ainda."));
+                for (String x : tl) p.sendMessage(txt(x));
+            }
             case "rank" -> {
                 int r = rank(p);
                 p.sendMessage(txt("§6⛏ Seu rank: " + nomeRank(r) + " §8| §7coronas: §6" + fmt(coronas(p))

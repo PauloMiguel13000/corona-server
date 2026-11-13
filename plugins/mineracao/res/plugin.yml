@@ -11,6 +11,8 @@ commands:
     aliases: [mineracao, mina]
   rankup:
     description: Sobe de rank na mineracao (paga coronas)
+  topminas:
+    description: Ranking dos mineradores
   rank:
     description: Mostra seu rank de mineracao
   picareta:
