@@ -73,6 +73,7 @@ final class Divulgacao implements Listener {
             "&6&l>> &eTodo dia uma &cmasmorra em destaque &ecom coronas e XP em DOBRO — veja no painel do spawn!",
             "&6&l>> &eDefesa da Torre: &6poderes &e(meteoros, nevasca, trovão) e um &5desafio diferente &etodo dia. &f/defesa",
             "&6&l>> &eAlgumas noites no Survival viram &4&lLUA DE SANGUE&e: monstros mais fortes que pagam coronas e soltam loot raro!",
+            "&6&l>> &eGire a &6&lROLETA DO DIA &egrátis: coronas, XP e até &c&lJACKPOT de 1000 coronas&e! &f/roleta",
             "&6&l>> &ePesque no Survival: tem &6Peixe Dourado &e(coronas), livros encantados raros e até &bTRIDENTE&e!",
             "&6&l>> &eEntre todo dia: o &6login diário &edá coronas que crescem até &6600 &eno 7º dia seguido!",
             "&6&l>> &eNa Prisão tem &6missões do dia &ecom prêmio em $ — dentro dela use &f/missoes");

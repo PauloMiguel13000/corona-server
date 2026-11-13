@@ -5,6 +5,9 @@ api-version: '1.21'
 softdepend: [GriefPrevention, WorldGuard, Geyser-Spigot, floodgate, AuthMe, BabyPets]
 description: Teleporte aleatorio (/rtp) e queda segura no spawn alto.
 commands:
+  roleta:
+    description: Roleta do Dia (uma girada gratis por dia)
+    aliases: [girar, sorte]
   kits:
     description: Kits do lugar onde voce esta (Survival ou Masmorras)
     aliases: [kitlugar]

@@ -76,6 +76,8 @@ public final class Extras extends JavaPlugin implements Listener {
         new PainelDia(this);
         Bukkit.getPluginManager().registerEvents(new LoginDiario(this), this);
         Bukkit.getPluginManager().registerEvents(new Pescaria(this), this);
+        roleta = new Roleta(this);
+        Bukkit.getPluginManager().registerEvents(roleta, this);
         luaDeSangue = new LuaDeSangue(this);
         Bukkit.getPluginManager().registerEvents(luaDeSangue, this);
         votos = new Votos(this);
@@ -849,12 +851,17 @@ public final class Extras extends JavaPlugin implements Listener {
     // ================================================================== comandos
 
     Tesouro tesouro;
+    Roleta roleta;
     LuaDeSangue luaDeSangue;
     KitsContexto kitsContexto;
 
     @Override
     public boolean onCommand(CommandSender s, Command cmd, String label, String[] args) {
         if (cmd.getName().equalsIgnoreCase("vip")) return vip.comando(s, args);
+        if (cmd.getName().equalsIgnoreCase("roleta")) {
+            if (s instanceof Player p && roleta != null) roleta.girar(p);
+            return true;
+        }
         if (cmd.getName().equalsIgnoreCase("kits")) {
             if (s instanceof Player p && kitsContexto != null) kitsContexto.abrir(p);
             return true;
