@@ -495,8 +495,39 @@ final class Cosmeticos implements Listener {
         }
     }
 
+    // As formas (asas, aureola...) sao desenhadas ponto a ponto. No Bedrock cada ponto de poeira e bem maior e dura
+    // mais, entao para quem joga no Bedrock vai uma versao com menos pontos (senao vira um borrao); no Java vai completa.
+    private final List<Player> verJava = new ArrayList<>(), verBed = new ArrayList<>();
+    private static Boolean temFloodgate;
+
+    static boolean bedrock(Player v) {
+        if (v.getName().startsWith(".")) return true;
+        try {
+            if (temFloodgate == null) temFloodgate = Bukkit.getPluginManager().getPlugin("floodgate") != null;
+            return temFloodgate && org.geysermc.floodgate.api.FloodgateApi.getInstance().isFloodgatePlayer(v.getUniqueId());
+        } catch (Throwable t) {
+            temFloodgate = false;
+            return false;
+        }
+    }
+
+    private void quemVe(Player dono) {
+        verJava.clear();
+        verBed.clear();
+        Location l = dono.getLocation();
+        for (Player v : dono.getWorld().getPlayers())
+            if (v.getLocation().distanceSquared(l) < 48 * 48) (bedrock(v) ? verBed : verJava).add(v);
+    }
+
+    private void ponto(double x, double y, double z, Particle.DustOptions o, boolean tambemBedrock) {
+        for (Player v : verJava) v.spawnParticle(Particle.DUST, x, y, z, 1, 0, 0, 0, 0, o);
+        if (tambemBedrock) for (Player v : verBed) v.spawnParticle(Particle.DUST, x, y, z, 1, 0, 0, 0, 0, o);
+    }
+
     /** Especiais: formas desenhadas em volta do jogador. */
     private void especial(Player p, String id) {
+        quemVe(p);
+        boolean par = giro % 2 == 0;
         switch (id) {
             case "asas_anjo" -> asas(p, 0xFFFFFF, 0xFFD24A, null);
             case "asas_demonio" -> asas(p, 0x7A0000, 0x111111, Particle.SMOKE);
@@ -513,7 +544,7 @@ final class Cosmeticos implements Listener {
                 for (int i = 0; i < 6; i++) {
                     double a = i * Math.PI / 3;
                     for (int k = 1; k <= 2; k++)
-                        p.getWorld().spawnParticle(Particle.DUST, c.getX() + Math.cos(a) * 0.3, c.getY() + k * 0.09, c.getZ() + Math.sin(a) * 0.3, 1, 0, 0, 0, 0, po(0xFFFFFF, 0.6f));
+                        ponto(c.getX() + Math.cos(a) * 0.3, c.getY() + k * 0.09, c.getZ() + Math.sin(a) * 0.3, po(0xFFFFFF, 0.6f), par && k == 2 && i % 2 == 0);
                 }
             }
             case "orbita" -> {
@@ -521,8 +552,8 @@ final class Cosmeticos implements Listener {
                 for (int i = 0; i < 3; i++) {
                     double a = giro * 0.55 + i * (Math.PI * 2 / 3);
                     double y = Math.sin(giro * 0.2 + i) * 0.35;
-                    p.getWorld().spawnParticle(Particle.DUST, c.getX() + Math.cos(a) * 0.85, c.getY() + y, c.getZ() + Math.sin(a) * 0.85, 2, 0.02, 0.02, 0.02, 0,
-                            po(i == 0 ? 0x40E0FF : i == 1 ? 0xFF40C0 : 0xFFE040, 1.0f));
+                    ponto(c.getX() + Math.cos(a) * 0.85, c.getY() + y, c.getZ() + Math.sin(a) * 0.85,
+                            po(i == 0 ? 0x40E0FF : i == 1 ? 0xFF40C0 : 0xFFE040, 1.0f), true);
                 }
             }
             case "espiral" -> {
@@ -531,8 +562,8 @@ final class Cosmeticos implements Listener {
                     double h = ((giro * 3 + k) % 24) / 24.0 * 2.2;
                     for (int s = 0; s < 2; s++) {
                         double a = h * 4.5 + s * Math.PI;
-                        p.getWorld().spawnParticle(Particle.DUST, c.getX() + Math.cos(a) * 0.6, c.getY() + h, c.getZ() + Math.sin(a) * 0.6, 1, 0, 0, 0, 0,
-                                po(s == 0 ? 0x9B30FF : 0xFF5EDB, 0.9f));
+                        ponto(c.getX() + Math.cos(a) * 0.6, c.getY() + h, c.getZ() + Math.sin(a) * 0.6,
+                                po(s == 0 ? 0x9B30FF : 0xFF5EDB, 0.9f), k % 2 == 0);
                     }
                 }
             }
@@ -540,17 +571,17 @@ final class Cosmeticos implements Listener {
                 Location c = p.getLocation();
                 for (int k = 0; k < 14; k++) {
                     double h = k * 0.17, raio = 0.15 + h * 0.38, a = giro * 0.7 + k * 0.75;
-                    p.getWorld().spawnParticle(Particle.DUST, c.getX() + Math.cos(a) * raio, c.getY() + h, c.getZ() + Math.sin(a) * raio, 1, 0, 0, 0, 0,
-                            po(k % 3 == 0 ? 0xFFFFFF : 0xB8C4CC, 1.0f));
+                    ponto(c.getX() + Math.cos(a) * raio, c.getY() + h, c.getZ() + Math.sin(a) * raio,
+                            po(k % 3 == 0 ? 0xFFFFFF : 0xB8C4CC, 1.0f), true);
                 }
             }
             case "olhos" -> {
                 if (giro % 25 < 2) return;   // pisca
-                double yaw = Math.toRadians(p.getBodyYaw());
+                double yaw = Math.toRadians(p.getLocation().getYaw());
                 double fx = -Math.sin(yaw), fz = Math.cos(yaw), rx = -fz, rz = fx;
                 Location b = p.getLocation().add(-fx * 0.9, 1.75, -fz * 0.9);
                 for (int s = -1; s <= 1; s += 2)
-                    p.getWorld().spawnParticle(Particle.DUST, b.getX() + rx * s * 0.13, b.getY(), b.getZ() + rz * s * 0.13, 1, 0, 0, 0, 0, po(0xFF0000, 0.9f));
+                    ponto(b.getX() + rx * s * 0.13, b.getY(), b.getZ() + rz * s * 0.13, po(0xFF0000, 0.9f), true);
             }
             default -> {}
         }
@@ -559,11 +590,12 @@ final class Cosmeticos implements Listener {
     private void anel(Player p, double altura, double raio, int pontos, double gira, Particle.DustOptions cor, Particle extra) {
         Location c = p.getLocation().add(0, altura, 0);
         World w = p.getWorld();
+        boolean par = giro % 2 == 0;
         for (int i = 0; i < pontos; i++) {
             double a = gira + i * Math.PI * 2 / pontos;
             double x = c.getX() + Math.cos(a) * raio, z = c.getZ() + Math.sin(a) * raio;
             if (extra != null && i % 2 == 0) w.spawnParticle(extra, x, c.getY(), z, 1, 0, 0, 0, 0);
-            else w.spawnParticle(Particle.DUST, x, c.getY(), z, 1, 0, 0, 0, 0, cor);
+            else ponto(x, c.getY(), z, cor, par && i % 3 == 0);
         }
     }
 
@@ -571,20 +603,23 @@ final class Cosmeticos implements Listener {
     private void asas(Player p, int miolo, int borda, Particle extra) {
         World w = p.getWorld();
         Location base = p.getLocation();
-        double yaw = Math.toRadians(p.getBodyYaw());
+        double yaw = Math.toRadians(p.getLocation().getYaw());   // (o corpo do jogador do Bedrock nao vem certo; a cabeca sim)
         double fx = -Math.sin(yaw), fz = Math.cos(yaw);   // frente
         double rx = -fz, rz = fx;                          // lado
         double bate = 0.5 + 0.5 * Math.sin(giro * 0.35);
         double sobe = p.isSneaking() ? -0.3 : 0;
         Particle.DustOptions dm = po(miolo, 0.75f), db = po(borda, 0.85f);
+        boolean par = giro % 2 == 0;
         for (int lado = -1; lado <= 1; lado += 2) {
-            for (double u = 0.2; u <= 1.32; u += 0.11) {
+            int iu = 0;
+            for (double u = 0.2; u <= 1.32; u += 0.12, iu++) {
                 double topo = 1.45 + 0.9 * u - 0.45 * u * u, fundo = 1.35 - 0.25 * u + 0.5 * u * u;
                 double tras = 0.3 + u * (0.12 + 0.38 * bate);
                 double x = base.getX() - fx * tras + rx * lado * u, z = base.getZ() - fz * tras + rz * lado * u;
-                for (double v = fundo; v <= topo + 0.001; v += 0.12) {
-                    boolean ehBorda = v + 0.12 > topo || u > 1.25;
-                    w.spawnParticle(Particle.DUST, x, base.getY() + v + sobe, z, 1, 0, 0, 0, 0, ehBorda ? db : dm);
+                int jv = 0;
+                for (double v = fundo; v <= topo + 0.001; v += 0.13, jv++) {
+                    boolean ehBorda = v + 0.13 > topo || u > 1.25;
+                    ponto(x, base.getY() + v + sobe, z, ehBorda ? db : dm, par && iu % 2 == 0 && (ehBorda || jv % 2 == 0));
                 }
                 if (extra != null && giro % 3 == 0 && u > 1.0)
                     w.spawnParticle(extra, x, base.getY() + topo + sobe, z, 1, 0.02, 0.02, 0.02, 0.005);
