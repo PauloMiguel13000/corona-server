@@ -80,6 +80,9 @@ public final class Extras extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(eventosSurvival, this);
         roleta = new Roleta(this);
         Bukkit.getPluginManager().registerEvents(roleta, this);
+        conquistas = new Conquistas(this);
+        contadoresLobby = new ContadoresLobby(this);
+        Bukkit.getPluginManager().registerEvents(conquistas, this);
         luaDeSangue = new LuaDeSangue(this);
         Bukkit.getPluginManager().registerEvents(luaDeSangue, this);
         votos = new Votos(this);
@@ -197,6 +200,7 @@ public final class Extras extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if (contadoresLobby != null) contadoresLobby.limpar();
         if (missoesDiarias != null) missoesDiarias.parar();
         if (bossMundial != null) bossMundial.parar();
         if (entradas != null) entradas.parar();
@@ -856,6 +860,8 @@ public final class Extras extends JavaPlugin implements Listener {
     EventosSurvival eventosSurvival;
     PainelDia painelDia;
     Roleta roleta;
+    Conquistas conquistas;
+    ContadoresLobby contadoresLobby;
     LuaDeSangue luaDeSangue;
     KitsContexto kitsContexto;
 
@@ -864,6 +870,10 @@ public final class Extras extends JavaPlugin implements Listener {
         if (cmd.getName().equalsIgnoreCase("vip")) return vip.comando(s, args);
         if (cmd.getName().equalsIgnoreCase("eventos")) {
             if (painelDia != null) for (String l : painelDia.texto().split("\n")) s.sendMessage(txt(l));
+            return true;
+        }
+        if (cmd.getName().equalsIgnoreCase("conquistas")) {
+            if (s instanceof Player p && conquistas != null) conquistas.abrir(p);
             return true;
         }
         if (cmd.getName().equalsIgnoreCase("roleta")) {

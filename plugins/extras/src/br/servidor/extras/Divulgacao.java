@@ -78,6 +78,7 @@ final class Divulgacao implements Listener {
             "&6&l>> &eGire a &6&lROLETA DO DIA &egrátis: coronas, XP e até &c&lJACKPOT de 1000 coronas&e! &f/roleta",
             "&6&l>> &ePesque no Survival: tem &6Peixe Dourado &e(coronas), livros encantados raros e até &bTRIDENTE&e!",
             "&6&l>> &eEntre todo dia: o &6login diário &edá coronas que crescem até &6600 &eno 7º dia seguido!",
+            "&6&l>> &eNOVO: &6&l/conquistas &e— 21 metas (horas jogadas, monstros, diamantes, dragão...) que pagam até &61500 coronas&e!",
             "&6&l>> &eNa Prisão tem &6missões do dia &ecom prêmio em $ — dentro dela use &f/missoes");
 
     private void dica() {

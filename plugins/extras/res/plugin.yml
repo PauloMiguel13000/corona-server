@@ -8,6 +8,9 @@ commands:
   eventos:
     description: O que tem de especial hoje no servidor
     aliases: [hoje, novidades, evento]
+  conquistas:
+    description: Conquistas com premio em coronas
+    aliases: [conquista, metas]
   roleta:
     description: Roleta do Dia (uma girada gratis por dia)
     aliases: [girar, sorte]
