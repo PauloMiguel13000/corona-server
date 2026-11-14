@@ -8,6 +8,9 @@ commands:
   eventos:
     description: O que tem de especial hoje no servidor
     aliases: [hoje, novidades, evento]
+  tempo:
+    description: Ranking semanal de tempo jogado (premio em coronas)
+    aliases: [tempojogado, toptempo]
   ferreiro:
     description: Ferreiro conserta o item da mao por coronas
     aliases: [reparar, consertar]
