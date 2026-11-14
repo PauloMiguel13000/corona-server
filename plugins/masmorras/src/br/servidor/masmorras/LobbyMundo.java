@@ -490,7 +490,7 @@ final class LobbyMundo implements Listener {
             if (!t.isValid()) continue;
             Integer q = t.getPersistentDataContainer().get(kPlacar, PersistentDataType.INTEGER);
             if (q == null) continue;
-            String s = q == 1 ? pl.ranking.placar("§c§lCHEFES DERROTADOS", "chefes", "chefes", "§c") : pl.ranking.placar("§b§lMAIORES NÍVEIS DE PODER", "nivel", "de poder", "§b");
+            String s = q == 1 ? pl.ranking.placar("§c§lCHEFES DERROTADOS", "chefes", "chefes", "§c") + pl.ranking.placarSemana() : pl.ranking.placar("§b§lMAIORES NÍVEIS DE PODER", "nivel", "de poder", "§b");
             t.text(Masmorras.txt(s));
         }
     }

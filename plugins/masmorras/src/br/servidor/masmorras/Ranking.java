@@ -45,7 +45,55 @@ final class Ranking {
         String k = "chefes." + chave(p.getName());
         dados.set(k + ".nome", p.getName());
         dados.set(k + ".valor", dados.getInt(k + ".valor", 0) + 1);
+        // 13/11: ranking da semana (zera toda segunda; top 3 ganha coronas)
+        virarSemana();
+        String w = "semana.lista." + chave(p.getName());
+        dados.set(w + ".nome", p.getName());
+        dados.set(w + ".valor", dados.getInt(w + ".valor", 0) + 1);
         sujo = true;
+    }
+
+    static final int[] PREMIO_SEMANA = {1500, 1000, 500};
+
+    static int semanaAtual() {
+        java.time.LocalDate d = java.time.LocalDate.now(java.time.ZoneId.of("America/Bahia"));
+        return d.get(java.time.temporal.IsoFields.WEEK_BASED_YEAR) * 100 + d.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+    }
+
+    /** Semana nova: o top 3 da semana que passou ganha coronas (pagas quando estiver online) e a lista zera. */
+    private void virarSemana() {
+        int atual = semanaAtual(), id = dados.getInt("semana.id", 0);
+        if (id == atual) return;
+        if (id != 0) {
+            List<Linha> top = top("semana.lista", 3);
+            StringBuilder sb = new StringBuilder("§6§l🏆 Ranking semanal das Masmorras encerrado!");
+            for (int i = 0; i < top.size(); i++) {
+                Linha x = top.get(i);
+                String k = "premio." + chave(x.nome());
+                dados.set(k + ".nome", x.nome());
+                dados.set(k + ".valor", dados.getInt(k + ".valor", 0) + PREMIO_SEMANA[i]);
+                sb.append("\n§e").append(i + 1).append("º §f").append(x.nome()).append(" §7(").append(x.valor()).append(" chefes) §6+").append(PREMIO_SEMANA[i]).append(" coronas");
+            }
+            if (!top.isEmpty()) Bukkit.broadcast(Masmorras.txt(sb.toString()));
+        }
+        dados.set("semana.lista", null);
+        dados.set("semana.id", atual);
+        sujo = true;
+    }
+
+    /** Paga quem tem premio semanal guardado e esta online. */
+    private void pagarPremios() {
+        if (pl.coronas == null) return;
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            String k = "premio." + chave(p.getName());
+            int v = dados.getInt(k + ".valor", 0);
+            if (v <= 0) continue;
+            dados.set(k, null);
+            sujo = true;
+            pl.coronas.definir(p, pl.coronas.saldo(p) + v);
+            p.sendMessage(Masmorras.txt("§6§l🏆 Prêmio do ranking semanal das Masmorras: §e+" + v + " coronas§6!"));
+            p.playSound(p.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1f);
+        }
     }
 
     int chefes(Player p) {
@@ -53,6 +101,8 @@ final class Ranking {
     }
 
     private void lerNiveis() {
+        virarSemana();
+        pagarPremios();
         for (Player p : Bukkit.getOnlinePlayers()) {
             int n = Aura.poder(p);
             if (n < 0) continue;
@@ -90,6 +140,16 @@ final class Ranking {
         } catch (IOException e) {
             pl.getLogger().warning("Nao consegui salvar ranking.yml: " + e.getMessage());
         }
+    }
+
+    /** Top 3 da semana (vai embaixo do placar de chefes). */
+    String placarSemana() {
+        StringBuilder sb = new StringBuilder("\n\n§6§lRANKING DA SEMANA §7(zera segunda)");
+        List<Linha> l = top("semana.lista", 3);
+        if (l.isEmpty()) sb.append("\n§7ninguém ainda... derrote um chefe!");
+        for (int i = 0; i < l.size(); i++)
+            sb.append("\n§e").append(i + 1).append("º §f").append(l.get(i).nome()).append(" §c").append(l.get(i).valor()).append(" §8→ §6").append(PREMIO_SEMANA[i]).append(" coronas");
+        return sb.toString();
     }
 
     /** Texto do placar (para o letreiro do lobby). */
