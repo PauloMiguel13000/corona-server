@@ -91,6 +91,13 @@ final class Loja implements Listener {
             double mult = Math.max(0.1, pl.getConfig().getDouble("loja.multiplicador", 3.0));
             preco = Math.max(10, Math.round(preco * mult / 10.0) * 10);
         }
+        // 14/11 (Paulo: "diminuir um pouquinho o preco das armaduras"): pecas de armadura saem mais baratas
+        String tipo = item.getType().name();
+        if (tipo.endsWith("_HELMET") || tipo.endsWith("_CHESTPLATE") || tipo.endsWith("_LEGGINGS") || tipo.endsWith("_BOOTS")) {
+            double f = Math.max(0.1, Math.min(1.0, pl.getConfig().getDouble("loja.fator-armaduras", 0.7)));
+            long passo = nivel < 6 ? 10 : 1000;
+            preco = Math.max(10, Math.round(preco * f / passo) * passo);
+        }
         catalogo.computeIfAbsent(nivel, k -> new ArrayList<>()).add(new Oferta(item, preco, 0));
     }
 

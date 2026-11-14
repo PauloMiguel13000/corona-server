@@ -102,6 +102,7 @@ loja:
   mercadores: true
   multiplicador: 3.0     # precos dos Mercadores das masmorras (nivel 1 a 5) x este numero
   moeda-reviver: 40000   # Moeda de Reviver no Mercador Lendario (coronas)
+  fator-armaduras: 0.7   # pecas de armadura (todos os mercadores) custam isto x o preco (14/11: 30% mais baratas)
 hub:
   ativo: true
   guia: ''          # onde fica o Guia das Masmorras no spawn principal (mundo,x,y,z,yaw). Admin: /masmorras admin guia
