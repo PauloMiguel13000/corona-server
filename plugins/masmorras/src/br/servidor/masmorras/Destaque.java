@@ -44,6 +44,13 @@ final class Destaque implements Listener {
 
     static String minigameNome() { return minigameHoje()[1]; }
 
+    static boolean fimDeSemana() {
+        var d = LocalDate.now(ZoneId.of("America/Sao_Paulo")).getDayOfWeek();
+        return d == java.time.DayOfWeek.SATURDAY || d == java.time.DayOfWeek.SUNDAY;
+    }
+
+    static String fimDeSemanaTexto() { return fimDeSemana() ? "sim" : null; }
+
     static boolean eh(Tipo t) { return t != null && t == hoje(); }
 
     static int mult(Tipo t) { return eh(t) ? 2 : 1; }

@@ -48,6 +48,7 @@ final class PainelDia {
         if (des != null) t.append("\n§5🏰 Defesa da Torre: ").append(des);
         String promo = deOutro("DefesaTorre", "br.servidor.defesa.TipoTorre", "promocao", "nome");
         if (promo != null) t.append(" §8• §6promoção: §f").append(promo).append(" §a-30%");
+        if (deOutro("Masmorras", "br.servidor.masmorras.Destaque", "fimDeSemanaTexto", null) != null) t.append("\n§a§l🎉 FIM DE SEMANA: §fcoronas §a+50% §fem tudo!");
         String mg = deOutro("Masmorras", "br.servidor.masmorras.Destaque", "minigameNome", null);
         if (mg != null) t.append("\n§d🎮 Minigame do dia: §f").append(mg).append(" §a(coronas x2)");
         t.append("\n§6⛏ Prisão: §f3 missões novas §7(/minas → /missoes)");

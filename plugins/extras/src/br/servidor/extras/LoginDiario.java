@@ -45,6 +45,8 @@ final class LoginDiario implements Listener {
         long hoje = hojeEpoch();
         Long ult = c.get(kDia, PersistentDataType.LONG);
         if (ult != null && ult == hoje) return;
+        // primeiro login do dia: mostra o que tem de especial hoje
+        if (pl.painelDia != null) Bukkit.getScheduler().runTaskLater(pl, () -> { if (p.isOnline()) for (String l : pl.painelDia.texto().split("\n")) p.sendMessage(Extras.txt(l)); }, 80L);
         int seq = (ult != null && ult == hoje - 1) ? c.getOrDefault(kSeq, PersistentDataType.INTEGER, 0) + 1 : 1;
         c.set(kDia, PersistentDataType.LONG, hoje);
         c.set(kSeq, PersistentDataType.INTEGER, seq);

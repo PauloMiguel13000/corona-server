@@ -1448,7 +1448,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         e.setDroppedExp(Premios.xp(t.nivel));
         if (m.chefe != null) m.chefe.esconderBarra();
         m.chefe = null;
-        m.bossVolta = System.currentTimeMillis() + getConfig().getLong("chefe-volta-minutos", 60) * 60_000L;
+        m.bossVolta = System.currentTimeMillis() + getConfig().getLong("chefe-volta-minutos", 60) * 60_000L / (Destaque.eh(t) ? 2 : 1);   // destaque: chefe volta na metade do tempo
         salvar();
         Player k = e.getEntity().getKiller();
         String quem = k != null ? k.getName() : "Alguém";

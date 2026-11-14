@@ -53,6 +53,7 @@ final class Coronas {
 
     void dar(Player p, long v, boolean avisar) {
         if (v <= 0) return;
+        if (Destaque.fimDeSemana()) v = Math.round(v * 1.5);   // 13/11: fim de semana = coronas +50%
         if (p.getWorld().getName().equals(Destaque.minigameHoje()[0])) {   // 13/11: minigame do dia paga em dobro
             v *= 2;
             p.sendMessage(Masmorras.txt("§d🎮 Minigame do dia: §acoronas em DOBRO! §7(+" + fmt(v) + ")"));
