@@ -71,6 +71,12 @@ final class Ajuda implements Listener {
     }
 
     void abrir(Player p) {
+        // 14/11: Bedrock ganha menu nativo de botoes
+        if (Bukkit.getPluginManager().isPluginEnabled("floodgate") && FormBedrock.ehBedrock(p)) {
+            java.util.List<Item> l = new java.util.ArrayList<>(java.util.Arrays.asList(ITENS));
+            l.sort(java.util.Comparator.comparingInt(Item::slot));
+            if (FormBedrock.ajuda(pl, p, l)) return;
+        }
         Menu h = new Menu();
         Inventory inv = Bukkit.createInventory(h, 45, Extras.txt("§8Guia do Corona Server"));
         h.inv = inv;
