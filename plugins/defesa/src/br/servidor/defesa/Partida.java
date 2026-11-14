@@ -857,9 +857,16 @@ final class Partida {
         Class<Mob> cls = (Class<Mob>) tipo.getEntityClass();
         Mob m = mundo.spawn(loc, cls, false, mob -> configurar(mob, "§c" + nome, vida, 1.0));
         int ess = Math.max(1, (int) Math.round(t.essencia * dif.essenciaDrop * desafio.essencia));
+        // 13/11: 4% dos monstros vem DOURADOS — brilham e soltam 5x Essencia
+        boolean dourado = !simulando && r.nextInt(100) < 4;
+        if (dourado) ess *= 5;
         monstros.put(m.getUniqueId(), new Monstro(m.getUniqueId(), nome, t.danoNucleo, ess, t.velocidade * desafio.velocidade, false));
         mundo.spawnParticle(Particle.PORTAL, loc.clone().add(0, 1, 0), 30, 0.4, 0.8, 0.4, 0.3);
-        limparNivel(m, vida, "§c" + nome);
+        limparNivel(m, vida, dourado ? "§6§l✦ " + nome + " Dourado" : "§c" + nome);
+        if (dourado) {
+            m.setGlowing(true);
+            mundo.spawnParticle(Particle.WAX_ON, loc.clone().add(0, 1, 0), 20, 0.4, 0.8, 0.4, 0.1);
+        }
     }
 
     /** O Minecraft limita a vida em 1024: acima disso o monstro ganha resistencia para compensar. */
