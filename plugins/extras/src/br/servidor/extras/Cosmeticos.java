@@ -145,7 +145,22 @@ final class Cosmeticos implements Listener {
 
     private void salvarComprados(Player p, Set<String> s) { p.getPersistentDataContainer().set(kDono, PersistentDataType.STRING, String.join(",", s)); }
 
-    private String escolha(Player p, NamespacedKey k) { return p.getPersistentDataContainer().get(k, PersistentDataType.STRING); }
+    private String escolha(Player p, NamespacedKey k) {
+        Map<UUID, String> prova = k == kEscolhaC ? provaC : provaE;
+        String t = prova.get(p.getUniqueId());
+        if (t != null) return t.isEmpty() ? null : t;
+        return p.getPersistentDataContainer().get(k, PersistentDataType.STRING);
+    }
+
+    /** Admin: prova um cosmetico sem comprar e sem salvar nada (some ao sair do servidor). "" = limpa a prova. */
+    private final Map<UUID, String> provaC = new HashMap<>(), provaE = new HashMap<>();
+
+    String provar(Player p, String id) {
+        if (id == null || id.equalsIgnoreCase("limpar")) { provaC.remove(p.getUniqueId()); provaE.remove(p.getUniqueId()); tirarChapeu(p); return "prova limpa"; }
+        if (chapeu(id) != null) { provaC.put(p.getUniqueId(), id); return "provando chapéu " + id; }
+        if (efeito(id) != null) { provaE.put(p.getUniqueId(), id); return "provando efeito " + id; }
+        return "id desconhecido";
+    }
 
     private long saldo(Player p) {
         Long v = p.getPersistentDataContainer().get(new NamespacedKey("masmorras", "coronas"), PersistentDataType.LONG);
@@ -224,7 +239,7 @@ final class Cosmeticos implements Listener {
     public void mundo(PlayerChangedWorldEvent e) { if (!permitido(e.getPlayer())) tirarChapeu(e.getPlayer()); }
 
     @EventHandler
-    public void saiu(PlayerQuitEvent e) { tirarChapeu(e.getPlayer()); }
+    public void saiu(PlayerQuitEvent e) { tirarChapeu(e.getPlayer()); provaC.remove(e.getPlayer().getUniqueId()); provaE.remove(e.getPlayer().getUniqueId()); }
 
     @EventHandler
     public void entrou(PlayerJoinEvent e) { tirarChapeu(e.getPlayer()); }

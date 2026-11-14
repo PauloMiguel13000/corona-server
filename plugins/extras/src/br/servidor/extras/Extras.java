@@ -1062,6 +1062,12 @@ public final class Extras extends JavaPlugin implements Listener {
                 s.sendMessage("§cSem permissão.");
                 return true;
             }
+            if (args.length >= 2 && args[0].equalsIgnoreCase("provar") && cosmeticos != null) {
+                Player alvo = Bukkit.getPlayerExact(args[1]);
+                if (alvo == null) { s.sendMessage("§cJogador offline."); return true; }
+                s.sendMessage("§a" + cosmeticos.provar(alvo, args.length > 2 ? args[2] : null));
+                return true;
+            }
             if (args.length > 0 && args[0].equalsIgnoreCase("quiz") && quizChat != null) {
                 quizChat.perguntar(true);
                 return true;
