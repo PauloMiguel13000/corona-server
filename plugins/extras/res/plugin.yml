@@ -8,6 +8,9 @@ commands:
   eventos:
     description: O que tem de especial hoje no servidor
     aliases: [hoje, novidades, evento]
+  semana:
+    description: Os rankings semanais (tempo, chefes, Prisao) e a sua posicao
+    aliases: [rankings, rankingsemanal, top]
   tempo:
     description: Ranking semanal de tempo jogado (premio em coronas)
     aliases: [tempojogado, toptempo]

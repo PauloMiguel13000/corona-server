@@ -86,6 +86,7 @@ public final class Extras extends JavaPlugin implements Listener {
         reparar = new Reparar(this);
         tempoSemanal = new TempoSemanal(this);
         meteoro = new Meteoro(this);
+        semana = new Semana(this);
         Bukkit.getPluginManager().registerEvents(chuvaCoronas, this);
         Bukkit.getPluginManager().registerEvents(conquistas, this);
         luaDeSangue = new LuaDeSangue(this);
@@ -871,6 +872,7 @@ public final class Extras extends JavaPlugin implements Listener {
     Reparar reparar;
     TempoSemanal tempoSemanal;
     Meteoro meteoro;
+    Semana semana;
     LuaDeSangue luaDeSangue;
     KitsContexto kitsContexto;
 
@@ -879,6 +881,10 @@ public final class Extras extends JavaPlugin implements Listener {
         if (cmd.getName().equalsIgnoreCase("vip")) return vip.comando(s, args);
         if (cmd.getName().equalsIgnoreCase("eventos")) {
             if (painelDia != null) for (String l : painelDia.texto().split("\n")) s.sendMessage(txt(l));
+            return true;
+        }
+        if (cmd.getName().equalsIgnoreCase("semana")) {
+            if (s instanceof Player p && semana != null) semana.abrir(p);
             return true;
         }
         if (cmd.getName().equalsIgnoreCase("tempo")) {

@@ -47,7 +47,7 @@ final class Ajuda implements Listener {
             new Item(33, Material.OAK_SIGN, "§f§lEndereço do servidor", "ip", "§7Java e Bedrock (celular), para passar aos amigos."),
             // 14/11: novidades
             new Item(37, Material.GOLDEN_HELMET, "§6§lConquistas", "conquistas", "§721 metas (horas, monstros, diamantes, dragão...)", "§7que pagam até §61500 coronas§7."),
-            new Item(38, Material.CLOCK, "§e§lRanking da semana", "tempo", "§7Quem mais jogar na semana (sem AFK)", "§7ganha até §61000 coronas §7toda segunda."),
+            new Item(38, Material.CLOCK, "§e§lRankings da semana", "semana", "§7Tempo jogado, chefes e Prisão:", "§7prêmios toda segunda §8(/semana)"),
             new Item(39, Material.SUNFLOWER, "§6§lRoleta do dia", "roleta", "§7Um giro grátis por dia. Jackpot de §61000§7!"),
             new Item(40, Material.CHEST, "§a§lKits", "kits", "§7Kits do Survival e das Masmorras", "§7(na Prisão abre os kits da Prisão)."),
             new Item(41, Material.FIREWORK_ROCKET, "§d§lEventos", "eventos", "§7Lua de Sangue, chuva de coronas no spawn,", "§7XP em dobro, monstro lendário e tesouro."),
