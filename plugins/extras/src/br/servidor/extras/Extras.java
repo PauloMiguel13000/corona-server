@@ -93,6 +93,8 @@ public final class Extras extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(pinata, this);
         new SorteioHora(this);
         quizChat = new QuizChat(this);
+        cosmeticos = new Cosmeticos(this);
+        Bukkit.getPluginManager().registerEvents(cosmeticos, this);
         Bukkit.getPluginManager().registerEvents(quizChat, this);
         Bukkit.getPluginManager().registerEvents(chuvaCoronas, this);
         Bukkit.getPluginManager().registerEvents(conquistas, this);
@@ -216,6 +218,7 @@ public final class Extras extends JavaPlugin implements Listener {
         if (contadoresLobby != null) contadoresLobby.limpar();
         if (torneioPesca != null) torneioPesca.desligar();
         if (pinata != null) pinata.desligar();
+        if (cosmeticos != null) cosmeticos.desligar();
         if (missoesDiarias != null) missoesDiarias.parar();
         if (bossMundial != null) bossMundial.parar();
         if (entradas != null) entradas.parar();
@@ -895,6 +898,7 @@ public final class Extras extends JavaPlugin implements Listener {
     TorneioPesca torneioPesca;
     Pinata pinata;
     QuizChat quizChat;
+    Cosmeticos cosmeticos;
     LuaDeSangue luaDeSangue;
     KitsContexto kitsContexto;
 
@@ -903,6 +907,10 @@ public final class Extras extends JavaPlugin implements Listener {
         if (cmd.getName().equalsIgnoreCase("vip")) return vip.comando(s, args);
         if (cmd.getName().equalsIgnoreCase("eventos")) {
             if (painelDia != null) for (String l : painelDia.texto().split("\n")) s.sendMessage(txt(l));
+            return true;
+        }
+        if (cmd.getName().equalsIgnoreCase("cosmeticos")) {
+            if (s instanceof Player p && cosmeticos != null) cosmeticos.abrir(p);
             return true;
         }
         if (cmd.getName().equalsIgnoreCase("youtube")) {

@@ -8,6 +8,9 @@ commands:
   eventos:
     description: O que tem de especial hoje no servidor
     aliases: [hoje, novidades, evento]
+  cosmeticos:
+    description: Loja de cosmeticos (chapeus e efeitos para lobbies e minigames)
+    aliases: [cosmetico, chapeu, chapeus, efeitos, loja-cosmeticos]
   youtube:
     description: Canal do YouTube do servidor
     aliases: [yt, canal, videos]
