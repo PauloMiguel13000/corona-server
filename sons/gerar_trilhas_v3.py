@@ -220,6 +220,40 @@ def compor(cfg, rng):
     A3 = A[:-1] + [(0, A[-1][1])]
     return A + A2 + B + A3
 
+
+# ------------------------------------------------------------------ motivos das trilhas antigas (v1, as que ja tocavam no jogo)
+# 14/11 (Paulo: "as primeiras musicas que voce fez, consegue fazer algo associado?"): cada tema novo comeca a frase
+# com a MELODIA da trilha antiga da familia dele (adaptada a escala, ao compasso e aos instrumentos do tema novo),
+# e responde com uma parte nova. Assim a trilha toda tem a mesma "cara" do Corona, mas cada masmorra soa diferente.
+def _midi(n):
+    base = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
+    k = base[n[0]]; i = 1
+    if n[1] in '#b': k += 1 if n[1] == '#' else -1; i = 2
+    return 12 * (int(n[i:]) + 1) + k
+M1 = [('E4', 1), ('A4', 1), ('C5', .5), ('B4', .5), ('A4', 1), ('G4', 1), ('E4', 1), (None, 1),
+      ('F4', 1), ('A4', .5), ('C5', .5), ('A4', 1), ('G4', 1), ('E4', 1), ('D4', 1), (None, 1)]
+M2 = [('B4', .5), ('E5', .5), ('D5', 1), ('B4', 1), ('G4', 1), ('A4', .5), ('B4', .5), ('G4', 1),
+      ('E4', 1), ('D4', 1), ('E4', 2), (None, 4)]
+M3 = [('D5', .5), ('C5', .5), ('A4', 1), ('F4', 1), ('D4', 1), ('A4', .5), ('C5', .5), ('D5', 1), ('A4', 2), (None, 1), ('D5', 1), ('F5', 1), ('E5', 1), ('C5', 1), ('D5', 3)]
+M4 = [('E5', .5), ('F5', .5), ('E5', .5), ('D5', .5), ('C5', 1), ('B4', 1), ('E4', .5), ('F4', .5),
+      ('G4', 1), ('E4', 2), ('F4', .5), ('E4', .5), ('G4', 1), ('B4', 1), ('C5', 1), ('B4', 1), ('E4', 2)]
+M5 = [('F#4', 1), ('B4', 1), ('C#5', .5), ('B4', .5), ('A4', 1), ('F#4', 1), ('D4', 1), ('E4', 1), ('B4', 2),
+      (None, 1), ('D5', 1), ('C#5', 1), ('B4', 1), ('A4', 1), ('B4', 3)]
+ANTIGAS = {'M1': (M1, 69, 'eolio'), 'M2': (M2, 64, 'eolio'), 'M3': (M3, 62, 'eolio'), 'M4': (M4, 64, 'frigio'), 'M5': (M5, 71, 'eolio')}
+
+def motivo(nome_m, cfg):
+    """Converte a melodia antiga em graus da escala do tema novo e estica para caber em 4 compassos."""
+    mel, raiz, modo = ANTIGAS[nome_m]
+    esc = MODOS[modo]; total = sum(d for _, d in mel)
+    alvo = 4 * cfg['beats']; k = alvo / total
+    out = []
+    for n, d in mel:
+        if n is None: out.append((None, d * k)); continue
+        rel = _midi(n) - raiz; o, r = divmod(rel, 12)
+        i = min(range(len(esc)), key=lambda j: abs(esc[j] - r))
+        out.append((i + o * len(MODOS[cfg['modo']]) if len(MODOS[cfg['modo']]) == len(esc) else i + o * len(MODOS[cfg['modo']]), d * k))
+    return out
+
 # ------------------------------------------------------------------ montagem de uma faixa
 def montar(nome, cfg, luta=False):
     R.g = np.random.default_rng(abs(hash(nome)) % 2**31)
@@ -230,6 +264,13 @@ def montar(nome, cfg, luta=False):
     D = comps * barra; x = Z(D + 4)
     prog = cfg['prog']
     mel = compor(cfg, rng)
+    if cfg.get('motivo'):
+        # metade: a melodia antiga (adaptada); outra metade: a resposta nova do tema
+        meio = 0.0; corte = 0
+        for i, (_, d) in enumerate(mel):
+            meio += d
+            if meio >= 4 * bpc - 1e-6: corte = i + 1; break
+        mel = motivo(cfg['motivo'], cfg) + mel[corte:]
     # ---- harmonia
     for c in range(comps):
         t0 = c * barra; g = prog[c % len(prog)]
@@ -504,8 +545,9 @@ TEMAS = {
     'antiga': dict(bpm=64, beats=4, raiz=46, modo='eolio', prog=[0, 0, 5, 1], harm='pad', corteHarm=500, baixo='drone', lead=lambda f, d: lp(sino(f, d), 1800),
                    ritmos=[[4], [3, 1], [2, 2]], bateria=[], luta=[(TAI(), 0, 1), (TAI(), 2.5, .8), (TIM(50), 3, .7)], extras=[ex_eco_warden], sala=4.0, mixRev=.5),
 }
+for _t, _m in {'cripta': 'M1', 'catedral': 'M1', 'vampiro': 'M1', 'aranha': 'M1', 'mina': 'M3', 'deserto': 'M1', 'pantano': 'M2', 'floresta': 'M2', 'jardim': 'M2', 'selva': 'M2', 'quartel': 'M2', 'gelo': 'M5', 'mar': 'M3', 'afogada': 'M3', 'relogio': 'M3', 'arcano': 'M1', 'coliseu': 'M3', 'trovao': 'M1', 'fogo': 'M4', 'nether': 'M4', 'vazio': 'M5', 'antiga': 'M3'}.items(): TEMAS[_t]['motivo'] = _m
 # explorar e o tema "padrao" (masmorras sem tema): andanca de aventura
-TEMAS['explorar'] = dict(TEMAS['mina'], bpm=104, raiz=55, modo='dorico', lead=flauta, instAc=pluck, extras=[], harm='acordes', batidas=[0, 2])
+TEMAS['explorar'] = dict(TEMAS['mina'], bpm=104, raiz=55, modo='dorico', lead=flauta, instAc=pluck, extras=[], harm='acordes', batidas=[0, 2], motivo='M2')
 
 # ------------------------------------------------------------------ Herobrine
 def herobrine():
