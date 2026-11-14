@@ -79,6 +79,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
     final Map<Material, Double> precos = new EnumMap<>(Material.class);
     World mundo;
     BauPrisao bau;
+    SemanaPrisao semana;
 
     /** 13/11 (Paulo): os plots (PlotMe + Casas) agora sao da Prisao: mesma mochila, mesmas regras. */
     boolean ehPlots(World w) {
@@ -115,6 +116,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         kVersao = new NamespacedKey(this, "versao");
         missoes = new Missoes(this);
         bau = new BauPrisao(this);
+        semana = new SemanaPrisao(this);
         Bukkit.getPluginManager().registerEvents(bau, this);
         saveDefaultConfig();
         mundosComAcesso.addAll(getConfig().getStringList("mundos-com-acesso"));
@@ -212,6 +214,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         if (bau != null) bau.salvarTodos();
+        if (semana != null) semana.salvar();
         for (Player p : Bukkit.getOnlinePlayers()) tirarPlacar(p);
     }
 
@@ -1052,6 +1055,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         if (m.quebrados == 0) m.ultimoReset = System.currentTimeMillis();
         m.quebrados++;
         missoes.somar(p, Missoes.Tipo.QUEBRAR, 1);
+        if (semana != null) semana.somar(p);
         if (!(t == Material.STONE || t == Material.DEEPSLATE || t == Material.COBBLESTONE || t == Material.COBBLED_DEEPSLATE || t == Material.ANDESITE
                 || t == Material.NETHERRACK || t == Material.BLACKSTONE)) missoes.somar(p, Missoes.Tipo.MINERIO, 1);
         if (!m.pvp && java.util.concurrent.ThreadLocalRandom.current().nextInt(700) == 0) {
@@ -1670,6 +1674,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         List<String> tl = new ArrayList<>(linhasTop(5));
         if (tl.isEmpty()) tl.add("§7Ninguém ainda. Seja o primeiro!");
         int hd = getConfig().getInt("hora-dourada", 20);
+        if (semana != null) { tl.add(" "); tl.addAll(semana.linhas()); tl.add("§7Você: §f" + fmt(semana.meus(p)) + " blocos"); }
         if (hd >= 0) tl.add(horaDourada() ? "§6§l✦ HORA DOURADA AGORA: venda x2!" : "§6✦ Hora dourada: todo dia às " + hd + "h (venda x2)");
         inv.setItem(8, item(Material.GOLDEN_HELMET, "§6§lTop da Prisão", tl.toArray(new String[0])));
         for (int i = 0; i < 12; i++) {
@@ -2087,6 +2092,10 @@ public final class Mineracao extends JavaPlugin implements Listener {
                 List<String> tl = linhasTop(10);
                 if (tl.isEmpty()) p.sendMessage(txt("§7Ninguém ainda."));
                 for (String x : tl) p.sendMessage(txt(x));
+                if (semana != null) {
+                    for (String x : semana.linhas()) p.sendMessage(txt(x));
+                    p.sendMessage(txt("§7Você nesta semana: §f" + fmt(semana.meus(p)) + " blocos"));
+                }
             }
             case "rank" -> {
                 int r = rank(p);
