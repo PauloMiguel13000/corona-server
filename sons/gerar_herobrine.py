@@ -47,6 +47,7 @@ def suga(d):
     return bp(rng.standard_normal(n), 400, 6000) * k * .5 + np.sin(2 * np.pi * np.cumsum(150 + 2200 * k) / SR) * k * .35
 
 def main():
+    gl.b, gl.BAR = b, BAR   # a melodia (gl.melodia) usa o andamento DESTA musica, nao o do lobby
     gl.L = Z(D + 6); gl.Rr = Z(D + 6)
     por = gl.por
     for c in range(TOTAL):
