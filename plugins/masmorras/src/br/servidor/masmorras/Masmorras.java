@@ -1490,8 +1490,11 @@ public final class Masmorras extends JavaPlugin implements Listener {
                 p.getWorld().spawnParticle(org.bukkit.Particle.TOTEM_OF_UNDYING, p.getLocation().add(0, 1, 0), 60, 0.5, 1, 0.5, 0.3);
                 p.playSound(p.getLocation(), "minecraft:ui.toast.challenge_complete", 0.8f, 1.3f);
             }
-            coronas.dar(p, coronas.comVip(p, cor), false);
-            p.sendMessage(txt(PREFIXO + "§6+" + Coronas.fmt(cor) + " coronas §7pelo chefe! Saldo: §6" + Coronas.fmt(coronas.saldo(p)) + " §7(gaste com os §6Mercadores§7)"));
+            // 14/11: bonus de grupo — +10% por companheiro que lutou junto (ate +40%)
+            int juntos = Math.min(4, lutaram.size() - 1);
+            long corP = cor + cor * juntos / 10;
+            coronas.dar(p, coronas.comVip(p, corP), false);
+            p.sendMessage(txt(PREFIXO + "§6+" + Coronas.fmt(corP) + " coronas §7pelo chefe" + (juntos > 0 ? " §a(grupo +" + juntos * 10 + "%)" : "") + "! Saldo: §6" + Coronas.fmt(coronas.saldo(p)) + " §7(gaste com os §6Mercadores§7)"));
         }
         Location l = e.getEntity().getLocation();
         l.getWorld().playSound(l, "minecraft:ui.toast.challenge_complete", 1f, 1f);
