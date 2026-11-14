@@ -55,6 +55,8 @@ final class PainelDia {
         t.append("\n§e✦ Tesouro: ").append(pl.tesouro != null && pl.tesouro.ativo() ? "§a§lATIVO! §7use §e/tesouro" : "§7aparece de tempos em tempos no Survival");
         if (pl.eventosSurvival != null && pl.eventosSurvival.xpDobro()) t.append("\n§a§l✦ XP EM DOBRO §fno Survival agora!");
         if (pl.luaDeSangue != null && pl.luaDeSangue.ativa()) t.append("\n§4§l☾ LUA DE SANGUE §cno Survival agora!");
+        t.append("\n§6⛃ §fChuva de Coronas §7cai aqui na praça de tempos em tempos!");
+        t.append("\n§6🏆 §f/conquistas §7— metas que pagam até 1500 coronas");
         t.append("\n§6🎰 §f/roleta §7— uma girada grátis por dia (jackpot 1000!)");
         t.append("\n§b🎁 §f/kits §7no Survival e nas Masmorras");
         return t.toString();

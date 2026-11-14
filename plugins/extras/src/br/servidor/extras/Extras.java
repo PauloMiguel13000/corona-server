@@ -83,6 +83,8 @@ public final class Extras extends JavaPlugin implements Listener {
         conquistas = new Conquistas(this);
         contadoresLobby = new ContadoresLobby(this);
         Bukkit.getPluginManager().registerEvents(new ArenaSequencia(this), this);
+        chuvaCoronas = new ChuvaCoronas(this);
+        Bukkit.getPluginManager().registerEvents(chuvaCoronas, this);
         Bukkit.getPluginManager().registerEvents(conquistas, this);
         luaDeSangue = new LuaDeSangue(this);
         Bukkit.getPluginManager().registerEvents(luaDeSangue, this);
@@ -863,6 +865,7 @@ public final class Extras extends JavaPlugin implements Listener {
     Roleta roleta;
     Conquistas conquistas;
     ContadoresLobby contadoresLobby;
+    ChuvaCoronas chuvaCoronas;
     LuaDeSangue luaDeSangue;
     KitsContexto kitsContexto;
 
@@ -1004,6 +1007,11 @@ public final class Extras extends JavaPlugin implements Listener {
         if (cmd.getName().equalsIgnoreCase("extras")) {
             if (!s.hasPermission("extras.admin")) {
                 s.sendMessage("§cSem permissão.");
+                return true;
+            }
+            if (args.length > 0 && args[0].equalsIgnoreCase("chuva") && chuvaCoronas != null) {
+                chuvaCoronas.anunciar();
+                s.sendMessage("§aChuva de coronas anunciada (cai em 1 minuto).");
                 return true;
             }
             if (args.length > 0 && args[0].equalsIgnoreCase("recarregar")) {
