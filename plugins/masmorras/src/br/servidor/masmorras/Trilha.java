@@ -25,6 +25,9 @@ import org.bukkit.event.player.PlayerQuitEvent;
  */
 final class Trilha implements Listener {
 
+    /** 14/11: as musicas novas ficam em "trilha.*" (pacotes corona_trilhas e corona_chefes no Bedrock; no Java dentro do
+     *  pacote do CoronaPack), separadas das antigas "masmorras.*" do pacote principal, que continuam la sem uso. */
+    static final String SOM = "trilha.";
     /** Quanto dura cada faixa, em segundos (para reemendar o loop antes de acabar). */
     private static final Map<String, Double> DURACAO = new HashMap<>();
     /** Qual faixa toca em cada tipo de masmorra. */
@@ -81,9 +84,33 @@ final class Trilha implements Listener {
         DURACAO.put("antiga_luta", 54.86);
         DURACAO.put("explorar", 36.23);
         DURACAO.put("explorar_luta", 36.23);
-        DURACAO.put("herobrine", 44.80);
+        DURACAO.put("herobrine", 51.43);
         DURACAO.put("lobby", 81.82);
-        DURACAO.put("chefe", 42.3);
+        DURACAO.put("chefe", 48.0);
+        // 14/11: cada tema tem a sua musica de chefe (sons/gerar_chefes.py)
+        DURACAO.put("chefe_cripta", 54.92);
+        DURACAO.put("chefe_catedral", 66.12);
+        DURACAO.put("chefe_vampiro", 49.85);
+        DURACAO.put("chefe_aranha", 46.96);
+        DURACAO.put("chefe_mina", 46.96);
+        DURACAO.put("chefe_deserto", 51.43);
+        DURACAO.put("chefe_pantano", 54.92);
+        DURACAO.put("chefe_floresta", 48.36);
+        DURACAO.put("chefe_jardim", 57.86);
+        DURACAO.put("chefe_selva", 43.20);
+        DURACAO.put("chefe_quartel", 45.63);
+        DURACAO.put("chefe_gelo", 53.11);
+        DURACAO.put("chefe_mar", 44.38);
+        DURACAO.put("chefe_afogada", 63.53);
+        DURACAO.put("chefe_relogio", 42.63);
+        DURACAO.put("chefe_arcano", 53.11);
+        DURACAO.put("chefe_coliseu", 51.43);
+        DURACAO.put("chefe_trovao", 38.57);
+        DURACAO.put("chefe_fogo", 38.57);
+        DURACAO.put("chefe_nether", 42.08);
+        DURACAO.put("chefe_vazio", 45.00);
+        DURACAO.put("chefe_antiga", 67.50);
+        DURACAO.put("chefe_explorar", 49.09);
 
         fam("cripta", "CRIPTA", "CEMITERIO", "CRIPTA_REAL", "TUMBA", "OSSOS");
         fam("catedral", "CATEDRAL", "MAUSOLEU");
@@ -148,12 +175,17 @@ final class Trilha implements Listener {
         Location l = p.getLocation();
         World w = l.getWorld();
         if (w == null) return null;
+        if (w.getName().equals(InfernoHerobrine.MUNDO)) return "herobrine";   // no mundo dele
         if (pl.lobby != null && pl.lobby.noLobby(l)) return "lobby";
         Masmorra m = pl.masmorraEm(w, l.getBlockX(), l.getBlockY(), l.getBlockZ());
         if (m == null || m.demolindo) return null;
-        if (m.chefe != null && m.chefe.vivo() && m.arena().contem(l.getBlockX(), l.getBlockY(), l.getBlockZ()))
-            return m.tipo.secreta ? "herobrine" : "chefe";
         String tema = faixaDe(m);
+        // chefe vivo: na arena ou perto dele (os chefes ja aparecem logo que a gente entra) -> musica do chefe do tema
+        if (m.chefe != null && m.chefe.vivo() && (m.arena().contem(l.getBlockX(), l.getBlockY(), l.getBlockZ())
+                || (m.chefe.e.getWorld().equals(w) && m.chefe.e.getLocation().distanceSquared(l) < 28 * 28))) {
+            if (m.tipo.secreta) return "herobrine";
+            return DURACAO.containsKey("chefe_" + tema) ? "chefe_" + tema : "chefe";
+        }
         int perto = 0;
         long agora = System.currentTimeMillis();
         for (Entity e : w.getNearbyEntities(l, 11, 7, 11)) {
@@ -176,7 +208,7 @@ final class Trilha implements Listener {
                 continue;
             }
             if (!quer.equals(atual)) {
-                if (atual != null) p.stopSound("masmorras." + atual, SoundCategory.MUSIC);
+                if (atual != null) p.stopSound(SOM + atual, SoundCategory.MUSIC);
                 tocar(p, quer, agora);
                 continue;
             }
@@ -187,13 +219,13 @@ final class Trilha implements Listener {
     }
 
     private void tocar(Player p, String faixa, long agora) {
-        p.playSound(p, "masmorras." + faixa, SoundCategory.MUSIC, 0.8f, 1f);
+        p.playSound(p, SOM + faixa, SoundCategory.MUSIC, 0.8f, 1f);
         tocando.put(p.getUniqueId(), faixa);
         desde.put(p.getUniqueId(), agora);
     }
 
     private void parar(Player p, String faixa) {
-        p.stopSound("masmorras." + faixa, SoundCategory.MUSIC);
+        p.stopSound(SOM + faixa, SoundCategory.MUSIC);
         tocando.remove(p.getUniqueId());
         desde.remove(p.getUniqueId());
     }
@@ -202,7 +234,7 @@ final class Trilha implements Listener {
     void calar(Player p) {
         String a = tocando.get(p.getUniqueId());
         if (a != null) parar(p, a);
-        for (String f : DURACAO.keySet()) p.stopSound("masmorras." + f, SoundCategory.MUSIC);
+        for (String f : DURACAO.keySet()) { p.stopSound(SOM + f, SoundCategory.MUSIC); p.stopSound("masmorras." + f, SoundCategory.MUSIC); }
         p.stopSound("masmorras.combate", SoundCategory.MUSIC);
     }
 

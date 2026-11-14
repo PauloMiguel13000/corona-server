@@ -63,6 +63,10 @@ final class Chefe {
     int elemento = -1;
     /** Blocos de gelo da prisao (para tirar depois). */
     final List<Block> gelos = new ArrayList<>();
+    /** Herobrine: ja levou todo mundo para o mundo dele (InfernoHerobrine) nesta luta. */
+    boolean infernoFeito;
+    /** Teste do admin (/masmorras admin inferno): usa o mundo de Herobrine com outro chefe. */
+    boolean forcarInferno;
 
     Chefe(Masmorras pl, Masmorra m, LivingEntity e, double vidaMax) {
         this.pl = pl;
@@ -100,6 +104,9 @@ final class Chefe {
     /** A cada meio segundo. Devolve false quando o chefe deve ser tirado (ninguem por perto ha muito tempo). */
     boolean tick() {
         if (!vivo()) return false;
+        if ((t.secreta || forcarInferno) && pl.inferno != null && pl.inferno.ativo(this)) {   // no mundo de Herobrine quem manda e o InfernoHerobrine
+            return true;   // a fase tem o tique dela (InfernoHerobrine)
+        }
         long agora = System.currentTimeMillis();
         List<Player> ps = naArena();
         // barra de vida
@@ -121,6 +128,7 @@ final class Chefe {
             return agora - semJogadorDesde < 60_000;
         }
         semJogadorDesde = -1;
+        if ((t.secreta || forcarInferno) && pl.inferno != null && pl.inferno.conferir(this, ps)) return true;
         // preso na arena
         Caixa a = m.arena();
         if (!a.crescer(1).contem(e.getX(), e.getY(), e.getZ())) e.teleport(centro());

@@ -127,6 +127,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
     AlaMonstros ala;
     MundoMasmorras mundoNovo;
     LobbyMundo lobby;
+    InfernoHerobrine inferno;
     Ranking ranking;
     Missoes missoes;
     VendaClasses vendaClasses;
@@ -224,6 +225,10 @@ public final class Masmorras extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(chocadeiras, this);
         // efeitos do conjunto cosmetico de Herobrine (so visual)
         getServer().getPluginManager().registerEvents(new HerobrineEfeitos(this), this);
+        // 14/11: o mundo de Herobrine (a luta dele leva todo mundo para o inferno dele)
+        inferno = new InfernoHerobrine(this);
+        getServer().getPluginManager().registerEvents(inferno, this);
+        Bukkit.getScheduler().runTaskLater(this, () -> { try { inferno.mundo(); } catch (Throwable ex) { getLogger().warning("Mundo de Herobrine: " + ex); } }, 200L);
         getServer().getPluginManager().registerEvents(new Vidas(this), this);
         hub = new Hub(this);
         getServer().getPluginManager().registerEvents(loja, this);
@@ -304,6 +309,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if (inferno != null) inferno.desligar();
         if (ranking != null) ranking.salvar();
         if (statusEntrada != null) statusEntrada.limpar();
         if (missoes != null) missoes.salvarAgora();
@@ -1333,6 +1339,10 @@ public final class Masmorras extends JavaPlugin implements Listener {
             List<Player> ps = new ArrayList<>();
             for (Player p : w.getPlayers())
                 if (p.getGameMode() != GameMode.SPECTATOR && perto.contem(p.getX(), p.getY(), p.getZ())) ps.add(p);
+            if (ps.isEmpty() && m.chefe != null && inferno != null && inferno.ativo(m.chefe)) {   // todos no mundo de Herobrine
+                m.semNinguemDesde = -1;
+                continue;
+            }
             if (ps.isEmpty()) {
                 if (m.chefe != null || !m.lacaios.isEmpty()) {
                     if (m.semNinguemDesde < 0) m.semNinguemDesde = agora;
@@ -2321,6 +2331,25 @@ public final class Masmorras extends JavaPlugin implements Listener {
                 for (ItemStack it : loja.pecasConjunto("herobrine", "de Herobrine", "§4"))
                     for (ItemStack sobra : alvo.getInventory().addItem(it).values()) alvo.getWorld().dropItem(alvo.getLocation(), sobra);
                 s.sendMessage(PREFIXO + "Conjunto de Herobrine dado a " + alvo.getName() + ".");
+            }
+            case "inferno" -> {
+                // teste: /masmorras admin inferno  (vai para a arena do Herobrine; se ele estiver vivo, baixa a vida
+                // para 65% e o mundo de Herobrine comeca)
+                Masmorra hm = null;
+                for (Masmorra m : todas) if (m.tipo.secreta) { hm = m; break; }
+                boolean teste = hm == null;
+                if (hm == null && a.length > 2) hm = porTexto(a[2]);   // teste com outra masmorra: /masmorras admin inferno <id>
+                if (hm == null) { s.sendMessage(PREFIXO + "Sem masmorra secreta."); return true; }
+                World hw = Bukkit.getWorld(hm.mundo);
+                if (s instanceof Player p && hw != null && (hm.chefe == null || !hm.chefe.e.getWorld().getName().equals(InfernoHerobrine.MUNDO))) {
+                    Caixa ar = hm.arena();
+                    p.teleport(new Location(hw, ar.cx() + 0.5, ar.y1(), ar.cz() + 0.5));
+                }
+                if (hm.chefe != null && hm.chefe.vivo()) {
+                    if (teste) hm.chefe.forcarInferno = true;
+                    hm.chefe.e.setHealth(Math.min(hm.chefe.e.getHealth(), hm.chefe.vidaMax * 0.65));
+                    s.sendMessage(PREFIXO + "Herobrine em 65% da vida: o mundo dele vai abrir.");
+                } else s.sendMessage(PREFIXO + "Herobrine ainda nao apareceu (espere a abertura de 24 s na arena).");
             }
             case "galeria" -> galeria.refazer(s);
             case "reliquia" -> {

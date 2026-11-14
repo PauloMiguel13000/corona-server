@@ -363,13 +363,13 @@ def emendar(x, D):
     f = int(.02 * SR); y[:f] *= np.linspace(.85, 1, f)
     return y
 
-def salvar(nome, x, vol=.85):
+def salvar(nome, x, vol=.85, q='0'):
     x = np.asarray(x, float); x -= np.mean(x)
     x = np.tanh(x / (np.percentile(np.abs(x), 99.7) + 1e-9) * .95); x /= np.max(np.abs(x)) + 1e-9; x *= vol
     w = f'{OUT}/{nome}.wav'
     with wave.open(w, 'wb') as f:
         f.setnchannels(1); f.setsampwidth(2); f.setframerate(SR); f.writeframes((x * 32767).astype(np.int16).tobytes())
-    subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', w, '-c:a', 'libvorbis', '-q:a', '0', f'{OUT}/{nome}.ogg'], check=True)
+    subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', w, '-c:a', 'libvorbis', '-q:a', q, f'{OUT}/{nome}.ogg'], check=True)
     os.remove(w)
     print(f'{nome:18s} {os.path.getsize(f"{OUT}/{nome}.ogg") // 1024:4d} KB {len(x) / SR:5.1f} s', flush=True)
     return len(x) / SR
@@ -697,6 +697,12 @@ def variacao(nome, luta=False):
         elif estAc == 'staccato':
             for k in range(8):
                 for f in fr[:2]: por(x, instAc(f, b / 2), t0 + k * b / 2, .3 if k % 2 == 0 else .2)
+        # LUTA: cordas em colcheia (tensao), golpe de metais no 1 e coro a cada 2 compassos (14/11: lutas mais fodas)
+        if luta:
+            for k in range(8):
+                for f in fr[:2]: por(x, cordas_st(f * 2, b / 2), t0 + k * b / 2, .2 if k % 2 == 0 else .14)
+            por(x, metais(fr[0], b * .6, 2200), t0, .35)
+            if c % 2 == 0: por(x, coro(fr, 2 * barra + .4), t0, .35)
         # fundo (pad, orgao, coro, cordas)
         if fundo == 'pad': por(x, pad(fr, barra + .4, 1100), t0, .5)
         elif fundo == 'orgao' and c % 2 == 0: por(x, orgao([fb * 2, fr[1], fr[2]], 2 * barra + .2), t0, .45)
@@ -711,7 +717,8 @@ def variacao(nome, luta=False):
         for (inst, pos, g) in padrao:
             if pos < 4: por(bat, inst(), t0 + pos * b, g)
         if luta and c % 4 == 3: por(bat, rufo(barra / 2), t0 + barra / 2, .6)
-        if luta and c % 8 == 0: por(bat, prato(1.0), t0, .5)
+        if luta and c % 4 == 0: por(bat, prato(1.2), t0, .5)
+        if luta: por(bat, taiko(), t0, .7); por(bat, taiko(), t0 + 2 * b, .55)
         if c % 4 == 3 and not luta and nome in ('mina', 'quartel', 'coliseu', 'fogo', 'trovao', 'selva', 'explorar'):
             for k in range(4): por(bat, tom(195 - k * 22, .24), t0 + 3 * b + k * b / 4, .4 + k * .08)
     # melodia original (entra depois de 4 compassos, como no jogo; na luta entra ja)
@@ -731,13 +738,13 @@ def variacao(nome, luta=False):
     return emendar(x[:int((D + 4) * SR)], D)
 
 if __name__ == '__main__':
-    quais = sys.argv[1:] or list(TEMAS) + ['herobrine']
+    quais = sys.argv[1:] or [t for t in TEMAS if t in VAR]
     dur = {}
     for nome in quais:
         if nome == 'herobrine':
             dur['herobrine'] = salvar('herobrine', herobrine(), .9)
             continue
         dur[nome] = salvar(nome, variacao(nome, False))
-        dur[nome + '_luta'] = salvar(nome + '_luta', variacao(nome, True))
+        dur[nome + '_luta'] = salvar(nome + '_luta', variacao(nome, True), q='1')
     with open(f'{OUT}/duracoes.txt', 'a') as f:
         for k, v in dur.items(): f.write(f'{k} {v:.2f}\n')
