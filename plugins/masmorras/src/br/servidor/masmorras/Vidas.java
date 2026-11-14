@@ -39,6 +39,21 @@ final class Vidas implements Listener {
         this.pl = pl;
     }
 
+    /**
+     * 14/11 (Paulo: "coloque pra nao perder itens"): morrer nas masmorras (mundo das masmorras, dentro de uma masmorra,
+     * no mundo de Herobrine e no nether/end das masmorras) NAO derruba nada: inventario e XP ficam com o jogador.
+     */
+    @EventHandler(priority = EventPriority.LOW)   // antes do Traje do Rei (HIGH), que entao nao guarda copia
+    public void naoPerde(PlayerDeathEvent e) {
+        if (!pl.getConfig().getBoolean("masmorras.manter-itens", true)) return;
+        String w = e.getEntity().getWorld().getName();
+        if (!w.startsWith("masmorras") && !w.equals(InfernoHerobrine.MUNDO)) return;
+        e.setKeepInventory(true);
+        e.getDrops().clear();
+        e.setKeepLevel(true);
+        e.setDroppedExp(0);
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void morreu(PlayerDeathEvent e) {
         Player p = e.getEntity();

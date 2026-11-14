@@ -228,6 +228,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         // 14/11: o mundo de Herobrine (a luta dele leva todo mundo para o inferno dele)
         inferno = new InfernoHerobrine(this);
         getServer().getPluginManager().registerEvents(inferno, this);
+        getServer().getPluginManager().registerEvents(new PacoteMusicaJava(this), this);
         Bukkit.getScheduler().runTaskLater(this, () -> { try { inferno.mundo(); } catch (Throwable ex) { getLogger().warning("Mundo de Herobrine: " + ex); } }, 200L);
         getServer().getPluginManager().registerEvents(new Vidas(this), this);
         hub = new Hub(this);
