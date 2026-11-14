@@ -87,6 +87,11 @@ public final class Extras extends JavaPlugin implements Listener {
         tempoSemanal = new TempoSemanal(this);
         meteoro = new Meteoro(this);
         semana = new Semana(this);
+        torneioPesca = new TorneioPesca(this);
+        Bukkit.getPluginManager().registerEvents(torneioPesca, this);
+        pinata = new Pinata(this);
+        Bukkit.getPluginManager().registerEvents(pinata, this);
+        new SorteioHora(this);
         Bukkit.getPluginManager().registerEvents(chuvaCoronas, this);
         Bukkit.getPluginManager().registerEvents(conquistas, this);
         luaDeSangue = new LuaDeSangue(this);
@@ -207,6 +212,8 @@ public final class Extras extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         if (contadoresLobby != null) contadoresLobby.limpar();
+        if (torneioPesca != null) torneioPesca.desligar();
+        if (pinata != null) pinata.desligar();
         if (missoesDiarias != null) missoesDiarias.parar();
         if (bossMundial != null) bossMundial.parar();
         if (entradas != null) entradas.parar();
@@ -873,6 +880,8 @@ public final class Extras extends JavaPlugin implements Listener {
     TempoSemanal tempoSemanal;
     Meteoro meteoro;
     Semana semana;
+    TorneioPesca torneioPesca;
+    Pinata pinata;
     LuaDeSangue luaDeSangue;
     KitsContexto kitsContexto;
 
@@ -1026,6 +1035,14 @@ public final class Extras extends JavaPlugin implements Listener {
         if (cmd.getName().equalsIgnoreCase("extras")) {
             if (!s.hasPermission("extras.admin")) {
                 s.sendMessage("§cSem permissão.");
+                return true;
+            }
+            if (args.length > 0 && args[0].equalsIgnoreCase("pesca") && torneioPesca != null) {
+                torneioPesca.iniciar();
+                return true;
+            }
+            if (args.length > 0 && args[0].equalsIgnoreCase("pinata") && pinata != null) {
+                s.sendMessage(pinata.aparecer() ? "§aPiñata no spawn!" : "§cJá tem piñata ou o mundo do spawn não existe.");
                 return true;
             }
             if (args.length > 0 && args[0].equalsIgnoreCase("meteoro") && meteoro != null) {

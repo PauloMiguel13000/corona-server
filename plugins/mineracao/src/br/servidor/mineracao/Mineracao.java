@@ -80,6 +80,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
     World mundo;
     BauPrisao bau;
     SemanaPrisao semana;
+    PicaretaEvolui picareta;
 
     /** 13/11 (Paulo): os plots (PlotMe + Casas) agora sao da Prisao: mesma mochila, mesmas regras. */
     boolean ehPlots(World w) {
@@ -117,6 +118,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         missoes = new Missoes(this);
         bau = new BauPrisao(this);
         semana = new SemanaPrisao(this);
+        picareta = new PicaretaEvolui(this);
         Bukkit.getPluginManager().registerEvents(bau, this);
         saveDefaultConfig();
         mundosComAcesso.addAll(getConfig().getStringList("mundos-com-acesso"));
@@ -1056,6 +1058,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         m.quebrados++;
         missoes.somar(p, Missoes.Tipo.QUEBRAR, 1);
         if (semana != null) semana.somar(p);
+        if (picareta != null) picareta.quebrou(p);
         if (!(t == Material.STONE || t == Material.DEEPSLATE || t == Material.COBBLESTONE || t == Material.COBBLED_DEEPSLATE || t == Material.ANDESITE
                 || t == Material.NETHERRACK || t == Material.BLACKSTONE)) missoes.somar(p, Missoes.Tipo.MINERIO, 1);
         if (!m.pvp && java.util.concurrent.ThreadLocalRandom.current().nextInt(700) == 0) {
