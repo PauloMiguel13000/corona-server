@@ -1466,7 +1466,18 @@ public final class Masmorras extends JavaPlugin implements Listener {
         if (missoes != null) for (Player p : lutaram) missoes.trilhaChefe(p, t);
         long cor = (t.secreta ? getConfig().getLong("coronas.secreta", 5000) : getConfig().getLong("coronas.chefe", 250) * t.nivel) * Destaque.mult(t);
         if (Destaque.eh(t)) Bukkit.broadcast(txt(PREFIXO + "§6⭐ Era a masmorra em destaque: §acoronas e XP em DOBRO§7!"));
+        org.bukkit.NamespacedKey kPrimeiro = new org.bukkit.NamespacedKey(this, "primeiro_chefe_dia");
+        long hojeDia = java.time.LocalDate.now(java.time.ZoneId.of("America/Sao_Paulo")).toEpochDay();
         for (Player p : lutaram) {
+            // 13/11: primeira vitoria contra chefe do dia vale o DOBRO de coronas
+            Long ult = p.getPersistentDataContainer().get(kPrimeiro, PersistentDataType.LONG);
+            if (ult == null || ult != hojeDia) {
+                p.getPersistentDataContainer().set(kPrimeiro, PersistentDataType.LONG, hojeDia);
+                coronas.dar(p, coronas.comVip(p, cor), false);
+                p.sendMessage(txt(PREFIXO + "§a§l✔ PRIMEIRA VITÓRIA DO DIA! §6+" + Coronas.fmt(cor) + " coronas extras"));
+                p.getWorld().spawnParticle(org.bukkit.Particle.TOTEM_OF_UNDYING, p.getLocation().add(0, 1, 0), 60, 0.5, 1, 0.5, 0.3);
+                p.playSound(p.getLocation(), "minecraft:ui.toast.challenge_complete", 0.8f, 1.3f);
+            }
             coronas.dar(p, coronas.comVip(p, cor), false);
             p.sendMessage(txt(PREFIXO + "§6+" + Coronas.fmt(cor) + " coronas §7pelo chefe! Saldo: §6" + Coronas.fmt(coronas.saldo(p)) + " §7(gaste com os §6Mercadores§7)"));
         }
