@@ -416,7 +416,7 @@ public final class DefesaTorre extends JavaPlugin implements Listener {
             List<String> lore = new ArrayList<>();
             lore.add("§7" + t.descricao);
             lore.add("");
-            lore.add("§fCusto: §d" + t.custo + " Essência");
+            lore.add(t == TipoTorre.promocao() ? "§fCusto: §m" + t.custo + "§r §a§l" + t.preco() + " Essência §6§l(PROMOÇÃO DO DIA -30%)" : "§fCusto: §d" + t.custo + " Essência");
             if (t == TipoTorre.MINA) {
                 lore.add("§fGera: §d" + TipoTorre.essenciaMina(1) + "/" + TipoTorre.essenciaMina(2) + "/" + TipoTorre.essenciaMina(3) + " §7por onda (nível 1/2/3)");
             } else if (t == TipoTorre.FAROL) {
@@ -441,7 +441,7 @@ public final class DefesaTorre extends JavaPlugin implements Listener {
             lore.add("§7Evolui até o nível 3 (clique na torre).");
             lore.add("");
             if (cheio) lore.add("§cLimite de torres atingido (" + pa.dif.limiteTorres + ")");
-            else lore.add(pa.essencia >= t.custo ? "§aClique para comprar e depois clique no chão" : "§cFalta " + (t.custo - pa.essencia) + " Essência");
+            else lore.add(pa.essencia >= t.preco() ? "§aClique para comprar e depois clique no chão" : "§cFalta " + (t.preco() - pa.essencia) + " Essência");
             inv.setItem(slots[i], marcado(item(t.icone, t.cor + "§l" + t.nome, lore), kItemTorre, t.id));
         }
         if (pa.estado == Partida.Estado.ESPERANDO) {
@@ -582,9 +582,9 @@ public final class DefesaTorre extends JavaPlugin implements Listener {
                 p.sendMessage("§cLimite de torres do " + pa.dif.cor + pa.dif.nome + " §catingido (§f" + pa.dif.limiteTorres + "§c). Evolua ou venda uma torre.");
                 return;
             }
-            if (pa.essencia < t.custo) {
+            if (pa.essencia < t.preco()) {
                 p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.8f, 1f);
-                p.sendMessage("§cFalta Essência: precisa de §d" + t.custo + "§c, vocês têm §d" + pa.essencia + "§c.");
+                p.sendMessage("§cFalta Essência: precisa de §d" + t.preco() + "§c, vocês têm §d" + pa.essencia + "§c.");
                 return;
             }
             pa.colocando.put(p.getUniqueId(), t);

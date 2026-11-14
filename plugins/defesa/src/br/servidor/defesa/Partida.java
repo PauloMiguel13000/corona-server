@@ -753,6 +753,7 @@ final class Partida {
         avisar("§7Objetivo: " + fim + "§7. Limite de §a" + dif.limiteTorres + " torres§7. Primeira onda em 10s.");
         avisar("§7Dica: compre torres na §6Loja §7(o aldeão) ou com §e/defesa loja§7.");
         avisar("§e⚑ Desafio do dia: " + desafio.nome + " §8» §f" + desafio.desc);
+        avisar("§6🏷 Promoção do dia: " + TipoTorre.promocao().cor + TipoTorre.promocao().nome + " §a30% mais barata§7 na loja!");
         tituloTodos(desafio.nome, "§f" + desafio.desc);
         plugin.getLogger().info("[" + mapa.id + "] Partida iniciada por " + quem.getName() + " (" + dif.id + ")" + (forcado ? " (forcada)" : ""));
         return true;
@@ -1578,8 +1579,8 @@ final class Partida {
                 return false;
             }
         }
-        if (!gratis && essencia < tipo.custo) {
-            if (p != null) p.sendMessage("§cFalta Essência: precisa de §d" + tipo.custo + "§c, vocês têm §d" + essencia + "§c.");
+        if (!gratis && essencia < tipo.preco()) {
+            if (p != null) p.sendMessage("§cFalta Essência: precisa de §d" + tipo.preco() + "§c, vocês têm §d" + essencia + "§c.");
             return false;
         }
         l.setYaw(p != null ? p.getLocation().getYaw() + 180f : 0f);
@@ -1588,7 +1589,7 @@ final class Partida {
             if (p != null) p.sendMessage("§cNão consegui colocar a torre aqui.");
             return false;
         }
-        int pago = gratis ? 0 : tipo.custo;
+        int pago = gratis ? 0 : tipo.preco();
         essencia -= pago;
         Torre nova = new Torre(st.getUniqueId(), tipo, l, Math.max(pago, tipo.custo / 2));
         torres.put(st.getUniqueId(), nova);

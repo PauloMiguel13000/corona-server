@@ -96,4 +96,14 @@ enum TipoTorre {
         }
         return null;
     }
+
+    /** 13/11: uma torre em PROMOCAO por dia (30% mais barata), igual para todos. */
+    static TipoTorre promocao() {
+        TipoTorre[] v = values();
+        java.util.List<TipoTorre> l = new java.util.ArrayList<>();
+        for (TipoTorre t : v) if (t != MINA) l.add(t);
+        return l.get((java.time.LocalDate.now(java.time.ZoneId.of("America/Sao_Paulo")).getDayOfYear() * 7) % l.size());
+    }
+
+    int preco() { return this == promocao() ? Math.max(1, (int) Math.round(custo * 0.7)) : custo; }
 }
