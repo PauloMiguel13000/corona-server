@@ -8,6 +8,9 @@ commands:
   masmorras:
     description: Mostra as masmorras mais perto (/masmorras, /masmorras todas)
     aliases: [masmorra, dungeons, dungeon]
+  contrato:
+    description: Contrato do dia nas masmorras (derrote 30 monstros de uma masmorra)
+    aliases: [contratodia]
   coronas:
     description: Seu saldo de coronas (/coronas pagar <jogador> <valor>)
     aliases: [corona, moedas, dinheiro, saldo]

@@ -112,6 +112,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
     final List<Masmorra> todas = new ArrayList<>();
     Coronas coronas;
     StatusEntrada statusEntrada;
+    ContratoDia contrato;
     Loja loja;
     Skins skins;
     Chocadeiras chocadeiras;
@@ -251,6 +252,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         ranking = new Ranking(this);
         ranking.iniciar();
         statusEntrada = new StatusEntrada(this);
+        contrato = new ContratoDia(this);
         missoes = new Missoes(this);
         getServer().getPluginManager().registerEvents(missoes, this);
         missoes.iniciar();
@@ -1437,6 +1439,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
                 darXpClasses(k, getConfig().getDouble("xp-classes.monstro", 12) * de.tipo.nivel * Destaque.mult(de.tipo), false);
                 if (missoes != null) missoes.monstroMorto(k, de.tipo.nivel);
                 if (missoes != null) missoes.trilhaMonstro(k, de.tipo);
+                if (contrato != null) contrato.monstro(k, de.tipo);
                 coronas.dar(k, coronas.comVip(k, (getConfig().getLong("coronas.monstro", 3) * de.tipo.nivel + rnd.nextInt(de.tipo.nivel + 1)) * Destaque.mult(de.tipo)), true);
             }
             return;
@@ -2105,6 +2108,10 @@ public final class Masmorras extends JavaPlugin implements Listener {
     @Override
     public boolean onCommand(CommandSender s, Command cmd, String label, String[] a) {
         if (cmd.getName().equalsIgnoreCase("coronas")) return coronas.comando(s, a);
+        if (cmd.getName().equalsIgnoreCase("contrato")) {
+            if (s instanceof Player pc && contrato != null) contrato.mostrar(pc);
+            return true;
+        }
         if (cmd.getName().equalsIgnoreCase("reviver")) return MoedaReviver.comando(s, a);
         if (cmd.getName().equalsIgnoreCase("darmoedareviver")) {
             // atalho do dono: /darmoedareviver <nick> [quantidade] (sem quantidade = 1)
