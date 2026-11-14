@@ -76,6 +76,8 @@ public final class Extras extends JavaPlugin implements Listener {
         painelDia = new PainelDia(this);
         Bukkit.getPluginManager().registerEvents(new LoginDiario(this), this);
         Bukkit.getPluginManager().registerEvents(new Pescaria(this), this);
+        eventosSurvival = new EventosSurvival(this);
+        Bukkit.getPluginManager().registerEvents(eventosSurvival, this);
         roleta = new Roleta(this);
         Bukkit.getPluginManager().registerEvents(roleta, this);
         luaDeSangue = new LuaDeSangue(this);
@@ -851,6 +853,7 @@ public final class Extras extends JavaPlugin implements Listener {
     // ================================================================== comandos
 
     Tesouro tesouro;
+    EventosSurvival eventosSurvival;
     PainelDia painelDia;
     Roleta roleta;
     LuaDeSangue luaDeSangue;
@@ -869,6 +872,10 @@ public final class Extras extends JavaPlugin implements Listener {
         }
         if (cmd.getName().equalsIgnoreCase("kits")) {
             if (s instanceof Player p && kitsContexto != null) kitsContexto.abrir(p);
+            return true;
+        }
+        if (cmd.getName().equalsIgnoreCase("tesouro") && args.length > 0 && args[0].equalsIgnoreCase("xp") && s.hasPermission("extras.admin")) {
+            eventosSurvival.forcarXp();
             return true;
         }
         if (cmd.getName().equalsIgnoreCase("tesouro") && args.length > 0 && args[0].equalsIgnoreCase("lua") && s.hasPermission("extras.admin")) {

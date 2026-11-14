@@ -74,6 +74,7 @@ final class Divulgacao implements Listener {
             "&6&l>> &eDefesa da Torre: &6poderes &e(meteoros, nevasca, trovão) e um &5desafio diferente &etodo dia. &f/defesa",
             "&6&l>> &eAlgumas noites no Survival viram &4&lLUA DE SANGUE&e: monstros mais fortes que pagam coronas e soltam loot raro!",
             "&6&l>> &eQuer saber o que tem de especial hoje? &f/eventos &e(destaques, desafio, tesouro, lua de sangue...)",
+            "&6&l>> &eNo Survival podem aparecer &6&lMONSTROS LENDÁRIOS &e(dourados): derrote e ganhe 50 coronas + diamantes!",
             "&6&l>> &eGire a &6&lROLETA DO DIA &egrátis: coronas, XP e até &c&lJACKPOT de 1000 coronas&e! &f/roleta",
             "&6&l>> &ePesque no Survival: tem &6Peixe Dourado &e(coronas), livros encantados raros e até &bTRIDENTE&e!",
             "&6&l>> &eEntre todo dia: o &6login diário &edá coronas que crescem até &6600 &eno 7º dia seguido!",
