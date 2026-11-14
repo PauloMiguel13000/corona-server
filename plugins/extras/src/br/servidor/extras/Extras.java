@@ -1055,7 +1055,7 @@ public final class Extras extends JavaPlugin implements Listener {
                 return true;
             }
             if (args.length > 0 && args[0].equalsIgnoreCase("quiz") && quizChat != null) {
-                quizChat.perguntar();
+                quizChat.perguntar(true);
                 return true;
             }
             if (args.length > 0 && args[0].equalsIgnoreCase("pesca") && torneioPesca != null) {

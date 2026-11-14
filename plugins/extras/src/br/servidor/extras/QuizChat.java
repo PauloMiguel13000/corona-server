@@ -27,11 +27,13 @@ final class QuizChat implements Listener {
 
     QuizChat(Extras pl) {
         this.pl = pl;
-        Bukkit.getScheduler().runTaskTimer(pl, this::perguntar, 20L * 60 * 12, 20L * 60 * Math.max(10, pl.getConfig().getInt("quiz-chat.minutos", 25)));
+        Bukkit.getScheduler().runTaskTimer(pl, () -> perguntar(false), 20L * 60 * 12, 20L * 60 * Math.max(10, pl.getConfig().getInt("quiz-chat.minutos", 25)));
     }
 
-    void perguntar() {
-        if (!pl.getConfig().getBoolean("quiz-chat.ativo", true) || Bukkit.getOnlinePlayers().size() < 2) return;
+    void perguntar() { perguntar(false); }
+
+    void perguntar(boolean forcar) {
+        if (!forcar && (!pl.getConfig().getBoolean("quiz-chat.ativo", true) || Bukkit.getOnlinePlayers().size() < 2)) return;
         ThreadLocalRandom r = ThreadLocalRandom.current();
         String pergunta;
         if (r.nextBoolean()) {
