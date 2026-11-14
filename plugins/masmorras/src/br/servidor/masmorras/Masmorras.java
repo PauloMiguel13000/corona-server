@@ -111,6 +111,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
 
     final List<Masmorra> todas = new ArrayList<>();
     Coronas coronas;
+    StatusEntrada statusEntrada;
     Loja loja;
     Skins skins;
     Chocadeiras chocadeiras;
@@ -249,6 +250,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         loja.iniciar();
         ranking = new Ranking(this);
         ranking.iniciar();
+        statusEntrada = new StatusEntrada(this);
         missoes = new Missoes(this);
         getServer().getPluginManager().registerEvents(missoes, this);
         missoes.iniciar();
@@ -301,6 +303,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         if (ranking != null) ranking.salvar();
+        if (statusEntrada != null) statusEntrada.limpar();
         if (missoes != null) missoes.salvarAgora();
         if (campos != null) campos.parar();
         if (coroas != null) coroas.parar();
