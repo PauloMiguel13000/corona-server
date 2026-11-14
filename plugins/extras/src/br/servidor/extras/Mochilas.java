@@ -10,6 +10,9 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
@@ -21,17 +24,56 @@ import org.bukkit.persistence.PersistentDataType;
  * Ao entrar num mundo de um grupo diferente do da mochila que esta na mao, a mochila atual e guardada no jogador
  * (PDC) e a do outro grupo e aberta. Mundos de minigame/lobby nao trocam nada (eles cuidam do proprio inventario).
  * Na primeira vez nas masmorras a mochila vem vazia, so com os itens de menu (bussola, estrela, osso, livro).
+ *
+ * 14/11 (Paulo: "itens de masmorra e rankup estao aparecendo no spawn e nos lobbys de minigames e de terror, nao
+ * deixe esses itens aparecerem neles; eles sao a parte"): LOBBY e um lugar a parte. Na praca do spawn e nos lobbies
+ * dos minigames e do terror o jogador fica de mao vazia: a mochila de onde ele veio fica guardada e volta quando ele
+ * sai. O que ele ganhar no lobby (kit, voto, premio) vai junto para a mochila de onde ele veio.
  */
 final class Mochilas implements Listener {
 
     private final Extras pl;
-    private final NamespacedKey kGrupo, kVersao, kReset;
+    static final String LOBBY = "lobby";
+    private final NamespacedKey kGrupo, kVersao, kReset, kAntes, kChapeu;
 
     Mochilas(Extras pl) {
         this.pl = pl;
         kGrupo = new NamespacedKey(pl, "mochila_grupo");
         kVersao = new NamespacedKey(pl, "mochila_v");
         kReset = new NamespacedKey(pl, "mochila_reset");
+        kAntes = new NamespacedKey(pl, "mochila_antes_lobby");
+        kChapeu = new NamespacedKey(pl, "cos_chapeu_item");
+    }
+
+    /** Grupo de onde o jogador esta AGORA (o lobby depende do lugar: a praca do spawn fica no mundo do survival). */
+    String grupoDe(Player p) {
+        String n = p.getWorld().getName();
+        if (pl.getConfig().getBoolean("mochilas.lobby-separado", true)
+                && (n.equals(LobbyMinigames.MUNDO) || n.equals(LobbyTerror.MUNDO) || Cosmeticos.noSpawn(p.getLocation()))) return LOBBY;
+        return grupo(p.getWorld());
+    }
+
+    private boolean cosmetico(ItemStack it) {
+        return it != null && it.hasItemMeta() && it.getItemMeta().getPersistentDataContainer().has(kChapeu, PersistentDataType.STRING);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void andou(PlayerMoveEvent e) {
+        var de = e.getFrom();
+        var para = e.getTo();
+        if (de.getBlockX() == para.getBlockX() && de.getBlockZ() == para.getBlockZ() && de.getBlockY() == para.getBlockY()) return;
+        if (!de.getWorld().getName().equals("world")) return;
+        if (Cosmeticos.noSpawn(de) != Cosmeticos.noSpawn(para)) conferirDepois(e.getPlayer(), 1L);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void teleportou(PlayerTeleportEvent e) { conferirDepois(e.getPlayer(), 2L); }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void renasceu(PlayerRespawnEvent e) { conferirDepois(e.getPlayer(), 3L); }
+
+    private void conferirDepois(Player p, long t) {
+        Bukkit.getScheduler().runTaskLater(pl, () -> { if (p.isOnline() && !p.isDead()) conferir(p); }, t);
     }
 
     boolean ligado() {
@@ -76,8 +118,8 @@ final class Mochilas implements Listener {
     /** Confere se a mochila na mao e a do grupo do mundo em que o jogador esta; se nao for, troca. */
     void conferir(Player p) {
         if (!ligado()) return;
-        String novo = grupo(p.getWorld());
-        if (novo == null) return;   // minigame/lobby: o inventario na mao nao e a mochila
+        String novo = grupoDe(p);
+        if (novo == null) return;   // minigame: o inventario na mao e cuidado pelo proprio minigame
         resetar(p);
         PersistentDataContainer pdc = p.getPersistentDataContainer();
         String atual = pdc.get(kGrupo, PersistentDataType.STRING);
@@ -88,8 +130,30 @@ final class Mochilas implements Listener {
         }
         if (atual.equals(novo)) return;
         try {
-            guardar(p, atual);
+            p.closeInventory();
+            if (novo.equals(LOBBY)) {
+                // entrando no lobby: guarda a mochila de onde veio e fica de mao vazia
+                guardar(p, atual);
+                abrir(p, LOBBY + "_nunca");   // so limpa (o lobby nunca guarda nada)
+                pdc.set(kAntes, PersistentDataType.STRING, atual);
+                pdc.set(kGrupo, PersistentDataType.STRING, LOBBY);
+                p.sendActionBar(Extras.txt("§eLobby: §7seus itens ficaram guardados e voltam quando você sair daqui"));
+                return;
+            }
+            List<ItemStack> sobra = List.of();
+            if (atual.equals(LOBBY)) {
+                // saindo do lobby: o que ganhou aqui vai para a mochila de onde ele veio
+                String antes = pdc.getOrDefault(kAntes, PersistentDataType.STRING, "survival");
+                List<ItemStack> ganhos = new java.util.ArrayList<>();
+                for (ItemStack it : p.getInventory().getContents()) if (it != null && !it.getType().isAir() && !cosmetico(it)) ganhos.add(it);
+                for (ItemStack it : p.getEnderChest().getContents()) if (it != null && !it.getType().isAir()) ganhos.add(it);
+                if (!ganhos.isEmpty()) sobra = juntar(antes, pdc, ganhos);
+                pdc.remove(kAntes);
+            } else {
+                guardar(p, atual);
+            }
             boolean tinha = abrir(p, novo);
+            for (ItemStack it : sobra) for (ItemStack s2 : p.getInventory().addItem(it).values()) p.getWorld().dropItemNaturally(p.getLocation(), s2);
             pdc.set(kGrupo, PersistentDataType.STRING, novo);
             if (!tinha) {
                 // mochila nova das masmorras: so os itens de menu
@@ -151,9 +215,37 @@ final class Mochilas implements Listener {
         }
     }
 
+    /** Poe os itens nos espacos vazios da mochila guardada do grupo (inventario, depois bau do fim). Devolve o que nao coube. */
+    private List<ItemStack> juntar(String grupo, PersistentDataContainer pdc, List<ItemStack> ganhos) {
+        byte[] bi = pdc.get(chave(grupo, "inv"), PersistentDataType.BYTE_ARRAY);
+        byte[] bb = pdc.get(chave(grupo, "bau"), PersistentDataType.BYTE_ARRAY);
+        ItemStack[] inv = new ItemStack[41], bau = new ItemStack[27];
+        if (bi != null) { ItemStack[] a = ItemStack.deserializeItemsFromBytes(bi); System.arraycopy(a, 0, inv, 0, Math.min(a.length, inv.length)); }
+        if (bb != null) { ItemStack[] a = ItemStack.deserializeItemsFromBytes(bb); System.arraycopy(a, 0, bau, 0, Math.min(a.length, bau.length)); }
+        List<ItemStack> sobra = new java.util.ArrayList<>();
+        int i = 0, j = 0;
+        for (ItemStack it : ganhos) {
+            while (i < 36 && inv[i] != null && !inv[i].getType().isAir()) i++;
+            if (i < 36) { inv[i++] = it; continue; }
+            while (j < 27 && bau[j] != null && !bau[j].getType().isAir()) j++;
+            if (j < 27) { bau[j++] = it; continue; }
+            sobra.add(it);
+        }
+        pdc.set(chave(grupo, "inv"), PersistentDataType.BYTE_ARRAY, ItemStack.serializeItemsAsBytes(inv));
+        pdc.set(chave(grupo, "bau"), PersistentDataType.BYTE_ARRAY, ItemStack.serializeItemsAsBytes(bau));
+        if (!pdc.has(chave(grupo, "tem"), PersistentDataType.BYTE)) {
+            pdc.set(chave(grupo, "xp"), PersistentDataType.INTEGER, 0);
+            pdc.set(chave(grupo, "xpf"), PersistentDataType.FLOAT, 0f);
+            pdc.set(chave(grupo, "tem"), PersistentDataType.BYTE, (byte) 1);
+        }
+        return sobra;
+    }
+
     private void guardar(Player p, String grupo) {
         PersistentDataContainer pdc = p.getPersistentDataContainer();
-        pdc.set(chave(grupo, "inv"), PersistentDataType.BYTE_ARRAY, ItemStack.serializeItemsAsBytes(p.getInventory().getContents()));
+        ItemStack[] conteudo = p.getInventory().getContents();
+        for (int i = 0; i < conteudo.length; i++) if (cosmetico(conteudo[i])) conteudo[i] = null;
+        pdc.set(chave(grupo, "inv"), PersistentDataType.BYTE_ARRAY, ItemStack.serializeItemsAsBytes(conteudo));
         pdc.set(chave(grupo, "bau"), PersistentDataType.BYTE_ARRAY, ItemStack.serializeItemsAsBytes(p.getEnderChest().getContents()));
         pdc.set(chave(grupo, "xp"), PersistentDataType.INTEGER, p.getLevel());
         pdc.set(chave(grupo, "xpf"), PersistentDataType.FLOAT, p.getExp());

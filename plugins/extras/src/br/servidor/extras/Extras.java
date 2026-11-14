@@ -95,6 +95,7 @@ public final class Extras extends JavaPlugin implements Listener {
         quizChat = new QuizChat(this);
         cosmeticos = new Cosmeticos(this);
         Bukkit.getPluginManager().registerEvents(cosmeticos, this);
+        Bukkit.getPluginManager().registerEvents(new ListaServidores(this), this);
         Bukkit.getPluginManager().registerEvents(quizChat, this);
         Bukkit.getPluginManager().registerEvents(chuvaCoronas, this);
         Bukkit.getPluginManager().registerEvents(conquistas, this);

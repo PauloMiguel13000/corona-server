@@ -77,7 +77,7 @@ final class KitsContexto implements Listener {
     }
 
     void abrir(Player p) {
-        Lugar l = lugar(p.getWorld());
+        Lugar l = Cosmeticos.noSpawn(p.getLocation()) ? Lugar.OUTRO : lugar(p.getWorld());   // 14/11: a praca do spawn e lobby
         if (l == Lugar.OUTRO) {
             p.sendMessage(Extras.txt("§6§lKITS §8» §7Os kits são do §aSurvival §7e das §cMasmorras§7 (a §6Prisão §7tem os dela: §e/minas§7). Entre em um deles e use §e/kits§7."));
             return;
@@ -143,7 +143,7 @@ final class KitsContexto implements Listener {
         if (s < 10 || (s - 10) % 2 != 0 || i >= t.kits.size()) return;
         Kit k = t.kits.get(i);
         p.closeInventory();
-        if (lugar(p.getWorld()) != k.lugar) return;
+        if (lugar(p.getWorld()) != k.lugar || Cosmeticos.noSpawn(p.getLocation())) return;
         long f = falta(p, k);
         if (f > 0) { p.sendMessage(Extras.txt("§c" + k.nome + " §cdisponível em " + tempo(f) + ".")); p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.8f, 1f); return; }
         p.getPersistentDataContainer().set(chave(k), PersistentDataType.LONG, System.currentTimeMillis());
