@@ -1064,7 +1064,17 @@ final class Partida {
         plugin.saveConfig();
         tituloTodos("§6§lVITÓRIA!", "§eVocês venceram o " + mapa.nome + " no " + dif.nome + "!");
         long premio = switch (dif) { case FACIL -> 100; case NORMAL -> 200; case DIFICIL -> 400; default -> 0; };
-        if (!simulando && premio > 0) for (Player p : jogadores()) { darCoronas(p, premio); p.sendMessage("§6[Defesa] §eVitória! §6+" + premio + " coronas"); }
+        if (!simulando && premio > 0) for (Player p : jogadores()) {
+            // 14/11: primeira vitoria do dia na Defesa vale o dobro
+            org.bukkit.NamespacedKey k = new org.bukkit.NamespacedKey(plugin, "vitoria_dia");
+            long hoje = java.time.LocalDate.now(java.time.ZoneId.of("America/Sao_Paulo")).toEpochDay();
+            Long ult = p.getPersistentDataContainer().get(k, org.bukkit.persistence.PersistentDataType.LONG);
+            boolean primeira = ult == null || ult != hoje;
+            p.getPersistentDataContainer().set(k, org.bukkit.persistence.PersistentDataType.LONG, hoje);
+            long vp = primeira ? premio * 2 : premio;
+            darCoronas(p, vp);
+            p.sendMessage("§6[Defesa] §eVitória! §6+" + vp + " coronas" + (primeira ? " §a§l(1ª vitória do dia: DOBRO!)" : ""));
+        }
         somTodos(Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1.2f);
         somTodos(Sound.ENTITY_PLAYER_LEVELUP, 1f, 0.8f);
         for (Player p : jogadores()) p.giveExp(250 + 150 * dif.ordinal());

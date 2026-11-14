@@ -24,6 +24,9 @@ final class Destaque implements Listener {
                     + ") §8» §acoronas, XP e relíquias em DOBRO§7! §e/masmorras"));
             Bukkit.broadcast(Masmorras.txt("§d🎮 Minigame do dia: §f" + minigameNome() + " §8» §acoronas em DOBRO §7jogando ele hoje! §e/minigames"));
         }, 20L * 60 * 5, 20L * 60 * 30);
+        Bukkit.getScheduler().runTaskTimer(pl, () -> {
+            if (Bukkit.getOnlinePlayers().size() >= 2 && pl.getConfig().getBoolean("relampago.ativo", true)) sortearRelampago();
+        }, 20L * 60 * 40, 20L * 60 * Math.max(60, pl.getConfig().getInt("relampago.minutos", 120)));
     }
 
     static Tipo hoje() {
@@ -53,7 +56,25 @@ final class Destaque implements Listener {
 
     static boolean eh(Tipo t) { return t != null && t == hoje(); }
 
-    static int mult(Tipo t) { return eh(t) ? 2 : 1; }
+    static int mult(Tipo t) { return (eh(t) ? 2 : 1) * (relampago(t) ? 3 : 1); }
+
+    // 14/11 (Paulo: "melhore muito"): MASMORRA RELAMPAGO — a cada ~2h uma masmorra aleatoria fica 20 min com
+    // coronas, XP e reliquias x3 (soma com o destaque do dia).
+    static Tipo relampago;
+    static long relampagoAte;
+
+    static boolean relampago(Tipo t) { return t != null && t == relampago && System.currentTimeMillis() < relampagoAte; }
+
+    static void sortearRelampago() {
+        List<Tipo> l = new ArrayList<>();
+        for (Tipo t : Tipo.TODOS.values()) if (!t.secreta && t != hoje()) l.add(t);
+        if (l.isEmpty()) return;
+        relampago = l.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(l.size()));
+        relampagoAte = System.currentTimeMillis() + 20 * 60_000L;
+        Bukkit.broadcast(Masmorras.txt("§e§l⚡ MASMORRA RELÂMPAGO! §f" + relampago.nome + " §7(nível " + relampago.nivel
+                + ") §8» §6coronas, XP e relíquias x3 §7por §f20 minutos§7! §e/masmorras"));
+        for (Player p : Bukkit.getOnlinePlayers()) p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.4f, 1.4f);
+    }
 
     @EventHandler
     public void entrou(PlayerChangedWorldEvent e) {

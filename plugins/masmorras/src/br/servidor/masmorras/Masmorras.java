@@ -1470,6 +1470,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         if (missoes != null) for (Player p : lutaram) missoes.trilhaChefe(p, t);
         long cor = (t.secreta ? getConfig().getLong("coronas.secreta", 5000) : getConfig().getLong("coronas.chefe", 250) * t.nivel) * Destaque.mult(t);
         if (Destaque.eh(t)) Bukkit.broadcast(txt(PREFIXO + "§6⭐ Era a masmorra em destaque: §acoronas e XP em DOBRO§7!"));
+        if (Destaque.relampago(t)) Bukkit.broadcast(txt(PREFIXO + "§e⚡ Era a masmorra relâmpago: §6coronas e XP x3§7!"));
         org.bukkit.NamespacedKey kPrimeiro = new org.bukkit.NamespacedKey(this, "primeiro_chefe_dia");
         long hojeDia = java.time.LocalDate.now(java.time.ZoneId.of("America/Sao_Paulo")).toEpochDay();
         for (Player p : lutaram) {
@@ -2378,6 +2379,10 @@ public final class Masmorras extends JavaPlugin implements Listener {
             case "bordas" -> {
                 aplicarBordas();
                 s.sendMessage(PREFIXO + "Bordas conferidas.");
+            }
+            case "relampago" -> {
+                Destaque.sortearRelampago();
+                s.sendMessage(PREFIXO + "Masmorra relâmpago: " + (Destaque.relampago == null ? "nenhuma" : Destaque.relampago.nome));
             }
             case "zerar" -> {
                 if (a.length < 3) { s.sendMessage(PREFIXO + "Use: masmorras admin zerar <jogador> (missoes e trilha do jogador voltam ao comeco)"); return true; }

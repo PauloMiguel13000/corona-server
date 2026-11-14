@@ -38,7 +38,7 @@ final class StatusEntrada {
             }
             String st = m.chefe != null ? "§4⚔ chefe em luta agora" : m.bossVolta == 0 ? "§a✔ chefe esperando"
                     : "§c✖ chefe volta em " + Math.max(1, (m.bossVolta - System.currentTimeMillis()) / 60000) + " min";
-            String txt = "§6§l" + m.tipo.nome + "\n§7Nível " + m.tipo.nivel + (Destaque.eh(m.tipo) ? " §d§l★ DESTAQUE x2" : "") + "\n" + st;
+            String txt = "§6§l" + m.tipo.nome + "\n§7Nível " + m.tipo.nivel + (Destaque.eh(m.tipo) ? " §d§l★ DESTAQUE x2" : "") + (Destaque.relampago(m.tipo) ? "\n§e§l⚡ RELÂMPAGO x3 §7(" + Math.max(1, (Destaque.relampagoAte - System.currentTimeMillis()) / 60000) + " min)" : "") + "\n" + st;
             if (t == null || !t.isValid()) {
                 t = w.spawn(l, TextDisplay.class, x -> {
                     x.setPersistent(false);
