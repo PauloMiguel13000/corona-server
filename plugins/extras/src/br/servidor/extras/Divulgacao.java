@@ -86,6 +86,7 @@ final class Divulgacao implements Listener {
             "&6&l>> &eFerramenta ou armadura gasta? O &6Ferreiro &econserta por coronas: segure o item e use &f/reparar",
             "&6&l>> &eRANKING DA SEMANA: quem mais jogar (sem AFK) ganha até &61000 coronas &etoda segunda! &f/tempo",
             "&6&l>> &eNa Prisão tem &6ranking semanal de blocos&e: top 3 ganha até &2$60.000&e! &f/topminas",
+            "&6&l>> &eNo Survival caem &c&lMETEOROS &ede vez em quando, cheios de diamante e ouro! Fique de olho no chat.",
             "&6&l>> &eA primeira vitória contra um chefe de masmorra no dia vale &6coronas em DOBRO&e!",
             "&6&l>> &eNa Prisão tem &6missões do dia &ecom prêmio em $ — dentro dela use &f/missoes");
 

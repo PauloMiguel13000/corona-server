@@ -85,6 +85,7 @@ public final class Extras extends JavaPlugin implements Listener {
         chuvaCoronas = new ChuvaCoronas(this);
         reparar = new Reparar(this);
         tempoSemanal = new TempoSemanal(this);
+        meteoro = new Meteoro(this);
         Bukkit.getPluginManager().registerEvents(chuvaCoronas, this);
         Bukkit.getPluginManager().registerEvents(conquistas, this);
         luaDeSangue = new LuaDeSangue(this);
@@ -869,6 +870,7 @@ public final class Extras extends JavaPlugin implements Listener {
     ChuvaCoronas chuvaCoronas;
     Reparar reparar;
     TempoSemanal tempoSemanal;
+    Meteoro meteoro;
     LuaDeSangue luaDeSangue;
     KitsContexto kitsContexto;
 
@@ -1018,6 +1020,10 @@ public final class Extras extends JavaPlugin implements Listener {
         if (cmd.getName().equalsIgnoreCase("extras")) {
             if (!s.hasPermission("extras.admin")) {
                 s.sendMessage("§cSem permissão.");
+                return true;
+            }
+            if (args.length > 0 && args[0].equalsIgnoreCase("meteoro") && meteoro != null) {
+                s.sendMessage(meteoro.cair() ? "§aMeteoro caindo!" : "§cSem lugar/jogador no Survival para o meteoro.");
                 return true;
             }
             if (args.length > 0 && args[0].equalsIgnoreCase("chuva") && chuvaCoronas != null) {
