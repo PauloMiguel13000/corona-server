@@ -605,6 +605,131 @@ def herobrine():
     x = x / (np.max(np.abs(x)) + 1e-9) + reverb(bat, .9, .1) / (np.max(np.abs(bat)) + 1e-9) * .5
     return emendar(x[:int((D + 5) * SR)], D)
 
+# ------------------------------------------------------------------ v3b: VARIACOES da musica caracteristica
+# 14/11 (Paulo: "ficou um pouco feia"; "aquela musica agora e a caracteristica das dungeons"). Cada tema agora e a
+# MUSICA ORIGINAL da familia dele (mesma melodia, mesmos acordes, mesmo compasso 4/4, como no jogo desde o comeco),
+# re-arranjada: instrumentos, levada, andamento, tom, ambiente e enfeite proprios de cada masmorra.
+ORIG = {'M1': ([('E4', 1), ('A4', 1), ('C5', .5), ('B4', .5), ('A4', 1), ('G4', 1), ('E4', 1), (None, 1),
+                ('F4', 1), ('A4', .5), ('C5', .5), ('A4', 1), ('G4', 1), ('E4', 1), ('D4', 1), (None, 1)],
+               [('A2', ['A3', 'C4', 'E4']), ('F2', ['F3', 'A3', 'C4']), ('C2', ['C3', 'E3', 'G3']), ('G2', ['G2', 'B3', 'D4'])]),
+        'M2': ([('B4', .5), ('E5', .5), ('D5', 1), ('B4', 1), ('G4', 1), ('A4', .5), ('B4', .5), ('G4', 1), ('E4', 1), ('D4', 1), ('E4', 2)],
+               [('E2', ['E3', 'G3', 'B3']), ('C2', ['C3', 'E3', 'G3']), ('G2', ['G3', 'B3', 'D4']), ('D2', ['D3', 'F#3', 'A3'])]),
+        'M3': ([('D5', .5), ('C5', .5), ('A4', 1), ('F4', 1), ('D4', 1), ('A4', .5), ('C5', .5), ('D5', 1), ('A4', 2)],
+               [('D2', ['D3', 'F3', 'A3']), ('A2', ['A3', 'C4', 'E4']), ('B2', ['B2', 'D3', 'F3']), ('G2', ['G2', 'A#3', 'D4'])]),
+        'M4': ([('E5', .5), ('F5', .5), ('E5', .5), ('D5', .5), ('C5', 1), ('B4', 1), ('E4', .5), ('F4', .5), ('G4', 1), ('E4', 2)],
+               [('E2', ['E3', 'F3', 'B3']), ('F2', ['F3', 'A3', 'C4']), ('E2', ['E3', 'G3', 'B3']), ('D2', ['D3', 'F3', 'A3'])]),
+        'M5': ([('F#4', 1), ('B4', 1), ('C#5', .5), ('B4', .5), ('A4', 1), ('F#4', 1), ('D4', 1), ('E4', 1), ('B4', 2)],
+               [('B2', ['B3', 'D4', 'F#4']), ('G2', ['G3', 'B3', 'D4']), ('A2', ['A3', 'C#4', 'E4']), ('F#2', ['F#3', 'A3', 'C#4'])])}
+
+def hz(n, tr=0): return mf(_midi(n) + tr)
+
+# levadas em 4/4 para os temas que tinham outro compasso
+P44 = {
+    'cripta': ([(TIM(55), 0, .35), (MAD(700), 2, .25)], None),
+    'vampiro': ([(BUM(.7), 0, .6), (CX(), 2, .45), (MAD(1400), 3.5, .25)], None),
+    'aranha': ([(MAD(900), 0, .5), (MAD(1300), .75, .35), (MAD(900), 1.5, .4), (MAD(1300), 2.5, .35), (CHO(), 3, .45)], None),
+    'floresta': ([(BUM(.6), 0, .5), (MAD(1500), 1.5, .3), (BUM(.6), 2.5, .4), (CHO(), 3, .3)], None),
+    'gelo': ([(CHO(), 1, .2), (CHO(), 3, .2)], None),
+    'mar': ([(BUM(.7), 0, .6), (MAD(900), 1.5, .35), (BUM(.7), 2, .5), (CHO(), 3, .3), (CHO(), 3.5, .25)], None),
+    'relogio': ([(MAD(1200), 0, .5), (MAD(800), 1, .35), (MAD(1200), 2, .45), (MAD(800), 3, .35)], None),
+    'arcano': ([(CHO(), 1, .2), (TOM(150), 3.5, .25)], None),
+    'nether': ([(TAI(), 0, .9), (CX(150), 1, .5), (TAI(), 2, .7), (TAI(), 2.5, .5), (CX(150), 3, .6)], None),
+}
+
+VAR = {
+    # tema:     (musica, bpm, transp, acordes(inst, estilo), lead, oitLead, fundo, baixo)
+    'cripta':   ('M1', 92, 0,  (caixinha, 'arpejo'), caixinha, 1, 'orgao', 'normal'),
+    'catedral': ('M1', 72, -2, (sino, 'bloco'), lambda f, d: orgao([f], d, 2600), 0, 'coro', 'drone'),
+    'vampiro':  ('M1', 104, 1, (cravo, 'arpejo'), violino, 0, 'cordas', 'normal'),
+    'aranha':   ('M1', 112, -1, (lambda f, d: pluck(f, .3, 2000, .98), 'arpejo'), violino, 0, None, 'normal'),
+    'deserto':  ('M1', 100, -5, (oud, 'arpejo'), oboe, 0, 'pad', 'drone'),
+    'arcano':   ('M1', 96, 3, (harpa, 'arpejo'), fm, 0, 'coro', 'normal'),
+    'trovao':   ('M1', 150, -3, (lambda f, d: quadrado(f, d * .5, .3), 'arpejo'), violino, 0, None, 'normal'),
+    'pantano':  ('M2', 92, 3, (lambda f, d: pluck(f, d, 1500, .99), 'bloco'), oboe, -1, 'pad', 'normal'),
+    'floresta': ('M2', 108, 0, (pluck, 'arpejo'), flauta, 0, None, 'normal'),
+    'jardim':   ('M2', 86, 5, (koto, 'arpejo'), koto, 0, 'pad', 'drone'),
+    'selva':    ('M2', 124, 0, (marimba, 'arpejo'), flauta, 0, None, 'normal'),
+    'quartel':  ('M2', 116, -2, (lambda f, d: metais(f, d * .7, 1500), 'bloco'), metais, 0, None, 'tuba'),
+    'explorar': ('M2', 106, -1, (pluck, 'arpejo'), flauta, 0, None, 'normal'),
+    'mina':     ('M3', 112, 0, (banjo, 'arpejo'), oboe, 0, None, 'normal'),
+    'mar':      ('M3', 120, 0, (acordeao, 'bloco'), acordeao, 0, None, 'normal'),
+    'afogada':  ('M3', 76, -1, (lambda f, d: lp(fm(f, d, 1.2, 2), 1500), 'arpejo'), lambda f, d: lp(fm(f, d, 1.5, 2), 1500), 0, 'pad', 'drone'),
+    'relogio':  ('M3', 126, 7, (lambda f, d: quadrado(f, d * .6, .25), 'arpejo'), lambda f, d: quadrado(f, d, .5), 0, None, 'normal'),
+    'coliseu':  ('M3', 100, -2, (lambda f, d: metais(f, d * .8, 1500), 'bloco'), metais, 0, 'coro', 'tuba'),
+    'antiga':   ('M3', 70, -4, (lambda f, d: lp(sino(f, d), 1800), 'arpejo'), lambda f, d: lp(sino(f, d), 1800), 0, 'pad', 'drone'),
+    'fogo':     ('M4', 146, 0, (cordas_st, 'staccato'), lambda f, d: lp(np.tanh(3 * metais(f, d, 3000)), 3500) * .6, 0, None, 'normal'),
+    'nether':   ('M4', 128, -2, (lambda f, d: metais(f, d * .8, 1200), 'bloco'), lambda f, d: metais(f, d, 1800), 0, 'coro', 'normal'),
+    'gelo':     ('M5', 96, 0, (lambda f, d: caixinha(f * 2, d), 'arpejo'), lambda f, d: sino(f, d), 0, 'pad', 'drone'),
+    'vazio':    ('M5', 118, 0, (lambda f, d: fm(f, d, 1.2, 3.01) * .6, 'arpejo'), lambda f, d: quadrado(f, d, .12), 0, 'pad', 'drone'),
+}
+
+def variacao(nome, luta=False):
+    R.g = np.random.default_rng(sum(map(ord, nome)) * 13)
+    cfg = TEMAS[nome]
+    mus, bpm, tr, (instAc, estAc), lead, oit, fundo, tipoBaixo = VAR[nome]
+    mel, prog = ORIG[mus]
+    b = 60 / bpm; barra = 4 * b; comps = 16; D = comps * barra
+    x = Z(D + 4); bat = Z(D + 4)
+    for c in range(comps):
+        t0 = c * barra; nb, tri = prog[c % 4]
+        fr = [hz(n, tr) for n in tri]; fb = hz(nb, tr)
+        # baixo (como na original: colcheias na fundamental, oitava no 4 e no 7)
+        if tipoBaixo == 'drone':
+            if c % 2 == 0: por(x, lp(pad([fb, fb * 1.5], 2 * barra + .5, 500, .003), 400) * 1.5, t0, 1)
+            if luta:
+                for k in range(8): por(x, lp(np.sin(2 * np.pi * fb * T(b * .45)) + .4 * signal.sawtooth(2 * np.pi * fb * T(b * .45)), 600) * env(b * .45, .004, .05, .6, .04), t0 + k * b / 2, .4)
+        elif tipoBaixo == 'tuba':
+            for k in (0, 2): por(x, metais(fb, b * .9, 700) * 1.3, t0 + k * b, .55)
+            if luta:
+                for k in (1, 3): por(x, metais(fb, b * .5, 700) * 1.3, t0 + k * b, .35)
+        else:
+            for k in range(8):
+                f = fb * (2 if k in (3, 6) else 1); tt = T(b * .44)
+                y = lp(.55 * np.sin(2 * np.pi * f * tt) + .65 * signal.sawtooth(2 * np.pi * f * tt), 520) * env(b * .44, .004, .06, .6, .06)
+                por(x, y, t0 + k * b / 2, .44 if k % 2 == 0 else .26)
+        # acordes
+        if estAc == 'arpejo':
+            for k, f in enumerate(fr): por(x, instAc(f, b * 1.1), t0 + k * b, .3)
+            if c % 2 == 1: por(x, instAc(fr[1], b * 1.1), t0 + 3 * b, .22)
+        elif estAc == 'bloco':
+            for k in (0, 2):
+                for i, f in enumerate(fr): por(x, instAc(f, b * 1.2), t0 + k * b + i * .012, .2)
+        elif estAc == 'staccato':
+            for k in range(8):
+                for f in fr[:2]: por(x, instAc(f, b / 2), t0 + k * b / 2, .3 if k % 2 == 0 else .2)
+        # fundo (pad, orgao, coro, cordas)
+        if fundo == 'pad': por(x, pad(fr, barra + .4, 1100), t0, .5)
+        elif fundo == 'orgao' and c % 2 == 0: por(x, orgao([fb * 2, fr[1], fr[2]], 2 * barra + .2), t0, .45)
+        elif fundo == 'coro' and c % 2 == 0: por(x, coro(fr, 2 * barra + .5), t0, .55)
+        elif fundo == 'cordas': por(x, pad(fr, barra + .4, 2000, .004, 'sin'), t0, .4)
+    # bateria: a do tema (em 4/4) ou a de luta
+    if nome in P44 and not luta: padrao = P44[nome][0]
+    elif luta: padrao = cfg['luta'] if cfg['beats'] == 4 else luta44()
+    else: padrao = cfg['bateria']
+    for c in range(comps):
+        t0 = c * barra
+        for (inst, pos, g) in padrao:
+            if pos < 4: por(bat, inst(), t0 + pos * b, g)
+        if luta and c % 4 == 3: por(bat, rufo(barra / 2), t0 + barra / 2, .6)
+        if luta and c % 8 == 0: por(bat, prato(1.0), t0, .5)
+        if c % 4 == 3 and not luta and nome in ('mina', 'quartel', 'coliseu', 'fogo', 'trovao', 'selva', 'explorar'):
+            for k in range(4): por(bat, tom(195 - k * 22, .24), t0 + 3 * b + k * b / 4, .4 + k * .08)
+    # melodia original (entra depois de 4 compassos, como no jogo; na luta entra ja)
+    q = 0.0 if luta else 4 * barra; volta = 0
+    while q < D - .1:
+        for n, d in mel:
+            if n and q < D - .1:
+                por(x, lead(hz(n, tr + 12 * oit), b * d * 1.15), q, .5)
+                if luta: por(x, lead(hz(n, tr + 12 * oit - 12), b * d), q, .2)
+            q += b * d
+        volta += 1
+        if volta > 12: break
+    for ex in cfg.get('extras', []): ex(x, b, barra, comps, D, luta)
+    x = reverb(x, cfg.get('sala', 1.6), cfg.get('mixRev', .22))
+    if cfg.get('eco'): x = eco(x, b * .75, .28, 3)
+    x = x / (np.max(np.abs(x)) + 1e-9) + reverb(bat, .7, .08) / (np.max(np.abs(bat)) + 1e-9) * (.55 if luta else .38)
+    return emendar(x[:int((D + 4) * SR)], D)
+
 if __name__ == '__main__':
     quais = sys.argv[1:] or list(TEMAS) + ['herobrine']
     dur = {}
@@ -612,8 +737,7 @@ if __name__ == '__main__':
         if nome == 'herobrine':
             dur['herobrine'] = salvar('herobrine', herobrine(), .9)
             continue
-        cfg = TEMAS[nome]
-        dur[nome] = salvar(nome, montar(nome, cfg, False))
-        dur[nome + '_luta'] = salvar(nome + '_luta', montar(nome, cfg, True))
+        dur[nome] = salvar(nome, variacao(nome, False))
+        dur[nome + '_luta'] = salvar(nome + '_luta', variacao(nome, True))
     with open(f'{OUT}/duracoes.txt', 'a') as f:
         for k, v in dur.items(): f.write(f'{k} {v:.2f}\n')

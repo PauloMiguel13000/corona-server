@@ -33,53 +33,56 @@ final class Trilha implements Listener {
     static {
         // 14/11 (Paulo: "diferenciar a musica de todas, esta muito igual"): 23 temas, cada um com musica propria
         // (sons/gerar_trilhas_v3.py) e a versao de luta da mesma musica (<tema>_luta); Herobrine tem a dele.
-        DURACAO.put("cripta", 30.00);
-        DURACAO.put("cripta_luta", 30.00);
-        DURACAO.put("catedral", 58.18);
-        DURACAO.put("catedral_luta", 58.18);
-        DURACAO.put("vampiro", 48.00);
-        DURACAO.put("vampiro_luta", 48.00);
-        DURACAO.put("aranha", 44.80);
-        DURACAO.put("aranha_luta", 44.80);
+        // Cada tema e a musica caracteristica das masmorras (a original) com arranjo proprio. O lobby tem a versao
+        // de lobby da musica caracteristica (sons/gerar_lobby.py, estereo e com mais qualidade).
+        DURACAO.put("cripta", 41.74);
+        DURACAO.put("cripta_luta", 41.74);
+        DURACAO.put("catedral", 53.33);
+        DURACAO.put("catedral_luta", 53.33);
+        DURACAO.put("vampiro", 36.92);
+        DURACAO.put("vampiro_luta", 36.92);
+        DURACAO.put("aranha", 34.29);
+        DURACAO.put("aranha_luta", 34.29);
         DURACAO.put("mina", 34.29);
         DURACAO.put("mina_luta", 34.29);
-        DURACAO.put("deserto", 36.92);
-        DURACAO.put("deserto_luta", 36.92);
+        DURACAO.put("deserto", 38.40);
+        DURACAO.put("deserto_luta", 38.40);
         DURACAO.put("pantano", 41.74);
         DURACAO.put("pantano_luta", 41.74);
-        DURACAO.put("floresta", 53.33);
-        DURACAO.put("floresta_luta", 53.33);
-        DURACAO.put("jardim", 45.71);
-        DURACAO.put("jardim_luta", 45.71);
-        DURACAO.put("selva", 30.48);
-        DURACAO.put("selva_luta", 30.48);
+        DURACAO.put("floresta", 35.56);
+        DURACAO.put("floresta_luta", 35.56);
+        DURACAO.put("jardim", 44.65);
+        DURACAO.put("jardim_luta", 44.65);
+        DURACAO.put("selva", 30.97);
+        DURACAO.put("selva_luta", 30.97);
         DURACAO.put("quartel", 33.10);
         DURACAO.put("quartel_luta", 33.10);
-        DURACAO.put("gelo", 36.92);
-        DURACAO.put("gelo_luta", 36.92);
-        DURACAO.put("mar", 45.71);
-        DURACAO.put("mar_luta", 45.71);
-        DURACAO.put("afogada", 54.86);
-        DURACAO.put("afogada_luta", 54.86);
-        DURACAO.put("relogio", 50.91);
-        DURACAO.put("relogio_luta", 50.91);
-        DURACAO.put("arcano", 31.30);
-        DURACAO.put("arcano_luta", 31.30);
+        DURACAO.put("gelo", 40.00);
+        DURACAO.put("gelo_luta", 40.00);
+        DURACAO.put("mar", 32.00);
+        DURACAO.put("mar_luta", 32.00);
+        DURACAO.put("afogada", 50.53);
+        DURACAO.put("afogada_luta", 50.53);
+        DURACAO.put("relogio", 30.48);
+        DURACAO.put("relogio_luta", 30.48);
+        DURACAO.put("arcano", 40.00);
+        DURACAO.put("arcano_luta", 40.00);
         DURACAO.put("coliseu", 38.40);
         DURACAO.put("coliseu_luta", 38.40);
-        DURACAO.put("trovao", 24.30);
-        DURACAO.put("trovao_luta", 24.30);
+        DURACAO.put("trovao", 25.60);
+        DURACAO.put("trovao_luta", 25.60);
         DURACAO.put("fogo", 26.30);
         DURACAO.put("fogo_luta", 26.30);
-        DURACAO.put("nether", 36.36);
-        DURACAO.put("nether_luta", 36.36);
+        DURACAO.put("nether", 30.00);
+        DURACAO.put("nether_luta", 30.00);
         DURACAO.put("vazio", 32.54);
         DURACAO.put("vazio_luta", 32.54);
-        DURACAO.put("antiga", 60.00);
-        DURACAO.put("antiga_luta", 60.00);
-        DURACAO.put("explorar", 36.92);
-        DURACAO.put("explorar_luta", 36.92);
+        DURACAO.put("antiga", 54.86);
+        DURACAO.put("antiga_luta", 54.86);
+        DURACAO.put("explorar", 36.23);
+        DURACAO.put("explorar_luta", 36.23);
         DURACAO.put("herobrine", 44.80);
+        DURACAO.put("lobby", 81.82);
         DURACAO.put("chefe", 42.3);
 
         fam("cripta", "CRIPTA", "CEMITERIO", "CRIPTA_REAL", "TUMBA", "OSSOS");
@@ -145,6 +148,7 @@ final class Trilha implements Listener {
         Location l = p.getLocation();
         World w = l.getWorld();
         if (w == null) return null;
+        if (pl.lobby != null && pl.lobby.noLobby(l)) return "lobby";
         Masmorra m = pl.masmorraEm(w, l.getBlockX(), l.getBlockY(), l.getBlockZ());
         if (m == null || m.demolindo) return null;
         if (m.chefe != null && m.chefe.vivo() && m.arena().contem(l.getBlockX(), l.getBlockY(), l.getBlockZ()))
