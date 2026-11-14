@@ -499,6 +499,9 @@ public final class Backrooms extends JavaPlugin implements Listener {
             getConfig().set(k, getConfig().getInt(k, 0) + 1);
             for (String cmd : getConfig().getStringList("recompensa-comandos"))
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%jogador%", p.getName()).replace("%modo%", modo));
+            // 13/11: vitoria agora paga coronas (minigame do dia = dobro)
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "coronas dar " + p.getName() + " " + (modo.equals("dificil") ? 200 : modo.equals("facil") ? 60 : 120));
+            p.sendMessage(txt("§6+" + (modo.equals("dificil") ? 200 : modo.equals("facil") ? 60 : 120) + " coronas §7por escapar das Backrooms!"));
         }
         saveConfig();
         if (!nomes.isEmpty())

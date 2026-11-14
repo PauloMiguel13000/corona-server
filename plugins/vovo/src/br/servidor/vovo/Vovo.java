@@ -559,6 +559,9 @@ public final class Vovo extends JavaPlugin implements Listener {
             }
             for (String cmd : getConfig().getStringList("recompensa-comandos"))
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%jogador%", p.getName()));
+            // 13/11: vitoria agora paga coronas (minigame do dia = dobro)
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "coronas dar " + p.getName() + " " + (modo.equals("dificil") ? 200 : 100));
+            p.sendMessage(txt("§6+" + (modo.equals("dificil") ? 200 : 100) + " coronas §7por fugir da casa da vovó!"));
         }
         saveConfig();
         if (!nomes.isEmpty()) {

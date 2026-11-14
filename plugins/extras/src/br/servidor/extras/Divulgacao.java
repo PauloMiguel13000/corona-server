@@ -79,6 +79,9 @@ final class Divulgacao implements Listener {
             "&6&l>> &ePesque no Survival: tem &6Peixe Dourado &e(coronas), livros encantados raros e até &bTRIDENTE&e!",
             "&6&l>> &eEntre todo dia: o &6login diário &edá coronas que crescem até &6600 &eno 7º dia seguido!",
             "&6&l>> &eNOVO: &6&l/conquistas &e— 21 metas (horas jogadas, monstros, diamantes, dragão...) que pagam até &61500 coronas&e!",
+            "&6&l>> &eRANKING SEMANAL das Masmorras: quem mais derrotar chefes na semana ganha até &61500 coronas&e! Placar no lobby das masmorras.",
+            "&6&l>> &eAgora os jogos de terror pagam: escapou do &4Hotel&e, &eBackrooms&e, &5Vovó&e, &8Porcelana &eou &9Não Chore&e? Coronas na hora!",
+            "&6&l>> &eA primeira vitória contra um chefe de masmorra no dia vale &6coronas em DOBRO&e!",
             "&6&l>> &eNa Prisão tem &6missões do dia &ecom prêmio em $ — dentro dela use &f/missoes");
 
     private void dica() {

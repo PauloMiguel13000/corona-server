@@ -445,6 +445,9 @@ public final class Hotel extends JavaPlugin implements Listener {
             getConfig().set(k, getConfig().getInt(k, 0) + 1);
             for (String cmd : getConfig().getStringList("recompensa-comandos"))
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%jogador%", p.getName()));
+            // 13/11: vitoria agora paga coronas (minigame do dia = dobro)
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "coronas dar " + p.getName() + " " + (getConfig().getInt("coronas-vitoria", 150)));
+            p.sendMessage(txt("§6+" + (getConfig().getInt("coronas-vitoria", 150)) + " coronas §7por sair vivo do Hotel!"));
         }
         saveConfig();
         if (!nomes.isEmpty()) {

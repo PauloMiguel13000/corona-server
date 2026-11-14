@@ -701,6 +701,9 @@ public final class Slender extends JavaPlugin implements Listener {
             getConfig().set(k, getConfig().getInt(k, 0) + 1);
             for (String cmd : getConfig().getStringList("recompensa-comandos"))
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%jogador%", p.getName()));
+            // 13/11: vitoria agora paga coronas (minigame do dia = dobro)
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "coronas dar " + p.getName() + " " + (120));
+            p.sendMessage(txt("§6+" + (120) + " coronas §7por escapar do Porcelana!"));
         }
         saveConfig();
         if (!nomes.isEmpty()) {

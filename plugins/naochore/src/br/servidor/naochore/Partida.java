@@ -417,6 +417,12 @@ final class Partida {
             p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 0.8f);
         }
         if (!nomes.isEmpty()) Bukkit.broadcast(NaoChore.txt(NaoChore.PREFIXO + "§a" + String.join(", ", nomes) + " §fsobreviveu aos §c" + dias() + " dias §fdo Não Chore!"));
+        // 13/11: vitoria paga coronas (minigame do dia = dobro)
+        for (String n : nomes) {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "coronas dar " + n + " 150");
+            Player pn = Bukkit.getPlayerExact(n);
+            if (pn != null) pn.sendMessage(NaoChore.txt("§6+150 coronas §7por sobreviver aos dias do Não Chore!"));
+        }
         for (String n : nomes)
             for (String c : pl.getConfig().getStringList("recompensa-comandos"))
                 Bukkit.getScheduler().runTaskLater(pl, () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), c.replace("{jogador}", n)), 220L);
