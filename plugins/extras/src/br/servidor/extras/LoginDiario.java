@@ -60,6 +60,17 @@ final class LoginDiario implements Listener {
         p.sendMessage(Extras.txt(dia < 6 ? "§7Volte amanhã para ganhar §6" + PREMIO[dia + 1] + " coronas§7. No §6dia 7§7: §6§l" + PREMIO[6] + " coronas§7!"
                 : "§6§l★ Você fechou os 7 dias! §7Amanhã a sequência recomeça — continue vindo!"));
         p.playSound(p.getLocation(), dia == 6 ? Sound.UI_TOAST_CHALLENGE_COMPLETE : Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.3f);
+        // 14/11: bonus de volta para quem sumiu 5+ dias
+        if (ult != null && hoje - ult >= 5) {
+            long volta = Math.min(600, 150 + (hoje - ult) * 15);
+            Bukkit.getScheduler().runTaskLater(pl, () -> {
+                if (!p.isOnline()) return;
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "coronas dar " + p.getName() + " " + volta);
+                p.showTitle(net.kyori.adventure.title.Title.title(Extras.txt("§a§lBEM-VINDO DE VOLTA!"), Extras.txt("§7sentimos sua falta §8• §6+" + volta + " coronas")));
+                p.sendMessage(Extras.txt("§a§l✦ Bem-vindo de volta! §7Você ficou §f" + (hoje - ult) + " dias §7fora e ganhou §6" + volta + " coronas§7. Muita coisa nova: §e/ajuda"));
+                p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.1f);
+            }, 120L);
+        }
         if (dia == 6) {
             p.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, p.getLocation().add(0, 1, 0), 60, 0.5, 1, 0.5, 0.3);
             Bukkit.broadcast(Extras.txt("§6🔥 §e" + p.getName() + " §7entrou §67 dias seguidos §7e ganhou §6" + PREMIO[6] + " coronas§7!"));
