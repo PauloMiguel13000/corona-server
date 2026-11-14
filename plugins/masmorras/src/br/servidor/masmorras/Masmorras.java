@@ -388,6 +388,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
     @EventHandler
     public void entrouNoHubAntigo(org.bukkit.event.player.PlayerJoinEvent e) {
         Player p = e.getPlayer();
+        if (coronas != null) coronas.pendente(p);
         if (hub != null && hub.ehHub(p.getWorld()) && mundoNovo != null && mundoNovo.normal != null) depois(30, () -> {
             if (p.isOnline() && hub.ehHub(p.getWorld())) mundoNovo.irParaLobby(p);
         });

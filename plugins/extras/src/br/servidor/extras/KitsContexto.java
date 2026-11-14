@@ -45,7 +45,7 @@ final class KitsContexto implements Listener {
             new Kit("explorador", Lugar.MASMORRA, "§e§lKit Explorador", Material.TORCH, 12, "Tochas, cenouras douradas, balde de leite e bússola"),
     };
 
-    static final Set<String> SURVIVAL = Set.of("world", "world_nether", "world_the_end", "plots");
+    static final Set<String> SURVIVAL = Set.of("world", "world_nether", "world_the_end");   // plots agora sao da Prisao
 
     private final Extras pl;
 

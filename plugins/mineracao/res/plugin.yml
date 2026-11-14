@@ -3,7 +3,7 @@ version: 1.0
 main: br.servidor.mineracao.Mineracao
 api-version: '1.21'
 author: Corona Server
-softdepend: [GriefPrevention, Multiverse-Core]
+softdepend: [GriefPrevention, Multiverse-Core, PlotMe, Casas]
 description: Prisao (Rank Up) - mundo a parte com 12 minas, Mina PvP, dinheiro proprio, kits e encantamentos.
 commands:
   minas:
@@ -28,6 +28,15 @@ commands:
   missoesprisao:
     description: Missoes do dia da Prisao (dentro da Prisao, /missoes tambem abre)
     aliases: [prisaomissoes]
+  bau:
+    description: Bau pessoal da Prisao (so abre na Prisao e nos plots)
+    aliases: [cofre, bauprisao]
+  terreno:
+    description: Vai para o seu terreno (plots da Prisao)
+    aliases: [meuterreno]
+  dinheiro:
+    description: Dinheiro da Prisao (/dinheiro, /dinheiro pagar, /dinheiro admin dar|tirar|definir)
+    aliases: [dinheiroprisao, moneyprisao]
   mineracaoadm:
     description: Admin da mineracao
     permission: mineracao.admin

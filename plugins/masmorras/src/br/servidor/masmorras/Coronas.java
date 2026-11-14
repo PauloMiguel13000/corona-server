@@ -51,6 +51,17 @@ final class Coronas {
         p.getPersistentDataContainer().set(chave, PersistentDataType.LONG, Math.max(0, v));
     }
 
+    /** Coronas dadas pelo admin enquanto o jogador estava offline (chamado ao logar). */
+    void pendente(Player p) {
+        String k = "coronas-pendente." + p.getUniqueId();
+        long v = pl.getConfig().getLong(k, 0);
+        if (v == 0) return;
+        pl.getConfig().set(k, null);
+        pl.saveConfig();
+        definir(p, saldo(p) + v);
+        if (v > 0) Bukkit.getScheduler().runTaskLater(pl, () -> p.sendMessage(Masmorras.txt("§6⛃ Você recebeu §e" + fmt(v) + " coronas §6enquanto estava fora!")), 100L);
+    }
+
     void dar(Player p, long v, boolean avisar) {
         if (v <= 0) return;
         if (Destaque.fimDeSemana()) v = Math.round(v * 1.5);   // 13/11: fim de semana = coronas +50%
@@ -71,6 +82,31 @@ final class Coronas {
     }
 
     boolean comando(CommandSender s, String[] a) {
+        // 13/11 (Paulo): /corona adm dar|tirar|definir <jogador> <valor> (admin ou console); offline fica guardado
+        if (a.length >= 1 && (a[0].equalsIgnoreCase("adm") || a[0].equalsIgnoreCase("admin"))) {
+            if (!s.hasPermission("masmorras.admin")) { s.sendMessage(Masmorras.txt("§cSem permissão.")); return true; }
+            if (a.length < 4) { s.sendMessage(Masmorras.txt("§eUse: §f/corona adm dar|tirar|definir <jogador> <valor>")); return true; }
+            String op = a[1].toLowerCase(java.util.Locale.ROOT);
+            long v;
+            try { v = Long.parseLong(a[3].replace(".", "").replace("_", "")); } catch (NumberFormatException e) { v = -1; }
+            if (v < 0 || !(op.equals("dar") || op.equals("tirar") || op.equals("definir"))) { s.sendMessage(Masmorras.txt("§eUse: §f/corona adm dar|tirar|definir <jogador> <valor>")); return true; }
+            Player alvo = Bukkit.getPlayerExact(a[2]);
+            if (alvo != null) {
+                if (op.equals("dar")) { definir(alvo, saldo(alvo) + v); alvo.sendMessage(Masmorras.txt("§6⛃ Você recebeu §e" + fmt(v) + " coronas§6! §7(saldo: " + fmt(saldo(alvo)) + ")")); }
+                else if (op.equals("tirar")) definir(alvo, saldo(alvo) - v);
+                else definir(alvo, v);
+                s.sendMessage(Masmorras.txt("§aSaldo de " + alvo.getName() + ": §6" + fmt(saldo(alvo)) + " coronas"));
+                pl.getLogger().info("corona adm " + op + " " + alvo.getName() + " " + v + " por " + s.getName());
+                return true;
+            }
+            org.bukkit.OfflinePlayer off = Bukkit.getOfflinePlayerIfCached(a[2]);
+            if (off == null || op.equals("definir")) { s.sendMessage(Masmorras.txt("§c" + a[2] + (off == null ? " nunca entrou no servidor." : " está offline (definir só com ele online)."))); return true; }
+            String k = "coronas-pendente." + off.getUniqueId();
+            pl.getConfig().set(k, pl.getConfig().getLong(k, 0) + (op.equals("dar") ? v : -v));
+            pl.saveConfig();
+            s.sendMessage(Masmorras.txt("§a" + off.getName() + " está offline: " + (op.equals("dar") ? "+" : "-") + fmt(v) + " coronas entram quando ele logar."));
+            return true;
+        }
         if (a.length >= 3 && (a[0].equalsIgnoreCase("dar") || a[0].equalsIgnoreCase("tirar")) && s.hasPermission("masmorras.admin")) {
             Player alvo = Bukkit.getPlayerExact(a[1]);
             long v;

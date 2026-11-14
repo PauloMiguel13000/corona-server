@@ -46,6 +46,8 @@ final class Mochilas implements Listener {
         List<String> min = pl.getConfig().getStringList("mochilas.mineracao");
         if (min.isEmpty()) min = List.of("mineracao");
         if (min.contains(n)) return "mineracao";
+        // 13/11 (Paulo): os plots sairam das masmorras e agora sao da Prisao (mesma mochila do Rank Up)
+        if (n.equalsIgnoreCase(pl.getConfig().getString("mochilas.plots", "plots"))) return "mineracao";
         List<String> surv = pl.getConfig().getStringList("mochilas.survival");
         if (surv.isEmpty()) surv = List.of("world", "world_nether", "world_the_end", "plots");
         List<String> mas = pl.getConfig().getStringList("mochilas.masmorras");

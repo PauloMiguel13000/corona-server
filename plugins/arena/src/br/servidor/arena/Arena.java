@@ -70,6 +70,7 @@ public final class Arena extends JavaPlugin implements Listener {
     private File arqDados;
     private YamlConfiguration dados;
     private final Map<UUID, Integer> sequencia = new HashMap<>();
+    private final Map<String, Long> ultimoAbate = new HashMap<>();
     private final Map<UUID, Long> protegidoAte = new HashMap<>();
     private final Set<UUID> movendo = new HashSet<>();
 
@@ -434,6 +435,19 @@ public final class Arena extends JavaPlugin implements Listener {
             if (getConfig().getIntegerList("anunciar-sequencia").contains(seq))
                 Bukkit.broadcast(txt(PREFIXO + "§6§l" + k.getName() + " §eestá imparável na Arena: §f" + seq + " abates seguidos!"));
             if (perdeu >= 5) Bukkit.broadcast(txt(PREFIXO + "§f" + k.getName() + " §7acabou com a sequência de §c" + perdeu + " §7de §f" + p.getName() + "§7!"));
+            // 13/11: abate paga coronas (+ bonus nas sequencias anunciadas e por acabar com sequencia alheia).
+            // Matar o mesmo jogador de novo em menos de 2 minutos nao paga (contra farm combinado).
+            String par = k.getUniqueId() + ">" + p.getUniqueId();
+            long agora = System.currentTimeMillis();
+            Long ant = ultimoAbate.put(par, agora);
+            if (ultimoAbate.size() > 2000) ultimoAbate.entrySet().removeIf(x -> agora - x.getValue() > 120_000L);
+            if (ant == null || agora - ant >= 120_000L) {
+                int v = 10;
+                if (getConfig().getIntegerList("anunciar-sequencia").contains(seq)) v += seq * 10;
+                if (perdeu >= 3) v += perdeu * 5;
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "coronas dar " + k.getName() + " " + v);
+                k.sendMessage(PREFIXO + "§6+" + v + " coronas §7pelo abate" + (v > 10 ? " §e(bônus!)" : ""));
+            } else k.sendMessage(PREFIXO + "§7Abate repetido no mesmo jogador: sem coronas por 2 minutos.");
         } else msg = "§f" + p.getName() + " §7caiu na arena.";
         for (Player o : mundo.getPlayers()) o.sendMessage(PREFIXO + msg);
         salvar();

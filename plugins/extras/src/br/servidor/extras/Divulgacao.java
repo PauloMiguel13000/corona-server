@@ -83,6 +83,7 @@ final class Divulgacao implements Listener {
             "&6&l>> &eAgora os jogos de terror pagam: escapou do &4Hotel&e, &eBackrooms&e, &5Vovó&e, &8Porcelana &eou &9Não Chore&e? Coronas na hora!",
             "&6&l>> &eArena PvP agora paga &6coronas por abate &ee tem &c&lSEQUÊNCIA DE ABATES &ecom bônus! &f/minigames",
             "&6&l>> &eFique de olho: de tempos em tempos cai uma &6&lCHUVA DE CORONAS &ena praça do spawn! Pegue as moedas douradas.",
+            "&6&l>> &eFerramenta ou armadura gasta? O &6Ferreiro &econserta por coronas: segure o item e use &f/reparar",
             "&6&l>> &eA primeira vitória contra um chefe de masmorra no dia vale &6coronas em DOBRO&e!",
             "&6&l>> &eNa Prisão tem &6missões do dia &ecom prêmio em $ — dentro dela use &f/missoes");
 

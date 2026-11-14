@@ -78,6 +78,12 @@ public final class Mineracao extends JavaPlugin implements Listener {
     GolemMina golem;
     final Map<Material, Double> precos = new EnumMap<>(Material.class);
     World mundo;
+    BauPrisao bau;
+
+    /** 13/11 (Paulo): os plots (PlotMe + Casas) agora sao da Prisao: mesma mochila, mesmas regras. */
+    boolean ehPlots(World w) {
+        return w != null && w.getName().equalsIgnoreCase(getConfig().getString("plots-mundo", "plots"));
+    }
     NamespacedKey kRank, kMinerado, kGanhou, kDinheiro, kEnfeite, kAcao, kPrisao, kAuto, kPrest, kDiaria, kVersao;
     static final NamespacedKey VIP_NIVEL = new NamespacedKey("extras", "vip_nivel");
     static final NamespacedKey VIP_ATE = new NamespacedKey("extras", "vip_ate");
@@ -108,6 +114,8 @@ public final class Mineracao extends JavaPlugin implements Listener {
         kDiaria = new NamespacedKey(this, "diaria");
         kVersao = new NamespacedKey(this, "versao");
         missoes = new Missoes(this);
+        bau = new BauPrisao(this);
+        Bukkit.getPluginManager().registerEvents(bau, this);
         saveDefaultConfig();
         mundosComAcesso.addAll(getConfig().getStringList("mundos-com-acesso"));
         int reset = Math.max(1, getConfig().getInt("reset-minutos", 8));
@@ -203,6 +211,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if (bau != null) bau.salvarTodos();
         for (Player p : Bukkit.getOnlinePlayers()) tirarPlacar(p);
     }
 
@@ -1142,7 +1151,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
     }
 
     private final Map<UUID, Long> trocouMundo = new HashMap<>();
-    static final Set<String> MUNDOS_OUTRA_MOCHILA = Set.of("world", "world_nether", "world_the_end", "plots", "masmorras_mundo", "masmorras_nether", "masmorras_end");
+    static final Set<String> MUNDOS_OUTRA_MOCHILA = Set.of("world", "world_nether", "world_the_end", "masmorras_mundo", "masmorras_nether", "masmorras_end");
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void trocou(PlayerChangedWorldEvent e) { trocouMundo.put(e.getPlayer().getUniqueId(), System.currentTimeMillis()); }
@@ -1399,15 +1408,19 @@ public final class Mineracao extends JavaPlugin implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void comando(PlayerCommandPreprocessEvent e) {
-        if (e.getPlayer().getWorld() != mundo) return;
+        boolean plots = ehPlots(e.getPlayer().getWorld());
+        if (e.getPlayer().getWorld() != mundo && !plots) return;
         String c = e.getMessage().substring(1).split(" ")[0].toLowerCase(Locale.ROOT);
         if (c.contains(":")) c = c.substring(c.indexOf(':') + 1);
+        // nos plots o pet continua liberado (regra antiga dos plots); o resto segue as regras da Prisao
+        if (plots && (c.equals("pet") || c.equals("pets"))) return;
+        if (c.equals("bau") || c.equals("cofre")) { e.setCancelled(true); bau.abrir(e.getPlayer()); return; }
         // /missoes e do Extras tambem: dentro da Prisao abre as missoes da Prisao
         if (c.equals("missoes") || c.equals("missao") || c.equals("quests") || c.equals("missoesprisao")) { e.setCancelled(true); missoes.abrir(e.getPlayer()); return; }
         if (!BLOQUEADOS.contains(c)) return;
         e.setCancelled(true);
         if (c.startsWith("kit")) abrirKits(e.getPlayer());
-        else e.getPlayer().sendMessage(txt("§cNa Prisão isso não funciona: aqui é um mundo à parte."));
+        else e.getPlayer().sendMessage(txt(plots ? "§cNos plots isso não funciona: eles fazem parte da Prisão (mundo à parte)." : "§cNa Prisão isso não funciona: aqui é um mundo à parte."));
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
@@ -1668,6 +1681,10 @@ public final class Mineracao extends JavaPlugin implements Listener {
         Mina pv = minas.get(12);
         inv.setItem(24, item(r >= pv.rank ? Material.NETHERITE_SWORD : Material.IRON_BARS, "§c§l" + pv.nome,
                 "§7Rank: " + nomeRank(pv.rank), "§7Minérios: §f" + resumo(pv), "§c⚠ PvP ligado: quem morre", "§c   perde os itens!", r >= pv.rank ? "§a▶ Clique para ir" : "§c✖ Precisa do rank " + RANKS[pv.rank].letra()));
+        inv.setItem(48, item(Material.ENDER_CHEST, "§5§lBaú da Prisão §7(/bau)", "§7Guarde seus itens: " + (vip(p) > 0 ? "§654 espaços (VIP)" : "§f27 espaços §8(VIP: 54)"),
+                "§7Só abre na Prisão e no seu terreno.", "§a▶ Clique para abrir"));
+        inv.setItem(50, item(Material.OAK_SAPLING, "§a§lSeu Terreno §7(plots)", "§7Um terreno com uma §fcasa que evolui", "§7com o seu rank da Prisão (A, C, E... L).",
+                "§7Use a mesma mochila da Prisão:", "§7guarde tudo nos baús da sua casa!", "§a▶ Clique para ir §8(/plotme auto · /plotme home)"));
         inv.setItem(49, item(Material.WRITABLE_BOOK, "§6§l📜 Missões do dia", "§73 missões com prêmio em $", "§7e bônus por completar todas.", "§a▶ Clique para ver"));
         inv.setItem(25, item(Material.ENCHANTING_TABLE, "§d§lSala de Encantamentos", "§7Mesas com 15 estantes, bigornas", "§7e rebolo. §a▶ Clique para ir"));
         inv.setItem(36, item(Material.DIAMOND_PICKAXE, "§b§lLoja de picaretas", "§7Picaretas com o dinheiro da Prisão", "§7(até a de diamante, sem encantamento).", "§7Encante na Sala de Encantamentos!", "§a▶ Clique para ver"));
@@ -1726,6 +1743,8 @@ public final class Mineracao extends JavaPlugin implements Listener {
                     case 0 -> { p.closeInventory(); sair(p); }
                     case 2 -> { p.closeInventory(); diaria(p); }
                     case 49 -> { p.closeInventory(); Bukkit.getScheduler().runTask(this, () -> missoes.abrir(p)); }
+                    case 48 -> Bukkit.getScheduler().runTask(this, () -> bau.abrir(p));
+                    case 50 -> { p.closeInventory(); irTerreno(p); }
                     case 6 -> { p.closeInventory(); fazerPrestigio(p); }
                     case 4 -> { p.closeInventory(); irCentro(p); }
                     case 24 -> { p.closeInventory(); irPara(p, minas.get(12)); }
@@ -1753,6 +1772,81 @@ public final class Mineracao extends JavaPlugin implements Listener {
     @EventHandler
     public void arrastar(InventoryDragEvent e) {
         if (e.getView().getTopInventory().getHolder() instanceof Tela) e.setCancelled(true);
+    }
+
+    /**
+     * 13/11 (Paulo): /dinheiro — saldo da Prisao; /dinheiro pagar <jogador> <valor>;
+     * /dinheiro admin dar|tirar|definir <jogador> <valor> (admin ou console). Jogador offline: o "dar"/"tirar" fica
+     * guardado e entra quando ele logar.
+     */
+    boolean cmdDinheiro(CommandSender s, String[] a) {
+        if (a.length >= 1 && a[0].equalsIgnoreCase("admin")) {
+            if (!(s.hasPermission("mineracao.admin") || !(s instanceof Player))) { s.sendMessage(txt("§cSem permissão.")); return true; }
+            if (a.length < 4) { s.sendMessage(txt("§eUse: §f/dinheiro admin dar|tirar|definir <jogador> <valor>")); return true; }
+            String op = a[1].toLowerCase(Locale.ROOT);
+            long v;
+            try { v = Long.parseLong(a[3].replace(".", "").replace("_", "")); } catch (NumberFormatException e) { s.sendMessage(txt("§cValor inválido: " + a[3])); return true; }
+            if (v < 0 || !(op.equals("dar") || op.equals("tirar") || op.equals("definir"))) { s.sendMessage(txt("§eUse: §f/dinheiro admin dar|tirar|definir <jogador> <valor>")); return true; }
+            Player alvo = Bukkit.getPlayerExact(a[2]);
+            if (alvo != null) {
+                long novo = op.equals("dar") ? dinheiro(alvo) + v : op.equals("tirar") ? dinheiro(alvo) - v : v;
+                setDinheiro(alvo, novo);
+                s.sendMessage(txt("§a$ Saldo da Prisão de §f" + alvo.getName() + "§a: " + din(dinheiro(alvo))));
+                if (op.equals("dar")) alvo.sendMessage(txt("§a§l$ §fVocê recebeu " + din(v) + " §fna Prisão! §8• saldo " + din(dinheiro(alvo))));
+                getLogger().info("dinheiro admin " + op + " " + alvo.getName() + " " + v + " por " + s.getName());
+                return true;
+            }
+            org.bukkit.OfflinePlayer off = Bukkit.getOfflinePlayerIfCached(a[2]);
+            if (off == null || op.equals("definir")) { s.sendMessage(txt("§c" + a[2] + " não está online" + (op.equals("definir") ? " (definir só com o jogador online)." : " e nunca entrou no servidor."))); return true; }
+            String k = "dinheiro-pendente." + off.getUniqueId();
+            getConfig().set(k, getConfig().getLong(k, 0) + (op.equals("dar") ? v : -v));
+            saveConfig();
+            s.sendMessage(txt("§a$ " + off.getName() + " está offline: " + (op.equals("dar") ? "+" : "-") + din(v) + " §aentra quando ele logar."));
+            return true;
+        }
+        if (!(s instanceof Player p)) { s.sendMessage("Use: dinheiro admin dar|tirar|definir <jogador> <valor>"); return true; }
+        // fora da Prisao/plots, /dinheiro continua sendo o saldo de coronas (como era antes)
+        if (p.getWorld() != mundo && !ehPlots(p.getWorld())) { p.performCommand(("coronas " + String.join(" ", a)).trim()); return true; }
+        if (a.length >= 3 && a[0].equalsIgnoreCase("pagar")) {
+            Player alvo = Bukkit.getPlayerExact(a[1]);
+            long v;
+            try { v = Long.parseLong(a[2].replace(".", "")); } catch (NumberFormatException e) { v = -1; }
+            if (alvo == null || alvo.equals(p) || v <= 0) { p.sendMessage(txt("§eUse: §f/dinheiro pagar <jogador online> <valor>")); return true; }
+            if (dinheiro(p) < v) { p.sendMessage(txt("§cVocê não tem " + din(v) + "§c. Saldo: " + din(dinheiro(p)))); return true; }
+            setDinheiro(p, dinheiro(p) - v);
+            setDinheiro(alvo, dinheiro(alvo) + v);
+            p.sendMessage(txt("§a$ Você pagou " + din(v) + " §apara §f" + alvo.getName() + "§a."));
+            alvo.sendMessage(txt("§a$ §f" + p.getName() + " §ate pagou " + din(v) + "§a na Prisão."));
+            return true;
+        }
+        p.sendMessage(txt("§a$ Seu dinheiro da Prisão: " + din(dinheiro(p)) + " §8• §7/dinheiro pagar <jogador> <valor>"));
+        return true;
+    }
+
+    @EventHandler
+    public void pendenteDinheiro(PlayerJoinEvent e) {
+        String k = "dinheiro-pendente." + e.getPlayer().getUniqueId();
+        long v = getConfig().getLong(k, 0);
+        if (v == 0) return;
+        getConfig().set(k, null);
+        saveConfig();
+        setDinheiro(e.getPlayer(), dinheiro(e.getPlayer()) + v);
+        if (v > 0) Bukkit.getScheduler().runTaskLater(this, () -> e.getPlayer().sendMessage(txt("§a§l$ §fVocê recebeu " + din(v) + " §fna Prisão enquanto estava fora!")), 100L);
+    }
+
+    /** Leva para o terreno do jogador nos plots (PlotMe): o dele, ou pega um novo se ainda nao tem. */
+    void irTerreno(Player p) {
+        org.bukkit.plugin.Plugin pm = Bukkit.getPluginManager().getPlugin("PlotMe");
+        if (pm == null || !pm.isEnabled()) { p.sendMessage(txt("§cOs terrenos (plots) não estão ligados agora.")); return; }
+        boolean temCasa = false;
+        org.bukkit.plugin.Plugin cs = Bukkit.getPluginManager().getPlugin("Casas");
+        if (cs != null) {
+            java.io.File f = new java.io.File(cs.getDataFolder(), "casas.yml");
+            org.bukkit.configuration.file.YamlConfiguration y = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(f);
+            for (String k : y.getKeys(false)) if (p.getUniqueId().toString().equals(y.getString(k + ".dono"))) { temCasa = true; break; }
+        }
+        p.performCommand(temCasa ? "plotme home" : "plotme auto");
+        if (!temCasa) p.sendMessage(txt("§a⛓ Seu terreno da Prisão! §7Em até 30 s aparece a sua §fcasa§7, que evolui com o seu rank. Guarde seus itens nos baús dela ou no §e/bau§7."));
     }
 
     boolean podeIr(Player p) {
@@ -1960,6 +2054,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
     public boolean onCommand(CommandSender s, Command cmd, String label, String[] a) {
         String n = cmd.getName().toLowerCase(Locale.ROOT);
         if (n.equals("mineracaoadm")) return adm(s, a);
+        if (n.equals("dinheiro")) return cmdDinheiro(s, a);
         if (!(s instanceof Player p)) { s.sendMessage("So jogador."); return true; }
         if (mundo == null) { p.sendMessage(txt("§cA Prisão não está disponível agora.")); return true; }
         switch (n) {
@@ -1979,6 +2074,8 @@ public final class Mineracao extends JavaPlugin implements Listener {
             case "rankup" -> rankup(p);
             case "prestigio" -> fazerPrestigio(p);
             case "recompensa" -> diaria(p);
+            case "bau" -> bau.abrir(p);
+            case "terreno" -> irTerreno(p);
             case "missoesprisao" -> { if (p.getWorld() == mundo) missoes.abrir(p); else p.sendMessage(txt("§7As missões são da §6Prisão§7: entre com §e/minas§7.")); }
             case "vender" -> vender(p);
             case "picareta" -> {

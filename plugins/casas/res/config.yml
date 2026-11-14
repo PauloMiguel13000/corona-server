@@ -7,3 +7,10 @@ niveis: [0, 10, 20, 30, 40, 50, 60]
 placeholder-nivel: "%auraskills_power%"
 # true = os baus da casa antiga sao esvaziados para os baus da casa nova ao evoluir (o que nao couber cai no chao)
 guardar-itens: true
+
+# 13/11 (Paulo): os plots sao da Prisao (Rank Up). A casa evolui pelo rank da Prisao: rank (A=0 ... L=11) de cada nivel.
+requisito: rank            # rank = rank da Prisao; poder = nivel de poder (como era antes)
+ranks: [0, 2, 4, 6, 8, 10, 11]
+# uma vez so: o que estava nos baus dos plots (eram da mochila das masmorras) volta para o dono nas masmorras
+desvincular-masmorras: true
+devolver-mundos: [masmorras_mundo, masmorras_nether, masmorras_end]

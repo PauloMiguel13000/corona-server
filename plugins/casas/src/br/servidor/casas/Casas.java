@@ -107,6 +107,38 @@ public final class Casas extends JavaPlugin implements Listener {
         return n < l.size() ? l.get(n) : l.get(l.size() - 1);
     }
 
+    // 13/11 (Paulo): os plots agora sao da Prisao (Rank Up): a casa evolui pelo RANK da Prisao, nao pelo poder das masmorras.
+    static final String[] LETRAS = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"};
+    static final String[] NOMES = {"Novato", "Detento", "Ladrão", "Fugitivo", "Bandido", "Contrabandista", "Chefe de Cela", "Carcereiro", "Xerife", "Diretor", "Imperador", "Lenda da Prisão"};
+
+    boolean porRank() {
+        return getConfig().getString("requisito", "rank").equalsIgnoreCase("rank");
+    }
+
+    /** Rank da Prisao (0 = A) exigido para a casa de nivel n: A, C, E, G, I, K, L. */
+    int rankPara(int n) {
+        List<Integer> l = getConfig().getIntegerList("ranks");
+        if (l.isEmpty()) l = List.of(0, 2, 4, 6, 8, 10, 11);
+        int v = n < l.size() ? l.get(n) : l.get(l.size() - 1);
+        return Math.max(0, Math.min(LETRAS.length - 1, v));
+    }
+
+    static String nomeRank(int r) {
+        return "§e" + LETRAS[r] + " §7(" + NOMES[r] + ")";
+    }
+
+    /** Rank da Prisao do jogador (fica no proprio jogador, gravado pelo plugin Mineracao). */
+    int rankPrisao(Player p) {
+        Integer r = p.getPersistentDataContainer().get(new NamespacedKey("mineracao", "rank"), PersistentDataType.INTEGER);
+        Integer pr = p.getPersistentDataContainer().get(new NamespacedKey("mineracao", "prestigio"), PersistentDataType.INTEGER);
+        if (pr != null && pr > 0) return LETRAS.length - 1;   // quem ja prestigiou passou por todos os ranks
+        return r == null ? 0 : Math.max(0, Math.min(LETRAS.length - 1, r));
+    }
+
+    String requisito(int n) {
+        return porRank() ? "rank " + nomeRank(rankPara(n)) : "nível de poder §e" + poderPara(n);
+    }
+
     World mundo() {
         return Bukkit.getWorld(getConfig().getString("mundo", "plots"));
     }
@@ -195,8 +227,116 @@ public final class Casas extends JavaPlugin implements Listener {
                     return;
                 }
                 aplicar(w, lista);
+                migrarUmaVez(w, lista);
             });
         });
+    }
+
+    // ------------------------------------------------------------------ 13/11: plots desvinculados das masmorras
+
+    private File arquivoDevolver() { return new File(getDataFolder(), "devolver-masmorras.yml"); }
+
+    /**
+     * Uma vez so: os plots eram da mochila das masmorras e agora sao da Prisao. Tudo o que estava guardado nos baus
+     * (e molduras/suportes) dos plots veio de fora, entao sai dos plots e fica guardado para o dono: volta para ele
+     * na proxima vez que entrar nas masmorras. Nada e apagado (copia em devolver-masmorras.yml).
+     */
+    private void migrarUmaVez(World w, List<Plots.Plot> lista) {
+        File feito = new File(getDataFolder(), "plots-da-prisao-v1.txt");
+        if (feito.exists() || !getConfig().getBoolean("desvincular-masmorras", true)) return;
+        YamlConfiguration dev = YamlConfiguration.loadConfiguration(arquivoDevolver());
+        int baus = 0, itens = 0;
+        for (Plots.Plot p : lista) {
+            List<ItemStack> achados = new ArrayList<>();
+            for (int cx = p.x1() >> 4; cx <= p.x2() >> 4; cx++)
+                for (int cz = p.z1() >> 4; cz <= p.z2() >> 4; cz++) {
+                    org.bukkit.Chunk ch = w.getChunkAt(cx, cz);
+                    ch.load(true);
+                    for (BlockState bs : ch.getTileEntities()) {
+                        int x = bs.getX(), z = bs.getZ();
+                        if (x < p.x1() || x > p.x2() || z < p.z1() || z > p.z2()) continue;
+                        if (!(bs instanceof Container ct)) continue;
+                        boolean teve = false;
+                        for (ItemStack it : ct.getInventory().getContents())
+                            if (it != null && !it.getType().isAir()) { achados.add(it.clone()); teve = true; }
+                        if (teve) { ct.getInventory().clear(); baus++; }
+                    }
+                    for (Entity en : ch.getEntities()) {
+                        org.bukkit.Location l = en.getLocation();
+                        if (l.getBlockX() < p.x1() || l.getBlockX() > p.x2() || l.getBlockZ() < p.z1() || l.getBlockZ() > p.z2()) continue;
+                        if (en instanceof ItemFrame f && f.getItem() != null && !f.getItem().getType().isAir()) { achados.add(f.getItem().clone()); f.setItem(null); }
+                        else if (en instanceof ArmorStand a) {
+                            for (org.bukkit.inventory.EquipmentSlot sl : org.bukkit.inventory.EquipmentSlot.values()) {
+                                try {
+                                    ItemStack it = a.getEquipment().getItem(sl);
+                                    if (it != null && !it.getType().isAir()) { achados.add(it.clone()); a.getEquipment().setItem(sl, null); }
+                                } catch (Throwable ignored) {}
+                            }
+                        } else if (en instanceof org.bukkit.entity.Item i) { achados.add(i.getItemStack().clone()); i.remove(); }
+                    }
+                }
+            if (achados.isEmpty()) continue;
+            String k = p.dono().toString();
+            List<ItemStack> todos = new ArrayList<>(lerDevolver(dev, k));
+            todos.addAll(achados);
+            dev.set(k + ".nome", p.nomeDono());
+            dev.set(k + ".itens", java.util.Base64.getEncoder().encodeToString(ItemStack.serializeItemsAsBytes(todos)));
+            for (ItemStack it : achados) itens += it.getAmount();
+        }
+        try {
+            dev.save(arquivoDevolver());
+            java.nio.file.Files.writeString(feito.toPath(), "plots desvinculados das masmorras em " + new java.util.Date() + ": " + baus + " baus, " + itens + " itens guardados\n");
+        } catch (IOException ex) {
+            getLogger().warning("Nao consegui salvar devolver-masmorras.yml: " + ex);
+            return;
+        }
+        getLogger().info("Plots agora sao da Prisao: " + baus + " bau(s) esvaziado(s), " + itens + " item(ns) guardado(s) para voltar aos donos nas masmorras.");
+    }
+
+    private static List<ItemStack> lerDevolver(YamlConfiguration dev, String k) {
+        String b = dev.getString(k + ".itens");
+        if (b == null || b.isEmpty()) return List.of();
+        try {
+            List<ItemStack> l = new ArrayList<>();
+            for (ItemStack it : ItemStack.deserializeItemsFromBytes(java.util.Base64.getDecoder().decode(b))) if (it != null && !it.getType().isAir()) l.add(it);
+            return l;
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    private boolean mundoDasMasmorras(World w) {
+        List<String> l = getConfig().getStringList("devolver-mundos");
+        if (l.isEmpty()) l = List.of("masmorras_mundo", "masmorras_nether", "masmorras_end");
+        return w != null && l.contains(w.getName());
+    }
+
+    @EventHandler
+    public void mudouMundo(org.bukkit.event.player.PlayerChangedWorldEvent e) { devolverDepois(e.getPlayer()); }
+
+    @EventHandler
+    public void entrou(org.bukkit.event.player.PlayerJoinEvent e) { devolverDepois(e.getPlayer()); }
+
+    /** Espera a troca de mochila (Extras) terminar e devolve os itens dos plots na mochila das masmorras. */
+    private void devolverDepois(Player p) {
+        if (!arquivoDevolver().exists()) return;
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            if (!p.isOnline() || !mundoDasMasmorras(p.getWorld())) return;
+            YamlConfiguration dev = YamlConfiguration.loadConfiguration(arquivoDevolver());
+            String k = p.getUniqueId().toString();
+            List<ItemStack> l = lerDevolver(dev, k);
+            if (l.isEmpty()) return;
+            dev.set(k, null);
+            try { dev.save(arquivoDevolver()); } catch (IOException ex) { return; }
+            int n = 0;
+            for (ItemStack it : l) {
+                n += it.getAmount();
+                for (ItemStack sobra : p.getInventory().addItem(it).values()) p.getWorld().dropItem(p.getLocation(), sobra);
+            }
+            p.sendMessage(txt("§6§l>> §eOs plots agora fazem parte da §6Prisão (Rank Up)§e. Os §f" + n + " §eitens que estavam guardados no seu plot voltaram para você aqui nas masmorras."));
+            p.playSound(p.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1f, 0.8f);
+            getLogger().info("Devolvidos " + n + " itens dos plots para " + p.getName() + " nas masmorras.");
+        }, 20L * 12);
     }
 
     private void aplicar(World w, List<Plots.Plot> lista) {
@@ -224,7 +364,7 @@ public final class Casas extends JavaPlugin implements Listener {
                 Player dono = Bukkit.getPlayer(p.dono());
                 if (dono != null) {
                     dono.sendMessage(txt("§6§l>> §eSua casa foi construída no seu plot! §7Uma §f" + Construtor.casa(0).nome()
-                            + "§7 para começar. Dentro dela, pise na §fplaca§7 quando tiver nível de poder §e" + poderPara(1) + "§7 e ela evolui."));
+                            + "§7 para começar. Dentro dela, pise na §fplaca§7 quando chegar no " + requisito(1) + "§7 e ela evolui."));
                     dono.playSound(dono.getLocation(), Sound.ENTITY_VILLAGER_WORK_MASON, 1f, 1f);
                 }
                 getLogger().info("Casa inicial no plot " + p.chave() + " de " + p.nomeDono() + " em " + e.cx + "," + e.cz + ".");
@@ -422,7 +562,7 @@ public final class Casas extends JavaPlugin implements Listener {
         Construtor.Casa c = Construtor.casa(e.nivel);
         String t;
         if (e.nivel >= maxNivel()) t = "§6§l" + c.nome().toUpperCase(Locale.ROOT) + "\n§7Nível máximo da casa. §dParabéns!";
-        else t = "§6§lCASA NÍVEL " + e.nivel + " §7- §f" + c.nome() + "\n§7Pise na placa com nível de poder §e" + poderPara(e.nivel + 1)
+        else t = "§6§lCASA NÍVEL " + e.nivel + " §7- §f" + c.nome() + "\n§7Pise na placa no " + requisito(e.nivel + 1)
                 + "\n§7para virar §f" + Construtor.casa(e.nivel + 1).nome() + "§7.";
         w.spawn(new Location(w, e.px + 0.5, e.py + 1.9, e.pz + 0.5), TextDisplay.class, d -> {
             d.text(txt(t));
@@ -486,6 +626,16 @@ public final class Casas extends JavaPlugin implements Listener {
             p.sendActionBar(txt("§6Sua casa já é um " + Construtor.casa(c.nivel).nome() + ": o nível máximo!"));
             return;
         }
+        if (porRank() && !forcar) {
+            int precisa = rankPara(c.nivel + 1), tem = rankPrisao(p);
+            if (tem < precisa) {
+                p.sendActionBar(txt("§eSua casa evolui para §f" + Construtor.casa(c.nivel + 1).nome() + " §eno rank " + nomeRank(precisa)
+                        + " §7(você é " + LETRAS[tem] + "; suba com §f/rankup§7)"));
+                p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.7f, 0.8f);
+                return;
+            }
+            forcar = true;
+        }
         int exigido = poderPara(c.nivel + 1);
         int nivel = nivelDePoder(p);
         if (!forcar && nivel >= 0 && nivel < exigido) {
@@ -528,7 +678,7 @@ public final class Casas extends JavaPlugin implements Listener {
         w.spawnParticle(Particle.TOTEM_OF_UNDYING, l, 120, 4, 3, 4, 0.2);
         w.spawnParticle(Particle.CLOUD, l, 80, 5, 2, 5, 0.05);
         p.sendMessage(txt("§6§l>> §eCasa nova: §f" + nova.nome() + " §7(" + nova.descricao() + ")."));
-        if (novo < maxNivel()) p.sendMessage(txt("§7Próxima: §f" + Construtor.casa(novo + 1).nome() + " §7no nível de poder §e" + poderPara(novo + 1) + "§7."));
+        if (novo < maxNivel()) p.sendMessage(txt("§7Próxima: §f" + Construtor.casa(novo + 1).nome() + " §7no " + requisito(novo + 1) + "§7."));
         else p.sendMessage(txt("§dEssa é a casa máxima. Parabéns!"));
         if (getConfig().getBoolean("guardar-itens", true)) p.sendMessage(txt("§8Os itens dos baús antigos foram para os baús da casa nova (o que não coube caiu na placa)."));
         for (Player o : w.getPlayers()) if (!o.equals(p)) o.sendMessage(txt("§6" + p.getName() + " §eevoluiu a casa para §f" + nova.nome() + "§e!"));
@@ -595,8 +745,8 @@ public final class Casas extends JavaPlugin implements Listener {
         }
         Construtor.Casa casa = Construtor.casa(c.nivel);
         p.sendMessage(txt("§6§lSua casa: §f" + casa.nome() + " §7(nível " + c.nivel + ") em " + c.cx + ", " + c.cz + " do mundo dos plots."));
-        if (c.nivel < maxNivel()) p.sendMessage(txt("§7Próxima: §f" + Construtor.casa(c.nivel + 1).nome() + " §7pisando na placa com nível de poder §e"
-                + poderPara(c.nivel + 1) + " §7(você tem §e" + Math.max(0, nivelDePoder(p)) + "§7)."));
+        if (c.nivel < maxNivel()) p.sendMessage(txt("§7Próxima: §f" + Construtor.casa(c.nivel + 1).nome() + " §7pisando na placa no "
+                + requisito(c.nivel + 1) + (porRank() ? " §7(você é §e" + LETRAS[rankPrisao(p)] + "§7)." : " §7(você tem §e" + Math.max(0, nivelDePoder(p)) + "§7).")));
         else p.sendMessage(txt("§dNível máximo!"));
         return true;
     }

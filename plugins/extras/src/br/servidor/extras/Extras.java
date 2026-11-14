@@ -82,8 +82,8 @@ public final class Extras extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(roleta, this);
         conquistas = new Conquistas(this);
         contadoresLobby = new ContadoresLobby(this);
-        Bukkit.getPluginManager().registerEvents(new ArenaSequencia(this), this);
         chuvaCoronas = new ChuvaCoronas(this);
+        reparar = new Reparar(this);
         Bukkit.getPluginManager().registerEvents(chuvaCoronas, this);
         Bukkit.getPluginManager().registerEvents(conquistas, this);
         luaDeSangue = new LuaDeSangue(this);
@@ -866,6 +866,7 @@ public final class Extras extends JavaPlugin implements Listener {
     Conquistas conquistas;
     ContadoresLobby contadoresLobby;
     ChuvaCoronas chuvaCoronas;
+    Reparar reparar;
     LuaDeSangue luaDeSangue;
     KitsContexto kitsContexto;
 
@@ -874,6 +875,10 @@ public final class Extras extends JavaPlugin implements Listener {
         if (cmd.getName().equalsIgnoreCase("vip")) return vip.comando(s, args);
         if (cmd.getName().equalsIgnoreCase("eventos")) {
             if (painelDia != null) for (String l : painelDia.texto().split("\n")) s.sendMessage(txt(l));
+            return true;
+        }
+        if (cmd.getName().equalsIgnoreCase("ferreiro")) {
+            if (s instanceof Player p && reparar != null) reparar.comando(p, args);
             return true;
         }
         if (cmd.getName().equalsIgnoreCase("conquistas")) {

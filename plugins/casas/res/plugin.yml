@@ -2,8 +2,8 @@ name: Casas
 version: '1.0'
 main: br.servidor.casas.Casas
 api-version: '1.21'
-softdepend: [PlotMe, PlaceholderAPI, AuraSkills]
-description: Casa padrao em cada plot que evolui a cada 10 niveis de poder (ate 60) pisando na placa dentro da casa.
+softdepend: [PlotMe, PlaceholderAPI, AuraSkills, Mineracao]
+description: Casa padrao em cada plot que evolui com o rank da Prisao (Rank Up) pisando na placa dentro da casa.
 commands:
   casa:
     description: Informacoes da sua casa (admin - /casa nivel <jogador> <n>, /casa refazer <jogador>)
