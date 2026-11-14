@@ -1477,8 +1477,16 @@ public final class Masmorras extends JavaPlugin implements Listener {
             Long ult = p.getPersistentDataContainer().get(kPrimeiro, PersistentDataType.LONG);
             if (ult == null || ult != hojeDia) {
                 p.getPersistentDataContainer().set(kPrimeiro, PersistentDataType.LONG, hojeDia);
-                coronas.dar(p, coronas.comVip(p, cor), false);
-                p.sendMessage(txt(PREFIXO + "§a§l✔ PRIMEIRA VITÓRIA DO DIA! §6+" + Coronas.fmt(cor) + " coronas extras"));
+                // 14/11: sequencia de dias seguidos vencendo um chefe (+10% por dia, ate +70% no 7o dia)
+                org.bukkit.NamespacedKey kSeq = new org.bukkit.NamespacedKey(this, "seq_dias_chefe");
+                int seq = (ult != null && ult == hojeDia - 1) ? p.getPersistentDataContainer().getOrDefault(kSeq, PersistentDataType.INTEGER, 0) + 1 : 1;
+                p.getPersistentDataContainer().set(kSeq, PersistentDataType.INTEGER, seq);
+                long extra = cor + cor * Math.min(seq - 1, 7) / 10;
+                coronas.dar(p, coronas.comVip(p, extra), false);
+                p.sendMessage(txt(PREFIXO + "§a§l✔ PRIMEIRA VITÓRIA DO DIA! §6+" + Coronas.fmt(extra) + " coronas extras"));
+                if (seq > 1) p.sendMessage(txt(PREFIXO + "§6🔥 Sequência: §e" + seq + " dias seguidos §7(+" + Math.min(seq - 1, 7) * 10 + "% no bônus). §7Volte amanhã para não perder!"));
+                else p.sendMessage(txt(PREFIXO + "§7Vença um chefe amanhã também para começar uma §6🔥 sequência §7(bônus maior a cada dia)."));
+                if (seq == 7 || seq % 10 == 0) Bukkit.broadcast(txt(PREFIXO + "§6🔥 §e" + p.getName() + " §7está com §6" + seq + " dias seguidos §7vencendo chefes nas masmorras!"));
                 p.getWorld().spawnParticle(org.bukkit.Particle.TOTEM_OF_UNDYING, p.getLocation().add(0, 1, 0), 60, 0.5, 1, 0.5, 0.3);
                 p.playSound(p.getLocation(), "minecraft:ui.toast.challenge_complete", 0.8f, 1.3f);
             }

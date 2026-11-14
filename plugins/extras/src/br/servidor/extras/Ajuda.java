@@ -45,6 +45,14 @@ final class Ajuda implements Listener {
             new Item(31, Material.IRON_PICKAXE, "§6§lPrisão (Rank Up)", "minas", "§712 minas (A a L), Mina PvP, kits e encantamentos.", "§7Dinheiro próprio: §f/vender §8| §7Suba: §f/rankup §8| §f/recompensa"),
             new Item(32, Material.BELL, "§9§lDiscord", "discord", "§7Novidades, avisos e a galera do servidor."),
             new Item(33, Material.OAK_SIGN, "§f§lEndereço do servidor", "ip", "§7Java e Bedrock (celular), para passar aos amigos."),
+            // 14/11: novidades
+            new Item(37, Material.GOLDEN_HELMET, "§6§lConquistas", "conquistas", "§721 metas (horas, monstros, diamantes, dragão...)", "§7que pagam até §61500 coronas§7."),
+            new Item(38, Material.CLOCK, "§e§lRanking da semana", "tempo", "§7Quem mais jogar na semana (sem AFK)", "§7ganha até §61000 coronas §7toda segunda."),
+            new Item(39, Material.SUNFLOWER, "§6§lRoleta do dia", "roleta", "§7Um giro grátis por dia. Jackpot de §61000§7!"),
+            new Item(40, Material.CHEST, "§a§lKits", "kits", "§7Kits do Survival e das Masmorras", "§7(na Prisão abre os kits da Prisão)."),
+            new Item(41, Material.FIREWORK_ROCKET, "§d§lEventos", "eventos", "§7Lua de Sangue, chuva de coronas no spawn,", "§7XP em dobro, monstro lendário e tesouro."),
+            new Item(42, Material.ANVIL, "§7§lFerreiro", "reparar", "§7Conserta o item da sua mão por coronas", "§7(só no Survival)."),
+            new Item(43, Material.MAP, "§b§lTesouro", "tesouro", "§7Caça ao tesouro no mundo aberto:", "§7veja a pista e o prêmio."),
     };
 
     private final Extras pl;
