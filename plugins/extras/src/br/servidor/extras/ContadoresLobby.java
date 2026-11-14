@@ -59,7 +59,9 @@ final class ContadoresLobby {
                 if (tw != null) n += tw.getPlayers().size();
                 for (LobbyMinigames.Portal o : LobbyMinigames.deTerror()) n += jogando(o.id());
             } else n = jogando(p.id());
-            String txt = n > 0 ? "§a● §f" + n + (n == 1 ? " jogando agora" : " jogando agora") : "§8○ §7ninguém jogando — §fseja o primeiro!";
+            String mg = minigameDoDia();
+            boolean doDia = mg != null && !p.id().equals("terror") && (mg.startsWith(p.id()) || p.id().startsWith(mg));
+            String txt = (doDia ? "§d§l★ JOGO DO DIA §7— §acoronas x2\n" : "") + (n > 0 ? "§a● §f" + n + (n == 1 ? " jogando agora" : " jogando agora") : "§8○ §7ninguém jogando — §fseja o primeiro!");
             if (t == null || !t.isValid()) {
                 Location l = local(w, p, terror);
                 if (l == null || !l.isChunkLoaded()) continue;
@@ -74,6 +76,20 @@ final class ContadoresLobby {
                 textos.put(chave, t);
             }
             t.text(Extras.txt(txt));
+        }
+    }
+
+    private static String minigameDoDia() {
+        try {
+            var pl = Bukkit.getPluginManager().getPlugin("Masmorras");
+            if (pl == null || !pl.isEnabled()) return null;
+            Class<?> c = Class.forName("br.servidor.masmorras.Destaque", true, pl.getClass().getClassLoader());
+            var m = c.getDeclaredMethod("minigameHoje");
+            m.setAccessible(true);
+            Object o = m.invoke(null);
+            return o instanceof String[] a && a.length > 0 ? a[0].toLowerCase() : null;
+        } catch (Throwable t) {
+            return null;
         }
     }
 
