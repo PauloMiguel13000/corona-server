@@ -11,11 +11,11 @@ import org.bukkit.event.player.PlayerJoinEvent;
 /**
  * 14/11: a trilha sonora nova das masmorras (trilha.*) vai para o Java num SEGUNDO pacote de recursos, separado do
  * pacote principal do CoronaPack (que continua igual, no link de sempre). O pacote fica no repositorio publico
- * corona-pacotes e chega pelo jsDelivr (rapido). Entra uns segundos depois do pacote principal, sem obrigar
+ * corona-pacotes e chega pelo raw.githubusercontent (o jsDelivr recusa arquivos novos: o repositorio passou de 50 MB). Entra uns segundos depois do pacote principal, sem obrigar
  * (quem recusar so fica sem as musicas). Bedrock recebe a trilha pelos pacotes corona_trilhas/corona_chefes.
  */
 final class PacoteMusicaJava implements Listener {
-    static final String URL_PADRAO = "https://cdn.jsdelivr.net/gh/PauloMiguel13000/corona-pacotes@main/corona_trilha_java-8d06254cdc.zip";
+    static final String URL_PADRAO = "https://raw.githubusercontent.com/PauloMiguel13000/corona-pacotes/main/corona_trilha_java-8d06254cdc.zip";
     static final String SHA1_PADRAO = "8d06254cdc4305e721dab6b5408ea1ac92013113";
     private static final UUID ID = UUID.nameUUIDFromBytes("corona-trilha-masmorras".getBytes());
     private final Masmorras pl;
