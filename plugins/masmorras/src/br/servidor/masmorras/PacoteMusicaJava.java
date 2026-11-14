@@ -15,8 +15,8 @@ import org.bukkit.event.player.PlayerJoinEvent;
  * (quem recusar so fica sem as musicas). Bedrock recebe a trilha pelos pacotes corona_trilhas/corona_chefes.
  */
 final class PacoteMusicaJava implements Listener {
-    static final String URL_PADRAO = "https://cdn.jsdelivr.net/gh/PauloMiguel13000/corona-pacotes@main/corona_trilha_java-aa9ea5ceba.zip";
-    static final String SHA1_PADRAO = "aa9ea5ceba71de2c98c0c043ff218644204f3da7";
+    static final String URL_PADRAO = "https://cdn.jsdelivr.net/gh/PauloMiguel13000/corona-pacotes@main/corona_trilha_java-8d06254cdc.zip";
+    static final String SHA1_PADRAO = "8d06254cdc4305e721dab6b5408ea1ac92013113";
     private static final UUID ID = UUID.nameUUIDFromBytes("corona-trilha-masmorras".getBytes());
     private final Masmorras pl;
 

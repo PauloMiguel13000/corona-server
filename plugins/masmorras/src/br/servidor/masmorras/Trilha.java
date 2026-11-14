@@ -84,7 +84,7 @@ final class Trilha implements Listener {
         DURACAO.put("antiga_luta", 54.86);
         DURACAO.put("explorar", 36.23);
         DURACAO.put("explorar_luta", 36.23);
-        DURACAO.put("herobrine", 51.43);
+        DURACAO.put("herobrine", 51.2);
         DURACAO.put("lobby", 81.82);
         DURACAO.put("chefe", 48.0);
         // 14/11: cada tema tem a sua musica de chefe (sons/gerar_chefes.py)
