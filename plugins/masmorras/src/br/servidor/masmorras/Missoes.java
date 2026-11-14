@@ -175,6 +175,16 @@ final class Missoes implements Listener {
         }
     }
 
+    /** 13/11 (Paulo): zera as missoes e a trilha de um jogador (para jogar as masmorras de novo do comeco). */
+    boolean zerar(String nome) {
+        String c = chave(nome);
+        boolean tinha = dados.contains("jogadores." + c) || dados.contains("trilha." + c);
+        dados.set("jogadores." + c, null);
+        dados.set("trilha." + c, null);
+        salvarAgora();
+        return tinha;
+    }
+
     void salvarAgora() {
         sujo = true;
         salvar();

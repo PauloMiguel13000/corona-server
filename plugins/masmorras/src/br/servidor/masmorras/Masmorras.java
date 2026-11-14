@@ -2365,6 +2365,11 @@ public final class Masmorras extends JavaPlugin implements Listener {
                 aplicarBordas();
                 s.sendMessage(PREFIXO + "Bordas conferidas.");
             }
+            case "zerar" -> {
+                if (a.length < 3) { s.sendMessage(PREFIXO + "Use: masmorras admin zerar <jogador> (missoes e trilha do jogador voltam ao comeco)"); return true; }
+                boolean ok = missoes != null && missoes.zerar(a[2]);
+                s.sendMessage(PREFIXO + (ok ? "Missões e trilha de " + a[2] + " zeradas." : a[2] + " não tinha progresso de missões."));
+            }
             case "reset" -> {
                 Masmorra m = a.length > 2 ? porTexto(a[2]) : null;
                 if (m == null) {
