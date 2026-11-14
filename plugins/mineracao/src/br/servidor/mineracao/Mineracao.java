@@ -1826,7 +1826,9 @@ public final class Mineracao extends JavaPlugin implements Listener {
         int r = rank(p);
         int nv = vip(p);
         boolean dour = horaDourada();
-        long v = Math.max(1, Math.round(total * RANKS[r].mult() * multPrest(prestigio(p)) * (100 + BONUS_VIP[nv]) / 100.0 * (dour ? 2 : 1)));
+        // 13/11: bonus de grupo — +5% por jogador a mais na Prisao (ate +20%), para minerar junto valer a pena
+        int outros = Math.min(4, Math.max(0, mundo.getPlayers().size() - 1));
+        long v = Math.max(1, Math.round(total * RANKS[r].mult() * multPrest(prestigio(p)) * (100 + BONUS_VIP[nv] + 5 * outros) / 100.0 * (dour ? 2 : 1)));
         setDinheiro(p, dinheiro(p) + v);
         missoes.somar(p, Missoes.Tipo.VENDER, v);
         p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1.2f);
@@ -1836,7 +1838,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
             return;
         }
         p.sendMessage(txt("§a⛏ Vendeu §f" + itens + " §aminérios por " + din(v) + " §8(rank " + RANKS[r].letra()
-                + (nv > 0 ? ", " + NOME_VIP[nv] + " +" + BONUS_VIP[nv] + "%" : "") + (dour ? ", §6HORA DOURADA x2§8" : "") + ") §7— saldo: " + din(dinheiro(p))));
+                + (nv > 0 ? ", " + NOME_VIP[nv] + " +" + BONUS_VIP[nv] + "%" : "") + (outros > 0 ? ", §bgrupo +" + (5 * outros) + "%§8" : "") + (dour ? ", §6HORA DOURADA x2§8" : "") + ") §7— saldo: " + din(dinheiro(p))));
         registrarTop(p, itens);
     }
 
