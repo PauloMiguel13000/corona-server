@@ -82,6 +82,7 @@ public final class Extras extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(roleta, this);
         conquistas = new Conquistas(this);
         contadoresLobby = new ContadoresLobby(this);
+        Bukkit.getPluginManager().registerEvents(new ArenaSequencia(this), this);
         Bukkit.getPluginManager().registerEvents(conquistas, this);
         luaDeSangue = new LuaDeSangue(this);
         Bukkit.getPluginManager().registerEvents(luaDeSangue, this);
