@@ -597,7 +597,7 @@ public final class Hotel extends JavaPlugin implements Listener {
                 "§7Abra as portas, uma depois da outra,", "§7até a porta §f" + getConfig().getInt("portas", 50) + "§7.",
                 "", "§cLuzes piscando: §fesconda-se num armário!", "§5Olhos roxos: §fnão olhe para eles.",
                 "§8Escuro + \"psst\": §folhe para o que apareceu.", "§7Porta trancada: chave numa gaveta (barril).",
-                "§7Na biblioteca: §fande agachado§7 e ache 5 livros."));
+                "§7Na biblioteca: §fande agachado§7 e ache os livros brilhando nas estantes."));
         int rec = getConfig().getInt("recorde.segundos", 0);
         inv.setItem(15, item(Material.CLOCK, "", "§6§lRecorde",
                 rec > 0 ? "§7Mais rápido: §f" + String.format("%d:%02d", rec / 60, rec % 60) : "§7Ninguém saiu vivo ainda.",

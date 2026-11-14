@@ -92,6 +92,8 @@ public final class Extras extends JavaPlugin implements Listener {
         pinata = new Pinata(this);
         Bukkit.getPluginManager().registerEvents(pinata, this);
         new SorteioHora(this);
+        quizChat = new QuizChat(this);
+        Bukkit.getPluginManager().registerEvents(quizChat, this);
         Bukkit.getPluginManager().registerEvents(chuvaCoronas, this);
         Bukkit.getPluginManager().registerEvents(conquistas, this);
         luaDeSangue = new LuaDeSangue(this);
@@ -880,8 +882,19 @@ public final class Extras extends JavaPlugin implements Listener {
     TempoSemanal tempoSemanal;
     Meteoro meteoro;
     Semana semana;
+
+    /** 14/11: canal do YouTube do servidor (link clicavel). */
+    static final String YT = "https://www.youtube.com/@coronadooscaroficial";
+
+    void youtube(org.bukkit.command.CommandSender s) {
+        s.sendMessage(txt("§c§l▶ YouTube do Corona Server §7— gameplay de verdade: masmorras, chefes e tour!"));
+        s.sendMessage(txt("§f" + YT).clickEvent(net.kyori.adventure.text.event.ClickEvent.openUrl(YT))
+                .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(txt("§eClique para abrir o canal"))));
+        s.sendMessage(txt("§7Se inscreva e deixe o like — ajuda muito o servidor a crescer! §8(link também no /discord)"));
+    }
     TorneioPesca torneioPesca;
     Pinata pinata;
+    QuizChat quizChat;
     LuaDeSangue luaDeSangue;
     KitsContexto kitsContexto;
 
@@ -890,6 +903,10 @@ public final class Extras extends JavaPlugin implements Listener {
         if (cmd.getName().equalsIgnoreCase("vip")) return vip.comando(s, args);
         if (cmd.getName().equalsIgnoreCase("eventos")) {
             if (painelDia != null) for (String l : painelDia.texto().split("\n")) s.sendMessage(txt(l));
+            return true;
+        }
+        if (cmd.getName().equalsIgnoreCase("youtube")) {
+            youtube(s);
             return true;
         }
         if (cmd.getName().equalsIgnoreCase("semana")) {
@@ -1035,6 +1052,10 @@ public final class Extras extends JavaPlugin implements Listener {
         if (cmd.getName().equalsIgnoreCase("extras")) {
             if (!s.hasPermission("extras.admin")) {
                 s.sendMessage("§cSem permissão.");
+                return true;
+            }
+            if (args.length > 0 && args[0].equalsIgnoreCase("quiz") && quizChat != null) {
+                quizChat.perguntar();
                 return true;
             }
             if (args.length > 0 && args[0].equalsIgnoreCase("pesca") && torneioPesca != null) {

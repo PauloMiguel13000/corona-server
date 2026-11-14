@@ -240,3 +240,13 @@ details p { padding: 0 0 18px; color: var(--texto); max-width: 65ch; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* 14/11: videos do YouTube */
+.youtube { margin-top: 48px; }
+.youtube-topo { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.videos { margin-top: 18px; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+.video { display: block; background: var(--cinza); border-radius: 14px; overflow: hidden; text-decoration: none; color: var(--preto); transition: transform .15s; }
+.video:hover { transform: translateY(-3px); }
+.video img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; }
+.video b { display: block; padding: 4px 14px 14px; font-size: 15px; line-height: 1.3; }
+.video-tag { display: inline-block; margin: 12px 14px 4px; font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--vermelho); }

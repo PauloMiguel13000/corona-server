@@ -101,7 +101,7 @@ final class Partida {
     private final List<Entity> criadas = new ArrayList<>();
     private final Map<Integer, ItemDisplay> olhos = new HashMap<>();
     private final List<ItemDisplay> olhosParede = new ArrayList<>();
-    private final List<Item> livrosNoChao = new ArrayList<>();
+    private final List<org.bukkit.entity.Entity> livrosNoChao = new ArrayList<>();
     private Investida investida;
     private Figura figura;
     private Perseguidor perseguidor;
@@ -1447,7 +1447,7 @@ final class Partida {
 
     private void iniciarBiblioteca(Planta.Comodo c) {
         livros = 0;
-        for (Item i : livrosNoChao) i.remove();
+        for (org.bukkit.entity.Entity i : livrosNoChao) i.remove();
         livrosNoChao.clear();
         List<int[]> lugares = new ArrayList<>(c.livros);
         java.util.Collections.shuffle(lugares, rnd);
@@ -1459,6 +1459,9 @@ final class Partida {
             if (longe && l[0] > c.x0 + 3) escolhidos.add(l);
         }
         for (int[] l : escolhidos) {
+            // 14/11 (Paulo): o livro fica DENTRO da estante (brilhando na frente dela), nao no chao
+            org.bukkit.entity.Entity naEstante = livroNaEstante(l);
+            if (naEstante != null) { livrosNoChao.add(naEstante); criadas.add(naEstante); continue; }
             Item it = mundo.dropItem(new Location(mundo, l[0] + 0.5, Planta.Y + 0.3, l[1] + 0.5), new ItemStack(Material.ENCHANTED_BOOK), x -> {
                 x.setGravity(false);
                 x.setVelocity(new Vector());
@@ -1477,7 +1480,7 @@ final class Partida {
         for (Player p : vivos()) {
             titulo(p, "§4§lA BIBLIOTECA", "§7Ache §f" + livrosPrecisa() + " livros§7. §cAnde AGACHADO.", 4);
             p.sendMessage(Hotel.PREFIXO + "§fA §4Figura §fé cega, mas ouve tudo. §eAnde agachado§f e não corra. Ache os §e" + livrosPrecisa()
-                    + " livros brilhantes§f no chão para abrir a porta " + String.format("%04d", c.porta()) + ".");
+                    + " livros brilhantes§f nas estantes para abrir a porta " + String.format("%04d", c.porta()) + ".");
         }
         Bukkit.getScheduler().runTaskLater(pl, () -> {
             if (estado != Estado.JOGANDO || planta == null) return;
@@ -1486,11 +1489,36 @@ final class Partida {
         }, 80L);
     }
 
+    /** Livro encaixado numa estante vizinha do lugar sorteado: um livro brilhando na face da estante. */
+    private org.bukkit.entity.Entity livroNaEstante(int[] l) {
+        int[][] viz = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        for (int y : new int[] {Planta.Y + 1, Planta.Y, Planta.Y + 2})
+            for (int[] d : viz) {
+                if (mundo.getBlockAt(l[0] + d[0], y, l[1] + d[1]).getType() != Material.BOOKSHELF) continue;
+                // centro da face da estante virada para o lugar livre
+                Location loc = new Location(mundo, l[0] + d[0] + 0.5 - d[0] * 0.53, y + 0.5, l[1] + d[1] + 0.5 - d[1] * 0.53);
+                float yaw = d[0] == 1 ? 90 : d[0] == -1 ? -90 : d[1] == 1 ? 180 : 0;
+                loc.setYaw(yaw);
+                return mundo.spawn(loc, org.bukkit.entity.ItemDisplay.class, x -> {
+                    x.setItemStack(new ItemStack(Material.ENCHANTED_BOOK));
+                    x.setTransformation(new org.bukkit.util.Transformation(new org.joml.Vector3f(), new org.joml.AxisAngle4f(),
+                            new org.joml.Vector3f(0.45f, 0.45f, 0.45f), new org.joml.AxisAngle4f()));
+                    x.setGlowing(true);
+                    x.setGlowColorOverride(org.bukkit.Color.fromRGB(255, 200, 60));
+                    x.setBrightness(new org.bukkit.entity.Display.Brightness(15, 15));
+                    x.setPersistent(false);
+                    x.getPersistentDataContainer().set(pl.kHotel, PersistentDataType.BYTE, (byte) 1);
+                });
+            }
+        return null;
+    }
+
     private void pegarLivro(Player p) {
         Location l = p.getLocation();
-        for (Iterator<Item> it = livrosNoChao.iterator(); it.hasNext(); ) {
-            Item i = it.next();
-            if (!i.isValid() || i.getLocation().distanceSquared(l) > 1.6 * 1.6) continue;
+        for (Iterator<org.bukkit.entity.Entity> it = livrosNoChao.iterator(); it.hasNext(); ) {
+            org.bukkit.entity.Entity i = it.next();
+            double raio = i instanceof org.bukkit.entity.ItemDisplay ? 2.1 : 1.6;
+            if (!i.isValid() || i.getLocation().distanceSquared(l) > raio * raio) continue;
             i.remove();
             it.remove();
             livros++;

@@ -8,6 +8,9 @@ commands:
   eventos:
     description: O que tem de especial hoje no servidor
     aliases: [hoje, novidades, evento]
+  youtube:
+    description: Canal do YouTube do servidor
+    aliases: [yt, canal, videos]
   semana:
     description: Os rankings semanais (tempo, chefes, Prisao) e a sua posicao
     aliases: [rankings, rankingsemanal, top]
