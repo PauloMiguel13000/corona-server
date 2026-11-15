@@ -29,6 +29,10 @@ final class Ceu {
     static final Tema VERMELHO = new Tema("minecraft:red_concrete", "red", "minecraft:cherry_leaves", "minecraft:cherry_log",
             "minecraft:campfire", "minecraft:red_stained_glass", "minecraft:poppy", "minecraft:gold_block", "minecraft:grass_block[snowy=false]",
             "minecraft:lantern", false);
+    /** 15/11: spawn principal v3 (templo no ceu): cobre azul-esverdeado, fogo de alma, cerejeiras. */
+    static final Tema CELESTE = new Tema("minecraft:waxed_oxidized_cut_copper", "cyan", "minecraft:cherry_leaves", "minecraft:cherry_log",
+            "minecraft:soul_campfire", "minecraft:light_blue_stained_glass", "minecraft:pink_tulip", "minecraft:gold_block", "minecraft:grass_block[snowy=false]",
+            "minecraft:soul_lantern", false);
     static final Tema JOGOS = new Tema("minecraft:red_concrete", "red", "minecraft:flowering_azalea_leaves", "minecraft:oak_log",
             "minecraft:campfire", "minecraft:red_stained_glass", "minecraft:orange_tulip", "minecraft:gold_block", "minecraft:grass_block[snowy=false]",
             "minecraft:lantern", false);

@@ -46,17 +46,17 @@ import org.joml.Vector3f;
  */
 final class SpawnPrincipal implements Listener {
 
-    static final int CX = 6, CZ = -6, PISO = 122, R = 27, VERSAO = 2, PORTAL = 23, VAGAS_MINIGAMES = 9;
+    static final int CX = 6, CZ = -6, PISO = 122, R = 27, VERSAO = 3, PORTAL = 23, VAGAS_MINIGAMES = 9;
 
     record Pedestal(String nome, String sub, double angulo, Material icone, String tapete, String comando) {}
 
     record Vip(String produto, String nome, String cor, Material icone) {}
 
     static final Pedestal[] PEDESTAIS = {
-            new Pedestal("§b§lCLASSES", "§7escolha a sua classe", -135, Material.NETHER_STAR, "minecraft:red_glazed_terracotta", "classe"),
-            new Pedestal("§2§lKITS", "§7pegue seus kits", -45, Material.CHEST, "minecraft:red_glazed_terracotta", "kit"),
-            new Pedestal("§a§lEXPLORAR", "§7lugar aleatório do mundo", 45, Material.COMPASS, "minecraft:red_glazed_terracotta", "rtp"),
-            new Pedestal("§d§lPETS", "§7chame e guarde seus pets", 135, Material.BONE, "minecraft:red_glazed_terracotta", "pets")};
+            new Pedestal("§b§lCLASSES", "§7escolha a sua classe", -135, Material.NETHER_STAR, "minecraft:light_blue_glazed_terracotta", "classe"),
+            new Pedestal("§2§lKITS", "§7pegue seus kits", -45, Material.CHEST, "minecraft:light_blue_glazed_terracotta", "kit"),
+            new Pedestal("§a§lEXPLORAR", "§7lugar aleatório do mundo", 45, Material.COMPASS, "minecraft:light_blue_glazed_terracotta", "rtp"),
+            new Pedestal("§d§lPETS", "§7chame e guarde seus pets", 135, Material.BONE, "minecraft:light_blue_glazed_terracotta", "pets")};
 
     /** Galeria VIP (leste). O texto (preco e beneficios) quem escreve e o CoronaLoja, pela chave coronaloja:totem. */
     static final Vip[] VIPS = {
@@ -177,7 +177,7 @@ final class SpawnPrincipal implements Listener {
         for (int y = 1; y <= 3; y++) por(w, CX, PISO + y, z, "minecraft:air");
         portalSul(w, CX + SUL_TERROR, z, new String[] {"minecraft:crying_obsidian", "minecraft:polished_blackstone_bricks", "minecraft:blackstone", "minecraft:obsidian"},
                 "§4§lLOBBY DO TERROR\n§7Hotel • Porcelana • Vovó • Backrooms\n§7Não Chore • Turno • Fábrica • O Porteiro", true);
-        portalSul(w, CX + SUL_MINIGAMES, z, new String[] {"minecraft:quartz_bricks", "minecraft:polished_blackstone_bricks", "minecraft:red_nether_bricks", "minecraft:red_concrete"},
+        portalSul(w, CX + SUL_MINIGAMES, z, new String[] {"minecraft:quartz_bricks", "minecraft:polished_deepslate", "minecraft:deepslate_tiles", "minecraft:sea_lantern"},
                 "§c§lLOBBY DOS MINIGAMES\n§7Defesa da Torre • Arena PvP • Esconde-esconde", false);
         portalSul(w, CX + SUL_TIRO, z, new String[] {"minecraft:green_concrete", "minecraft:polished_deepslate", "minecraft:deepslate_tiles", "minecraft:lime_concrete"},
                 "§2§lLOBBY DE TIRO\n§7Apocalipse Zumbi • Operação Coroa", false);
@@ -312,7 +312,7 @@ final class SpawnPrincipal implements Listener {
                 }
             }, 220L);
             Bukkit.getScheduler().runTaskLater(pl, () -> atualizarSulOeste(w), 160L);
-            Bukkit.getScheduler().runTaskLater(pl, () -> Ceu.fazer(pl, "spawn-principal", w, CX, CZ, PISO, R, 46, Ceu.VERMELHO, false), 260L);
+            Bukkit.getScheduler().runTaskLater(pl, () -> Ceu.fazer(pl, "spawn-principal", w, CX, CZ, PISO, R, 46, Ceu.CELESTE, false), 260L);
             // limpa enfeite antigo que tenha sobrado (ja carregado)
             Bukkit.getScheduler().runTaskLater(pl, () -> {
                 int n = 0;
@@ -328,7 +328,7 @@ final class SpawnPrincipal implements Listener {
             try {
                 construir(w);
                 Files.writeString(feito.toPath(), "construido em " + new java.util.Date() + "\n");
-                Ceu.fazer(pl, "spawn-principal", w, CX, CZ, PISO, R, 46, Ceu.VERMELHO, true);
+                Ceu.fazer(pl, "spawn-principal", w, CX, CZ, PISO, R, 46, Ceu.CELESTE, true);
             } catch (Throwable t) {
                 pl.getLogger().warning("Spawn novo nao terminou: " + t);
             }
@@ -346,7 +346,7 @@ final class SpawnPrincipal implements Listener {
         limparAntigo(w, () -> {
             try {
                 construir(w);
-                Ceu.fazer(pl, "spawn-principal", w, CX, CZ, PISO, R, 46, Ceu.VERMELHO, true);
+                Ceu.fazer(pl, "spawn-principal", w, CX, CZ, PISO, R, 46, Ceu.CELESTE, true);
                 quem.sendMessage("§aSpawn principal refeito.");
                 pl.getLogger().info("Spawn principal refeito por " + quem.getName() + ".");
             } catch (Throwable t) {
@@ -360,7 +360,7 @@ final class SpawnPrincipal implements Listener {
 
     /** Tira tudo da plataforma antiga e da Praca dos Portais (blocos e enfeites), aos poucos. */
     private void limparAntigo(World w, Runnable depois) {
-        int x1 = -32, x2 = 54, z1 = -70, z2 = 38, y1 = 96, y2 = 175;
+        int x1 = -36, x2 = 54, z1 = -70, z2 = 38, y1 = 96, y2 = 175;
         for (int cx = x1 >> 4; cx <= x2 >> 4; cx++) for (int cz = z1 >> 4; cz <= z2 >> 4; cz++) w.getChunkAt(cx, cz).load(true);
         int[] x = {x1};
         long[] tirados = {0};
@@ -406,18 +406,28 @@ final class SpawnPrincipal implements Listener {
 
     /** Bloco do piso original naquele ponto (null = fora da ilha). */
     static String piso(int x, int z) {
+        // v3 (15/11, Paulo: "deixe o spawn fodao, nao precisa botar minhas cores"): templo no ceu. Piso de ardosia
+        // escura com caminhos claros iluminados, aneis de cobre azul-esverdeado e 4 jardins de cerejeira no miolo.
         double d = dist(x, z);
         if (d > R + 0.5) return null;
-        boolean cruz = Math.abs(x - CX) <= 1 || Math.abs(z - CZ) <= 1;
-        if (d < 0.5) return "minecraft:red_stained_glass";
-        if (d < 2.5) return "minecraft:quartz_bricks";
-        if (d < 4.5) return "minecraft:polished_blackstone_bricks";
-        if (d > R - 0.5) return "minecraft:polished_blackstone_bricks";
-        if (d > R - 1.5) return "minecraft:red_nether_bricks";
-        if (d >= 12.5 && d < 13.5) return "minecraft:red_nether_bricks";
-        if (cruz) return Math.abs(x - CX) + Math.abs(z - CZ) - 1 == (int) d && (int) d % 5 == 0 ? "minecraft:chiseled_quartz_block" : "minecraft:red_concrete";
-        if (Math.floorMod(x - CX, 4) == 0 || Math.floorMod(z - CZ, 4) == 0) return "minecraft:polished_blackstone";
-        return "minecraft:smooth_quartz";
+        int dx = Math.abs(x - CX), dz = Math.abs(z - CZ);
+        boolean cruz = dx <= 1 || dz <= 1;
+        if (d < 0.5) return "minecraft:light_blue_stained_glass";
+        if (d < 2.5) return "minecraft:sea_lantern";
+        if (d < 4.5) return "minecraft:polished_deepslate";
+        if (d > R - 0.5) return "minecraft:polished_deepslate";
+        if (d > R - 1.5) return "minecraft:waxed_oxidized_cut_copper";
+        if (d >= 12.5 && d < 13.5) return "minecraft:waxed_oxidized_cut_copper";
+        if (cruz) {
+            boolean meio = dx == 0 || dz == 0;
+            if (meio && (int) d % 5 == 0) return "minecraft:sea_lantern";
+            return meio ? "minecraft:quartz_bricks" : "minecraft:smooth_quartz";
+        }
+        if (d >= 5.5 && d < 12.5 && dx >= 3 && dz >= 3 && Math.abs(dx - dz) <= 1) return "minecraft:smooth_quartz";   // trilha ate o pedestal
+        if (d >= 5.5 && d < 12.5 && dx >= 3 && dz >= 3) return d < 6.5 || d >= 11.5 || dx == 3 || dz == 3 ? "minecraft:moss_block" : "minecraft:grass_block[snowy=false]";
+        if (d >= 4.5 && d < 5.5) return "minecraft:deepslate_tiles";
+        if (Math.floorMod(x - CX, 4) == 0 || Math.floorMod(z - CZ, 4) == 0) return "minecraft:polished_deepslate";
+        return (Math.floorMod(x * 7 + z * 13, 11) == 0) ? "minecraft:cracked_deepslate_tiles" : "minecraft:deepslate_tiles";
     }
 
     private void construir(World w) {
@@ -427,42 +437,67 @@ final class SpawnPrincipal implements Listener {
                 String b = piso(x, z);
                 if (b == null) continue;
                 por(w, x, PISO, z, b);
-                por(w, x, PISO - 1, z, "minecraft:obsidian");
+                por(w, x, PISO - 1, z, "minecraft:deepslate");
             }
-        // farol no meio: o vidro vermelho deixa o feixe vermelho
+        // farol no meio: o vidro azul-claro deixa o feixe azul
         for (int x = CX - 1; x <= CX + 1; x++) for (int z = CZ - 1; z <= CZ + 1; z++) por(w, x, PISO - 2, z, "minecraft:iron_block");
         por(w, CX, PISO - 1, CZ, "minecraft:beacon");
-        // fundo da ilha afinando (solido)
-        for (int k = 2; k <= 8; k++)
+        // fundo da ilha: uma rocha de verdade (cone torto, com camadas e cristais acesos), nao degraus
+        java.util.Random rr = new java.util.Random(31);
+        for (int k = 2; k <= 20; k++)
             for (int x = CX - R; x <= CX + R; x++)
                 for (int z = CZ - R; z <= CZ + R; z++) {
-                    if (dist(x, z) > R - k * 3.0) continue;
+                    double ang = Math.atan2(z - CZ, x - CX);
+                    double borda = R - 1 - (k - 1) * 1.35 - 2.2 * Math.sin(ang * 3 + k * 0.35) - 1.4 * Math.sin(ang * 7 - k * 0.6);
+                    double d = dist(x, z);
+                    if (d > borda) continue;
                     if (Math.abs(x - CX) <= 1 && Math.abs(z - CZ) <= 1 && k == 2) continue;
-                    por(w, x, PISO - k, z, k % 3 == 0 ? "minecraft:red_nether_bricks" : k >= 6 ? "minecraft:blackstone" : "minecraft:polished_blackstone");
+                    int q = rr.nextInt(40);
+                    String m = d > borda - 1.2 && q < 2 ? "minecraft:sea_lantern" : d > borda - 1.2 && q < 5 ? "minecraft:amethyst_block"
+                            : k <= 3 ? (q < 28 ? "minecraft:stone" : "minecraft:andesite") : k <= 9 ? (q < 22 ? "minecraft:stone" : q < 32 ? "minecraft:tuff" : "minecraft:cobbled_deepslate")
+                            : (q < 26 ? "minecraft:deepslate" : "minecraft:cobbled_deepslate");
+                    por(w, x, PISO - k, z, m);
                 }
-        // coroa em volta do farol: 8 pontas vermelhas (altas e baixas) com uma "joia" branca em cima
+        // monumento em volta do farol: 8 agulhas de cobre e ardosia (altas e baixas) com luz na ponta
         for (int k = 0; k < 8; k++) {
             double ang = k * 45;
             int x = px(ang, 3.6), z = pz(ang, 3.6);
-            int alt = k % 2 == 0 ? 4 : 2;
-            por(w, x, PISO + 1, z, "minecraft:polished_blackstone_bricks");
-            for (int y = 2; y <= alt; y++) por(w, x, PISO + y, z, "minecraft:red_concrete");
-            por(w, x, PISO + alt + 1, z, "minecraft:quartz_block");
+            int alt = k % 2 == 0 ? 6 : 3;
+            por(w, x, PISO + 1, z, "minecraft:polished_deepslate");
+            for (int y = 2; y <= alt; y++) por(w, x, PISO + y, z, y == alt ? "minecraft:waxed_oxidized_cut_copper" : "minecraft:polished_deepslate_wall");
+            por(w, x, PISO + alt + 1, z, "minecraft:sea_lantern");
+            por(w, x, PISO + alt + 2, z, "minecraft:end_rod[facing=up]");
         }
-        // mureta preta na borda e 12 pilares brancos com topo vermelho e lanterna
+        // 4 jardins no miolo (o pedestal fica no meio de cada um, numa trilha clara): duas cerejeiras pequenas por jardim e flores
+        String[] flores = {"minecraft:pink_tulip", "minecraft:allium", "minecraft:azure_bluet", "minecraft:oxeye_daisy", "minecraft:short_grass"};
+        for (int x = CX - 13; x <= CX + 13; x++) for (int z = CZ - 13; z <= CZ + 13; z++)
+            if ("minecraft:grass_block[snowy=false]".equals(piso(x, z)) && rr.nextInt(3) == 0) por(w, x, PISO + 1, z, flores[rr.nextInt(flores.length)]);
+        for (int k = 0; k < 8; k++) {
+            double ang = 45 + (k / 2) * 90 + (k % 2 == 0 ? -23 : 23);
+            int tx = px(ang, 10.3), tz = pz(ang, 10.3);
+            for (int y = 1; y <= 3; y++) por(w, tx, PISO + y, tz, "minecraft:cherry_log[axis=y]");
+            for (int ax = -2; ax <= 2; ax++) for (int az = -2; az <= 2; az++) for (int ay = 3; ay <= 6; ay++) {
+                double e = Math.sqrt(ax * ax + az * az + (ay - 4.3) * (ay - 4.3) * 1.6);
+                if (e > 2.5 || (e > 1.9 && rr.nextInt(3) == 0)) continue;
+                Block bl = w.getBlockAt(tx + ax, PISO + ay, tz + az);
+                if (bl.getType().isAir()) bl.setBlockData(Bukkit.createBlockData("minecraft:cherry_leaves[persistent=true]"), false);
+            }
+        }
+        // mureta de ardosia na borda e 12 pilares com cobre, luz e ponta acesa
         for (int x = CX - R; x <= CX + R; x++)
             for (int z = CZ - R; z <= CZ + R; z++) {
                 double d = dist(x, z);
-                if (d > R - 0.5 && d <= R + 0.5) w.getBlockAt(x, PISO + 1, z).setBlockData(Bukkit.createBlockData("minecraft:polished_blackstone_wall"), true);
+                if (d > R - 0.5 && d <= R + 0.5) w.getBlockAt(x, PISO + 1, z).setBlockData(Bukkit.createBlockData("minecraft:polished_deepslate_wall"), true);
             }
         for (int k = 0; k < 12; k++) {
             double ang = 15 + k * 30;
             int x = px(ang, R), z = pz(ang, R);
             if (dist(x, z) > R + 0.5) continue;
-            por(w, x, PISO + 1, z, "minecraft:quartz_pillar");
-            por(w, x, PISO + 2, z, "minecraft:quartz_pillar");
-            por(w, x, PISO + 3, z, "minecraft:red_concrete");
-            por(w, x, PISO + 4, z, "minecraft:lantern[hanging=false]");
+            por(w, x, PISO + 1, z, "minecraft:polished_deepslate");
+            por(w, x, PISO + 2, z, "minecraft:polished_deepslate");
+            por(w, x, PISO + 3, z, "minecraft:waxed_oxidized_cut_copper");
+            por(w, x, PISO + 4, z, "minecraft:sea_lantern");
+            por(w, x, PISO + 5, z, "minecraft:end_rod[facing=up]");
         }
         // portais: sul = Lobby do Terror e Lobby dos Minigames (lado a lado), norte = Mundo das Masmorras
         portaisSul(w);
@@ -516,7 +551,7 @@ final class SpawnPrincipal implements Listener {
             Files.writeString(new File(pl.getDataFolder(), "spawn-principal-sul-oeste-v" + PARTE + ".txt").toPath(), "junto com o spawn em " + new java.util.Date() + "\n");
         } catch (IOException ignored) {
         }
-        pl.getLogger().info("Spawn principal v2 construido (raio " + R + ", galeria VIP, " + LobbyMinigames.PORTAIS.length + " minigames + vagas, 4 pedestais, terror e minigames ao sul).");
+        pl.getLogger().info("Spawn principal v3 (templo no ceu) construido (raio " + R + ", galeria VIP, " + LobbyMinigames.PORTAIS.length + " minigames + vagas, 4 pedestais, terror e minigames ao sul).");
     }
 
     private void portal(World w, int z, String nome) {
@@ -524,8 +559,8 @@ final class SpawnPrincipal implements Listener {
             for (int y = 0; y <= 6; y++) {
                 int x = CX + s;
                 boolean borda = Math.abs(s) == 2 || y == 0 || y == 6;
-                String b = !borda ? "minecraft:nether_portal[axis=x]" : y == 6 && s == 0 ? "minecraft:red_concrete"
-                        : y == 0 ? "minecraft:red_nether_bricks" : (y == 6 || (Math.abs(s) == 2 && y % 2 == 0)) ? "minecraft:quartz_bricks" : "minecraft:polished_blackstone_bricks";
+                String b = !borda ? "minecraft:nether_portal[axis=x]" : y == 6 && s == 0 ? "minecraft:sea_lantern"
+                        : y == 0 ? "minecraft:polished_deepslate" : (y == 6 || (Math.abs(s) == 2 && y % 2 == 0)) ? "minecraft:waxed_oxidized_cut_copper" : "minecraft:polished_deepslate";
                 por(w, x, PISO + y, z, b);
             }
         double tz = z > CZ ? z - 0.6 : z + 1.6;
@@ -534,8 +569,8 @@ final class SpawnPrincipal implements Listener {
 
     /** Base de totem: plataforma 3x3, coluna e o icone flutuando. */
     private void base(World w, int x, int z, String topo, Material icone, String comando) {
-        for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) por(w, x + dx, PISO, z + dz, dx == 0 && dz == 0 ? "minecraft:polished_blackstone_bricks" : "minecraft:red_nether_bricks");
-        por(w, x, PISO + 1, z, "minecraft:polished_blackstone_bricks");
+        for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) por(w, x + dx, PISO, z + dz, dx == 0 && dz == 0 ? "minecraft:polished_deepslate" : "minecraft:waxed_oxidized_cut_copper");
+        por(w, x, PISO + 1, z, "minecraft:polished_deepslate");
         por(w, x, PISO + 2, z, topo);
         if (icone != null) w.spawn(new Location(w, x + 0.5, PISO + 3.6, z + 0.5), ItemDisplay.class, d -> {
             d.setItemStack(new ItemStack(icone));
@@ -567,13 +602,13 @@ final class SpawnPrincipal implements Listener {
 
     private void totemMinigame(World w, LobbyMinigames.Portal p, double ang, double r, double alturaTexto) {
         int x = px(ang, r), z = pz(ang, r);
-        base(w, x, z, p.terror() ? "minecraft:crying_obsidian" : "minecraft:red_concrete", p.icone(), p.comando());
+        base(w, x, z, p.terror() ? "minecraft:crying_obsidian" : "minecraft:chiseled_quartz_block", p.icone(), p.comando());
         texto(w, new Location(w, x + 0.5, PISO + alturaTexto, z + 0.5), p.nome() + "\n" + p.sub() + (p.terror() ? "\n§4☠ terror" : "") + "\n§f▶ clique para jogar", 0.7f);
     }
 
     private void vaga(World w, double ang, double r) {
         int x = px(ang, r), z = pz(ang, r);
-        base(w, x, z, "minecraft:polished_blackstone", null, null);
+        base(w, x, z, "minecraft:polished_deepslate", null, null);
         texto(w, new Location(w, x + 0.5, PISO + 3.4, z + 0.5), "§8§lEM BREVE\n§7novo minigame", 0.7f);
     }
 
