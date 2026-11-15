@@ -21,6 +21,12 @@ COR = {
     'ztanque': dict(pele=(176, 124, 112), calca=(52, 56, 68), olho=(255, 230, 170)),
     'zcuspidor': dict(pele=(152, 162, 122), camisa=(178, 170, 118), calca=(40, 48, 38), bolha=(150, 240, 60), olho=(222, 255, 120), cabelo=(30, 24, 22)),
     'zexplosivo': dict(pele=(152, 142, 112), camisa=(44, 56, 76), calca=(42, 46, 38), bolha=(214, 200, 120), olho=(255, 204, 90)),
+    'zsoldado': dict(pele=(196, 150, 120), camisa=(78, 88, 62), calca=(64, 70, 52), couro=(50, 54, 44), metal=(52, 54, 58), faixa=(34, 36, 34), olho=(255, 230, 150), bolha=(255, 220, 110)),
+    'zescopeta': dict(pele=(176, 130, 100), camisa=(142, 124, 92), calca=(108, 96, 72), couro=(70, 60, 46), metal=(58, 56, 54), faixa=(40, 36, 32), olho=(255, 230, 150), bolha=(255, 220, 110)),
+    'zatirador': dict(pele=(190, 146, 116), camisa=(70, 84, 50), calca=(58, 70, 44), couro=(84, 98, 58), metal=(40, 42, 44), faixa=(66, 80, 46), olho=(255, 60, 40), bolha=(255, 60, 40)),
+    'zescudo': dict(pele=(186, 140, 112), camisa=(40, 44, 54), calca=(34, 38, 46), couro=(24, 26, 32), metal=(86, 92, 104), faixa=(24, 26, 30), olho=(160, 220, 255), bolha=(255, 220, 110)),
+    'zpesado': dict(pele=(180, 136, 108), camisa=(58, 60, 64), calca=(46, 48, 52), couro=(34, 36, 40), metal=(70, 72, 78), faixa=(28, 28, 30), olho=(255, 180, 60), bolha=(255, 200, 90)),
+    'zjuggernaut': dict(pele=(60, 60, 64), camisa=(44, 46, 52), calca=(36, 38, 44), couro=(26, 28, 32), metal=(96, 100, 110), faixa=(160, 30, 30), olho=(255, 40, 30), bolha=(255, 190, 80)),
     'zchefe': dict(pele=(152, 62, 60), couro=(98, 72, 48), metal=(106, 100, 94), faixa=(142, 130, 110), calca=(142, 130, 110), olho=(255, 44, 30)),
 }
 FIXO = dict(sapato=(30, 26, 24), carne=(132, 20, 22), osso=(216, 206, 178), boca=(26, 6, 8), dente=(224, 214, 182))
@@ -361,9 +367,75 @@ def zchefe(q):
     return cs
 
 
+CORPOS_SOLDADOS = {'z' + t: (lambda q, t=t: soldado(q, t)) for t in ('soldado', 'escopeta', 'atirador', 'escudo', 'pesado', 'juggernaut')}
 CORPOS = dict(zcomum=zcomum, zcorredor=zcorredor, ztanque=ztanque, zcuspidor=zcuspidor, zexplosivo=zexplosivo, zchefe=zchefe)
+CORPOS.update(CORPOS_SOLDADOS)
 for k in CORPOS:
     A.PALETAS[k] = {}
+
+
+def soldado(q, tipo):
+    """Soldado inimigo das missoes (gente, nao infectado): capacete, balaclava, colete, arma apontada. Quadros 1 e 4 = atirando
+    (clarao na boca do cano e coice)."""
+    at = q == 1
+    grande = tipo in ('pesado', 'juggernaut')
+    L = 1.25 if tipo == 'juggernaut' else 1.12 if tipo == 'pesado' else 1.0          # largura
+    cs = []
+    pernas(cs, q, afast=1.9 * L, larg=3.0 * L, topo=-4.0, comp=12.0, pe='faixa')
+    cs += [C('quadril', 8 - 3.7 * L, 8 + 3.7 * L, -5.4, -2.6, 6.2, 10.8, 'calca'),
+           C('tronco', 8 - 3.9 * L, 8 + 3.9 * L, -3.0, 7.6, 5.8, 11.0, 'camisa'),
+           C('colete', 8 - 4.1 * L, 8 + 4.1 * L, 0.2, 7.0, 5.2, 11.6, 'couro'),
+           C('bolso_d', 8 - 3.4 * L, 8 - 0.6, 0.6, 3.2, 4.4, 5.3, 'faixa'),
+           C('cinto', 8 - 4.0 * L, 8 + 4.0 * L, -3.2, -1.8, 5.6, 11.2, 'faixa'),
+           C('pescoco', 6.9, 9.1, 7.4, 9.0, 7.0, 9.6, 'faixa'),
+           C('cabeca', 5.6, 10.4, 8.6, 13.4, 5.8, 10.6, 'faixa'),
+           C('rosto', 6.2, 9.8, 10.4, 12.0, 5.5, 5.9, 'pele', so=('north',)),
+           C('olho_r', 6.6, 7.5, 10.9, 11.5, 5.36, 5.5, 'olho', emite=6, so=('north',)),
+           C('olho_l', 8.5, 9.4, 10.9, 11.5, 5.36, 5.5, 'olho', emite=6, so=('north',)),
+           C('capacete', 5.2, 10.8, 12.4, 14.6, 5.4, 11.0, 'metal' if grande or tipo == 'escudo' else 'couro'),
+           C('capacete_aba', 5.2, 10.8, 12.2, 12.9, 4.6, 5.6, 'metal' if grande or tipo == 'escudo' else 'couro')]
+    for c in cs:
+        if c.nome == 'cabeca':
+            c.sem_rosto = True
+    if tipo == 'atirador':            # capuz de camuflagem
+        cs += [C('ghillie', 4.8, 11.2, 9.0, 15.0, 9.6, 11.6, 'couro'), C('ghillie_o', 3.0, 13.0, 5.6, 8.6, 5.4, 11.4, 'couro')]
+    elif tipo == 'pesado':
+        cs += [C('mochila', 4.6, 11.4, -1.0, 8.0, 11.0, 14.6, 'metal'), C('ombreira_d', 2.0, 5.0, 6.0, 9.0, 5.6, 11.2, 'metal'),
+               C('visor', 5.9, 10.1, 10.2, 11.8, 5.2, 5.6, 'olho', emite=8, so=('north',))]
+    elif tipo == 'juggernaut':
+        cs += [C('placa', 3.2, 12.8, -1.0, 8.4, 4.0, 5.4, 'metal'), C('placa_c', 3.4, 12.6, -1.0, 8.4, 11.4, 12.8, 'metal'),
+               C('ombreira_d', 0.8, 4.8, 5.6, 9.8, 5.0, 11.8, 'metal'), C('elmo', 5.0, 11.0, 8.2, 14.8, 5.0, 11.2, 'metal'),
+               C('visor', 5.8, 10.2, 10.4, 11.8, 4.7, 5.1, 'olho', emite=13, so=('north',)), C('faixa_r', 3.2, 12.8, 5.0, 5.9, 3.9, 4.1, 'faixa', so=('north',)),
+               C('tanque', 5.6, 10.4, 0.0, 7.0, 12.8, 15.6, 'metal')]
+    else:
+        cs += [C('ombreira_d', 2.6, 4.6, 6.2, 8.2, 6.0, 10.8, 'faixa')]
+    # bracos para a frente segurando a arma (o cano aponta para o norte)
+    bx = 3.9 * L + 1.2
+    cs += [C('braco_d', 8 - bx - 1.2, 8 - bx + 1.2, 3.6, 6.4, 1.0, 8.6, 'camisa'), C('mao_d', 8 - bx - 1.0, 8 - bx + 1.2, 3.4, 6.0, -0.8, 1.2, 'faixa')]
+    if tipo == 'escudo':
+        cs += [C('escudo', 2.6, 13.4, -12.0, 9.6, -2.6, -1.6, 'metal'), C('escudo_visor', 5.6, 10.4, 5.4, 7.6, -2.8, -2.6, 'olho', emite=4, so=('north',)),
+               C('escudo_faixa', 2.6, 13.4, -2.0, -0.8, -2.75, -2.6, 'faixa', so=('north',)), C('pistola', 12.6, 13.6, 3.8, 5.4, -4.6, -1.0, 'faixa')]
+        boca = (13.1, 4.8, -5.2)
+    elif grande:                    # metralhadora giratoria
+        cs += [C('arma', 6.4, 9.6, 0.4, 3.6, -3.0, 6.0, 'metal'), C('canos', 7.0, 9.0, 1.0, 3.0, -9.0, -3.0, 'faixa'),
+               C('cano2', 6.6, 9.4, 0.6, 3.4, -6.4, -5.6, 'metal'), C('caixa', 9.6, 12.0, -0.6, 3.0, 1.0, 5.0, 'couro')]
+        boca = (8.0, 2.0, -9.8)
+    elif tipo == 'atirador':
+        cs += [C('arma', 7.3, 8.7, 3.6, 5.6, -1.0, 7.0, 'couro'), C('cano', 7.6, 8.4, 4.4, 5.2, -12.0, -1.0, 'metal'),
+               C('luneta', 7.4, 8.6, 5.6, 6.8, 0.0, 4.6, 'faixa'), C('lente', 7.5, 8.5, 5.7, 6.7, -0.2, 0.0, 'olho', emite=13, so=('north',))]
+        boca = (8.0, 4.8, -12.8)
+    elif tipo == 'escopeta':
+        cs += [C('arma', 7.2, 8.8, 3.4, 5.4, -1.0, 6.4, 'couro'), C('cano', 7.5, 8.5, 4.2, 5.2, -7.0, -1.0, 'metal'), C('bomba', 7.2, 8.8, 3.2, 4.2, -5.0, -2.0, 'couro')]
+        boca = (8.0, 4.7, -7.8)
+    else:
+        cs += [C('arma', 7.3, 8.7, 3.4, 5.6, -1.6, 6.4, 'metal'), C('cano', 7.6, 8.4, 4.4, 5.2, -7.6, -1.6, 'faixa'),
+               C('pente', 7.5, 8.5, 0.8, 3.6, 0.6, 2.4, 'faixa'), C('mira', 7.7, 8.3, 5.6, 6.4, 0.0, 2.0, 'faixa')]
+        boca = (8.0, 4.8, -8.4)
+    # clarao do tiro: so aparece no quadro 1 (nos outros fica escondido dentro da arma, do mesmo tamanho)
+    t = 1.3 if at else 0.3
+    bz = boca[2] - (1.3 if at else -2.4)
+    cs.append(C('clarao', boca[0] - t, boca[0] + t, boca[1] - t, boca[1] + t, bz - 0.5, bz + 0.5, 'bolha', emite=15))
+    return esp(cs)
 
 
 def _mover(cs, dy=0.0, dz=0.0, pernas_tambem=True):

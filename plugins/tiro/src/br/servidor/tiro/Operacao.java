@@ -61,7 +61,7 @@ import org.bukkit.potion.PotionEffectType;
  */
 final class Operacao implements Listener {
 
-    static final String PREFIXO = "§8[§6§lOperação§8] §7";
+    static final String PREFIXO = "§8[§6§lHorda§8] §7";
     static final int Y = 64, M = 28, YSALA = 140, VERSAO = 1;
     static final String[] MAPAS = {"Depósito 7", "Rua em Ruínas", "Laboratório Coroa"};
     static final String[] DIFS = {"§aFácil", "§eNormal", "§cDifícil"};
@@ -117,7 +117,7 @@ final class Operacao implements Listener {
             pl.saveConfig();
         }
         for (Entity e : mundo.getEntities()) if (e instanceof Zombie) e.remove();
-        barra = BossBar.bossBar(Tiro.txt("§6§lOPERAÇÃO COROA"), 1f, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS);
+        barra = BossBar.bossBar(Tiro.txt("§6§lMODO HORDA"), 1f, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS);
         Bukkit.getScheduler().runTaskTimer(pl, this::segundo, 60L, 20L);
     }
 
@@ -279,7 +279,7 @@ final class Operacao implements Listener {
 
     void entrar(Player p) {
         if (mundo == null) {
-            p.sendMessage(PREFIXO + "§cA Operação está indisponível agora.");
+            p.sendMessage(PREFIXO + "§cO Modo Horda está indisponível agora.");
             return;
         }
         if (aqui(p)) {
@@ -294,11 +294,11 @@ final class Operacao implements Listener {
                 return;
             }
             if (w.equals(Tiro.ZUMBI)) {
-                p.sendMessage(PREFIXO + "§7Saia do Apocalipse primeiro (§f/zumbi sair§7) e entre pelo portão da Operação.");
+                p.sendMessage(PREFIXO + "§7Saia do Apocalipse primeiro (§f/zumbi sair§7) e entre pelo portão do Modo Horda.");
                 return;
             }
             pl.irLobby(p);
-            p.sendMessage(PREFIXO + "§7Você está no Lobby de Tiro. Entre no §6portão da Operação Coroa§7 (leste) ou use §f/operacao §7de novo.");
+            p.sendMessage(PREFIXO + "§7Você está no Lobby de Tiro. Entre no §6portão da Modo Horda§7 (leste) ou use §f/operacao §7de novo.");
             return;
         }
         p.getInventory().clear();
@@ -306,7 +306,7 @@ final class Operacao implements Listener {
         p.setFallDistance(0);
         classe.putIfAbsent(p.getUniqueId(), "fuzileiro");
         int x = xp(p.getUniqueId());
-        p.showTitle(Title.title(Tiro.txt("§6§lOPERAÇÃO COROA"), Tiro.txt("§7Patente: §f" + PATENTES[patente(x)] + " §8(" + x + " XP)")));
+        p.showTitle(Title.title(Tiro.txt("§6§lMODO HORDA"), Tiro.txt("§7Patente: §f" + PATENTES[patente(x)] + " §8(" + x + " XP)")));
         p.sendMessage(PREFIXO + "§fMissão co-op de 1 a 4 jogadores: §7limpe as ondas, defenda o gerador e derrube o Chefe de Horda.");
         p.sendMessage(PREFIXO + "§7Escolha a §fclasse§7 e a §fdificuldade§7 com a §eestrela§7 na sua mão. Sair: §f/operacao sair");
         if (fase != Fase.ESPERA && fase != Fase.CONTAGEM) p.sendMessage(PREFIXO + "§eTem uma missão em andamento: você entra na próxima.");
@@ -330,7 +330,7 @@ final class Operacao implements Listener {
         p.setAbsorptionAmount(0);
         if (p.getGameMode() == GameMode.SPECTATOR) p.setGameMode(GameMode.SURVIVAL);
         if (aqui(p)) pl.irLobby(p);
-        if (avisar) p.sendMessage(PREFIXO + "Você saiu da Operação.");
+        if (avisar) p.sendMessage(PREFIXO + "Você saiu do Modo Horda.");
     }
 
     boolean comando(CommandSender s, String[] a) {
@@ -340,7 +340,7 @@ final class Operacao implements Listener {
             var sec = pl.dados.getConfigurationSection("operacao.nome");
             if (sec != null) for (String u : sec.getKeys(false)) l.add(new String[] {sec.getString(u), String.valueOf(pl.dados.getInt("operacao.xp." + u, 0)), String.valueOf(pl.dados.getInt("operacao.vitorias." + u, 0))});
             l.sort((x, y) -> Integer.compare(Integer.parseInt(y[1]), Integer.parseInt(x[1])));
-            s.sendMessage(PREFIXO + "§e§lMelhores da Operação Coroa");
+            s.sendMessage(PREFIXO + "§e§lMelhores da Modo Horda");
             if (l.isEmpty()) s.sendMessage("§7Ninguém ainda. Seja o primeiro!");
             for (int i = 0; i < Math.min(10, l.size()); i++)
                 s.sendMessage("§e" + (i + 1) + ". §f" + l.get(i)[0] + " §7— §6" + PATENTES[patente(Integer.parseInt(l.get(i)[1]))] + " §7(" + l.get(i)[1] + " XP, " + l.get(i)[2] + " missões)");
@@ -362,7 +362,7 @@ final class Operacao implements Listener {
         if (!(s instanceof Player p)) return true;
         if (sub.equals("sair")) {
             if (aqui(p)) tirar(p, true);
-            else p.sendMessage(PREFIXO + "Você não está na Operação.");
+            else p.sendMessage(PREFIXO + "Você não está no Modo Horda.");
         } else entrar(p);
         return true;
     }
@@ -371,7 +371,7 @@ final class Operacao implements Listener {
 
     private void abrirMenu(Player p) {
         Menu h = new Menu();
-        h.inv = Bukkit.createInventory(h, 27, Tiro.txt("§8Operação Coroa: classe e dificuldade"));
+        h.inv = Bukkit.createInventory(h, 27, Tiro.txt("§8Modo Horda: classe e dificuldade"));
         String minha = classe.getOrDefault(p.getUniqueId(), "fuzileiro");
         for (int i = 0; i < CLASSES.length; i++) {
             Classe c = CLASSES[i];
@@ -513,7 +513,22 @@ final class Operacao implements Listener {
         }
     }
 
+    /** Musica do momento: calma na sala e entre ondas, de luta com infectado vivo, a do chefe na fase final. */
+    private void musica() {
+        if (pl.musica == null) return;
+        boolean vivos = false;
+        for (Zombie z : mundo.getEntitiesByClass(Zombie.class)) if (pl.zumbis.tipo(z) != null && !z.isDead()) vivos = true;
+        String f = switch (fase) {
+            case CHEFE -> "horda_chefe";
+            case ONDAS, DEFESA -> vivos ? "horda_luta" : "horda";
+            case FIM -> null;
+            default -> "horda";
+        };
+        for (Player p : mundo.getPlayers()) pl.musica.tocar(p, f);
+    }
+
     private void segundo() {
+        musica();
         if (mundo == null) return;
         List<Player> todos = todos();
         for (Player p : todos) {

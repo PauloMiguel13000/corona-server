@@ -45,7 +45,18 @@ final class Zumbis implements Listener {
         TANQUE("§6§lTanque", 90, 0.19, 9, 1.5, 6),
         CUSPIDOR("§aCuspidor", 18, 0.22, 2, 1.0, 3),
         EXPLOSIVO("§eExplosivo", 16, 0.31, 0, 1.05, 3),
-        CHEFE("§4§lCHEFE DE HORDA", 320, 0.25, 12, 1.9, 40);
+        CHEFE("§4§lCHEFE DE HORDA", 320, 0.25, 12, 1.9, 40),
+        // 15/11: os soldados inimigos da Missao (gente; quem manda neles e o Missao.java: andam, miram e atiram)
+        SOLDADO("§cSoldado", 24, 0.25, 2, 1.0, 2),
+        ESCOPETA("§6Escopeteiro", 26, 0.31, 2, 1.0, 3),
+        ATIRADOR("§bAtirador de Elite", 16, 0.2, 2, 1.0, 4),
+        ESCUDO("§7Escudeiro", 40, 0.23, 2, 1.05, 4),
+        PESADO("§4Pesado", 110, 0.17, 2, 1.25, 8),
+        JUGGERNAUT("§4§lJUGGERNAUT", 420, 0.2, 2, 1.5, 50);
+
+        boolean soldado() {
+            return ordinal() >= SOLDADO.ordinal();
+        }
 
         final String nome;
         final double vida, veloc, dano, escala;
@@ -107,7 +118,7 @@ final class Zumbis implements Listener {
             z.setRemoveWhenFarAway(false);
             z.setPersistent(false);
             z.customName(Tiro.txt(t.nome));
-            z.setCustomNameVisible(t == Tipo.TANQUE || t == Tipo.CHEFE);
+            z.setCustomNameVisible(t == Tipo.TANQUE || t == Tipo.CHEFE || t == Tipo.PESADO || t == Tipo.JUGGERNAUT);
             atributo(z, Attribute.MAX_HEALTH, t.vida * forca);
             z.setHealth(t.vida * forca);
             atributo(z, Attribute.MOVEMENT_SPEED, t.veloc);
@@ -115,7 +126,8 @@ final class Zumbis implements Listener {
             atributo(z, Attribute.SCALE, t.escala);
             atributo(z, Attribute.FOLLOW_RANGE, 34);
             atributo(z, Attribute.SPAWN_REINFORCEMENTS, 0);
-            if (t == Tipo.TANQUE || t == Tipo.CHEFE) atributo(z, Attribute.KNOCKBACK_RESISTANCE, 1.0);
+            if (t == Tipo.TANQUE || t == Tipo.CHEFE || t == Tipo.PESADO || t == Tipo.JUGGERNAUT) atributo(z, Attribute.KNOCKBACK_RESISTANCE, 1.0);
+            else if (t.soldado()) atributo(z, Attribute.KNOCKBACK_RESISTANCE, 0.6);
             var eq = z.getEquipment();
             eq.clear();
             switch (t) {
@@ -142,6 +154,16 @@ final class Zumbis implements Listener {
                     eq.setLeggings(new ItemStack(Material.NETHERITE_LEGGINGS));
                     eq.setItemInMainHand(new ItemStack(Material.NETHERITE_AXE));
                     z.setGlowing(true);
+                }
+                case SOLDADO, ESCOPETA, ATIRADOR, ESCUDO, PESADO, JUGGERNAUT -> {
+                    // para quem nao tem o pacote: zumbi fardado com besta (ou escudo) na mao
+                    boolean forte = t == Tipo.PESADO || t == Tipo.JUGGERNAUT;
+                    eq.setHelmet(forte ? new ItemStack(Material.NETHERITE_HELMET) : couro(Material.LEATHER_HELMET, 0x2E3B2A));
+                    eq.setChestplate(forte ? new ItemStack(Material.NETHERITE_CHESTPLATE) : t == Tipo.ESCUDO ? new ItemStack(Material.IRON_CHESTPLATE) : couro(Material.LEATHER_CHESTPLATE, 0x34422E));
+                    eq.setLeggings(couro(Material.LEATHER_LEGGINGS, 0x262B22));
+                    eq.setBoots(couro(Material.LEATHER_BOOTS, 0x151515));
+                    eq.setItemInMainHand(new ItemStack(Material.CROSSBOW));
+                    if (t == Tipo.ESCUDO) eq.setItemInOffHand(new ItemStack(Material.SHIELD));
                 }
                 default -> {
                     if (rnd.nextInt(3) == 0) eq.setChestplate(couro(Material.LEATHER_CHESTPLATE, 0x405060 + rnd.nextInt(0x202020)));

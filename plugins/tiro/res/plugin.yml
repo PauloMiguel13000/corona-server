@@ -12,8 +12,11 @@ commands:
     description: Apocalipse Zumbi (/zumbi, /zumbi sair, /zumbi abrigo, /zumbi loja, /zumbi top)
     aliases: [apocalipse, zumbis]
   operacao:
-    description: Operacao Coroa, co-op de tiro (/operacao, /operacao sair, /operacao top)
-    aliases: [warface, coop]
+    description: Modo Horda, co-op contra ondas de infectados (/horda, /horda sair, /horda top)
+    aliases: [horda, modohorda, coop]
+  missao:
+    description: Missao co-op contra soldados inimigos, 5 setores ate o Heliporto (/missao, /missao sair)
+    aliases: [warface, missoes]
 permissions:
   tiro.usar:
     default: true

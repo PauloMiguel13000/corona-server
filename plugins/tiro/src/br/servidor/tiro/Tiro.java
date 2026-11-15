@@ -52,15 +52,17 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class Tiro extends JavaPlugin implements Listener {
 
     static final String PREFIXO = "§8[§2§lTiro§8] §7";
-    static final String LOBBY = "tiro", ZUMBI = "zumbi", OPERACAO = "operacao";
-    static final int Y = 100, VERSAO_LOBBY = 1;
+    static final String LOBBY = "tiro", ZUMBI = "zumbi", OPERACAO = "operacao", MISSAO = "missao";
+    static final int Y = 100, VERSAO_LOBBY = 2;
 
     World lobby;
     Armas armas;
     Zumbis zumbis;
     Visual visual;
+    Musica musica;
     Apocalipse apocalipse;
     Operacao operacao;
+    Missao missao;
     File arqDados;
     YamlConfiguration dados;
     final Random rnd = new Random();
@@ -72,7 +74,7 @@ public final class Tiro extends JavaPlugin implements Listener {
 
     boolean mundoDeTiro(World w) {
         String n = w.getName();
-        return n.equals(ZUMBI) || n.equals(OPERACAO);
+        return n.equals(ZUMBI) || n.equals(OPERACAO) || n.equals(MISSAO);
     }
 
     @Override
@@ -83,6 +85,7 @@ public final class Tiro extends JavaPlugin implements Listener {
         armas = new Armas(this);
         zumbis = new Zumbis(this);
         visual = new Visual(this);
+        musica = new Musica(this);
         getServer().getPluginManager().registerEvents(visual, this);
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(armas, this);
@@ -92,6 +95,13 @@ public final class Tiro extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(apocalipse, this);
         operacao = new Operacao(this);
         getServer().getPluginManager().registerEvents(operacao, this);
+        try {
+            missao = new Missao(this);
+            getServer().getPluginManager().registerEvents(missao, this);
+        } catch (Throwable t) {
+            getLogger().warning("Missao nao subiu: " + t);
+            missao = null;
+        }
         armas.regras = new Armas.Regras() {
             @Override
             public boolean podeAtingir(Player a, org.bukkit.entity.LivingEntity alvo) {
@@ -107,6 +117,7 @@ public final class Tiro extends JavaPlugin implements Listener {
         zumbis.dono = (z, t, matador) -> {
             if (z.getWorld().getName().equals(ZUMBI)) apocalipse.morreu(z, t, matador);
             else if (z.getWorld().getName().equals(OPERACAO)) operacao.morreu(z, t, matador);
+            else if (missao != null && z.getWorld().getName().equals(MISSAO)) missao.morreu(z, t, matador);
         };
         Bukkit.getScheduler().runTaskTimer(this, this::salvar, 6000L, 6000L);
         getLogger().info("Jogos de tiro prontos (lobby, Apocalipse Zumbi e Operacao Coroa).");
@@ -116,6 +127,7 @@ public final class Tiro extends JavaPlugin implements Listener {
     public void onDisable() {
         if (visual != null) visual.limpar();
         if (operacao != null) operacao.desligar();
+        if (missao != null) missao.desligar();
         if (apocalipse != null) apocalipse.desligar();
         salvar();
     }
@@ -215,7 +227,8 @@ public final class Tiro extends JavaPlugin implements Listener {
         for (Entity e : lobby.getEntities()) if (e instanceof TextDisplay) e.remove();
         texto(0.5, Y + 6.2, 0.5, "§2§lJOGOS DE TIRO\n§fEscolha um portão\n§7armas, munição e infectados", 1.6f);
         texto(-13.5, Y + 5.6, 0.5, "§2§lAPOCALIPSE ZUMBI\n§fSurvival: saqueie, construa, sobreviva\n§7mundo aberto • mochila própria\n§a▶ entre no portão", 1.1f);
-        texto(14.5, Y + 5.6, 0.5, "§6§lOPERAÇÃO COROA\n§fCo-op de 1 a 4: missões contra a horda\n§7classes • patentes • chefes\n§a▶ entre no portão", 1.1f);
+        texto(14.5, Y + 5.6, 0.5, "§6§lMODO HORDA\n§fCo-op de 1 a 4: missões contra a horda\n§7classes • patentes • chefes\n§a▶ entre no portão", 1.1f);
+        texto(0.5, Y + 5.6, -13.5, "§c§lMISSÃO\n§fCo-op de 1 a 4 contra soldados inimigos\n§75 setores até o Heliporto • eles atiram de volta\n§a▶ entre no portão", 1.1f);
         texto(0.5, Y + 3.2, 13.5, "§a§lVOLTAR AOS MINIGAMES\n§7pise na esmeralda", 0.9f);
     }
 
@@ -245,6 +258,14 @@ public final class Tiro extends JavaPlugin implements Listener {
             b(x - s, Y + 1, -4, Material.BARREL);
             b(x - s, Y + 2, -4, s < 0 ? Material.ZOMBIE_HEAD : Material.TARGET);
         }
+        // 15/11: terceiro portao, ao norte = Missao (soldados)
+        for (int x = -3; x <= 3; x++)
+            for (int y = 1; y <= 6; y++) if (Math.abs(x) == 3 || y == 6) b(x, Y + y, -15, Material.POLISHED_BLACKSTONE_BRICKS);
+        for (int x = -2; x <= 2; x++) b(x, Y, -15, Material.RED_CONCRETE);
+        b(0, Y + 7, -15, Material.LANTERN);
+        b(4, Y + 1, -14, Material.BARREL);
+        b(-4, Y + 1, -14, Material.BARREL);
+        b(-4, Y + 2, -14, Material.TARGET);
         // centro: fogueira e caixotes
         b(0, Y + 1, 0, Material.CAMPFIRE);
         for (int[] c : new int[][] {{3, 3}, {-3, 3}, {4, -3}, {-4, -4}, {-3, -5}}) {
@@ -269,7 +290,7 @@ public final class Tiro extends JavaPlugin implements Listener {
         if (lobby == null) return;
         p.teleport(spawnLobby());
         p.setFallDistance(0);
-        p.showTitle(net.kyori.adventure.title.Title.title(txt("§2§lJOGOS DE TIRO"), txt("§7Apocalipse Zumbi a oeste • Operação Coroa a leste")));
+        p.showTitle(net.kyori.adventure.title.Title.title(txt("§2§lJOGOS DE TIRO"), txt("§7Zumbis a oeste • Horda a leste • Missão ao norte")));
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -288,6 +309,7 @@ public final class Tiro extends JavaPlugin implements Listener {
         String cmd = null;
         if (Math.abs(z) <= 2 && x <= -14 && x >= -16) cmd = "zumbi";
         else if (Math.abs(z) <= 2 && x >= 14 && x <= 16) cmd = "operacao";
+        else if (Math.abs(x) <= 2 && z <= -14 && z >= -16) cmd = "missao";
         else if (x == 0 && z == 13) cmd = "minigames";
         if (cmd == null) return;
         esperaPortal.put(p.getUniqueId(), agora);
@@ -333,9 +355,21 @@ public final class Tiro extends JavaPlugin implements Listener {
         String c = cmd.getName().toLowerCase(java.util.Locale.ROOT);
         if (c.equals("zumbi")) return apocalipse.comando(s, a);
         if (c.equals("operacao")) return operacao.comando(s, a);
+        if (c.equals("missao")) {
+            if (missao == null) {
+                s.sendMessage(PREFIXO + "§cA Missão está indisponível agora.");
+                return true;
+            }
+            if (s instanceof Player pm && !missao.aqui(pm) && !pm.getWorld().getName().equals(LOBBY) && (a.length == 0 || !a[0].equalsIgnoreCase("admin"))) {
+                irLobby(pm);
+                pm.sendMessage(PREFIXO + "Entre pelo portão §cvermelho§7 (norte) ou digite §f/missao§7 de novo.");
+                return true;
+            }
+            return missao.comando(s, a);
+        }
         if (!(s instanceof Player p)) return true;
         String w = p.getWorld().getName().toLowerCase(java.util.Locale.ROOT);
-        if (java.util.Set.of("vovo", "slender", "backrooms", "hotel", "defesa", "login", "naochore", "turno_noite", "fabrica", "arena", "esconde", "porteiro", OPERACAO).contains(w)) {
+        if (java.util.Set.of("vovo", "slender", "backrooms", "hotel", "defesa", "login", "naochore", "turno_noite", "fabrica", "arena", "esconde", "porteiro", OPERACAO, MISSAO).contains(w)) {
             p.sendMessage(PREFIXO + "§cSaia do outro jogo primeiro.");
             return true;
         }

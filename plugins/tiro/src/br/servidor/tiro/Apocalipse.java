@@ -617,6 +617,7 @@ final class Apocalipse implements Listener {
             o.showTitle(Title.title(Tiro.txt("§c§lHORDA!"), Tiro.txt(motivo + " §fVindo do §e" + rumo), Title.Times.times(Duration.ofMillis(200), Duration.ofMillis(2800), Duration.ofMillis(600))));
             o.playSound(o.getLocation(), Sound.ENTITY_RAVAGER_ROAR, 0.9f, 0.7f);
             o.playSound(o.getLocation(), Sound.AMBIENT_CAVE, 1f, 0.6f);
+            if (pl.musica != null) pl.musica.tocar(o, "horda_luta", false);
         }
         for (int i = 0; i < n; i++) {
             final int k = i;

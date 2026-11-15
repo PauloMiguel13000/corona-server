@@ -46,8 +46,8 @@ import org.joml.Vector3f;
  */
 final class Visual implements Listener {
 
-    static final String URL_PADRAO = "https://corona-server.duckdns.org/pacotes/corona_tiro_java-464b18f579.zip";
-    static final String SHA1_PADRAO = "464b18f5791df83163f26bb7dbc58c71542db691";
+    static final String URL_PADRAO = "https://corona-server.duckdns.org/pacotes/corona_tiro_java-e912845661.zip";
+    static final String SHA1_PADRAO = "e912845661a07d929a4b8f91588f5915db09d007";
     private static final UUID ID = UUID.nameUUIDFromBytes("corona-tiro-pack".getBytes(StandardCharsets.UTF_8));
 
     private final Tiro pl;
@@ -59,6 +59,12 @@ final class Visual implements Listener {
     private final Map<UUID, Long> ultimoGolpe = new HashMap<>();
     private int conta;
     private static final int[] CICLO = {0, 3, 2, 3};
+    /** Soldados da Missao: ate quando (tick do Visual) cada um esta com o quadro de tiro (clarao no cano). */
+    private final Map<UUID, Integer> tiroAte = new HashMap<>();
+
+    void atirando(Zombie z) {
+        tiroAte.put(z.getUniqueId(), conta + 3);
+    }
 
     Visual(Tiro pl) {
         this.pl = pl;
@@ -180,7 +186,8 @@ final class Visual implements Listener {
                 boolean atacando = alvo != null && alvo.getWorld() == w && alvo.getLocation().distanceSquared(z.getLocation()) < 7.0;
                 int fase = conta + (int) (u.getLeastSignificantBits() & 7);
                 int q;
-                if (atacando) q = (fase / 5) % 2 == 0 ? 1 : 4;
+                if (t.soldado()) q = tiroAte.getOrDefault(u, 0) >= conta ? 1 : andando ? CICLO[(fase / 3) % 4] : 3;
+                else if (atacando) q = (fase / 5) % 2 == 0 ? 1 : 4;
                 else if (andando) q = CICLO[(fase / (t.veloc >= 0.3 ? 3 : 4)) % 4];
                 else q = 3;
                 ItemDisplay d = modelos.get(u);

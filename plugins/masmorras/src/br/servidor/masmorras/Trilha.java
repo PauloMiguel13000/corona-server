@@ -87,6 +87,12 @@ final class Trilha implements Listener {
         DURACAO.put("explorar_luta", 36.23);
         DURACAO.put("herobrine", 51.2);
         DURACAO.put("lobby", 81.82);
+        // 15/11 (Paulo: "a do lobby esta muito alta e nao combinou", "a do Farol esta ruim", "quando repete fica chata"):
+        // musicas longas, com varias partes (sons/gerar_calmas.py). A do lobby toca baixinho, acaba de verdade e so
+        // volta depois de um silencio.
+        DURACAO.put("lobby2", 183.06 + 14);
+        DURACAO.put("farol", 106.67);
+        DURACAO.put("farol_luta", 54.70);
         DURACAO.put("chefe", 48.0);
         // 14/11: cada tema tem a sua musica de chefe (sons/gerar_chefes.py)
         DURACAO.put("chefe_cripta", 54.92);
@@ -125,7 +131,8 @@ final class Trilha implements Listener {
         fam("selva", "SELVA", "COVIL_LOBOS", "COVIL");
         fam("quartel", "QUARTEL", "ACAMPAMENTO");
         fam("gelo", "GELO", "URSO", "GELEIRA", "NEVE");
-        fam("mar", "FAROL", "NAUFRAGIO", "CORAL");
+        fam("mar", "NAUFRAGIO", "CORAL");
+        fam("farol", "FAROL");
         fam("afogada", "AFOGADA");
         fam("relogio", "LABORATORIO", "CAMARA_TESTES", "RELOGIO");
         fam("arcano", "TORRE", "BIBLIOTECA", "OBSERVATORIO", "ARCANO");
@@ -177,7 +184,7 @@ final class Trilha implements Listener {
         World w = l.getWorld();
         if (w == null) return null;
         if (w.getName().equals(InfernoHerobrine.MUNDO)) return "herobrine";   // no mundo dele
-        if (pl.lobby != null && pl.lobby.noLobby(l)) return "lobby";
+        if (pl.lobby != null && pl.lobby.noLobby(l)) return "lobby2";
         Masmorra m = pl.masmorraEm(w, l.getBlockX(), l.getBlockY(), l.getBlockZ());
         if (m == null || m.demolindo) return null;
         String tema = faixaDe(m);
@@ -185,6 +192,7 @@ final class Trilha implements Listener {
         if (m.chefe != null && m.chefe.vivo() && (m.arenaLuta().contem(l.getBlockX(), l.getBlockY(), l.getBlockZ())
                 || (m.chefe.e.getWorld().equals(w) && m.chefe.e.getLocation().distanceSquared(l) < 28 * 28))) {
             if (m.tipo.secreta) return "herobrine";
+            if (tema.equals("farol")) return "chefe_mar";
             return DURACAO.containsKey("chefe_" + tema) ? "chefe_" + tema : "chefe";
         }
         int perto = 0;
@@ -222,7 +230,7 @@ final class Trilha implements Listener {
     }
 
     private void tocar(Player p, String faixa, long agora) {
-        p.playSound(p, SOM + faixa, SoundCategory.MUSIC, 0.8f, 1f);
+        p.playSound(p, SOM + faixa, SoundCategory.MUSIC, faixa.equals("lobby2") ? 0.45f : 0.8f, 1f);
         tocando.put(p.getUniqueId(), faixa);
         desde.put(p.getUniqueId(), agora);
     }

@@ -63,7 +63,7 @@ final class MissoesDiarias implements Listener {
     };
 
     /** Mundos que contam como minigame (entrar no mundo = entrou no jogo). */
-    private static final Set<String> MINIGAMES = Set.of("turno_noite", "hotel", "fabrica", "backrooms", "naochore", "slender", "vovo", "defesa", "arena", "esconde", "porteiro", "operacao");
+    private static final Set<String> MINIGAMES = Set.of("turno_noite", "hotel", "fabrica", "backrooms", "naochore", "slender", "vovo", "defesa", "arena", "esconde", "porteiro", "operacao", "missao");
 
     private static final ZoneId ZONA = ZoneId.of("America/Sao_Paulo");
     private static final int[] SLOTS = {11, 13, 15};
