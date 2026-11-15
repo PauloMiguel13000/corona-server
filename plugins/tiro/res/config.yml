@@ -1,0 +1,15 @@
+# Jogos de tiro do Corona Server (15/11): Lobby de Tiro (mundo "tiro"), Apocalipse Zumbi (mundo "zumbi", survival
+# com mochila propria) e Operacao Coroa (mundo "operacao", co-op de 1 a 4).
+zumbi:
+  semente: 20261115
+  borda: 1500            # raio do mundo
+  pvp: false             # tiro e faca nao machucam outros jogadores
+  abrigo-raio: 34        # area protegida em volta do Abrigo (sem zumbi, sem quebrar)
+  zumbis-de-dia: 5       # maximo perto de cada jogador
+  zumbis-de-noite: 11
+  saque-volta-minutos: 20
+  perna-quebrada-chance: 0.35   # ao cair de alto
+  ao-morrer-perde-municao: 0.5  # fracao da municao perdida (os outros itens ficam)
+operacao:
+  maximo-jogadores: 4
+  contagem-segundos: 20

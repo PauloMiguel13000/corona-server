@@ -65,7 +65,7 @@ final class LobbyMinigames implements Listener {
 
     static final String MUNDO = "minigames";
     /** v3 (09/11): este lobby fica so com os minigames normais; os de terror foram para o Lobby do Terror (mundo "terror"). */
-    static final int Y = 100, R = 34, PORTAL = 22, VERSAO = 4, VAGAS = 8;   // v4 (15/11): portal do Esconde-esconde
+    static final int Y = 100, R = 34, PORTAL = 22, VERSAO = 5, VAGAS = 8;   // v4 (15/11): portal do Esconde-esconde
 
     /** terror = vai para o Lobby do Terror (e nao para este). */
     record Portal(String id, String nome, String sub, String cor, String comando, int dx, int dz, String[] moldura, Material icone, Color brilho, boolean terror) {}
@@ -93,7 +93,9 @@ final class LobbyMinigames implements Listener {
             new Portal("esconde", "§e§lESCONDE-ESCONDE", "§7Um procura, os outros se escondem na Vila\n§7Quem é pego vira pegador! (3+ jogadores)", "§e", "esconde", -1, 1,
                     new String[] {"minecraft:oak_planks", "minecraft:oak_leaves[persistent=true]", "minecraft:hay_block"}, Material.SPYGLASS, Color.fromRGB(255, 230, 80), false),
             new Portal("porteiro", "§4§lO PORTEIRO", "§7Ele é cego, mas ouve. Ache as chaves e fuja!\n§7Não tire os olhos da Sombra de Cartola", "§4", "porteiro", 0, 1,
-                    new String[] {"minecraft:mangrove_planks", "minecraft:deepslate_bricks", "minecraft:red_nether_bricks"}, Material.TRIPWIRE_HOOK, Color.fromRGB(150, 20, 30), true)};
+                    new String[] {"minecraft:mangrove_planks", "minecraft:deepslate_bricks", "minecraft:red_nether_bricks"}, Material.TRIPWIRE_HOOK, Color.fromRGB(150, 20, 30), true),
+            new Portal("tiro", "§2§lJOGOS DE TIRO", "§7Apocalipse Zumbi (survival com armas)\n§7Operação Coroa (co-op de missões)", "§2", "tiro", 1, -1,
+                    new String[] {"minecraft:mossy_stone_bricks", "minecraft:cut_copper", "minecraft:smooth_sandstone"}, Material.IRON_HOE, Color.fromRGB(70, 160, 60), false)};
 
     /** Portal deste lobby que leva ao Lobby do Terror. */
     static final Portal PORTAL_TERROR = new Portal("terror", "§4§lLOBBY DO TERROR", "§7Hotel • Porcelana • Vovó • Backrooms\n§7Não Chore • Turno • Fábrica • O Porteiro", "§4", "terror", 0, 0,

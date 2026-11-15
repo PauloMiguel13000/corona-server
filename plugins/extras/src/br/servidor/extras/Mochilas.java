@@ -49,7 +49,7 @@ final class Mochilas implements Listener {
     String grupoDe(Player p) {
         String n = p.getWorld().getName();
         if (pl.getConfig().getBoolean("mochilas.lobby-separado", true)
-                && (n.equals(LobbyMinigames.MUNDO) || n.equals(LobbyTerror.MUNDO) || Cosmeticos.noSpawn(p.getLocation()))) return LOBBY;
+                && (n.equals(LobbyMinigames.MUNDO) || n.equals(LobbyTerror.MUNDO) || n.equals("tiro") || Cosmeticos.noSpawn(p.getLocation()))) return LOBBY;
         return grupo(p.getWorld());
     }
 
@@ -88,6 +88,8 @@ final class Mochilas implements Listener {
         List<String> min = pl.getConfig().getStringList("mochilas.mineracao");
         if (min.isEmpty()) min = List.of("mineracao");
         if (min.contains(n)) return "mineracao";
+        // 15/11: o Apocalipse Zumbi e um survival a parte, com mochila propria (armas, municao e sucata ficam la)
+        if (n.equals("zumbi")) return "zumbi";
         // 13/11 (Paulo): os plots sairam das masmorras e agora sao da Prisao (mesma mochila do Rank Up)
         if (n.equalsIgnoreCase(pl.getConfig().getString("mochilas.plots", "plots"))) return "mineracao";
         List<String> surv = pl.getConfig().getStringList("mochilas.survival");

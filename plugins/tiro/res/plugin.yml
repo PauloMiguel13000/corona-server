@@ -1,0 +1,21 @@
+name: CoronaTiro
+version: '1.0'
+main: br.servidor.tiro.Tiro
+api-version: '1.21'
+author: Corona Server
+description: Jogos de tiro do Corona Server - Lobby de Tiro, Apocalipse Zumbi (survival) e Operacao Coroa (co-op estilo Warface).
+softdepend: [AuthMe, Multiverse-Core, BabyPets, Poderes, Geyser-Spigot, floodgate, CoronaPack, GriefPrevention, Extras]
+commands:
+  tiro:
+    description: Lobby dos jogos de tiro
+  zumbi:
+    description: Apocalipse Zumbi (/zumbi, /zumbi sair, /zumbi abrigo, /zumbi loja, /zumbi top)
+    aliases: [apocalipse, zumbis]
+  operacao:
+    description: Operacao Coroa, co-op de tiro (/operacao, /operacao sair, /operacao top)
+    aliases: [warface, coop]
+permissions:
+  tiro.usar:
+    default: true
+  tiro.admin:
+    default: op
