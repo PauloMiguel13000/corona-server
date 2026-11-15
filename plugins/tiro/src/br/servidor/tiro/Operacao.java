@@ -433,6 +433,7 @@ final class Operacao implements Listener {
             arm[3 - i] = it;
         }
         inv.setArmorContents(arm);
+        pl.armas.vestir(p, "sobrevivente");   // 15/11: no Modo Horda todo mundo e sobrevivente (a cor da classe fica no nome e na habilidade)
         p.setHealth(p.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue());
         p.setFoodLevel(20);
         p.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, PotionEffect.INFINITE_DURATION, 0, false, false, false));

@@ -94,7 +94,11 @@ final class Apocalipse implements Listener {
             new Oferta("m:leve", 16, 4), new Oferta("m:pesada", 16, 6), new Oferta("m:cartucho", 8, 6), new Oferta("i:bandagem", 1, 3),
             new Oferta("i:tala", 1, 4), new Oferta("i:pao", 4, 2), new Oferta("i:faca", 1, 10), new Oferta("a:pistola", 1, 15),
             new Oferta("a:smg", 1, 45), new Oferta("a:escopeta", 1, 50), new Oferta("a:fuzil", 1, 80), new Oferta("a:sniper", 1, 120),
-            new Oferta("a:metralhadora", 1, 160)};
+            new Oferta("a:metralhadora", 1, 160),
+            // 15/11: roupas (fileira de baixo): sobrevivente barata, exercito cara
+            new Oferta("u:sobrevivente:helmet", 1, 8), new Oferta("u:sobrevivente:chestplate", 1, 14), new Oferta("u:sobrevivente:leggings", 1, 12),
+            new Oferta("u:sobrevivente:boots", 1, 8), new Oferta("u:exercito:helmet", 1, 22), new Oferta("u:exercito:chestplate", 1, 38),
+            new Oferta("u:exercito:leggings", 1, 32), new Oferta("u:exercito:boots", 1, 22)};
 
     Apocalipse(Tiro pl) {
         this.pl = pl;
@@ -317,6 +321,7 @@ final class Apocalipse implements Listener {
         return switch (p[0]) {
             case "m" -> pl.armas.municao(p[1], o.qtd());
             case "a" -> pl.armas.arma(p[1]);
+            case "u" -> pl.armas.uniforme(p[1], p[2]);
             default -> coisa(p[1], o.qtd());
         };
     }
@@ -780,7 +785,7 @@ final class Apocalipse implements Listener {
             lore.add(Tiro.txt("§eClique para comprar"));
             m.lore(lore);
             it.setItemMeta(m);
-            h.inv.setItem(i < 7 ? i + 1 : i + 4, it);
+            h.inv.setItem(i < 7 ? i + 1 : i < 13 ? i + 4 : i + 5, it);
         }
         h.inv.setItem(22, pl.armas.item("saldo", Material.PRISMARINE_SHARD, "§bSua sucata: §f" + contar(p, "sucata"), 1, "§7Mate infectados e abra barris", "§7de suprimento para juntar mais."));
         p.openInventory(h.inv);
@@ -791,7 +796,7 @@ final class Apocalipse implements Listener {
         if (!(e.getInventory().getHolder() instanceof Loja)) return;
         e.setCancelled(true);
         if (!(e.getWhoClicked() instanceof Player p) || e.getClickedInventory() != e.getInventory()) return;
-        int s = e.getSlot(), i = s >= 1 && s <= 7 ? s - 1 : s >= 11 && s <= 16 ? s - 4 : -1;
+        int s = e.getSlot(), i = s >= 1 && s <= 7 ? s - 1 : s >= 11 && s <= 16 ? s - 4 : s >= 18 && s <= 25 ? s - 5 : -1;
         if (i < 0 || i >= OFERTAS.length) return;
         Oferta o = OFERTAS[i];
         if (contar(p, "sucata") < o.preco()) {

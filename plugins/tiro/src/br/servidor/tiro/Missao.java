@@ -356,10 +356,7 @@ final class Missao implements Listener {
         municao(p);
         if (c == 1) inv.setItem(2, pl.armas.item("kitmed", Material.RED_DYE, "§dKit médico §7(botão direito)", 1, "§7Cura você e quem estiver a 6 blocos.", "§7Recarrega em 18 s."));
         if (c == 2) inv.setItem(2, pl.armas.item("placas", Material.IRON_INGOT, "§ePlacas de blindagem §7(botão direito)", 1, "§7Escudo extra para você e quem estiver a 6 blocos.", "§7Recarrega em 25 s."));
-        inv.setHelmet(new ItemStack(Material.IRON_HELMET));
-        inv.setChestplate(new ItemStack(Material.IRON_CHESTPLATE));
-        inv.setLeggings(new ItemStack(Material.IRON_LEGGINGS));
-        inv.setBoots(new ItemStack(Material.IRON_BOOTS));
+        pl.armas.vestir(p, c == 3 ? "tatico" : "exercito");   // atirador de elite vai de preto; o resto, farda camuflada
         inv.setHeldItemSlot(0);
     }
 
@@ -848,7 +845,7 @@ final class Missao implements Listener {
             ItemStack it = inv.getItem(i);
             if (it == null) continue;
             String id = pl.armas.idItem(it);
-            boolean daMissao = id != null && (id.startsWith("classe") || id.equals("kitmed") || id.equals("placas"));
+            boolean daMissao = id != null && (id.startsWith("classe") || id.startsWith("uniforme_") || id.equals("kitmed") || id.equals("placas"));
             if (daMissao || pl.armas.armaDe(it) != null || pl.armas.municaoDe(it) != null) inv.setItem(i, null);
         }
     }

@@ -137,6 +137,45 @@ final class Armas implements Listener {
         return it;
     }
 
+    /** 15/11 (Paulo: "falta fazer roupas de exercito e de sobrevivencia"): peca de uniforme. conj = exercito | tatico |
+     *  sobrevivente; peca = helmet | chestplate | leggings | boots. Couro tingido para quem nao tem o pacote. */
+    @SuppressWarnings("UnstableApiUsage")
+    ItemStack uniforme(String conj, String peca) {
+        String[] pecas = {"helmet", "chestplate", "leggings", "boots"}, pt = {"elmo", "peitoral", "calca", "botas"};
+        String[] nomes = switch (conj) {
+            case "tatico" -> new String[] {"§8Capacete Tático", "§8Colete Tático", "§8Calça Tática", "§8Coturno Tático"};
+            case "sobrevivente" -> new String[] {"§6Gorro de Sobrevivente", "§6Jaqueta com Mochila", "§6Jeans Remendado", "§6Bota de Trilha"};
+            default -> new String[] {"§2Capacete do Exército", "§2Farda Camuflada com Colete", "§2Calça Camuflada", "§2Coturno"};
+        };
+        int i = java.util.Arrays.asList(pecas).indexOf(peca);
+        if (i < 0) i = 1;
+        Material mat = Material.valueOf("LEATHER_" + pecas[i].toUpperCase(java.util.Locale.ROOT));
+        int cor = conj.equals("tatico") ? 0x26282C : conj.equals("sobrevivente") ? 0x603E24 : 0x4E5F38;
+        double[] def = conj.equals("sobrevivente") ? new double[] {2, 4, 3, 2} : new double[] {2, 6, 5, 2};
+        ItemStack it = item("uniforme_" + conj, mat, nomes[i], 1, conj.equals("sobrevivente") ? "§7Roupa de quem sobreviveu até aqui." : "§7Proteção de soldado.");
+        org.bukkit.inventory.meta.LeatherArmorMeta m = (org.bukkit.inventory.meta.LeatherArmorMeta) it.getItemMeta();
+        m.setColor(org.bukkit.Color.fromRGB(cor));
+        m.setUnbreakable(true);
+        m.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_DYE, org.bukkit.inventory.ItemFlag.HIDE_UNBREAKABLE);
+        org.bukkit.inventory.EquipmentSlot slot = mat.getEquipmentSlot();
+        m.addAttributeModifier(org.bukkit.attribute.Attribute.ARMOR, new org.bukkit.attribute.AttributeModifier(
+                new NamespacedKey(pl, "uniforme_" + pecas[i]), def[i], org.bukkit.attribute.AttributeModifier.Operation.ADD_NUMBER, slot.getGroup()));
+        it.setItemMeta(m);
+        it.setData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL, net.kyori.adventure.key.Key.key("corona", "uniforme/" + conj + "_" + pt[i]));
+        it.setData(io.papermc.paper.datacomponent.DataComponentTypes.EQUIPPABLE, io.papermc.paper.datacomponent.item.Equippable.equippable(slot)
+                .assetId(net.kyori.adventure.key.Key.key("corona", "u" + conj)).build());
+        return it;
+    }
+
+    /** Veste o conjunto inteiro. */
+    void vestir(org.bukkit.entity.Player p, String conj) {
+        var inv = p.getInventory();
+        inv.setHelmet(uniforme(conj, "helmet"));
+        inv.setChestplate(uniforme(conj, "chestplate"));
+        inv.setLeggings(uniforme(conj, "leggings"));
+        inv.setBoots(uniforme(conj, "boots"));
+    }
+
     String idItem(ItemStack it) {
         if (it == null || !it.hasItemMeta()) return null;
         return it.getItemMeta().getPersistentDataContainer().get(kItem, PersistentDataType.STRING);
