@@ -144,12 +144,12 @@ def esp(cs):
     return out
 
 
-def ztanque(at):
+def ztanque(q):
+    at = q == 1
     cs = []
     inc = ('x', -22.5, (8.0, -3.0, 9.0))                                # tronco curvado para a frente
     # pernas curtas e grossas
-    cs += [C('coxa_d', 3.2, 7.4, -11.0, -4.0, 6.2, 11.0, 'calca'), C('canela_d', 3.6, 7.0, -14.6, -10.6, 6.6, 10.4, 'calca'),
-           C('pe_d', 3.2, 7.4, -16.0, -14.2, 4.4, 10.8, 'sapato'), C('joelho_d', 3.9, 6.7, -11.6, -9.6, 5.6, 6.8, 'calca')]
+    pernas(cs, q, afast=2.7, larg=4.0, topo=-4.0, zc=8.6, comp=12.0)
     cs += [C('quadril', 3.0, 13.0, -5.6, -2.0, 5.6, 11.6, 'calca')]
     # tronco: abdomen, peito largo, costas e corcova
     cs += [C('abdomen', 3.0, 13.0, -2.6, 3.4, 4.8, 11.6, 'pele', inc),
@@ -361,11 +361,7 @@ def zchefe(q):
     return cs
 
 
-def _tanque3(q):
-    return ztanque(q == 1)
-
-
-CORPOS = dict(zcomum=zcomum, zcorredor=zcorredor, ztanque=_tanque3, zcuspidor=zcuspidor, zexplosivo=zexplosivo, zchefe=zchefe)
+CORPOS = dict(zcomum=zcomum, zcorredor=zcorredor, ztanque=ztanque, zcuspidor=zcuspidor, zexplosivo=zexplosivo, zchefe=zchefe)
 for k in CORPOS:
     A.PALETAS[k] = {}
 A.cubos = lambda ident, quadro=0: CORPOS[ident](quadro)

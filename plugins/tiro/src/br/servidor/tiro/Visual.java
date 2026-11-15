@@ -46,8 +46,8 @@ import org.joml.Vector3f;
  */
 final class Visual implements Listener {
 
-    static final String URL_PADRAO = "https://corona-server.duckdns.org/pacotes/corona_tiro_java-8d11387743.zip";
-    static final String SHA1_PADRAO = "8d11387743abc60adc3d7bea34ddbd1bf95811ac";
+    static final String URL_PADRAO = "https://corona-server.duckdns.org/pacotes/corona_tiro_java-25b15147b6.zip";
+    static final String SHA1_PADRAO = "25b15147b6e43975068a7dc90bdd76fadfc84cc0";
     private static final UUID ID = UUID.nameUUIDFromBytes("corona-tiro-pack".getBytes(StandardCharsets.UTF_8));
 
     private final Tiro pl;
@@ -55,6 +55,7 @@ final class Visual implements Listener {
     private final Map<UUID, ItemDisplay> modelos = new HashMap<>();
     private final Map<UUID, Integer> quadros = new HashMap<>();
     private final Map<UUID, Location> ultimo = new HashMap<>();
+    private final Map<UUID, Float> escalas = new HashMap<>();
     private final Map<UUID, Long> ultimoGolpe = new HashMap<>();
     private int conta;
 
@@ -166,6 +167,10 @@ final class Visual implements Listener {
                 Location l = z.getLocation();
                 l.setYaw(z.getBodyYaw());
                 l.setPitch(0);
+                // o modelo fica um pouco para tras do zumbi: colado no jogador ele nao engole a camera
+                double recuo = 0.4 * escalas.getOrDefault(z.getUniqueId(), 0.92f);
+                double rad = Math.toRadians(l.getYaw());
+                l.add(Math.sin(rad) * recuo, 0, -Math.cos(rad) * recuo);
                 LivingEntity alvo = z.getTarget();
                 // quadro: 1 = atacando (alvo colado); andando alterna 0 e 2 (os dois passos); parado fica no 0
                 Location antes = ultimo.put(u, l.clone());
@@ -177,6 +182,7 @@ final class Visual implements Listener {
                 if (novo) {
                     var esc = z.getAttribute(Attribute.SCALE);
                     float e = (float) ((esc == null ? 1.0 : esc.getBaseValue()) * 0.92);
+                    escalas.put(u, e);
                     final int fq = q;
                     d = w.spawn(l, ItemDisplay.class, x -> {
                         x.setItemStack(item(t, fq));
@@ -221,6 +227,7 @@ final class Visual implements Listener {
                 if (en.getValue().isValid()) en.getValue().remove();
                 quadros.remove(en.getKey());
                 ultimo.remove(en.getKey());
+                escalas.remove(en.getKey());
                 i.remove();
             }
         }
@@ -260,6 +267,7 @@ final class Visual implements Listener {
         ItemDisplay d = modelos.remove(z.getUniqueId());
         quadros.remove(z.getUniqueId());
         ultimo.remove(z.getUniqueId());
+        escalas.remove(z.getUniqueId());
         if (d == null) return;
         if (d.isValid()) d.remove();
         Location l = z.getLocation().add(0, z.getHeight() * 0.5, 0);
