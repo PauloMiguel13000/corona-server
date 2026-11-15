@@ -2,59 +2,41 @@ package br.servidor.tiro;
 
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.HexFormat;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.kyori.adventure.key.Key;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.Particle;
-import org.bukkit.Sound;
 import org.bukkit.World;
-import org.bukkit.attribute.Attribute;
-import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.ItemDisplay;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Zombie;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.RayTraceResult;
-import org.bukkit.util.Transformation;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
 
 /**
- * Texturas dos jogos de tiro (15/11): um pacote pequeno so deles (armas desenhadas e os infectados em 3D), separado
- * do pacote principal. Java recebe por link ao entrar (sem obrigar); Bedrock recebe pelo CoronaPack (pacotes-fora).
- * Quem tem o pacote ve o modelo 3D do infectado (ItemDisplay que anda junto) e a arma desenhada; quem nao tem
- * continua vendo o zumbi do jogo e a enxada. Para quem ve o 3D o zumbi de verdade fica escondido, entao o golpe
- * de perto (faca, soco) e o som de dor sao feitos aqui.
+ * Texturas dos jogos de tiro (15/11): um pacote pequeno so deles (armas desenhadas e a pele de cada infectado),
+ * separado do pacote principal. Java recebe por link ao entrar (sem obrigar); Bedrock recebe pelo CoronaPack.
+ * O infectado e o zumbi de verdade do jogo (anda e ataca animado) vestindo 4 pecas cuja textura e a pele do tipo.
+ * Quem nao tem o pacote ve couro tingido no lugar (mandado so para ele) e a arma como enxada.
  */
 final class Visual implements Listener {
 
-    static final String URL_PADRAO = "https://corona-server.duckdns.org/pacotes/corona_tiro_java-de43a3d86d.zip";
-    static final String SHA1_PADRAO = "de43a3d86d83d0a7664f69692d8d1d6affb34338";
+    static final String URL_PADRAO = "https://corona-server.duckdns.org/pacotes/corona_tiro_java-383ceeafd3.zip";
+    static final String SHA1_PADRAO = "383ceeafd343680ae02419dc5f7c2d46617297a8";
     private static final UUID ID = UUID.nameUUIDFromBytes("corona-tiro-pack".getBytes(StandardCharsets.UTF_8));
 
     private final Tiro pl;
     private final Set<UUID> comPacote = ConcurrentHashMap.newKeySet();
-    private final Map<UUID, ItemDisplay> modelos = new HashMap<>();
-    private final Map<UUID, Integer> quadros = new HashMap<>();
-    private final Map<UUID, Long> ultimoGolpe = new HashMap<>();
     private int conta;
 
     Visual(Tiro pl) {
@@ -110,7 +92,6 @@ final class Visual implements Listener {
     @EventHandler
     public void saiu(PlayerQuitEvent e) {
         comPacote.remove(e.getPlayer().getUniqueId());
-        ultimoGolpe.remove(e.getPlayer().getUniqueId());
     }
 
     // ------------------------------------------------------------------ arma desenhada
@@ -134,148 +115,64 @@ final class Visual implements Listener {
         }
     }
 
-    // ------------------------------------------------------------------ infectados em 3D
+    // ------------------------------------------------------------------ pele dos infectados
 
+    private static final Map<EquipmentSlot, String> PECAS = Map.of(EquipmentSlot.HEAD, "elmo", EquipmentSlot.CHEST, "peitoral",
+            EquipmentSlot.LEGS, "calca", EquipmentSlot.FEET, "botas");
+    private static final Map<EquipmentSlot, Material> COURO = Map.of(EquipmentSlot.HEAD, Material.LEATHER_HELMET, EquipmentSlot.CHEST, Material.LEATHER_CHESTPLATE,
+            EquipmentSlot.LEGS, Material.LEATHER_LEGGINGS, EquipmentSlot.FEET, Material.LEATHER_BOOTS);
+
+    /** Veste o infectado com a pele do tipo dele: 4 pecas de couro cuja "armadura" e a textura corona:z<tipo> do pacote. */
     @SuppressWarnings("UnstableApiUsage")
-    private static ItemStack item(Zumbis.Tipo t, int q) {
-        ItemStack it = new ItemStack(Material.LEATHER_HELMET);   // no Bedrock o Geyser (corona-tiro.json) troca pelo item 3D
-        it.setData(DataComponentTypes.ITEM_MODEL, Key.key("corona", "props/anim_z" + t.name().toLowerCase() + "_f" + q));
-        return it;
+    void vestir(Zombie z, Zumbis.Tipo t) {
+        if (!ligado()) return;
+        String tipo = t.name().toLowerCase();
+        var eq = z.getEquipment();
+        for (var en : PECAS.entrySet()) {
+            ItemStack it = new ItemStack(COURO.get(en.getKey()));
+            it.setData(DataComponentTypes.ITEM_MODEL, Key.key("corona", "zumbi/" + tipo + "_" + en.getValue()));
+            it.setData(DataComponentTypes.EQUIPPABLE, io.papermc.paper.datacomponent.item.Equippable.equippable(en.getKey())
+                    .assetId(Key.key("corona", "z" + tipo)).build());
+            eq.setItem(en.getKey(), it);
+            eq.setDropChance(en.getKey(), 0f);
+        }
     }
 
-    private static Transformation forma(float e) {
-        return new Transformation(new Vector3f(0, 1.5f * e, 0), new Quaternionf(), new Vector3f(e, e, e), new Quaternionf());
+    /** Roupa de couro tingida que quem NAO tem o pacote ve no lugar da pele (so para ele). */
+    private ItemStack simples(EquipmentSlot s, Zumbis.Tipo t) {
+        ItemStack it = new ItemStack(COURO.get(s));
+        org.bukkit.inventory.meta.LeatherArmorMeta m = (org.bukkit.inventory.meta.LeatherArmorMeta) it.getItemMeta();
+        m.setColor(org.bukkit.Color.fromRGB(switch (t) {
+            case CORREDOR -> 0xB02020;
+            case TANQUE -> 0x70747C;
+            case CUSPIDOR -> 0x58C030;
+            case EXPLOSIVO -> 0xE0C020;
+            case CHEFE -> 0x1A1820;
+            default -> 0x3A6090;
+        }));
+        it.setItemMeta(m);
+        return it;
     }
 
     private void tique() {
         conta++;
-        boolean rever = conta % 20 == 0;
-        if (!ligado()) {
-            if (!modelos.isEmpty()) limpar();
-            return;
-        }
+        if (conta % 40 != 0 || !ligado()) return;
         for (World w : Bukkit.getWorlds()) {
             if (!pl.mundoDeTiro(w)) continue;
-            if (w.getPlayers().isEmpty()) continue;
-            if (rever) for (Player p : w.getPlayers()) armas(p);
-            for (Zombie z : w.getEntitiesByClass(Zombie.class)) {
-                Zumbis.Tipo t = pl.zumbis.tipo(z);
-                if (t == null || z.isDead() || !z.isValid()) continue;
-                UUID u = z.getUniqueId();
-                Location l = z.getLocation();
-                l.setYaw(z.getBodyYaw());
-                l.setPitch(0);
-                LivingEntity alvo = z.getTarget();
-                int q = alvo != null && alvo.getWorld() == w && alvo.getLocation().distanceSquared(l) < 7.0 ? 1 : 0;
-                ItemDisplay d = modelos.get(u);
-                boolean novo = d == null || !d.isValid();
-                if (novo) {
-                    var esc = z.getAttribute(Attribute.SCALE);
-                    float e = (float) ((esc == null ? 1.0 : esc.getBaseValue()) * 0.92);
-                    final int fq = q;
-                    d = w.spawn(l, ItemDisplay.class, x -> {
-                        x.setItemStack(item(t, fq));
-                        x.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
-                        x.setBillboard(Display.Billboard.FIXED);
-                        x.setTransformation(forma(e));
-                        x.setViewRange(1.6f);
-                        x.setShadowRadius(0f);
-                        x.setTeleportDuration(2);
-                        x.setPersistent(false);
-                        x.setVisibleByDefault(false);
-                    });
-                    modelos.put(u, d);
-                    quadros.put(u, q);
-                } else {
-                    Location m = d.getLocation();
-                    double dist = m.distanceSquared(l);
-                    if (dist > 0.0001 || Math.abs(m.getYaw() - l.getYaw()) > 0.5f) {
-                        d.setTeleportDuration(dist > 9 ? 0 : 2);
-                        d.teleport(l);
-                    }
-                    if (quadros.getOrDefault(u, 0) != q) {
-                        d.setItemStack(item(t, q));
-                        quadros.put(u, q);
-                    }
-                }
-                if (d.isGlowing() != z.isGlowing()) d.setGlowing(z.isGlowing());
-                if (novo || rever) {
-                    for (Player p : w.getPlayers()) {
-                        boolean tres = tem(p);
-                        ver(p, d, tres);
-                        ver(p, z, !tres);
-                    }
+            for (Player p : w.getPlayers()) {
+                armas(p);
+                if (tem(p)) continue;
+                // sem o pacote a pele apareceria como textura que falta: este jogador ve couro tingido
+                for (Entity e : p.getNearbyEntities(48, 32, 48)) {
+                    if (!(e instanceof Zombie z)) continue;
+                    Zumbis.Tipo t = pl.zumbis.tipo(z);
+                    if (t == null) continue;
+                    for (EquipmentSlot s : PECAS.keySet()) p.sendEquipmentChange(z, s, s == EquipmentSlot.HEAD ? new ItemStack(Material.AIR) : simples(s, t));
                 }
             }
         }
-        if (rever) {
-            for (Iterator<Map.Entry<UUID, ItemDisplay>> i = modelos.entrySet().iterator(); i.hasNext(); ) {
-                Map.Entry<UUID, ItemDisplay> en = i.next();
-                Entity z = Bukkit.getEntity(en.getKey());
-                if (z != null && z.isValid() && !z.isDead() && en.getValue().isValid()) continue;
-                if (en.getValue().isValid()) en.getValue().remove();
-                quadros.remove(en.getKey());
-                i.remove();
-            }
-        }
-    }
-
-    private void ver(Player p, Entity e, boolean sim) {
-        if (e == null || !e.isValid() || sim == p.canSee(e)) return;
-        if (sim) p.showEntity(pl, e);
-        else p.hideEntity(pl, e);
     }
 
     void limpar() {
-        for (ItemDisplay d : modelos.values()) if (d.isValid()) d.remove();
-        modelos.clear();
-        quadros.clear();
-        for (World w : Bukkit.getWorlds()) {
-            if (!pl.mundoDeTiro(w)) continue;
-            for (Zombie z : w.getEntitiesByClass(Zombie.class)) for (Player p : w.getPlayers()) if (!p.canSee(z)) p.showEntity(pl, z);
-        }
-    }
-
-    /** Quem ve o 3D nao recebe o som de dor do zumbi escondido: toca daqui. */
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void dor(EntityDamageEvent e) {
-        if (!(e.getEntity() instanceof Zombie z) || pl.zumbis.tipo(z) == null || e.getFinalDamage() <= 0) return;
-        Location l = z.getLocation().add(0, z.getHeight() * 0.6, 0);
-        for (Player p : z.getWorld().getPlayers()) {
-            if (p.canSee(z) || p.getLocation().distanceSquared(l) > 900) continue;
-            p.playSound(l, Sound.ENTITY_ZOMBIE_HURT, 0.9f, 0.8f + (float) Math.random() * 0.3f);
-            p.spawnParticle(Particle.DAMAGE_INDICATOR, l, 3, 0.2, 0.3, 0.2, 0.05);
-        }
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void morte(EntityDeathEvent e) {
-        if (!(e.getEntity() instanceof Zombie z) || pl.zumbis.tipo(z) == null) return;
-        ItemDisplay d = modelos.remove(z.getUniqueId());
-        quadros.remove(z.getUniqueId());
-        if (d == null) return;
-        if (d.isValid()) d.remove();
-        Location l = z.getLocation().add(0, z.getHeight() * 0.5, 0);
-        for (Player p : z.getWorld().getPlayers()) {
-            if (p.canSee(z) || p.getLocation().distanceSquared(l) > 1600) continue;
-            p.playSound(l, Sound.ENTITY_ZOMBIE_DEATH, 1f, 0.85f);
-            p.spawnParticle(Particle.BLOCK, l, 24, 0.3, 0.5, 0.3, 0, Material.REDSTONE_BLOCK.createBlockData());
-            p.spawnParticle(Particle.POOF, l, 8, 0.3, 0.5, 0.3, 0.02);
-        }
-    }
-
-    /** Golpe de perto de quem ve o 3D (o zumbi de verdade esta escondido para ele, o clique nao chega no bicho). */
-    @EventHandler(ignoreCancelled = true)
-    public void golpe(io.papermc.paper.event.player.PlayerArmSwingEvent e) {
-        Player p = e.getPlayer();
-        if (e.getHand() != org.bukkit.inventory.EquipmentSlot.HAND || !pl.mundoDeTiro(p.getWorld()) || !tem(p)) return;
-        if (pl.armas.armaDe(p.getInventory().getItemInMainHand()) != null) return;   // com arma de fogo, esquerdo = recarregar
-        long agora = System.currentTimeMillis();
-        if (agora - ultimoGolpe.getOrDefault(p.getUniqueId(), 0L) < 250) return;
-        RayTraceResult r = p.getWorld().rayTrace(p.getEyeLocation(), p.getEyeLocation().getDirection(), 3.2, org.bukkit.FluidCollisionMode.NEVER, true, 0.25,
-                x -> x instanceof Zombie zz && pl.zumbis.tipo(zz) != null && !zz.isDead() && !p.canSee(zz));
-        if (r == null || !(r.getHitEntity() instanceof Zombie z)) return;
-        ultimoGolpe.put(p.getUniqueId(), agora);
-        p.attack(z);
     }
 }

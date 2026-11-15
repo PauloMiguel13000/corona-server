@@ -154,6 +154,7 @@ final class Zumbis implements Listener {
                     // slot que zumbi nao tem
                 }
             }
+            if (pl.visual != null) pl.visual.vestir(z, t);
         });
     }
 
