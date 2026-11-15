@@ -101,6 +101,9 @@ public final class Mineracao extends JavaPlugin implements Listener {
 
     // sala de encantamentos
     static final int ENC_Z = -120;
+    /** 15/11 (Paulo: "uma area em que o pessoal so foque em pvp"): Arena PvP, so luta, quem morre NAO perde os itens. */
+    static final int ARENA_Z = -185, ARENA_R = 17, ARENA_V = 1;
+    private final Map<UUID, Long> protegidoAte = new HashMap<>();
 
     @Override
     public void onEnable() {
@@ -172,10 +175,26 @@ public final class Mineracao extends JavaPlugin implements Listener {
         }
         portaisPatio.add(new Portal(10, H, 's', "pvp", "§4§l⚔ MINA PVP ⚔\n§c§lAQUI TEM PVP!", "§cOutros jogadores podem te matar\n§cquem morre §4§lPERDE OS ITENS\n§8rank " + RANKS[minas.get(12).rank].letra(), "minecraft:redstone_block"));
         portaisPatio.add(new Portal(20, H, 's', "enc", "§d§lENCANTAMENTOS", "§7mesas, bigornas e rebolo", "minecraft:amethyst_block"));
+        portaisPatio.add(new Portal(0, H, 's', "arena", "§c§l⚔ ARENA PVP ⚔", "§7só luta, sem minerar\n§aquem morre NÃO perde os itens", "minecraft:redstone_block"));
         portaisPatio.add(new Portal(-H, 0, 'o', "saida", "§a§lSAÍDA", "§7volta para o spawn", "minecraft:emerald_block"));
 
         criarMundo();
         if (mundo == null) { getLogger().severe("Nao consegui criar o mundo da mineracao."); return; }
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            if (mundo == null || getConfig().getInt("arena-construida", 0) >= ARENA_V) return;
+            try {
+                construirArena();
+                for (Portal pt : portaisPatio) if (pt.acao().equals("arena")) construirPortal(pt);
+                oficina();
+                texto(new Location(mundo, -8.8, PISO + 3.4, ENC_Z + 2.5), "§e§lBANCADAS\n§7faça espada, armadura e blocos", 0.7f);
+                texto(new Location(mundo, 9.8, PISO + 3.4, ENC_Z + 2.5), "§6§lFORNALHAS\n§7derreta o minério bruto", 0.7f);
+                getConfig().set("arena-construida", ARENA_V);
+                saveConfig();
+                getLogger().info("Arena PvP da Prisao construida (portal no meio da parede sul do patio) + bancadas e fornalhas.");
+            } catch (Throwable t) {
+                getLogger().warning("Arena PvP: " + t);
+            }
+        }, 100L);
         if (getConfig().getInt("construido", 0) < VERSAO_CONSTRUCAO) {
             int v = getConfig().getInt("construido", 0);
             construirTudo(v);
@@ -196,7 +215,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         carregarTop();
         Bukkit.getScheduler().runTaskTimer(this, this::avisoDourada, 200L, 600L);
         Bukkit.getScheduler().runTaskTimer(this, this::atualizarPainel, 100L, 1200L);
-        Bukkit.getScheduler().runTaskTimer(this, () -> { consertarBigornas(); consertarPortais(); }, 600L, 6000L);
+        Bukkit.getScheduler().runTaskTimer(this, () -> { consertarBigornas(); consertarPortais(); }, 600L, 600L);
         Bukkit.getScheduler().runTaskTimer(this, this::varrerItens, 100L, 100L);
         Bukkit.getScheduler().runTaskTimer(this, () -> {
             long agora = System.currentTimeMillis();
@@ -263,6 +282,65 @@ public final class Mineracao extends JavaPlugin implements Listener {
     }
 
     Location patio() { return new Location(mundo, 0.5, PISO + 1, 14.5, 180, 0); }
+    boolean naArena(Location l) {
+        return l.getWorld() == mundo && Math.abs(l.getX() - 0.5) <= ARENA_R + 0.5 && Math.abs(l.getZ() - (ARENA_Z + 0.5)) <= ARENA_R + 0.5 && l.getY() > PISO - 2 && l.getY() < PISO + 14;
+    }
+
+    void irArena(Player p) {
+        double a = Math.random() * Math.PI * 2;
+        Location l = new Location(mundo, 0.5 + Math.cos(a) * (ARENA_R - 4), PISO + 1, ARENA_Z + 0.5 + Math.sin(a) * (ARENA_R - 4));
+        l.setYaw((float) Math.toDegrees(Math.atan2(-(0.5 - l.getX()), ARENA_Z + 0.5 - l.getZ())));
+        p.teleport(l);
+        protegidoAte.put(p.getUniqueId(), System.currentTimeMillis() + 4000);
+        p.playSound(p.getLocation(), Sound.ITEM_TRIDENT_RETURN, 0.8f, 0.8f);
+        p.showTitle(Title.title(txt("§c§l⚔ ARENA PVP ⚔"), txt("§7Protegido por 4 s • §aquem morre não perde os itens"), Title.Times.times(Duration.ofMillis(200), Duration.ofSeconds(2), Duration.ofMillis(400))));
+        p.sendMessage(txt("§c⚔ Arena PvP: §7aqui é só luta. Sair: portal verde na parede sul ou §e/minas centro§7. Espada, arco e escudo na §eloja§7."));
+    }
+
+    /** Arena: chao de areia e pedra, muro com grade, 8 pilares de cobertura, portal de volta na parede sul. */
+    private void construirArena() {
+        int R = ARENA_R;
+        java.util.Random r = new java.util.Random(7);
+        for (int x = -R - 1; x <= R + 1; x++)
+            for (int z = ARENA_Z - R - 1; z <= ARENA_Z + R + 1; z++) {
+                boolean borda = Math.abs(x) == R + 1 || Math.abs(z - ARENA_Z) == R + 1;
+                for (int y = PISO - 2; y <= PISO + 9; y++) {
+                    String b;
+                    if (y < PISO) b = "minecraft:deepslate_bricks";
+                    else if (y == PISO) b = borda ? "minecraft:deepslate_bricks" : Math.hypot(x, z - ARENA_Z) < 3.5 ? "minecraft:red_sandstone" : r.nextInt(6) == 0 ? "minecraft:coarse_dirt" : r.nextInt(5) == 0 ? "minecraft:smooth_sandstone" : "minecraft:sand";
+                    else if (borda) b = y <= PISO + 4 ? (y == PISO + 3 ? "minecraft:chiseled_stone_bricks" : "minecraft:stone_bricks") : y <= PISO + 6 ? "minecraft:iron_bars" : "minecraft:air";
+                    else b = "minecraft:air";
+                    por(x, y, z, b);
+                }
+                if (!borda) por(x, PISO - 1, z, "minecraft:sandstone");
+            }
+        for (int k = 0; k < 8; k++) {
+            double a = Math.toRadians(22.5 + k * 45);
+            int px = (int) Math.round(Math.cos(a) * (k % 2 == 0 ? 9 : 5)), pz = ARENA_Z + (int) Math.round(Math.sin(a) * (k % 2 == 0 ? 9 : 5));
+            for (int y = 1; y <= (k % 2 == 0 ? 3 : 2); y++) for (int dx = 0; dx <= (k % 2 == 0 ? 1 : 0); dx++) por(px + dx, PISO + y, pz, y == 3 ? "minecraft:stone_brick_slab" : "minecraft:cracked_stone_bricks");
+        }
+        for (int x = -R + 3; x <= R - 3; x += 7) for (int z = ARENA_Z - R + 3; z <= ARENA_Z + R - 3; z += 7) if (mundo.getBlockAt(x, PISO + 6, z).getType().isAir()) por(x, PISO + 6, z, "minecraft:light[level=15]");
+        for (int[] c : new int[][]{{-R, -R}, {R, -R}, {-R, R}, {R, R}}) { por(c[0], PISO + 5, ARENA_Z + c[1], "minecraft:stone_bricks"); por(c[0], PISO + 6, ARENA_Z + c[1], "minecraft:lantern[hanging=false]"); }
+        // portal de volta (parede sul), igual ao da sala de encantamentos
+        int zp = ARENA_Z + R + 1;
+        for (int sx = -2; sx <= 2; sx++)
+            for (int y = PISO; y <= PISO + 7; y++) {
+                boolean miolo = Math.abs(sx) <= 1 && y >= PISO + 1 && y <= PISO + 5;
+                por(sx, y, zp, miolo ? "minecraft:nether_portal[axis=x]" : y == PISO + 7 && sx == 0 ? "minecraft:emerald_block" : y == PISO + 6 ? "minecraft:chiseled_polished_blackstone" : "minecraft:polished_blackstone_bricks");
+            }
+        texto(new Location(mundo, 0.5, PISO + 7.6, zp - 1.2), "§a§l◀ VOLTAR AO PÁTIO", 1.0f);
+        texto(new Location(mundo, 0.5, PISO + 7.5, ARENA_Z + 0.5), "§c§l⚔ ARENA PVP ⚔\n§7só luta • §aquem morre não perde os itens\n§8matar vale $ e conta na sequência", 1.2f);
+    }
+
+    /** Bancadas e fornalhas na Sala de Encantamentos (recolocadas junto com as bigornas). */
+    private void oficina() {
+        for (int k = 1; k <= 3; k++) {
+            por(-10, PISO + 1, ENC_Z + k, "minecraft:crafting_table");
+            por(10, PISO + 1, ENC_Z + k, "minecraft:furnace[facing=west,lit=false]");
+        }
+        por(-10, PISO + 1, ENC_Z + 4, "minecraft:smithing_table");
+    }
+
     Location salaEnc() { return new Location(mundo, 0.5, PISO + 1, ENC_Z + 8.5, 180, 0); }
 
     private void por(World w, int x, int y, int z, String b) { w.getBlockAt(x, y, z).setBlockData(Bukkit.createBlockData(b), false); }
@@ -526,11 +604,14 @@ public final class Mineracao extends JavaPlugin implements Listener {
     }
 
     /** Portais sem moldura de obsidiana podem sumir com uma atualizacao de bloco: recoloca o miolo (so em chunk carregado). */
+    private boolean portalSpawnVisto;
+
     void consertarPortais() {
         if (mundo == null) return;
         int n = 0;
         List<Portal> todos = new ArrayList<>(portaisPatio);
         todos.add(new Portal(0, ENC_Z + 11, 's', "patio", "", "", ""));
+        if (getConfig().getInt("arena-construida", 0) >= ARENA_V) todos.add(new Portal(0, ARENA_Z + ARENA_R + 1, 's', "patio", "", "", ""));
         for (Portal pt : todos) {
             boolean eixoX = pt.parede() == 'n' || pt.parede() == 's';
             for (int s = -1; s <= 1; s++) for (int y = PISO + 1; y <= PISO + 5; y++) n += miolo(mundo, eixoX ? pt.x() + s : pt.x(), y, eixoX ? pt.z() : pt.z() + s, eixoX);
@@ -540,7 +621,10 @@ public final class Mineracao extends JavaPlugin implements Listener {
             World w = Bukkit.getWorld(getConfig().getString("portal-spawn.mundo", "world"));
             int cx = getConfig().getInt("portal-spawn.x", 15), z = getConfig().getInt("portal-spawn.z", -29), y0 = getConfig().getInt("portal-spawn.y", 122);
             // 15/11: o spawn principal foi refeito e levou o portal junto ("o rankup sumiu"): sem a moldura, faz de novo
-            if (w != null && w.isChunkLoaded(cx >> 4, z >> 4) && w.getBlockAt(cx - 2, y0 + 1, z).getType().isAir() && w.getBlockAt(cx + 2, y0 + 1, z).getType().isAir()) {
+            if (w != null && !portalSpawnVisto) w.getChunkAt(cx >> 4, z >> 4).load(true);   // a primeira conferida nao depende de ter gente no spawn
+            portalSpawnVisto = true;
+            if (w != null && w.isChunkLoaded(cx >> 4, z >> 4) && (w.getBlockAt(cx - 2, y0 + 1, z).getType() != Material.POLISHED_BLACKSTONE_BRICKS
+                    || w.getBlockAt(cx + 2, y0 + 1, z).getType() != Material.POLISHED_BLACKSTONE_BRICKS || w.getBlockAt(cx, y0 + 6, z).getType().isAir())) {
                 for (int s = -3; s <= 3; s++) for (int y = y0 + 1; y <= y0 + 9; y++) w.getBlockAt(cx + s, y, z).setType(Material.AIR, false);
                 for (Entity en : w.getNearbyEntities(new Location(w, cx + 0.5, y0 + 6, z + 0.5), 4, 6, 3)) if (en instanceof TextDisplay && en.getPersistentDataContainer().has(kEnfeite, PersistentDataType.STRING)) en.remove();
                 getConfig().set("portal-spawn.feito", false);
@@ -564,6 +648,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         por(-8, PISO + 1, ENC_Z + 6, "minecraft:anvil[facing=east]");
         por(8, PISO + 1, ENC_Z + 6, "minecraft:anvil[facing=west]");
         for (int x : new int[]{-8, -6, -4}) por(x, PISO + 1, ENC_Z - 8, "minecraft:anvil[facing=south]");
+        if (getConfig().getInt("arena-construida", 0) >= ARENA_V) oficina();
         if (getConfig().getInt("construido", 0) >= 7)
             for (int[] b : new int[][]{{-13, -10}, {-13, -8}}) por(b[0], PISO + 1, b[1], "minecraft:anvil[facing=north]");
     }
@@ -1262,6 +1347,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void semFabricar(org.bukkit.event.inventory.CraftItemEvent e) {
         if (e.getWhoClicked().getWorld() != mundo || admin((Player) e.getWhoClicked())) return;
+        if (getConfig().getBoolean("fabricar-liberado", true)) return;   // 15/11 (Paulo): bancadas na Prisao para fazer espada e armadura
         e.setCancelled(true);
         e.getWhoClicked().sendMessage(txt("§cNa Prisão não dá para fabricar itens. Venda o minério com §e/vender§c."));
     }
@@ -1292,6 +1378,12 @@ public final class Mineracao extends JavaPlugin implements Listener {
         if (a == null || a == v) return;
         Mina mv = minaDaArea(v.getLocation()), ma = minaDaArea(a.getLocation());
         if (mv != null && mv.pvp && ma == mv) return;
+        if (naArena(v.getLocation()) && naArena(a.getLocation())) {
+            long agora = System.currentTimeMillis();
+            if (protegidoAte.getOrDefault(v.getUniqueId(), 0L) > agora) { e.setCancelled(true); a.sendActionBar(txt("§7Ele acabou de entrar: protegido por uns segundos.")); return; }
+            protegidoAte.remove(a.getUniqueId());   // quem bate perde a protecao
+            return;
+        }
         e.setCancelled(true);
     }
 
@@ -1303,6 +1395,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         if (a == null || a == v) return;
         Mina mv = minaDaArea(v.getLocation()), ma = minaDaArea(a.getLocation());
         if (mv != null && mv.pvp && ma == mv) e.setCancelled(false);
+        else if (naArena(v.getLocation()) && naArena(a.getLocation()) && protegidoAte.getOrDefault(v.getUniqueId(), 0L) <= System.currentTimeMillis()) e.setCancelled(false);
     }
 
     @EventHandler
@@ -1351,7 +1444,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         if (noTapete(to)) {
             if (!noTapete(e.getFrom()) && !esperando(p, 1500)) {
                 boolean tem = false;
-                for (ItemStack it : p.getInventory().getStorageContents()) if (marcado(it)) { tem = true; break; }
+                for (ItemStack it : p.getInventory().getStorageContents()) if (it != null && precos.containsKey(it.getType())) { tem = true; break; }
                 if (tem) vender(p);
                 else p.sendActionBar(txt("§2⛏ Tapete de venda: §7pise aqui com minério no inventário para vender"));
             }
@@ -1368,6 +1461,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
         if (esperando(p, 1500)) return;
         // portal de volta (minas e sala de encantamentos)
         if (to.getBlockZ() == ENC_Z + 11 && Math.abs(to.getBlockX()) <= 1) { irPatio(p); return; }
+        if (to.getBlockZ() == ARENA_Z + ARENA_R + 1 && Math.abs(to.getBlockX()) <= 1) { irPatio(p); return; }
         Mina m = minaDaArea(to);
         if (m != null) { irPatio(p); return; }
         for (Mina mp : minas) if (mp.pvp && to.getBlockZ() == mp.zVolta() && Math.abs(to.getBlockX() - mp.cx) <= 1) { irPatio(p); return; }
@@ -1377,6 +1471,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
             if (!dentro) continue;
             switch (pt.acao()) {
                 case "saida" -> sair(p);
+                case "arena" -> irArena(p);
                 case "enc" -> { p.teleport(salaEnc()); p.playSound(p.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 0.8f, 1f); }
                 default -> {
                     Mina mm = mina(pt.acao());
@@ -1470,6 +1565,18 @@ public final class Mineracao extends JavaPlugin implements Listener {
         e.getDrops().clear();
         e.setKeepLevel(true);
         e.setDroppedExp(0);
+        if (naArena(p.getLocation())) {
+            Player k = p.getKiller();
+            e.deathMessage(txt("§c⚔ " + p.getName() + " §7perdeu na §cArena PvP" + (k != null ? " §7para §c" + k.getName() : "") + "§7."));
+            if (k != null && k != p && k.getWorld() == mundo) {
+                long v = 60L * (rank(p) + 1);
+                setDinheiro(k, dinheiro(k) + v);
+                missoes.somar(k, Missoes.Tipo.PVP, 1);
+                k.sendMessage(txt("§c⚔ §7Você venceu §f" + p.getName() + " §7na Arena e ganhou " + din(v) + "§7."));
+                k.playSound(k.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.6f);
+                k.setHealth(Math.min(k.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue(), k.getHealth() + 8));
+            }
+        }
     }
 
     private final Map<UUID, Integer> sequencia = new HashMap<>();
@@ -1923,7 +2030,9 @@ public final class Mineracao extends JavaPlugin implements Listener {
         ItemStack[] cont = p.getInventory().getStorageContents();
         for (int i = 0; i < cont.length; i++) {
             ItemStack s = cont[i];
-            if (s == null || !marcado(s)) continue;
+            // 15/11 (Paulo: "so vende quando esta em 64"): parte dos minerios chegava sem a marca (pilhas quebradas) e
+            // nao vendia. A mochila da Prisao e a parte, entao la dentro vende tudo o que tem preco, de 1 em diante.
+            if (s == null || !(marcado(s) || p.getWorld() == mundo)) continue;
             Double pr = precos.get(s.getType());
             if (pr == null) continue;
             total += pr * s.getAmount();
@@ -2034,16 +2143,24 @@ public final class Mineracao extends JavaPlugin implements Listener {
             new Oferta(12, Material.DIAMOND_PICKAXE, 1, "§bPicareta de Diamante", 3000),
             new Oferta(14, Material.LAPIS_LAZULI, 8, "§9Lápis-lazúli x8", 60),
             new Oferta(15, Material.LAPIS_LAZULI, 32, "§9Lápis-lazúli x32", 220),
-            new Oferta(16, Material.LAPIS_LAZULI, 64, "§9Lápis-lazúli x64", 400)};
+            new Oferta(16, Material.LAPIS_LAZULI, 64, "§9Lápis-lazúli x64", 400),
+            // 15/11 (Paulo: "nao tem espada a venda para o pessoal ir na mina pvp"): fileira de combate
+            new Oferta(1, Material.IRON_SWORD, 1, "§fEspada de Ferro", 350),
+            new Oferta(2, Material.DIAMOND_SWORD, 1, "§bEspada de Diamante", 2800),
+            new Oferta(3, Material.BOW, 1, "§fArco", 400),
+            new Oferta(4, Material.ARROW, 32, "§fFlechas x32", 120),
+            new Oferta(5, Material.SHIELD, 1, "§fEscudo", 300),
+            new Oferta(6, Material.COOKED_BEEF, 16, "§fBife x16", 80),
+            new Oferta(7, Material.STICK, 16, "§fGravetos x16 §7(para fabricar)", 40)};
 
     void abrirLoja(Player p) {
         if (p.getWorld() != mundo) { p.sendMessage(txt("§cA loja de picaretas fica dentro da Prisão.")); return; }
         Tela h = new Tela("loja");
-        Inventory inv = Bukkit.createInventory(h, 27, txt("§8⛏ Loja • picaretas e lápis • $" + fmt(dinheiro(p))));
+        Inventory inv = Bukkit.createInventory(h, 27, txt("§8⛏ Loja • picaretas, armas e lápis • $" + fmt(dinheiro(p))));
         h.inv = inv;
         long tem = dinheiro(p);
         for (Oferta o : LOJA) {
-            ItemStack it = item(o.m(), o.nome(), "§7Preço: " + din(o.preco()), o.m() == Material.LAPIS_LAZULI ? "§7Use na mesa de encantamento." : "§7Sem encantamento: §fencante você mesmo!",
+            ItemStack it = item(o.m(), o.nome(), "§7Preço: " + din(o.preco()), o.m() == Material.LAPIS_LAZULI ? "§7Use na mesa de encantamento." : o.m().getMaxStackSize() > 1 ? "§7Para a Mina PvP e a Arena." : "§7Sem encantamento: §fencante você mesmo!",
                     tem >= o.preco() ? "§a▶ Clique para comprar" : "§c✖ Faltam " + din(o.preco() - tem));
             it.setAmount(o.qtd());
             inv.setItem(o.slot(), it);
@@ -2077,6 +2194,7 @@ public final class Mineracao extends JavaPlugin implements Listener {
                 if (a.length > 0) {
                     String id = a[0].toLowerCase(Locale.ROOT);
                     if (id.equals("centro") || id.equals("patio")) { irCentro(p); return true; }
+                    if (id.equals("arena")) { if (podeIr(p)) irArena(p); return true; }
                     if (id.equals("enc") || id.startsWith("encant")) { if (podeIr(p)) p.teleport(salaEnc()); return true; }
                     Mina m = mina(id);
                     if (m != null) { irPara(p, m); return true; }
