@@ -63,10 +63,15 @@ def pintar_face(c, f, wpx, hpx, sem, ident, esc):
         v = np.abs(Z.fbm(t.X * 0.8, t.Y * 0.8, sem + 13, 3) - 0.5) < 0.02
         t.cor(v, (84, 40, 70), 0.45)
         if grande:
-            n = (sem * 7) % 5
-            if n < 3:
-                t.rasgo(0.3 + 0.1 * n, 0.4 + 0.12 * n, 0.14, 0.08, cor['carne'], sem)
-                t.sangue(0.3 + 0.1 * n, 0.46 + 0.12 * n, 0.12, 0.3, sem)
+            # feridas: so em uma parte das faces, cada uma num lugar e tamanho (antes repetia igual em todas)
+            n = (sem * 2654435761 >> 7) % 100
+            if n < 30:
+                cx, cy = 0.2 + (n % 7) * 0.09, 0.25 + (n % 5) * 0.12
+                t.rasgo(cx, cy, 0.07 + (n % 4) * 0.03, 0.04 + (n % 3) * 0.025, cor['carne'], sem)
+                if n % 2 == 0:
+                    t.sangue(cx, cy + 0.05, 0.07 + (n % 3) * 0.03, 0.12 + (n % 4) * 0.08, sem)
+            elif n < 45:
+                t.manchas((96, 14, 16), 0.63, 0.9, 0.55, sem % 9)
             if c.nome.startswith('peito') and f == 'north':
                 t.mult(Z.elipse(t.U, t.V, 0.5, 0.92, 0.5, 0.1, 1.0), 0.55)
             if c.nome == 'abdomen' and f == 'north':
@@ -85,7 +90,7 @@ def pintar_face(c, f, wpx, hpx, sem, ident, esc):
             den = (np.mod(t.U * 7, 1.0) > 0.25) * (t.V > 0.8) * (t.V < 0.9) * (np.abs(t.U - 0.5) < 0.3)
             t.cor(den, cor['dente'], 0.95)
             t.sangue(0.5, 0.96, 0.2, 0.1, 1)
-        t.borda(0.62, 0.22)
+        t.borda(0.7, 0.3)
     elif mat in ('calca', 'camisa', 'couro', 'faixa'):
         t.base(cor[mat], 0.22)
         t.dobras(0.32)
@@ -93,12 +98,14 @@ def pintar_face(c, f, wpx, hpx, sem, ident, esc):
             t.mult(np.mod(t.Y * 0.9 + t.X * 0.25, 1.0) < 0.14, 0.6)
             t.manchas((110, 20, 20), 0.6, 0.8, 0.6)
         elif grande:
-            t.rasgo(0.5, 0.5, 0.25, 0.08, tuple(int(v * 0.8) for v in cor['pele']), sem)
-            t.sangue(0.4, 0.2, 0.2, 0.3, sem)
-            if mat == 'couro':
-                t.sangue(0.6, 0.55, 0.3, 0.4, sem + 1)
+            n = (sem * 2654435761 >> 7) % 100
+            if n < 35:
+                t.rasgo(0.25 + (n % 6) * 0.1, 0.3 + (n % 5) * 0.12, 0.1 + (n % 4) * 0.04, 0.04 + (n % 3) * 0.02, tuple(int(v * 0.8) for v in cor['pele']), sem)
+            if 20 <= n < 55 or mat == 'couro':
+                t.sangue(0.2 + (n % 7) * 0.1, 0.15 + (n % 4) * 0.15, 0.08 + (n % 5) * 0.03, 0.1 + (n % 3) * 0.1, sem)
+            t.manchas(tuple(int(v * 0.45) for v in cor[mat]), 0.6, 0.7, 0.5, sem % 7)
         t.sujeira(0.45, 0.55)
-        t.borda(0.66, 0.2)
+        t.borda(0.74, 0.28)
     elif mat == 'bolha':
         t.base(cor['bolha'], 0.25)
         t.cor(Z.elipse(t.U, t.V, 0.35, 0.3, 0.3, 0.3, 0.8), (255, 255, 220), 0.6)

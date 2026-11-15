@@ -62,7 +62,60 @@ final class SemPets implements Listener {
         }
     }
 
+    /**
+     * 15/11: bicho domado do jogo (lobo, gato, papagaio) que o dono deixou num lobby ou minigame volta para casa: para
+     * perto do dono se ele estiver num mundo com pets, senao para a cama dele (ou o spawn do survival), sentado.
+     */
+    private void bichosDomados() {
+        if (!pl.getConfig().getBoolean("pets.domados-fora-voltam", true)) return;
+        for (org.bukkit.World w : Bukkit.getWorlds()) {
+            if (permitido(w.getName())) continue;
+            for (org.bukkit.entity.Tameable t : w.getEntitiesByClass(org.bukkit.entity.Tameable.class)) {
+                UUID dono = t.isTamed() ? t.getOwnerUniqueId() : null;
+                if (dono == null || t instanceof org.bukkit.entity.AbstractHorse || !t.isValid()) continue;
+                boolean dePlugin = false;
+                for (org.bukkit.NamespacedKey k : t.getPersistentDataContainer().getKeys()) {
+                    String ns = k.getNamespace().toLowerCase();
+                    if (ns.contains("pet")) dePlugin = true;
+                }
+                if (dePlugin) continue;
+                Player p = Bukkit.getPlayer(dono);
+                org.bukkit.Location para = null;
+                String onde = "para a sua cama";
+                if (p != null && permitido(p.getWorld().getName())) {
+                    para = p.getLocation();
+                    onde = "para perto de você";
+                } else {
+                    try {
+                        org.bukkit.Location cama = Bukkit.getOfflinePlayer(dono).getRespawnLocation();
+                        if (cama != null && cama.getWorld() != null && permitido(cama.getWorld().getName())) para = cama;
+                    } catch (Throwable ignorado) {
+                        // sem cama
+                    }
+                    if (para == null) {
+                        List<String> sv = pl.getConfig().getStringList("mochilas.survival");
+                        org.bukkit.World casa = sv.isEmpty() ? null : Bukkit.getWorld(sv.get(0));
+                        if (casa == null) casa = Bukkit.getWorlds().get(0);
+                        para = casa.getSpawnLocation();
+                        onde = "para o spawn do survival";
+                    }
+                }
+                if (para.getWorld().equals(w)) continue;
+                if (t instanceof org.bukkit.entity.Sittable s) s.setSitting(true);
+                t.teleportAsync(para);
+                pl.getLogger().info("Pets: bicho domado (" + t.getType() + ") tirado de " + w.getName() + " " + onde);
+                if (p != null) p.sendMessage("§e§lCorona §8» §7Bicho domado não fica no lobby nem nos minigames: mandei o seu §f"
+                        + t.getType().name().toLowerCase() + " §7" + onde + ".");
+            }
+        }
+    }
+
     private void conferir() {
+        try {
+            bichosDomados();
+        } catch (Throwable t) {
+            if (!avisou) pl.getLogger().warning("Pets: bichos domados fora do lugar: " + t);
+        }
         if (!pl.getConfig().getBoolean("pets.esconder-fora", true) || !pronto()) return;
         for (Player p : Bukkit.getOnlinePlayers()) {
             try {
