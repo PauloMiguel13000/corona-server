@@ -31,8 +31,8 @@ import org.bukkit.inventory.ItemStack;
  */
 final class Visual implements Listener {
 
-    static final String URL_PADRAO = "https://corona-server.duckdns.org/pacotes/corona_tiro_java-a9a3ae25f4.zip";
-    static final String SHA1_PADRAO = "a9a3ae25f4fedc4aace0467895ee863ee6c714f7";
+    static final String URL_PADRAO = "https://corona-server.duckdns.org/pacotes/corona_tiro_java-4efc2698b1.zip";
+    static final String SHA1_PADRAO = "4efc2698b14ca16f0e1480e3f12e29b8dc835ae1";
     private static final UUID ID = UUID.nameUUIDFromBytes("corona-tiro-pack".getBytes(StandardCharsets.UTF_8));
 
     private final Tiro pl;
@@ -131,8 +131,10 @@ final class Visual implements Listener {
         for (var en : PECAS.entrySet()) {
             ItemStack it = new ItemStack(COURO.get(en.getKey()));
             it.setData(DataComponentTypes.ITEM_MODEL, Key.key("corona", "zumbi/" + tipo + "_" + en.getValue()));
-            it.setData(DataComponentTypes.EQUIPPABLE, io.papermc.paper.datacomponent.item.Equippable.equippable(en.getKey())
-                    .assetId(Key.key("corona", "z" + tipo)).build());
+            // cabeca: sem asset_id o Java desenha o MODELO do item (cabeca em relevo); as outras pecas usam a textura corona:z<tipo>
+            var eqp = io.papermc.paper.datacomponent.item.Equippable.equippable(en.getKey());
+            if (en.getKey() != EquipmentSlot.HEAD) eqp.assetId(Key.key("corona", "z" + tipo));
+            it.setData(DataComponentTypes.EQUIPPABLE, eqp.build());
             eq.setItem(en.getKey(), it);
             eq.setDropChance(en.getKey(), 0f);
         }

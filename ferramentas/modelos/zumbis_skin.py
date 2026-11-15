@@ -366,6 +366,13 @@ def camadas_hd(tipo):
     por(c2, cint[:, ::-1], 32, 29, 0.9)
     por(c2, cint[:, :4 * k], 16, 29, 0.85)
     por(c2, cint[:, :4 * k], 28, 29, 0.85)
+    import zumbis_relevo as R
+    cs = R.cores(t)
+    for i, nome in enumerate(R.AMOSTRAS):
+        x, y = R.pos(nome)
+        am = Z.liso(4, 4, cs[nome], sd + 60 + i)
+        am[..., :3] = np.clip(am[..., :3].astype(float) * 1.18, 0, 255)
+        por(c1, am, x, y)
     return c1, c2
 
 
@@ -396,24 +403,49 @@ if __name__ == '__main__':
                 os.makedirs(os.path.dirname(p), exist_ok=True)
                 Image.fromarray(g, 'RGBA').save(p, optimize=True)
         salvar(os.path.join(J, 'equipment', f'z{tipo}.json'), {'layers': {'humanoid': [{'texture': f'corona:z{tipo}'}], 'humanoid_leggings': [{'texture': f'corona:z{tipo}'}]}})
+        import zumbis_relevo as R
+        salvar(os.path.join(J, 'models', 'item', 'zumbi3d', f'{tipo}.json'), R.modelo_java(tipo, f'corona:entity/equipment/humanoid/z{tipo}'))
+        salvar(os.path.join(B, 'models', 'entity', f'corona_zumbi_{tipo}_elmo.geo.json'), R.geo_elmo(tipo))
+        salvar(os.path.join(B, 'models', 'entity', f'corona_zumbi_{tipo}_peitoral.geo.json'), R.geo_peitoral(tipo))
         for peca, (pt, camada, var, prot) in PECAS.items():
-            salvar(os.path.join(J, 'items', 'zumbi', f'{tipo}_{pt}.json'), {'model': {'type': 'minecraft:model', 'model': f'minecraft:item/leather_{peca}'}})
+            if peca == 'helmet':
+                salvar(os.path.join(J, 'items', 'zumbi', f'{tipo}_{pt}.json'), {'model': {'type': 'minecraft:select', 'property': 'minecraft:display_context',
+                       'cases': [{'when': 'head', 'model': {'type': 'minecraft:model', 'model': f'corona:item/zumbi3d/{tipo}'}}],
+                       'fallback': {'type': 'minecraft:model', 'model': 'minecraft:item/leather_helmet'}}})
+            else:
+                salvar(os.path.join(J, 'items', 'zumbi', f'{tipo}_{pt}.json'), {'model': {'type': 'minecraft:model', 'model': f'minecraft:item/leather_{peca}'}})
+            geo = {'helmet': f'geometry.corona.zumbi.{tipo}.elmo', 'chestplate': f'geometry.corona.zumbi.{tipo}.peitoral'}.get(peca, f'geometry.player.armor.{peca}')
             bid = f'corona:zumbi_{tipo}_{pt}'
             salvar(os.path.join(B, 'attachables', f'zumbi_{tipo}_{pt}.json'), {"format_version": "1.10.0", "minecraft:attachable": {"description": {
                 "identifier": bid, "materials": {"default": "armor", "enchanted": "armor_enchanted"},
                 "textures": {"default": f'textures/models/armor/corona_z{tipo}_{camada}', "enchanted": "textures/misc/enchanted_actor_glint"},
-                "geometry": {"default": f'geometry.player.armor.{peca}'}, "scripts": {"parent_setup": f"variable.{var} = 0.0;"},
+                "geometry": {"default": geo}, "scripts": {"parent_setup": f"variable.{var} = 0.0;"},
                 "render_controllers": ["controller.render.armor"]}}})
             mapa.setdefault(f'minecraft:leather_{peca}', []).append({
                 'type': 'definition', 'model': f'corona:zumbi/{tipo}_{pt}', 'bedrock_identifier': bid, 'display_name': f'Infectado {tipo} {pt}',
                 'bedrock_options': {'icon': 'corona_zumbi_pele', 'creative_category': 'equipment', 'protection_value': prot}})
-        for yaw in (28,):
-            RA.Render.__init__.__defaults__ = (400, 600, 14.0, yaw, 12)
-            previas.append(RA.boneco(g1, g2, pele))
+        for yaw in (30, -35):
+            r = RA.Render(400, 600, 13.0, yaw, 12)
+            k = g1.shape[1] // 64
+            r.caixa(g2, k, (16, 16), (-4, 12, -2), (8, 12, 4), 0.5)
+            r.caixa(g2, k, (0, 16), (-4, 0, -2), (4, 12, 4), 0.5)
+            r.caixa(g2, k, (0, 16), (0, 0, -2), (4, 12, 4), 0.5, espelho=True)
+            r.caixa(g1, k, (0, 16), (-4, 0, -2), (4, 12, 4), 1.0)
+            r.caixa(g1, k, (0, 16), (0, 0, -2), (4, 12, 4), 1.0, espelho=True)
+            r.caixa(g1, k, (16, 16), (-4, 12, -2), (8, 12, 4), 1.0)
+            r.caixa(g1, k, (40, 16), (-8, 12, -2), (4, 12, 4), 1.0)
+            r.caixa(g1, k, (40, 16), (4, 12, -2), (4, 12, 4), 1.0, espelho=True)
+            r.caixa(g1, k, (0, 0), (-4, 24, -4), (8, 8, 8), 1.0)
+            for geo in (R.geo_elmo(tipo), R.geo_peitoral(tipo)):
+                for bn in geo['minecraft:geometry'][0]['bones']:
+                    for c in bn['cubes']:
+                        if isinstance(c.get('uv'), dict):
+                            RA.cubo_bedrock(r, g1, k, c)
+            previas.append(r.imagem())
     salvar(os.path.join(SAIDA, 'corona-tiro-zumbis.json'), {'format_version': 2, 'items': mapa})
     salvar(os.path.join(SAIDA, 'item_texture_zumbis.json'), item_tex)
-    folha = Image.new('RGB', (400 * 3, 1200), (38, 40, 48))
+    folha = Image.new('RGB', (400 * 4, 1800), (38, 40, 48))
     for i, pv in enumerate(previas):
-        folha.paste(pv, ((i % 3) * 400, (i // 3) * 600))
+        folha.paste(pv, ((i % 4) * 400, (i // 4) * 600))
     folha.save(os.path.join(SAIDA, 'previa_zumbis.png'))
     print('skins:', len(T))
