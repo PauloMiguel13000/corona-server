@@ -2234,6 +2234,26 @@ public final class Masmorras extends JavaPlugin implements Listener {
     }
 
     /** Acha pelo numero ("83" ou "#83") ou pelo nome da secreta ("???" ou "secreta"). */
+    private static String semAcento(String t) {
+        return java.text.Normalizer.normalize(t, java.text.Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "").toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
+    }
+
+    /** 15/11 (Paulo: "adicione no reset o nome de cada masmorra"): numero, "???" ou o nome (trovao, farol, "templo do trovao"...).
+     *  Pelo nome vem todas as daquele tipo. */
+    List<Masmorra> porNome(String t) {
+        List<Masmorra> l = new ArrayList<>();
+        Masmorra um = porTexto(t);
+        if (um != null) {
+            l.add(um);
+            return l;
+        }
+        String q = semAcento(t);
+        if (q.isEmpty()) return l;
+        for (Masmorra m : porId.values()) if (semAcento(m.tipo.id).equals(q) || semAcento(m.tipo.nome).equals(q)) l.add(m);
+        if (l.isEmpty()) for (Masmorra m : porId.values()) if (semAcento(m.tipo.nome).contains(q) || semAcento(m.tipo.chefeNome).contains(q)) l.add(m);
+        return l;
+    }
+
     Masmorra porTexto(String t) {
         if (t.equals("???") || t.equalsIgnoreCase("secreta")) {
             for (Masmorra m : porId.values()) if (m.tipo.secreta) return m;
@@ -2454,17 +2474,20 @@ public final class Masmorras extends JavaPlugin implements Listener {
                 s.sendMessage(PREFIXO + (ok ? "Missões e trilha de " + a[2] + " zeradas." : a[2] + " não tinha progresso de missões."));
             }
             case "reset" -> {
-                Masmorra m = a.length > 2 ? porTexto(a[2]) : null;
-                if (m == null) {
-                    s.sendMessage(PREFIXO + "Masmorra não encontrada.");
+                List<Masmorra> ms = a.length > 2 ? porNome(String.join(" ", java.util.Arrays.copyOfRange(a, 2, a.length))) : new ArrayList<>();
+                if (ms.isEmpty()) {
+                    s.sendMessage(PREFIXO + "Masmorra não encontrada. Use o número ou o nome: §f/masmorras admin reset trovao");
                     return true;
                 }
-                limpar(m);
-                resetar(m);
-                s.sendMessage(PREFIXO + "Masmorra #" + m.id + " voltou ao começo.");
+                for (Masmorra m : ms) {
+                    limpar(m);
+                    resetar(m);
+                    s.sendMessage(PREFIXO + "§f" + m.tipo.nome + " §7(#" + m.id + ") voltou ao começo.");
+                }
             }
             case "tp" -> {
-                Masmorra m = a.length > 2 ? porTexto(a[2]) : null;
+                List<Masmorra> achadas = a.length > 2 ? porNome(String.join(" ", java.util.Arrays.copyOfRange(a, 2, a.length))) : new ArrayList<>();
+                Masmorra m = achadas.isEmpty() ? null : achadas.get(0);
                 World w = m == null ? null : Bukkit.getWorld(m.mundo);
                 if (m == null || w == null || !(s instanceof Player p)) {
                     s.sendMessage(PREFIXO + "Use: /masmorras admin tp <id> (no jogo)");
@@ -2472,7 +2495,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
                 }
                 p.teleport(new Location(w, m.saidaX + 0.5, m.saidaY, m.saidaZ + 0.5));
             }
-            default -> s.sendMessage(PREFIXO + "/masmorras admin <lista|status|construir|reset <id>|tp <id>|bordas|editar>  (id = número ou ???)");
+            default -> s.sendMessage(PREFIXO + "/masmorras admin <lista|status|construir|reset <id ou nome>|tp <id ou nome>|bordas|editar>  (ex.: reset trovao)");
         }
         return true;
     }
@@ -2488,7 +2511,12 @@ public final class Masmorras extends JavaPlugin implements Listener {
             l.add("menu");
             if (s.hasPermission("masmorras.admin")) l.add("admin");
         } else if (a.length == 2 && a[0].equalsIgnoreCase("admin") && s.hasPermission("masmorras.admin"))
-            l.addAll(List.of("lista", "status", "construir", "reset", "tp", "bordas", "editar", "reliquia"));
+            l.addAll(List.of("lista", "status", "construir", "reset", "tp", "bordas", "editar", "reliquia", "tempestade"));
+        else if (a.length == 3 && a[0].equalsIgnoreCase("admin") && (a[1].equalsIgnoreCase("reset") || a[1].equalsIgnoreCase("tp")) && s.hasPermission("masmorras.admin")) {
+            java.util.Set<String> nomes = new java.util.TreeSet<>();
+            for (Masmorra m : porId.values()) nomes.add(m.tipo.secreta ? "???" : m.tipo.id.toLowerCase(Locale.ROOT));
+            l.addAll(nomes);
+        }
         String u = a.length == 0 ? "" : a[a.length - 1].toLowerCase(Locale.ROOT);
         l.removeIf(x -> !x.startsWith(u));
         return l;
