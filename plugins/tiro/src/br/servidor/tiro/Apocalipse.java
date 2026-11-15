@@ -772,6 +772,7 @@ final class Apocalipse implements Listener {
         h.inv = Bukkit.createInventory(h, 27, Tiro.txt("§8Mercador do Abrigo §7(paga com sucata)"));
         for (int i = 0; i < OFERTAS.length; i++) {
             ItemStack it = daOferta(OFERTAS[i]);
+            if (pl.visual != null) pl.visual.desenhar(p, it);
             ItemMeta m = it.getItemMeta();
             List<net.kyori.adventure.text.Component> lore = m.hasLore() ? new ArrayList<>(m.lore()) : new ArrayList<>();
             lore.add(Tiro.txt(""));
