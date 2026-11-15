@@ -840,13 +840,36 @@ final class Missao implements Listener {
         if (mundo != null && e.getLocation().getWorld() == mundo && e.getSpawnReason() != CreatureSpawnEvent.SpawnReason.CUSTOM) e.setCancelled(true);
     }
 
+    /** 15/11 (Paulo: "os itens sairam do modo de tiro e foram para o spawn"): nada da Missao sai da Missao. */
+    private void varrer(Player p) {
+        if (pl.mundoDeTiro(p.getWorld())) return;
+        var inv = p.getInventory();
+        for (int i = 0; i < inv.getSize(); i++) {
+            ItemStack it = inv.getItem(i);
+            if (it == null) continue;
+            String id = pl.armas.idItem(it);
+            boolean daMissao = id != null && (id.startsWith("classe") || id.equals("kitmed") || id.equals("placas"));
+            if (daMissao || pl.armas.armaDe(it) != null || pl.armas.municaoDe(it) != null) inv.setItem(i, null);
+        }
+    }
+
     @EventHandler
+    public void entrouNoServidor(org.bukkit.event.player.PlayerJoinEvent e) {
+        Player p = e.getPlayer();
+        Bukkit.getScheduler().runTaskLater(pl, () -> { if (p.isOnline()) varrer(p); }, 50L);
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
     public void mudou(PlayerChangedWorldEvent e) {
         Player p = e.getPlayer();
+        // depois das mochilas do Extras trocarem (elas guardam a do Apocalipse com as armas dentro)
+        Bukkit.getScheduler().runTaskLater(pl, () -> { if (p.isOnline()) varrer(p); }, 8L);
         if (e.getFrom() == mundo) {
             noJogo.remove(p.getUniqueId());
             caidos.remove(p.getUniqueId());
             p.hideBossBar(barra);
+            p.getInventory().clear();
+            for (PotionEffect ef : p.getActivePotionEffects()) p.removePotionEffect(ef.getType());
             if (p.getGameMode() == GameMode.SPECTATOR || p.getGameMode() == GameMode.ADVENTURE) p.setGameMode(GameMode.SURVIVAL);
         }
     }
