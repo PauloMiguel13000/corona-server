@@ -2182,6 +2182,29 @@ public final class Masmorras extends JavaPlugin implements Listener {
             return ala.warp(s, a);
         }
         if (a.length > 0 && a[0].equalsIgnoreCase("admin")) return admin(s, a);
+        // 15/11 (Paulo): /masmorra tp <nome> leva direto para a porta de qualquer masmorra (so admin)
+        if (a.length > 0 && a[0].equalsIgnoreCase("tp")) {
+            if (!s.hasPermission("masmorras.admin")) {
+                s.sendMessage(PREFIXO + "§cSó a administração usa o teleporte direto. Veja as masmorras em §e/masmorras§c.");
+                return true;
+            }
+            if (!(s instanceof Player pt)) {
+                s.sendMessage(PREFIXO + "Só dentro do jogo.");
+                return true;
+            }
+            List<Masmorra> ms = a.length > 1 ? porNome(String.join(" ", java.util.Arrays.copyOfRange(a, 1, a.length))) : new ArrayList<>();
+            World wt = ms.isEmpty() ? null : Bukkit.getWorld(ms.get(0).mundo);
+            if (wt == null) {
+                java.util.Set<String> nomes = new java.util.TreeSet<>();
+                for (Masmorra m : porId.values()) nomes.add(m.tipo.secreta ? "???" : m.tipo.id.toLowerCase(Locale.ROOT));
+                s.sendMessage(PREFIXO + "Use: §f/masmorra tp <nome>§7. Nomes: §f" + String.join("§7, §f", nomes));
+                return true;
+            }
+            Masmorra m = ms.get(0);
+            pt.teleport(new Location(wt, m.saidaX + 0.5, m.saidaY, m.saidaZ + 0.5));
+            pt.sendMessage(PREFIXO + "§f" + m.tipo.nome + " §7(#" + m.id + ", nível " + m.tipo.nivel + ")" + (ms.size() > 1 ? " §8• há " + ms.size() + " desse tipo; use o número para as outras" : ""));
+            return true;
+        }
         if (a.length > 0 && a[0].equalsIgnoreCase("spawn") && s instanceof Player pp) {
             irParaSpawnMasmorras(pp);
             return true;
@@ -2509,7 +2532,14 @@ public final class Masmorras extends JavaPlugin implements Listener {
             l.add("todas");
             l.add("mapa");
             l.add("menu");
-            if (s.hasPermission("masmorras.admin")) l.add("admin");
+            if (s.hasPermission("masmorras.admin")) {
+                l.add("admin");
+                l.add("tp");
+            }
+        } else if (a.length == 2 && a[0].equalsIgnoreCase("tp") && s.hasPermission("masmorras.admin")) {
+            java.util.Set<String> nomes = new java.util.TreeSet<>();
+            for (Masmorra m : porId.values()) nomes.add(m.tipo.secreta ? "???" : m.tipo.id.toLowerCase(Locale.ROOT));
+            l.addAll(nomes);
         } else if (a.length == 2 && a[0].equalsIgnoreCase("admin") && s.hasPermission("masmorras.admin"))
             l.addAll(List.of("lista", "status", "construir", "reset", "tp", "bordas", "editar", "reliquia", "tempestade"));
         else if (a.length == 3 && a[0].equalsIgnoreCase("admin") && (a[1].equalsIgnoreCase("reset") || a[1].equalsIgnoreCase("tp")) && s.hasPermission("masmorras.admin")) {
