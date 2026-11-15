@@ -447,7 +447,7 @@ final class TempestadeTrovao implements Listener {
     private static List<Player> jogadoresEm(World w, Caixa a) {
         List<Player> l = new ArrayList<>();
         for (Player p : w.getPlayers())
-            if (!p.isDead() && p.getGameMode() != GameMode.SPECTATOR && p.getGameMode() != GameMode.CREATIVE && a.contem(p.getX(), p.getY(), p.getZ())) l.add(p);
+            if (!p.isDead() && p.getGameMode() != GameMode.SPECTATOR && a.contem(p.getX(), p.getY(), p.getZ())) l.add(p);
         return l;
     }
 

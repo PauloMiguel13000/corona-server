@@ -1557,6 +1557,18 @@ public final class Masmorras extends JavaPlugin implements Listener {
                     pp.sendActionBar(txt("§b§lEscudo! §7Mate os guardas brilhando primeiro."));
                 return;
             }
+            // 15/11 (Paulo: "era pra quebrar o chao e levar pra outro lugar, e nao funcionou"): o golpe que passaria dos 60%
+            // nao pode pular a fase (chefe com pouca vida morria antes do tique de meio segundo ver). Segura a vida e chama ja.
+            if (tempestade != null && c.t.id.equals("TROVAO") && !c.tempestadeFeita && getConfig().getBoolean("tempestade.ativa", true)
+                    && c.e.getHealth() - e.getFinalDamage() <= c.vidaMax * getConfig().getDouble("tempestade.vida", 0.6)) {
+                e.setDamage(0);
+                c.e.setHealth(Math.max(1, Math.min(c.e.getHealth(), c.vidaMax * 0.58)));
+                Bukkit.getScheduler().runTask(this, () -> {
+                    if (c.vivo() && !c.tempestadeFeita && !tempestade.conferir(c, c.naArena()))
+                        getLogger().warning("Tempestade: o Arauto chegou em 58% mas a fase nao comecou (masmorra #" + m.id + ").");
+                });
+                return;
+            }
             // volta uma vez com 40% da vida
             if (m.tipo.esp == Tipo.Esp.REVIVER && !c.reviveu && e.getFinalDamage() >= c.e.getHealth()) {
                 e.setCancelled(true);
