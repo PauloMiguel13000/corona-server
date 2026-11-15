@@ -319,7 +319,7 @@ public final class Tiro extends JavaPlugin implements Listener {
 
     @EventHandler
     public void nascer(CreatureSpawnEvent e) {
-        if (lobby != null && e.getLocation().getWorld() == lobby) e.setCancelled(true);
+        if (lobby != null && e.getLocation().getWorld() == lobby && e.getSpawnReason() != CreatureSpawnEvent.SpawnReason.CUSTOM) e.setCancelled(true);
     }
 
     // ================================================================== comandos

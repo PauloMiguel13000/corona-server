@@ -196,7 +196,7 @@ final class Trilha implements Listener {
         // a versao de luta da MESMA musica; so volta para a calma depois de 8 s sem monstro (nao fica trocando)
         Long ul = luta.get(p.getUniqueId());
         if (ul != null && agora - ul < 8000) return tema + "_luta";
-        if (tema.equals("trovao") && pl.getConfig().getBoolean("trilha.trovao-com-antiga", false)) return "trovao2";
+        if (tema.equals("trovao") && pl.getConfig().getBoolean("trilha.trovao-com-antiga", true)) return "trovao2";
         return tema;
     }
 

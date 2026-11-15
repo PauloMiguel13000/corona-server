@@ -908,7 +908,8 @@ public final class Esconde extends JavaPlugin implements Listener {
 
     @EventHandler
     public void nascer(CreatureSpawnEvent e) {
-        if (mundo != null && e.getLocation().getWorld().equals(mundo)) e.setCancelled(true);
+        // CUSTOM passa: e o pet do BabyPets chegando (o Extras/SemPets guarda o pet logo em seguida); cancelar aqui fazia o pet tentar nascer sem parar
+        if (mundo != null && e.getLocation().getWorld().equals(mundo) && e.getSpawnReason() != CreatureSpawnEvent.SpawnReason.CUSTOM) e.setCancelled(true);
     }
 
     @EventHandler

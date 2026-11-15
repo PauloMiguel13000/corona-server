@@ -1132,7 +1132,7 @@ public final class Porteiro extends JavaPlugin implements Listener {
 
     @EventHandler
     public void nascer(CreatureSpawnEvent e) {
-        if (mundo != null && e.getLocation().getWorld().equals(mundo) && !(e.getEntity() instanceof ArmorStand)) e.setCancelled(true);
+        if (mundo != null && e.getLocation().getWorld().equals(mundo) && !(e.getEntity() instanceof ArmorStand) && e.getSpawnReason() != CreatureSpawnEvent.SpawnReason.CUSTOM) e.setCancelled(true);
     }
 
     @EventHandler
