@@ -127,7 +127,6 @@ final class Visual implements Listener {
     /** Deixa as armas da mochila com o desenho (quem tem o pacote) ou como enxada (quem nao tem). */
     @SuppressWarnings("UnstableApiUsage")
     /** Icone de arma em menu (loja do Mercador): com o desenho, para quem tem o pacote. */
-    @SuppressWarnings("UnstableApiUsage")
     ItemStack desenhar(Player p, ItemStack it) {
         Armas.Arma a = pl.armas.armaDe(it);
         if (a != null && tem(p)) it.setData(DataComponentTypes.ITEM_MODEL, Key.key("corona", "armas/" + a.id()));
