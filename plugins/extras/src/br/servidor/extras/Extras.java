@@ -841,6 +841,9 @@ public final class Extras extends JavaPlugin implements Listener {
         h.inv.setItem(24, icone(Material.NETHERITE_SWORD, "§c§lArena PvP",
                 "§7Lute contra outros jogadores", "§7usando os §fpoderes das classes§7.", "§aNinguém perde itens nem XP.", "",
                 arena ? "§eClique para entrar" : "§cIndisponível agora"));
+        h.inv.setItem(4, icone(Material.SPYGLASS, "§e§lEsconde-esconde",
+                "§7Um jogador procura e os outros", "§7se escondem na §fVila§7.", "§eQuem é pego vira pegador também.", "§7Começa com 3 jogadores.", "",
+                Bukkit.getPluginManager().isPluginEnabled("EscondeEsconde") ? "§eClique para entrar" : "§cIndisponível agora"));
         p.openInventory(h.inv);
     }
 
@@ -858,6 +861,7 @@ public final class Extras extends JavaPlugin implements Listener {
             case 22 -> "hotel entrar";
             case 20 -> "naochore entrar";
             case 24 -> "arena entrar";
+            case 4 -> "esconde";
             case 18 -> "turno";
             case 26 -> "fabrica";
             default -> null;

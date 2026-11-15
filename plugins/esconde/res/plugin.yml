@@ -1,0 +1,16 @@
+name: EscondeEsconde
+version: '1.0'
+main: br.servidor.esconde.Esconde
+api-version: '1.21'
+author: Corona Server
+description: Esconde-esconde na Vila - um procura, os outros se escondem; quem e pego vira pegador.
+softdepend: [AuthMe, Multiverse-Core, BabyPets, Poderes, Geyser-Spigot, floodgate]
+commands:
+  esconde:
+    description: Esconde-esconde (/esconde, /esconde sair, /esconde top)
+    aliases: [escondeesconde, pique]
+permissions:
+  esconde.usar:
+    default: true
+  esconde.admin:
+    default: op

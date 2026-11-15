@@ -132,7 +132,7 @@ final class SpawnPrincipal implements Listener {
      * alturas para nao encavalar). Tudo o que esta parte poe leva a marca spawn_parte = PARTE; enfeite antigo
      * nessas areas sem a marca e apagado quando carrega.
      */
-    static final int PARTE = 2, SUL_TERROR = -6, SUL_MINIGAMES = 6, LUGARES_OESTE = 11;
+    static final int PARTE = 3, SUL_TERROR = -6, SUL_MINIGAMES = 6, LUGARES_OESTE = 11;
 
     private org.bukkit.NamespacedKey chaveParte() {
         return new org.bukkit.NamespacedKey(pl, "spawn_parte");

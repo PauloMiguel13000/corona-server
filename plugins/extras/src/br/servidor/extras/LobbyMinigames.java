@@ -65,7 +65,7 @@ final class LobbyMinigames implements Listener {
 
     static final String MUNDO = "minigames";
     /** v3 (09/11): este lobby fica so com os minigames normais; os de terror foram para o Lobby do Terror (mundo "terror"). */
-    static final int Y = 100, R = 34, PORTAL = 22, VERSAO = 3, VAGAS = 8;
+    static final int Y = 100, R = 34, PORTAL = 22, VERSAO = 4, VAGAS = 8;   // v4 (15/11): portal do Esconde-esconde
 
     /** terror = vai para o Lobby do Terror (e nao para este). */
     record Portal(String id, String nome, String sub, String cor, String comando, int dx, int dz, String[] moldura, Material icone, Color brilho, boolean terror) {}
@@ -89,7 +89,9 @@ final class LobbyMinigames implements Listener {
             new Portal("turno", "§e§lTURNO DA NOITE", "§7Vigia noturno: sobreviva até as 6h!\n§7Portas, luzes, câmeras e energia", "§e", "turno", 1, 0,
                     new String[] {"minecraft:stripped_spruce_wood", "minecraft:dark_oak_planks", "minecraft:deepslate_bricks"}, Material.CLOCK, Color.fromRGB(255, 220, 60), true),
             new Portal("fabrica", "§6§lFÁBRICA ALEGRIA", "§7Luva de gancho, energia e o Tutu nos dutos (co-op)", "§6", "fabrica", 1, 1,
-                    new String[] {"minecraft:orange_terracotta", "minecraft:yellow_terracotta", "minecraft:light_blue_concrete"}, Material.CARROT_ON_A_STICK, Color.fromRGB(255, 150, 40), true)};
+                    new String[] {"minecraft:orange_terracotta", "minecraft:yellow_terracotta", "minecraft:light_blue_concrete"}, Material.CARROT_ON_A_STICK, Color.fromRGB(255, 150, 40), true),
+            new Portal("esconde", "§e§lESCONDE-ESCONDE", "§7Um procura, os outros se escondem na Vila\n§7Quem é pego vira pegador! (3+ jogadores)", "§e", "esconde", -1, 1,
+                    new String[] {"minecraft:oak_planks", "minecraft:oak_leaves[persistent=true]", "minecraft:hay_block"}, Material.SPYGLASS, Color.fromRGB(255, 230, 80), false)};
 
     /** Portal deste lobby que leva ao Lobby do Terror. */
     static final Portal PORTAL_TERROR = new Portal("terror", "§4§lLOBBY DO TERROR", "§7Hotel • Porcelana • Vovó • Backrooms\n§7Não Chore • Turno • Fábrica", "§4", "terror", 0, 0,
@@ -110,7 +112,7 @@ final class LobbyMinigames implements Listener {
     }
 
     /** Subtitulo antigo das placas do spawn (atualizado quando a placa carrega). */
-    static final String SUB_ANTIGO = "§7Defesa • Slender • Vovó • Backrooms", SUB_NOVO = "§7Defesa • Slender • Vovó • Backrooms\n§7Hotel • Não Chore • Arena PvP • Turno • Fábrica";
+    static final String SUB_ANTIGO = "§7Defesa • Slender • Vovó • Backrooms", SUB_NOVO = "§7Defesa • Slender • Vovó • Backrooms\n§7Hotel • Não Chore • Arena PvP • Turno • Fábrica • Esconde-esconde";
 
     /**
      * v3: 8 vagas em circulo (a cada 45 graus, vaga 0 ao norte, de frente para quem chega). Defesa ao norte, Arena a
@@ -389,7 +391,7 @@ final class LobbyMinigames implements Listener {
             }
         for (Entity en : mundo.getEntities())
             if (en.getPersistentDataContainer().has(chave(), PersistentDataType.BYTE)) en.getPersistentDataContainer().set(chaveVersao(), PersistentDataType.INTEGER, VERSAO);
-        pl.getLogger().info("Lobby dos Minigames v3 construido (" + jogos + " jogos normais + portal do terror).");
+        pl.getLogger().info("Lobby dos Minigames v" + VERSAO + " construido (" + jogos + " jogos normais + portal do terror).");
     }
 
     /** Vaga sem jogo do lado de tras: jardim com arvore e dois bancos. */

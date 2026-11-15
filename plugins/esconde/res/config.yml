@@ -1,0 +1,15 @@
+# Esconde-esconde do Corona Server (14/11, pedido da comunidade no Discord).
+# Jogadores: /esconde (entrar), /esconde sair, /esconde top. Admin: /esconde admin <iniciar|refazer>
+mundo: esconde
+minimo-jogadores: 3          # a rodada comeca com isso
+contagem-segundos: 20        # espera na sala antes de comecar
+esconder-segundos: 35        # tempo para se esconder (o pegador fica cego la em cima)
+rodada-segundos: 240         # tempo que o pegador tem
+dica-a-cada-segundos: 40     # os escondidos "miam" (som no lugar deles)
+brilho-nos-ultimos-segundos: 25   # no fim, quem ainda esta escondido brilha
+dois-pegadores-a-partir-de: 7
+coronas:
+  por-pegar: 15
+  pegou-todos: 30
+  sobreviveu: 60
+  a-cada-30s-escondido: 5
