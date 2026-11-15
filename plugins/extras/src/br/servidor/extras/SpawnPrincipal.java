@@ -694,6 +694,53 @@ final class SpawnPrincipal implements Listener {
         else p.performCommand("masmorras spawn");
     }
 
+    // ------------------------------------------------------------------ protecao (15/11, Paulo: "to conseguindo quebrar a plantacao perto do spawn")
+    private static boolean mexe(Player p) {
+        return p != null && p.hasPermission("extras.admin") && p.getGameMode() == org.bukkit.GameMode.CREATIVE;
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void naoQuebra(org.bukkit.event.block.BlockBreakEvent e) {
+        if (Cosmeticos.noSpawn(e.getBlock().getLocation()) && !mexe(e.getPlayer())) e.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void naoColoca(org.bukkit.event.block.BlockPlaceEvent e) {
+        if (Cosmeticos.noSpawn(e.getBlock().getLocation()) && !mexe(e.getPlayer())) e.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void naoBalde(org.bukkit.event.player.PlayerBucketEmptyEvent e) {
+        if (Cosmeticos.noSpawn(e.getBlock().getLocation()) && !mexe(e.getPlayer())) e.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void naoPisoteia(org.bukkit.event.player.PlayerInteractEvent e) {
+        if (e.getClickedBlock() == null || !Cosmeticos.noSpawn(e.getClickedBlock().getLocation()) || mexe(e.getPlayer())) return;
+        // pisar (terra arada), osso em flor, tirar casca, etc.: nada muda o jardim
+        if (e.getAction() == org.bukkit.event.block.Action.PHYSICAL) e.setCancelled(true);
+        else if (e.getAction() == org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK && e.getItem() != null) {
+            Material m = e.getItem().getType();
+            String n = m.name();
+            if (m == Material.BONE_MEAL || m == Material.SHEARS || m == Material.FLINT_AND_STEEL || n.endsWith("_AXE") || n.endsWith("_HOE") || n.endsWith("_SHOVEL")) e.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void naoExplode(org.bukkit.event.entity.EntityExplodeEvent e) {
+        e.blockList().removeIf(b -> Cosmeticos.noSpawn(b.getLocation()));
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void naoMuda(org.bukkit.event.entity.EntityChangeBlockEvent e) {
+        if (!(e.getEntity() instanceof Player) && Cosmeticos.noSpawn(e.getBlock().getLocation())) e.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void folhaNaoCai(org.bukkit.event.block.LeavesDecayEvent e) {
+        if (Cosmeticos.noSpawn(e.getBlock().getLocation())) e.setCancelled(true);
+    }
+
     @EventHandler(priority = EventPriority.LOWEST)
     public void semNether(PlayerPortalEvent e) {
         if (e.getFrom().getWorld() == mundo() && perto(e.getFrom())) e.setCancelled(true);
