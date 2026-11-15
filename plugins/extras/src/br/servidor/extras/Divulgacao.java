@@ -173,6 +173,18 @@ final class Divulgacao implements Listener {
             return;
         }
         String q = quem.getUniqueId().toString();
+        // 14/11: contra conta falsa para ganhar o premio - quem indicou precisa ter jogado de verdade e nao pode ser da mesma rede
+        int minQuem = pl.getConfig().getInt("divulgacao.indicacao.quem-chamou-minutos", 60);
+        if (quem.getStatistic(Statistic.PLAY_ONE_MINUTE) / (20 * 60) < minQuem) {
+            p.sendMessage(Extras.txt("§c" + quem.getName() + " ainda jogou pouco aqui para indicar alguém (precisa de " + minQuem + " min de jogo)."));
+            return;
+        }
+        String meuIp = ipDe(p), ipQuem = dados.getString("redes." + q);
+        if (pl.getConfig().getBoolean("divulgacao.indicacao.bloquear-mesma-rede", true) && meuIp != null && meuIp.equals(ipQuem)) {
+            p.sendMessage(Extras.txt("§cA indicação não vale para contas da mesma casa/rede."));
+            pl.getLogger().info("Indicacao recusada (mesma rede): " + p.getName() + " -> " + quem.getName());
+            return;
+        }
         // limite por dia para quem indica
         long hoje = System.currentTimeMillis() / 86_400_000L;
         int hojeQtd = dados.getLong("quem-chamou." + q + ".dia", -1) == hoje ? dados.getInt("quem-chamou." + q + ".qtd", 0) : 0;
@@ -213,9 +225,25 @@ final class Divulgacao implements Listener {
         if (mudou) salvar();
     }
 
+    /** A rede do jogador embaralhada (nao guarda o IP em si). */
+    private static String ipDe(Player p) {
+        try {
+            if (p.getAddress() == null) return null;
+            byte[] h = java.security.MessageDigest.getInstance("SHA-256").digest(("corona:" + p.getAddress().getAddress().getHostAddress()).getBytes());
+            return java.util.HexFormat.of().formatHex(h, 0, 8);
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
     @EventHandler
     public void entrou(PlayerJoinEvent e) {
         Player p = e.getPlayer();
+        String rede = ipDe(p);
+        if (rede != null && !rede.equals(dados.getString("redes." + p.getUniqueId()))) {
+            dados.set("redes." + p.getUniqueId(), rede);
+            salvar();
+        }
         int n = dados.getInt("pendentes." + p.getUniqueId(), 0);
         if (n <= 0) return;
         dados.set("pendentes." + p.getUniqueId(), null);
