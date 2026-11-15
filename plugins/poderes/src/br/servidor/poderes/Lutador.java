@@ -156,7 +156,9 @@ final class Lutador implements Listener {
         if (pl.emDanoPoder) return false;
         if (!(e.getEntity() instanceof LivingEntity alvo) || alvo instanceof ArmorStand) return false;
         if (pl.classe(p) != Classe.LUTADOR) return false;
-        if (!p.getInventory().getItemInMainHand().getType().isAir()) return false;
+        // 15/11 (Paulo): o soco vale tambem segurando um item de poder da barra (trocar para a mao vazia toda hora era chato)
+        org.bukkit.inventory.ItemStack mao = p.getInventory().getItemInMainHand();
+        if (!mao.getType().isAir() && !(pl.barraItens != null && pl.barraItens.ehItem(mao))) return false;
         if (pl.semPoderes(p.getWorld())) return false;
         return !pl.ehAliado(alvo, p) && !pl.pets.ehPet(alvo) && !pl.vis.ehVisual(alvo);
     }
@@ -570,7 +572,7 @@ final class Lutador implements Listener {
         w.playSound(p.getLocation(), Sound.ENTITY_BLAZE_SHOOT, 1f, 0.5f);
         w.playSound(p.getLocation(), Sound.ITEM_FIRECHARGE_USE, 1f, 0.7f);
         w.playSound(p.getLocation(), Sound.ENTITY_RAVAGER_ROAR, 0.6f, 1.4f);
-        Poderes.barra(p, "§4§lPUNHOS EM CHAMAS! §7(10s - soque com a mao vazia)");
+        Poderes.barra(p, "§4§lPUNHOS EM CHAMAS! §7(10s - soque de mao vazia ou com um item de poder)");
         pl.fx.texto(p.getEyeLocation().add(0, 0.7, 0), "§4§lFURIA!", 1.7f, 24);
         pl.fx.pulso(p.getLocation().add(0, 1, 0), b(Material.ORANGE_STAINED_GLASS), b(Material.SHROOMLIGHT), 0.4f, 3.2f, 5, VERMELHO);
         pl.fx.anel(p.getLocation().add(0, 0.15, 0), b(Material.MAGMA_BLOCK), 3.2, 6, 14, 0.38f, LARANJA);
