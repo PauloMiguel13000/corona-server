@@ -49,7 +49,7 @@ final class Mochilas implements Listener {
     String grupoDe(Player p) {
         String n = p.getWorld().getName();
         if (pl.getConfig().getBoolean("mochilas.lobby-separado", true)
-                && (n.equals(LobbyMinigames.MUNDO) || n.equals(LobbyTerror.MUNDO) || n.equals("tiro") || Cosmeticos.noSpawn(p.getLocation()))) return LOBBY;
+                && (n.equals(LobbyMinigames.MUNDO) || n.equals(LobbyTerror.MUNDO) || n.equals("tiro") || n.equals("esconde") || n.equals("porteiro") || Cosmeticos.noSpawn(p.getLocation()))) return LOBBY;
         return grupo(p.getWorld());
     }
 
