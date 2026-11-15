@@ -107,6 +107,7 @@ public final class Porteiro extends JavaPlugin implements Listener {
     private Bicho porteiro, sombra;
     private BossBar barra;
     private boolean desligando, portaoAberto;
+    private long introAte;
 
     static Component txt(String s) {
         return LegacyComponentSerializer.legacySection().deserialize(s).decoration(TextDecoration.ITALIC, false);
@@ -715,7 +716,11 @@ public final class Porteiro extends JavaPlugin implements Listener {
                 d.setPersistent(false);
             }));
         }
-        porteiro = new Bicho("figura", 0.5, -11.5, Color.fromRGB(0x6B1220), Material.SKELETON_SKULL);
+        // comeca atras do balcao da portaria, de frente para quem chega; fica 5 s parado e sai para a ronda
+        porteiro = new Bicho("figura", 0.5, -6.5, Color.fromRGB(0x6B1220), Material.SKELETON_SKULL);
+        porteiro.yaw = 0f;
+        porteiro.mostrar();
+        introAte = System.currentTimeMillis() + 5000;
         sombra = new Bicho("perseguidor", 22.5, -22.5, Color.fromRGB(0x0A0A0C), Material.WITHER_SKELETON_SKULL);
         sombra.ativo = false;
         sombra.repartir();
@@ -724,6 +729,7 @@ public final class Porteiro extends JavaPlugin implements Listener {
         for (Player p : l) {
             limpar(p);
             vidas.put(p.getUniqueId(), v);
+            imuneAte.put(p.getUniqueId(), System.currentTimeMillis() + 12000);
             p.teleport(new Location(mundo, (k % 2 == 0 ? 2.5 : -1.5), Y, 3.5 + k / 2, 180f, 0f));
             k++;
             p.showBossBar(barra);
@@ -837,6 +843,7 @@ public final class Porteiro extends JavaPlugin implements Listener {
                 return;
             }
         }
+        if (agora < introAte) return;     // abertura: ele so observa (de costas para a parede, atras do balcao)
         // ---- o Porteiro: ouve e vai atras do som
         var pc = getConfig();
         double ouveC = pc.getDouble("porteiro.ouve-correndo", 18), ouveA = pc.getDouble("porteiro.ouve-andando", 8);
@@ -880,7 +887,8 @@ public final class Porteiro extends JavaPlugin implements Listener {
         }
         for (Player p : vivos) {
             if (imuneAte.getOrDefault(p.getUniqueId(), 0L) > agora || noArmario(p)) continue;
-            if (Math.hypot(p.getX() - porteiro.x, p.getZ() - porteiro.z) < 1.35) pegar(p, porteiro);
+            // na ronda ele so pega quem encostar nele; cacando, o braco alcanca mais longe
+            if (Math.hypot(p.getX() - porteiro.x, p.getZ() - porteiro.z) < (porteiro.cacando ? 1.35 : 0.85)) pegar(p, porteiro);
         }
         // ---- a Sombra de Cartola: so anda quando ninguem olha
         if (!sombra.ativo) return;

@@ -90,6 +90,25 @@ final class SemPets implements Listener {
         for (long t : new long[] {5L, 30L, 70L}) Bukkit.getScheduler().runTaskLater(pl, this::conferir, t);
     }
 
+    /**
+     * 15/11: indo para um mundo sem pets, guarda o pet ANTES do teleporte. Assim o BabyPets nao leva o pet junto
+     * (ele reaparecia por um instante e mandava "apareceu do seu lado" em todo lobby e minigame).
+     */
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void indo(org.bukkit.event.player.PlayerTeleportEvent e) {
+        if (e.getTo() == null || e.getTo().getWorld() == null || e.getTo().getWorld().equals(e.getFrom().getWorld())) return;
+        if (!pl.getConfig().getBoolean("pets.esconder-fora", true) || !pronto() || permitido(e.getTo().getWorld().getName())) return;
+        try {
+            UUID id = e.getPlayer().getUniqueId();
+            if (ativo.invoke(gerente, id) != null) {
+                guardar.invoke(gerente, id, false);
+                guardados.add(id);
+            }
+        } catch (Throwable t) {
+            // a conferencia de 2 em 2 segundos cuida
+        }
+    }
+
     @EventHandler
     public void saiu(PlayerQuitEvent e) {
         guardados.remove(e.getPlayer().getUniqueId());
