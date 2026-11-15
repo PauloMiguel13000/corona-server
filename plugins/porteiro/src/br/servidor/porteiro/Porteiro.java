@@ -127,7 +127,8 @@ public final class Porteiro extends JavaPlugin implements Listener {
         ArmorStand boneco;
         List<int[]> caminho = new ArrayList<>();
         int[] alvo;
-        int quadro = 0, parado, olhada;
+        int quadro = 0, parado, olhada, passo, sustoAte;
+        float yawVisto;
         boolean cacando, ativo = true;
 
         Bicho(String id, double x, double z, Color roupa, Material cabeca) {
@@ -175,7 +176,7 @@ public final class Porteiro extends JavaPlugin implements Listener {
 
         @SuppressWarnings("UnstableApiUsage")
         ItemStack item(int q) {
-            // leather_helmet: no Bedrock o Geyser (corona-hotel.json) troca pelo item 3D
+            // leather_helmet: no Bedrock o Geyser (corona-tiro.json) troca pelo item 3D
             ItemStack it = new ItemStack(Material.LEATHER_HELMET);
             it.setData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL, net.kyori.adventure.key.Key.key("corona", "props/anim_" + id + "_f" + q));
             return it;
@@ -214,8 +215,28 @@ public final class Porteiro extends JavaPlugin implements Listener {
             if (modelo != null && modelo.isValid()) modelo.setTeleportDuration(2);
         }
 
+        /** 15/11 (Paulo: "o monstro esta duro"): passos de verdade. Ronda: perna, parado, outra perna, parado.
+         *  Cacada: bracos para a frente e passada larga. Depois de pegar alguem, segura o quadro do susto. */
+        void animar(boolean andando, boolean correndo) {
+            if (sustoAte > 0) {
+                sustoAte--;
+                quadro(1);
+                return;
+            }
+            if (!andando) {
+                quadro(correndo ? 1 : 0);
+                return;
+            }
+            passo++;
+            if (correndo) quadro((passo / 3) % 2 == 0 ? 4 : 5);
+            else quadro(new int[] {2, 0, 3, 0}[(passo / 4) % 4]);
+        }
+
         void mostrar() {
-            Location l = loc();
+            // vira o corpo aos poucos em vez de girar de uma vez
+            float dif = ((yaw - yawVisto) % 360 + 540) % 360 - 180;
+            yawVisto += Math.max(-28f, Math.min(28f, dif));
+            Location l = new Location(mundo, x, Y, z, yawVisto, 0f);
             if (modelo != null && modelo.isValid()) modelo.teleport(l);
             if (boneco != null && boneco.isValid()) boneco.teleport(l);
         }
@@ -717,11 +738,11 @@ public final class Porteiro extends JavaPlugin implements Listener {
             }));
         }
         // comeca atras do balcao da portaria, de frente para quem chega; fica 5 s parado e sai para a ronda
-        porteiro = new Bicho("figura", 0.5, -6.5, Color.fromRGB(0x6B1220), Material.SKELETON_SKULL);
+        porteiro = new Bicho("porteiro", 0.5, -6.5, Color.fromRGB(0x6B1220), Material.SKELETON_SKULL);
         porteiro.yaw = 0f;
         porteiro.mostrar();
         introAte = System.currentTimeMillis() + 5000;
-        sombra = new Bicho("perseguidor", 22.5, -22.5, Color.fromRGB(0x0A0A0C), Material.WITHER_SKELETON_SKULL);
+        sombra = new Bicho("sombra", 22.5, -22.5, Color.fromRGB(0x0A0A0C), Material.WITHER_SKELETON_SKULL);
         sombra.ativo = false;
         sombra.repartir();
         t = getConfig().getInt("tempo-segundos", 600);
@@ -874,7 +895,7 @@ public final class Porteiro extends JavaPlugin implements Listener {
             }
         }
         double vel = (porteiro.cacando ? pc.getDouble("porteiro.velocidade-cacando", 4.6) + pegas * 0.2 : pc.getDouble("porteiro.velocidade-ronda", 2.6)) * 0.1;
-        porteiro.quadro(porteiro.cacando ? 1 : 0);
+        porteiro.animar(porteiro.parado <= 0 && !porteiro.caminho.isEmpty(), porteiro.cacando);
         if (porteiro.parado > 0) {
             porteiro.parado -= 2;
             if (porteiro.parado <= 0) porteiro.cacando = false;
@@ -906,8 +927,7 @@ public final class Porteiro extends JavaPlugin implements Listener {
             if (p.getEyeLocation().getDirection().dot(para) > 0.6 && p.hasLineOfSight(sombra.boneco)) olhada = true;
         }
         if (olhada) {
-            sombra.quadro(0);
-            sombra.olhada += 2;
+            sombra.olhada += 2;                                   // congela na pose em que estava
             if (sombra.olhada >= pc.getInt("sombra.some-depois-de-olhada-segundos", 10) * 20) {
                 int[] c = longe(16);
                 mundo.spawnParticle(Particle.LARGE_SMOKE, sombra.loc().add(0, 1, 0), 30, 0.3, 0.8, 0.3, 0.02);
@@ -917,7 +937,7 @@ public final class Porteiro extends JavaPlugin implements Listener {
             }
         } else if (perto != null) {
             sombra.olhada = Math.max(0, sombra.olhada - 1);
-            sombra.quadro(dp < 8 ? 1 : 0);
+            sombra.animar(true, dp < 8);
             if (sombra.caminho.isEmpty() || sombra.parado++ % 10 == 0) sombra.ir(perto.getLocation().getBlockX(), perto.getLocation().getBlockZ());
             sombra.andar((pc.getDouble("sombra.velocidade", 3.9) + pegas * 0.1) * 0.1);
         }
@@ -963,8 +983,10 @@ public final class Porteiro extends JavaPlugin implements Listener {
         vidas.put(u, v);
         imuneAte.put(u, System.currentTimeMillis() + 6000);
         boolean ehPorteiro = quem == porteiro;
-        p.playSound(p.getLocation(), ehPorteiro ? "minecraft:hotel.figura" : "minecraft:hotel.perseguidor", 1.6f, 1f);
-        p.playSound(p.getLocation(), Sound.ENTITY_WARDEN_SONIC_BOOM, 0.7f, 0.6f);
+        p.playSound(p.getLocation(), ehPorteiro ? "minecraft:terror.grito_porteiro" : "minecraft:terror.grito_sombra", 1.8f, 1f);
+        for (Player o : mundo.getPlayers()) if (o != p) o.playSound(quem.loc(), ehPorteiro ? "minecraft:terror.grito_porteiro" : "minecraft:terror.grito_sombra", 1.4f, 1f);
+        quem.sustoAte = 14;
+        quem.quadro(1);
         p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 50, 0, false, false, false));
         p.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 120, 0, false, false, false));
         titulo(p, ehPorteiro ? "§4§lO PORTEIRO TE PEGOU" : "§8§lA SOMBRA TE ALCANÇOU", v > 0 ? "§7Restam §c" + "❤".repeat(v) : "§7Você virou um fantasma do edifício");
