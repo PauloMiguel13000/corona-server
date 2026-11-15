@@ -274,7 +274,14 @@ final class Visual implements Listener {
     public void dor(EntityDamageEvent e) {
         if (!(e.getEntity() instanceof Zombie z) || pl.zumbis.tipo(z) == null || e.getFinalDamage() <= 0) return;
         Location l = z.getLocation().add(0, z.getHeight() * 0.6, 0);
+        // 15/11 (Paulo: "sao humanos e fazem som de zumbi"): soldado e gente, geme e cai como gente, para todo mundo
+        boolean gente = pl.zumbis.tipo(z).soldado();
         for (Player p : z.getWorld().getPlayers()) {
+            if (gente) {
+                if (p.getLocation().distanceSquared(l) <= 900) p.playSound(l, Sound.ENTITY_PLAYER_HURT, 0.9f, 0.75f + (float) Math.random() * 0.25f);
+                if (!p.canSee(z)) p.spawnParticle(Particle.DAMAGE_INDICATOR, l, 3, 0.2, 0.3, 0.2, 0.05);
+                continue;
+            }
             if (p.canSee(z) || p.getLocation().distanceSquared(l) > 900) continue;
             p.playSound(l, Sound.ENTITY_ZOMBIE_HURT, 0.9f, 0.8f + (float) Math.random() * 0.3f);
             p.spawnParticle(Particle.DAMAGE_INDICATOR, l, 3, 0.2, 0.3, 0.2, 0.05);
@@ -284,6 +291,8 @@ final class Visual implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void morte(EntityDeathEvent e) {
         if (!(e.getEntity() instanceof Zombie z) || pl.zumbis.tipo(z) == null) return;
+        boolean gente = pl.zumbis.tipo(z).soldado();
+        if (gente) z.getWorld().playSound(z.getLocation(), Sound.ENTITY_PLAYER_DEATH, 1f, 0.7f);
         ItemDisplay d = modelos.remove(z.getUniqueId());
         quadros.remove(z.getUniqueId());
         ultimo.remove(z.getUniqueId());
@@ -293,7 +302,7 @@ final class Visual implements Listener {
         Location l = z.getLocation().add(0, z.getHeight() * 0.5, 0);
         for (Player p : z.getWorld().getPlayers()) {
             if (p.canSee(z) || p.getLocation().distanceSquared(l) > 1600) continue;
-            p.playSound(l, Sound.ENTITY_ZOMBIE_DEATH, 1f, 0.85f);
+            if (!gente) p.playSound(l, Sound.ENTITY_ZOMBIE_DEATH, 1f, 0.85f);
             p.spawnParticle(Particle.BLOCK, l, 24, 0.3, 0.5, 0.3, 0, Material.REDSTONE_BLOCK.createBlockData());
             p.spawnParticle(Particle.POOF, l, 8, 0.3, 0.5, 0.3, 0.02);
         }
