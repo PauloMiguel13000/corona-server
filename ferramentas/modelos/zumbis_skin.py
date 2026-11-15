@@ -304,6 +304,71 @@ def ampliar(img, nome):
     return g.astype(np.uint8)
 
 
+HD = {
+    'comum': dict(pele=(126, 140, 116), olho=(228, 222, 170), cabelo=(40, 32, 26), camisa=(72, 98, 132), botoes=True, calca=(62, 54, 48), manga=0.36, boca=0.55),
+    'corredor': dict(pele=(152, 148, 140), olho=(255, 96, 40), cabelo=(30, 26, 24), capuz=(46, 58, 68), camisa=(46, 58, 68), ziper=True, calca=(74, 62, 50),
+                     manga=0.86, faixas=(168, 164, 150), boca=0.85),
+    'tanque': dict(pele=(170, 122, 112), olho=(244, 232, 200), cabelo=(40, 30, 26), cabelo_qtd=0.0, torso_nu=True, camisa=(60, 60, 60), calca=(54, 62, 78), manga=0.0, boca=0.7),
+    'cuspidor': dict(pele=(140, 152, 98), olho=(222, 255, 120), cabelo=(52, 48, 30), cabelo_qtd=0.6, camisa=(152, 142, 122), barriga=True, bolha=(192, 222, 84),
+                     baba=(112, 164, 30), calca=(70, 74, 56), manga=0.3, boca=1.0),
+    'explosivo': dict(pele=(152, 134, 106), olho=(255, 172, 60), cabelo=(34, 28, 24), camisa=(196, 156, 44), listras=(34, 32, 30), dinamite=True, calca=(58, 58, 62),
+                      manga=0.5, boca=0.6),
+    'chefe': dict(pele=(74, 80, 74), olho=(255, 44, 30), cabelo=(20, 18, 18), cabelo_qtd=0.0, camisa=(36, 32, 38), costelas=True, correntes=True, calca=(30, 28, 34),
+                  manga=0.9, faixas=(120, 30, 30), boca=0.95),
+}
+
+
+def camadas_hd(tipo):
+    import zumbis_hd as Z
+    t = HD[tipo]
+    sd = sum(ord(c) * (i + 3) for i, c in enumerate(tipo))
+    k = Z.K
+    c1 = np.zeros((32 * k, 64 * k, 4), np.uint8)
+    c2 = np.zeros((32 * k, 64 * k, 4), np.uint8)
+
+    def por(c, img, x, y, f=1.0):
+        h, w = img.shape[:2]
+        im = img.copy()
+        im[..., :3] = np.clip(im[..., :3] * f, 0, 255)
+        c[y * k:y * k + h, x * k:x * k + w] = im
+
+    por(c1, Z.rosto(t, sd), 8, 8)
+    por(c1, Z.cabeca_lado(t, sd + 1), 0, 8, 0.9)
+    por(c1, Z.cabeca_lado(t, sd + 2)[:, ::-1], 16, 8, 0.9)
+    por(c1, Z.cabeca_lado(t, sd + 3, nuca=True), 24, 8, 0.85)
+    por(c1, Z.cabeca_lado(t, sd + 4, topo=True), 8, 0)
+    por(c1, Z.liso(8, 8, t['pele'], sd + 5, 0.6), 16, 0)
+    por(c1, Z.tronco(t, sd + 6), 20, 20)
+    por(c1, Z.tronco(t, sd + 7, frente=False), 32, 20, 0.9)
+    por(c1, Z.tronco(t, sd + 8, frente=False, w=4), 16, 20, 0.84)
+    por(c1, Z.tronco(t, sd + 9, frente=False, w=4), 28, 20, 0.84)
+    por(c1, Z.liso(8, 4, t['pele'] if t.get('torso_nu') else t['camisa'], sd + 10), 20, 16)
+    por(c1, Z.liso(8, 4, t['calca'], sd + 11, 0.7), 28, 16)
+    por(c1, Z.braco(t, sd + 12), 44, 20)
+    por(c1, Z.braco(t, sd + 13)[:, ::-1], 52, 20, 0.88)
+    por(c1, Z.braco(t, sd + 14), 40, 20, 0.84)
+    por(c1, Z.braco(t, sd + 15), 48, 20, 0.84)
+    por(c1, Z.liso(4, 4, t['pele'] if t.get('torso_nu') or t.get('manga', 0.35) <= 0 else t['camisa'], sd + 16), 44, 16)
+    por(c1, Z.liso(4, 4, (96, 12, 14), sd + 17, 0.8), 48, 16)
+    for i, x in enumerate((0, 4, 8, 12)):
+        por(c1, Z.sapato(sd + 20 + i), x, 29, 1.0 if x == 4 else 0.85)
+    por(c1, Z.liso(4, 4, (16, 14, 14), sd + 25), 8, 16)
+    por(c2, Z.perna(t, sd + 30), 4, 20)
+    por(c2, Z.perna(t, sd + 31)[:, ::-1], 12, 20, 0.88)
+    por(c2, Z.perna(t, sd + 32), 0, 20, 0.84)
+    por(c2, Z.perna(t, sd + 33), 8, 20, 0.84)
+    por(c2, Z.liso(4, 4, t['calca'], sd + 34), 4, 16)
+    por(c2, Z.liso(4, 4, t['calca'], sd + 35, 0.6), 8, 16)
+    cint = Z.liso(8, 3, t['calca'], sd + 36)
+    cint[k:2 * k, :, :3] = (26, 22, 20)
+    cint[k:2 * k, 3 * k + k // 2:4 * k + k // 2, :3] = (150, 140, 110)
+    por(c2, cint, 20, 29)
+    por(c2, cint[:, ::-1], 32, 29, 0.9)
+    por(c2, cint[:, :4 * k], 16, 29, 0.85)
+    por(c2, cint[:, :4 * k], 28, 29, 0.85)
+    return c1, c2
+
+
 def salvar(caminho, obj):
     os.makedirs(os.path.dirname(caminho), exist_ok=True)
     with open(caminho, 'w', encoding='utf-8') as f:
@@ -325,8 +390,7 @@ if __name__ == '__main__':
     ic.save(os.path.join(B, 'textures', 'items', 'corona', 'tiro', 'corona_zumbi_pele.png'))
     item_tex['corona_zumbi_pele'] = {'textures': 'textures/items/corona/tiro/corona_zumbi_pele'}
     for tipo in T:
-        c1, c2 = camadas(tipo)
-        g1, g2 = ampliar(c1, tipo + '1'), ampliar(c2, tipo + '2')
+        g1, g2 = camadas_hd(tipo)
         for camada, pasta, g in ((1, 'humanoid', g1), (2, 'humanoid_leggings', g2)):
             for p in (os.path.join(J, 'textures', 'entity', 'equipment', pasta, f'z{tipo}.png'), os.path.join(B, 'textures', 'models', 'armor', f'corona_z{tipo}_{camada}.png')):
                 os.makedirs(os.path.dirname(p), exist_ok=True)
@@ -343,13 +407,13 @@ if __name__ == '__main__':
             mapa.setdefault(f'minecraft:leather_{peca}', []).append({
                 'type': 'definition', 'model': f'corona:zumbi/{tipo}_{pt}', 'bedrock_identifier': bid, 'display_name': f'Infectado {tipo} {pt}',
                 'bedrock_options': {'icon': 'corona_zumbi_pele', 'creative_category': 'equipment', 'protection_value': prot}})
-        for yaw in (32, -40):
-            RA.Render.__init__.__defaults__ = (200, 300, 7.0, yaw, 14)
+        for yaw in (28,):
+            RA.Render.__init__.__defaults__ = (400, 600, 14.0, yaw, 12)
             previas.append(RA.boneco(g1, g2, pele))
     salvar(os.path.join(SAIDA, 'corona-tiro-zumbis.json'), {'format_version': 2, 'items': mapa})
     salvar(os.path.join(SAIDA, 'item_texture_zumbis.json'), item_tex)
-    folha = Image.new('RGB', (200 * 6, 600), (38, 40, 48))
+    folha = Image.new('RGB', (400 * 3, 1200), (38, 40, 48))
     for i, pv in enumerate(previas):
-        folha.paste(pv, ((i // 2) * 200, (i % 2) * 300))
+        folha.paste(pv, ((i % 3) * 400, (i // 3) * 600))
     folha.save(os.path.join(SAIDA, 'previa_zumbis.png'))
     print('skins:', len(T))

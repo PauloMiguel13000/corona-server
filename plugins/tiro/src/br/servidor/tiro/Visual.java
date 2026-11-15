@@ -31,8 +31,8 @@ import org.bukkit.inventory.ItemStack;
  */
 final class Visual implements Listener {
 
-    static final String URL_PADRAO = "https://corona-server.duckdns.org/pacotes/corona_tiro_java-383ceeafd3.zip";
-    static final String SHA1_PADRAO = "383ceeafd343680ae02419dc5f7c2d46617297a8";
+    static final String URL_PADRAO = "https://corona-server.duckdns.org/pacotes/corona_tiro_java-a9a3ae25f4.zip";
+    static final String SHA1_PADRAO = "a9a3ae25f4fedc4aace0467895ee863ee6c714f7";
     private static final UUID ID = UUID.nameUUIDFromBytes("corona-tiro-pack".getBytes(StandardCharsets.UTF_8));
 
     private final Tiro pl;
