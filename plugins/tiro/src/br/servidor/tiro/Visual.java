@@ -69,6 +69,7 @@ final class Visual implements Listener {
     Visual(Tiro pl) {
         this.pl = pl;
         Bukkit.getScheduler().runTaskTimer(pl, this::tique, 2L, 1L);
+        Bukkit.getScheduler().runTaskTimer(pl, this::rosnados, 40L, 20L);
     }
 
     boolean ligado() {
@@ -269,30 +270,50 @@ final class Visual implements Listener {
         }
     }
 
-    /** Quem ve o 3D nao recebe o som de dor do zumbi escondido: toca daqui. */
+    /** 15/11 (Paulo: "todos os zumbis tem o mesmo som, tem que ser diferente"; "soldado e humano e faz som de zumbi"):
+     *  o zumbi de verdade e mudo e a voz de cada tipo sai daqui, para todo mundo. {dor, morte, rosnado}, tom. */
+    private record Voz(Sound dor, Sound morte, Sound rosnado, float tom, float vol) {}
+
+    private static Voz voz(Zumbis.Tipo t) {
+        return switch (t) {
+            case CORREDOR -> new Voz(Sound.ENTITY_HUSK_HURT, Sound.ENTITY_HUSK_DEATH, Sound.ENTITY_HUSK_AMBIENT, 1.45f, 0.9f);
+            case TANQUE -> new Voz(Sound.ENTITY_RAVAGER_HURT, Sound.ENTITY_RAVAGER_DEATH, Sound.ENTITY_RAVAGER_AMBIENT, 0.75f, 1.2f);
+            case CUSPIDOR -> new Voz(Sound.ENTITY_DROWNED_HURT, Sound.ENTITY_DROWNED_DEATH, Sound.ENTITY_DROWNED_AMBIENT, 1.25f, 1f);
+            case EXPLOSIVO -> new Voz(Sound.ENTITY_ZOMBIE_VILLAGER_HURT, Sound.ENTITY_ZOMBIE_VILLAGER_DEATH, Sound.ENTITY_ZOMBIE_VILLAGER_AMBIENT, 0.6f, 1f);
+            case CHEFE -> new Voz(Sound.ENTITY_WARDEN_HURT, Sound.ENTITY_WARDEN_DEATH, Sound.ENTITY_WARDEN_AMBIENT, 0.9f, 1.6f);
+            case COMUM -> new Voz(Sound.ENTITY_ZOMBIE_HURT, Sound.ENTITY_ZOMBIE_DEATH, Sound.ENTITY_ZOMBIE_AMBIENT, 0.95f, 0.9f);
+            default -> new Voz(Sound.ENTITY_PLAYER_HURT, Sound.ENTITY_PLAYER_DEATH, null, 0.8f, 0.9f);   // soldados: gente
+        };
+    }
+
+    /** Rosnado de vez em quando (chamado uma vez por segundo). */
+    void rosnados() {
+        for (World w : Bukkit.getWorlds()) {
+            if (!pl.mundoDeTiro(w) || w.getPlayers().isEmpty()) continue;
+            for (Zombie z : w.getEntitiesByClass(Zombie.class)) {
+                Zumbis.Tipo t = pl.zumbis.tipo(z);
+                if (t == null || z.isDead() || Math.random() > 0.11) continue;
+                Voz v = voz(t);
+                if (v.rosnado() != null) w.playSound(z.getLocation(), v.rosnado(), v.vol(), v.tom() * (0.92f + (float) Math.random() * 0.16f));
+            }
+        }
+    }
+
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void dor(EntityDamageEvent e) {
         if (!(e.getEntity() instanceof Zombie z) || pl.zumbis.tipo(z) == null || e.getFinalDamage() <= 0) return;
         Location l = z.getLocation().add(0, z.getHeight() * 0.6, 0);
-        // 15/11 (Paulo: "sao humanos e fazem som de zumbi"): soldado e gente, geme e cai como gente, para todo mundo
-        boolean gente = pl.zumbis.tipo(z).soldado();
-        for (Player p : z.getWorld().getPlayers()) {
-            if (gente) {
-                if (p.getLocation().distanceSquared(l) <= 900) p.playSound(l, Sound.ENTITY_PLAYER_HURT, 0.9f, 0.75f + (float) Math.random() * 0.25f);
-                if (!p.canSee(z)) p.spawnParticle(Particle.DAMAGE_INDICATOR, l, 3, 0.2, 0.3, 0.2, 0.05);
-                continue;
-            }
-            if (p.canSee(z) || p.getLocation().distanceSquared(l) > 900) continue;
-            p.playSound(l, Sound.ENTITY_ZOMBIE_HURT, 0.9f, 0.8f + (float) Math.random() * 0.3f);
-            p.spawnParticle(Particle.DAMAGE_INDICATOR, l, 3, 0.2, 0.3, 0.2, 0.05);
-        }
+        Voz v = voz(pl.zumbis.tipo(z));
+        z.getWorld().playSound(l, v.dor(), v.vol(), v.tom() * (0.92f + (float) Math.random() * 0.16f));
+        for (Player p : z.getWorld().getPlayers())
+            if (!p.canSee(z) && p.getLocation().distanceSquared(l) <= 900) p.spawnParticle(Particle.DAMAGE_INDICATOR, l, 3, 0.2, 0.3, 0.2, 0.05);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void morte(EntityDeathEvent e) {
         if (!(e.getEntity() instanceof Zombie z) || pl.zumbis.tipo(z) == null) return;
-        boolean gente = pl.zumbis.tipo(z).soldado();
-        if (gente) z.getWorld().playSound(z.getLocation(), Sound.ENTITY_PLAYER_DEATH, 1f, 0.7f);
+        Voz v = voz(pl.zumbis.tipo(z));
+        z.getWorld().playSound(z.getLocation(), v.morte(), v.vol(), v.tom());
         ItemDisplay d = modelos.remove(z.getUniqueId());
         quadros.remove(z.getUniqueId());
         ultimo.remove(z.getUniqueId());
@@ -302,7 +323,6 @@ final class Visual implements Listener {
         Location l = z.getLocation().add(0, z.getHeight() * 0.5, 0);
         for (Player p : z.getWorld().getPlayers()) {
             if (p.canSee(z) || p.getLocation().distanceSquared(l) > 1600) continue;
-            if (!gente) p.playSound(l, Sound.ENTITY_ZOMBIE_DEATH, 1f, 0.85f);
             p.spawnParticle(Particle.BLOCK, l, 24, 0.3, 0.5, 0.3, 0, Material.REDSTONE_BLOCK.createBlockData());
             p.spawnParticle(Particle.POOF, l, 8, 0.3, 0.5, 0.3, 0.02);
         }

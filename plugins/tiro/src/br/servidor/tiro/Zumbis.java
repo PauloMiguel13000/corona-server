@@ -113,7 +113,7 @@ final class Zumbis implements Listener {
         return l.getWorld().spawn(l, Zombie.class, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.CUSTOM, z -> {
             z.getPersistentDataContainer().set(kTipo, PersistentDataType.STRING, t.name());
             z.setAdult();
-            if (t.soldado()) z.setSilent(true);
+            z.setSilent(true);   // a voz de cada tipo sai do Visual (som proprio por tipo; soldado e gente)
             z.setShouldBurnInDay(false);
             z.setCanPickupItems(false);
             z.setRemoveWhenFarAway(false);

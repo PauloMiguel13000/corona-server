@@ -539,7 +539,14 @@ public final class Mineracao extends JavaPlugin implements Listener {
         if (getConfig().getBoolean("portal-spawn.feito", false)) {
             World w = Bukkit.getWorld(getConfig().getString("portal-spawn.mundo", "world"));
             int cx = getConfig().getInt("portal-spawn.x", 15), z = getConfig().getInt("portal-spawn.z", -29), y0 = getConfig().getInt("portal-spawn.y", 122);
-            if (w != null) for (int s = -1; s <= 1; s++) for (int y = y0 + 1; y <= y0 + 5; y++) n += miolo(w, cx + s, y, z, true);
+            // 15/11: o spawn principal foi refeito e levou o portal junto ("o rankup sumiu"): sem a moldura, faz de novo
+            if (w != null && w.isChunkLoaded(cx >> 4, z >> 4) && w.getBlockAt(cx - 2, y0 + 1, z).getType().isAir() && w.getBlockAt(cx + 2, y0 + 1, z).getType().isAir()) {
+                for (int s = -3; s <= 3; s++) for (int y = y0 + 1; y <= y0 + 9; y++) w.getBlockAt(cx + s, y, z).setType(Material.AIR, false);
+                for (Entity en : w.getNearbyEntities(new Location(w, cx + 0.5, y0 + 6, z + 0.5), 4, 6, 3)) if (en instanceof TextDisplay && en.getPersistentDataContainer().has(kEnfeite, PersistentDataType.STRING)) en.remove();
+                getConfig().set("portal-spawn.feito", false);
+                portalDoSpawn();
+                getLogger().info("Portal da Prisao no spawn refeito (a moldura tinha sumido).");
+            } else if (w != null) for (int s = -1; s <= 1; s++) for (int y = y0 + 1; y <= y0 + 5; y++) n += miolo(w, cx + s, y, z, true);
         }
         if (n > 0) getLogger().info("Portais consertados: " + n + " blocos.");
     }
