@@ -58,7 +58,7 @@ import org.bukkit.util.Vector;
 final class Missao implements Listener {
 
     static final String PREFIXO = "§8[§c§lMissão§8] §7";
-    static final int Y = 64, SETORES = 5, COMP = 40, LARG = 12, MAPA = 1;
+    static final int Y = 64, SETORES = 5, COMP = 40, LARG = 12, MAPA = 2;
     static final String[] NOMES = {"Pátio de Carga", "Armazém", "Rua dos Contêineres", "Laboratório", "Heliporto"};
     static final String[] CLASSES = {"fuzileiro", "medico", "engenheiro", "atirador"};
     static final String[] CLASSE_NOME = {"§aFuzileiro", "§dMédico", "§eEngenheiro", "§bAtirador"};
@@ -234,6 +234,21 @@ final class Missao implements Listener {
                 caixa(tx - 1, Y + 5, tz - 1, tx + 1, Y + 5, tz - 1, Material.MUD_BRICK_SLAB);
             }
         }
+        // luz invisivel pela base inteira (15/11: no teste estava escuro demais para ver os soldados)
+        org.bukkit.block.data.type.Light luz = (org.bukkit.block.data.type.Light) Bukkit.createBlockData(Material.LIGHT);
+        luz.setLevel(14);
+        for (int z = -12; z <= fim - 2; z += 4) {
+            int s = Math.max(0, Math.min(SETORES - 1, Math.floorDiv(z, COMP))), L = z < 0 ? 6 : larg(s);
+            for (int x = -L + 1; x <= L - 1; x += 4)
+                for (int y = Y + 5; y >= Y + 2; y--) {
+                    var bl = mundo.getBlockAt(x, y, z);
+                    if (bl.getType().isAir()) {
+                        bl.setBlockData(luz, false);
+                        break;
+                    }
+                }
+        }
+        for (int x = -4; x <= 4; x += 4) for (int z = -34; z <= -26; z += 4) mundo.getBlockAt(x, Y + 3, z).setBlockData(luz, false);
         pl.getLogger().info("Missao: base inimiga construida (" + SETORES + " setores).");
     }
 
@@ -675,8 +690,8 @@ final class Missao implements Listener {
         Vector v = fim.toVector().subtract(boca.toVector());
         double len = v.length();
         v.normalize();
-        Particle.DustOptions po = new Particle.DustOptions(Color.fromRGB(0xFFD27A), 0.4f);
-        for (double k = 0.6; k < len; k += 1.4) mundo.spawnParticle(Particle.DUST, boca.clone().add(v.clone().multiply(k)), 1, 0, 0, 0, 0, po);
+        // rastro fino (no Bedrock a poeira colorida sai enorme e tapa a visao)
+        for (double k = 0.8; k < len; k += 1.6) mundo.spawnParticle(Particle.ELECTRIC_SPARK, boca.clone().add(v.clone().multiply(k)), 1, 0, 0, 0, 0);
         if (!acertou) {
             alvo.playSound(fim, Sound.ENTITY_ARROW_SHOOT, 0.35f, 1.9f);       // zunido da bala passando
             return;

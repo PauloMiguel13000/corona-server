@@ -46,7 +46,7 @@ import org.joml.Vector3f;
  */
 final class SpawnPrincipal implements Listener {
 
-    static final int CX = 6, CZ = -6, PISO = 122, R = 27, VERSAO = 3, PORTAL = 23, VAGAS_MINIGAMES = 9;
+    static final int CX = 6, CZ = -6, PISO = 122, R = 27, VERSAO = 4, PORTAL = 23, VAGAS_MINIGAMES = 9;
 
     record Pedestal(String nome, String sub, double angulo, Material icone, String tapete, String comando) {}
 
@@ -460,8 +460,8 @@ final class SpawnPrincipal implements Listener {
                 }
         // monumento em volta do farol: 8 agulhas de cobre e ardosia (altas e baixas) com luz na ponta
         for (int k = 0; k < 8; k++) {
-            double ang = k * 45;
-            int x = px(ang, 3.6), z = pz(ang, 3.6);
+            double ang = 22.5 + k * 45;                                      // entre os caminhos: a cruz fica livre
+            int x = px(ang, 4.4), z = pz(ang, 4.4);
             int alt = k % 2 == 0 ? 6 : 3;
             por(w, x, PISO + 1, z, "minecraft:polished_deepslate");
             for (int y = 2; y <= alt; y++) por(w, x, PISO + y, z, y == alt ? "minecraft:waxed_oxidized_cut_copper" : "minecraft:polished_deepslate_wall");
