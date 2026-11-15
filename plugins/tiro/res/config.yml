@@ -13,3 +13,8 @@ zumbi:
 operacao:
   maximo-jogadores: 4
   contagem-segundos: 20
+
+# Texturas dos jogos de tiro (armas desenhadas e infectados 3D). O link e o sha1 do pacote do Java ficam no plugin;
+# so preencha aqui para trocar. ligado: false volta para o zumbi do jogo e a enxada.
+pacote:
+  ligado: true

@@ -58,6 +58,7 @@ public final class Tiro extends JavaPlugin implements Listener {
     World lobby;
     Armas armas;
     Zumbis zumbis;
+    Visual visual;
     Apocalipse apocalipse;
     Operacao operacao;
     File arqDados;
@@ -81,6 +82,8 @@ public final class Tiro extends JavaPlugin implements Listener {
         dados = YamlConfiguration.loadConfiguration(arqDados);
         armas = new Armas(this);
         zumbis = new Zumbis(this);
+        visual = new Visual(this);
+        getServer().getPluginManager().registerEvents(visual, this);
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(armas, this);
         getServer().getPluginManager().registerEvents(zumbis, this);
@@ -111,6 +114,7 @@ public final class Tiro extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if (visual != null) visual.limpar();
         if (operacao != null) operacao.desligar();
         if (apocalipse != null) apocalipse.desligar();
         salvar();
