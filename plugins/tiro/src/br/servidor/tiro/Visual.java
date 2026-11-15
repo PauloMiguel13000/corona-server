@@ -46,8 +46,8 @@ import org.joml.Vector3f;
  */
 final class Visual implements Listener {
 
-    static final String URL_PADRAO = "https://corona-server.duckdns.org/pacotes/corona_tiro_java-4374419eec.zip";
-    static final String SHA1_PADRAO = "4374419eec87b94909405a7ea2714d1bbeeb0a32";
+    static final String URL_PADRAO = "https://corona-server.duckdns.org/pacotes/corona_tiro_java-464b18f579.zip";
+    static final String SHA1_PADRAO = "464b18f5791df83163f26bb7dbc58c71542db691";
     private static final UUID ID = UUID.nameUUIDFromBytes("corona-tiro-pack".getBytes(StandardCharsets.UTF_8));
 
     private final Tiro pl;
@@ -58,6 +58,7 @@ final class Visual implements Listener {
     private final Map<UUID, Float> escalas = new HashMap<>();
     private final Map<UUID, Long> ultimoGolpe = new HashMap<>();
     private int conta;
+    private static final int[] CICLO = {0, 3, 2, 3};
 
     Visual(Tiro pl) {
         this.pl = pl;
@@ -172,11 +173,16 @@ final class Visual implements Listener {
                 double rad = Math.toRadians(l.getYaw());
                 l.add(Math.sin(rad) * recuo, 0, -Math.cos(rad) * recuo);
                 LivingEntity alvo = z.getTarget();
-                // quadro: 1 = atacando (alvo colado); andando alterna 0 e 2 (os dois passos); parado fica no 0
+                // animacao: andando roda o ciclo passo A, passagem, passo B, passagem (mais rapido nos que correm);
+                // colado no alvo alterna bracos erguidos e golpe; parado fica em pe
                 Location antes = ultimo.put(u, l.clone());
                 boolean andando = antes != null && antes.getWorld() == w && antes.distanceSquared(l) > 0.0004;
-                int q = alvo != null && alvo.getWorld() == w && alvo.getLocation().distanceSquared(l) < 7.0 ? 1
-                        : (andando && (conta / 7) % 2 == 1 ? 2 : 0);
+                boolean atacando = alvo != null && alvo.getWorld() == w && alvo.getLocation().distanceSquared(z.getLocation()) < 7.0;
+                int fase = conta + (int) (u.getLeastSignificantBits() & 7);
+                int q;
+                if (atacando) q = (fase / 5) % 2 == 0 ? 1 : 4;
+                else if (andando) q = CICLO[(fase / (t.veloc >= 0.3 ? 3 : 4)) % 4];
+                else q = 3;
                 ItemDisplay d = modelos.get(u);
                 boolean novo = d == null || !d.isValid();
                 if (novo) {

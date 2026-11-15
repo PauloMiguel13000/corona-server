@@ -364,10 +364,35 @@ def zchefe(q):
 CORPOS = dict(zcomum=zcomum, zcorredor=zcorredor, ztanque=ztanque, zcuspidor=zcuspidor, zexplosivo=zexplosivo, zchefe=zchefe)
 for k in CORPOS:
     A.PALETAS[k] = {}
-A.cubos = lambda ident, quadro=0: CORPOS[ident](quadro)
+
+
+def _mover(cs, dy=0.0, dz=0.0, pernas_tambem=True):
+    for c in cs:
+        if not pernas_tambem and c.nome.split('_')[0] in ('coxa', 'canela', 'pe', 'quadril'):
+            continue
+        c.de[1] += dy
+        c.ate[1] += dy
+        c.de[2] += dz
+        c.ate[2] += dz
+        if c.rot:
+            c.rot = (c.rot[0], c.rot[1], (c.rot[2][0], c.rot[2][1] + dy, c.rot[2][2] + dz))
+    return cs
+
+
+def cubos(ident, quadro=0):
+    """0 passo A, 1 ataque (bracos erguidos), 2 passo B, 3 passagem (pernas juntas, corpo sobe), 4 golpe (corpo vai para a frente)."""
+    cs = CORPOS[ident](quadro)
+    if quadro == 3:
+        _mover(cs, dy=0.7)
+    elif quadro == 4:
+        _mover(cs, dz=-2.2, pernas_tambem=False)
+    return cs
+
+
+A.cubos = cubos
 A.registrar = lambda pal: None
 A.pintar_face = pintar_face
-QUADROS = (0, 1, 2)
+QUADROS = (0, 1, 2, 3, 4)
 
 
 def gerar(saida, ids):
@@ -404,7 +429,7 @@ def gerar(saida, ids):
             at = BV.attachable_prop(f'corona:prop_{nome}', tex_bed, geo_id)
             at['minecraft:attachable']['description']['materials'] = {'default': 'entity_emissive_alpha', 'enchanted': 'entity_emissive_alpha'}
             kit.salvar_json(os.path.join(B, 'attachables', f'prop_{nome}.json'), at)
-            previas.append(kit.previa(cs, A.alfa_binario(img), 150 if q != 1 else 160, 8, escala=9, fundo=(150, 158, 168)))
+            previas.append(kit.previa(cs, A.alfa_binario(img), 150 if q != 1 else 160, 8, escala=6, fundo=(150, 158, 168)))
             ic = Image.new('RGBA', (16, 16), (90, 30, 30, 255))
             os.makedirs(os.path.join(B, 'textures', 'items', 'corona', 'v2'), exist_ok=True)
             ic.save(os.path.join(B, 'textures', 'items', 'corona', 'v2', f'corona_prop_{nome}.png'))

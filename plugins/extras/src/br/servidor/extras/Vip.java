@@ -87,6 +87,14 @@ final class Vip implements Listener {
         return c;
     }
 
+    /** O VIP acabou e o traje foi recolhido: no proximo VIP ele e entregue de novo (uma vez). */
+    void trajeDevolvido(Player p) {
+        ConfigurationSection c = secao(p.getName(), false);
+        if (c == null || !c.getBoolean("traje-recebido", false)) return;
+        c.set("traje-recebido", false);
+        salvar();
+    }
+
     private void salvar() {
         try {
             dados.save(arquivo);
@@ -486,7 +494,16 @@ final class Vip implements Listener {
         switch (sub) {
             case "kit" -> pegarKit(p);
             case "traje", "armadura", "rei" -> {
-                if (traje != null) traje.entregar(p, true);
+                if (traje == null) return true;
+                ConfigurationSection ct = secao(p.getName(), true);
+                if (ct.getBoolean("traje-recebido", false)) {
+                    p.sendMessage(Extras.txt("§7O §6Traje do Rei §7vem §fuma vez só§7, quando você pega o VIP. Você já recebeu o seu §8(procure no inventário, no corpo e no baú do fim)§7."));
+                    return true;
+                }
+                if (traje.entregar(p, true) >= 0 && traje.pode(p)) {
+                    ct.set("traje-recebido", true);
+                    salvar();
+                }
             }
             case "particulas", "particula", "rastro" -> {
                 if (nv == null || nv.n() < 2) {

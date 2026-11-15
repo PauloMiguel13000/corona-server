@@ -161,7 +161,9 @@ final class TrajeRei implements Listener {
     @EventHandler
     public void mudouDeMundo(org.bukkit.event.player.PlayerChangedWorldEvent e) {
         Player p = e.getPlayer();
-        if (!pl.getConfig().getBoolean("traje-do-rei.acompanha-nas-masmorras", true)) return;
+        // 15/11 (pedido do Paulo): o traje vem UMA vez so, quando a pessoa pega o VIP. Antes, a cada troca de mundo as
+        // pecas que faltavam naquela mochila eram dadas de novo ("fica dando toda hora"). So volta a acompanhar se ligar aqui.
+        if (!pl.getConfig().getBoolean("traje-do-rei.dar-de-novo-ao-trocar-de-mundo", false)) return;
         // 30 ticks: depois de a mochila do mundo novo ser colocada
         Bukkit.getScheduler().runTaskLater(pl, () -> {
             if (!p.isOnline() || !pode(p)) return;
@@ -237,8 +239,9 @@ final class TrajeRei implements Listener {
         }
         if (tirou > 0) {
             p.sendMessage(Extras.txt(pode ? "§cEsse Traje do Rei não é seu: ele voltou para o dono."
-                    : "§7Seu VIP acabou: o §6Traje do Rei §7foi guardado. §eRenove o MVP ou a LENDA §7e use §e/vip traje§7."));
+                    : "§7Seu VIP acabou: o §6Traje do Rei §7foi guardado. §eRenove o MVP ou a LENDA §7e ele volta."));
             pl.getLogger().info("Traje do Rei: " + tirou + " peca(s) tirada(s) de " + p.getName() + (pode ? " (nao era o dono)" : " (sem VIP)"));
+            if (!pode) vip.trajeDevolvido(p);       // VIP novo depois = traje de novo, uma vez
         }
     }
 
