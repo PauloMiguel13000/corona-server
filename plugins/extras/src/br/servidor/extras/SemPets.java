@@ -87,6 +87,26 @@ final class SemPets implements Listener {
     /** Some com o pet logo na chegada (sem esperar a conferencia de 2 em 2 segundos). */
     @EventHandler(priority = EventPriority.MONITOR)
     public void mudou(PlayerChangedWorldEvent e) {
+        // 15/11: o BabyPets, ao trocar de mundo, guarda o pet e marca para solta-lo de novo em meio segundo (e avisa
+        // "apareceu do seu lado"). Em mundo sem pets cancelamos essa volta marcada; o pet fica guardado ate o jogador
+        // voltar para um mundo com pets.
+        if (pl.getConfig().getBoolean("pets.esconder-fora", true) && pronto() && !permitido(e.getPlayer().getWorld().getName())) {
+            try {
+                UUID id = e.getPlayer().getUniqueId();
+                for (org.bukkit.plugin.RegisteredListener rl : PlayerChangedWorldEvent.getHandlerList().getRegisteredListeners()) {
+                    Object l = rl.getListener();
+                    if (!l.getClass().getName().equals("com.petsplugin.listener.PlayerListener")) continue;
+                    Method m = l.getClass().getDeclaredMethod("cancelPendingPetRespawn", UUID.class);
+                    m.setAccessible(true);
+                    m.invoke(l, id);
+                    if (escolhido.invoke(gerente, id) != null) guardados.add(id);
+                    break;
+                }
+            } catch (Throwable t) {
+                if (!avisou) pl.getLogger().warning("Pets: nao consegui cancelar a volta do pet (" + t + ")");
+                avisou = true;
+            }
+        }
         for (long t : new long[] {5L, 30L, 70L}) Bukkit.getScheduler().runTaskLater(pl, this::conferir, t);
     }
 
