@@ -67,6 +67,10 @@ final class Chefe {
     boolean infernoFeito;
     /** Teste do admin (/masmorras admin inferno): usa o mundo de Herobrine com outro chefe. */
     boolean forcarInferno;
+    /** Templo do Trovao: ja quebrou o chao e levou todo mundo para a tempestade no ceu (TempestadeTrovao). */
+    boolean tempestadeFeita;
+    /** Teste do admin (/masmorras admin tempestade): usa a segunda fase do Trovao com outro chefe. */
+    boolean forcarTempestade;
 
     Chefe(Masmorras pl, Masmorra m, LivingEntity e, double vidaMax) {
         this.pl = pl;
@@ -85,7 +89,7 @@ final class Chefe {
     /** Jogadores que estao na arena (ou bem na porta). */
     List<Player> naArena() {
         List<Player> l = new ArrayList<>();
-        Caixa a = m.arena().crescer(2);
+        Caixa a = m.arenaLuta().crescer(2);
         for (Player p : e.getWorld().getPlayers())
             if (!p.isDead() && p.getGameMode() != org.bukkit.GameMode.SPECTATOR && p.getGameMode() != org.bukkit.GameMode.CREATIVE
                     && a.contem(p.getX(), p.getY(), p.getZ())) l.add(p);
@@ -107,12 +111,13 @@ final class Chefe {
         if ((t.secreta || forcarInferno) && pl.inferno != null && pl.inferno.ativo(this)) {   // no mundo de Herobrine quem manda e o InfernoHerobrine
             return true;   // a fase tem o tique dela (InfernoHerobrine)
         }
+        if (pl.tempestade != null && pl.tempestade.ocupado(this)) return true;   // cena do chao quebrando
         long agora = System.currentTimeMillis();
         List<Player> ps = naArena();
         // barra de vida
         barra.progress((float) Math.max(0, Math.min(1, e.getHealth() / vidaMax)));
         List<Player> perto = new ArrayList<>();
-        Caixa ver = m.arena().crescer(10);
+        Caixa ver = m.arenaLuta().crescer(10);
         for (Player p : e.getWorld().getPlayers()) if (ver.contem(p.getX(), p.getY(), p.getZ())) perto.add(p);
         for (Player p : new ArrayList<>(vendo)) if (!perto.contains(p) || !p.isOnline()) {
             p.hideBossBar(barra);
@@ -129,8 +134,9 @@ final class Chefe {
         }
         semJogadorDesde = -1;
         if ((t.secreta || forcarInferno) && pl.inferno != null && pl.inferno.conferir(this, ps)) return true;
+        if (pl.tempestade != null && pl.tempestade.conferir(this, ps)) return true;
         // preso na arena
-        Caixa a = m.arena();
+        Caixa a = m.arenaLuta();
         if (!a.crescer(1).contem(e.getX(), e.getY(), e.getZ())) e.teleport(centro());
         // alvo
         Player alvo = maisPerto(ps);
@@ -326,7 +332,7 @@ final class Chefe {
     /** Cristais de cura (shulkers parados e abertos): enquanto algum estiver vivo, o chefe se cura. */
     private void cristais(List<Player> ps) {
         for (int i = 0; i < 3; i++) {
-            Caixa a = m.arena();
+            Caixa a = m.arenaLuta();
             Location ok = lugarLivre(new Location(e.getWorld(), a.x1() + 2 + rnd.nextInt(Math.max(1, a.x2() - a.x1() - 3)), a.y1(),
                     a.z1() + 2 + rnd.nextInt(Math.max(1, a.z2() - a.z1() - 3))));
             if (ok == null) continue;
@@ -435,7 +441,7 @@ final class Chefe {
     }
 
     Location centro() {
-        Caixa a = m.arena();
+        Caixa a = m.arenaLuta();
         return new Location(e.getWorld(), a.cx() + 0.5, a.y1(), a.cz() + 0.5);
     }
 
@@ -1014,7 +1020,7 @@ final class Chefe {
             }
             case ENXAME -> {
                 int vivos = 0;
-                for (Entity x : pl.lacaiosVivos(m)) if (m.arena().crescer(1).contem(x.getX(), x.getY(), x.getZ())) vivos++;
+                for (Entity x : pl.lacaiosVivos(m)) if (m.arenaLuta().crescer(1).contem(x.getX(), x.getY(), x.getZ())) vivos++;
                 for (int i = 0; i < Math.min(3, 7 - vivos); i++) {
                     Location ok = lugarLivre(l.clone().add(rnd.nextInt(5) - 2, 0, rnd.nextInt(5) - 2));
                     if (ok == null) continue;
@@ -1167,7 +1173,7 @@ final class Chefe {
     private void invocar(int quantos) {
         if (t.ajudantes == null || t.ajudantes.length == 0) return;
         int vivos = 0;
-        for (Entity x : pl.lacaiosVivos(m)) if (m.arena().crescer(1).contem(x.getX(), x.getY(), x.getZ())) vivos++;
+        for (Entity x : pl.lacaiosVivos(m)) if (m.arenaLuta().crescer(1).contem(x.getX(), x.getY(), x.getZ())) vivos++;
         quantos = Math.min(quantos, 6 - vivos);
         Location l = e.getLocation();
         for (int i = 0; i < quantos; i++) {
@@ -1181,7 +1187,7 @@ final class Chefe {
 
     /** Ponto dentro da arena com ar para os pes e a cabeca. */
     Location lugarLivre(Location quer) {
-        Caixa a = m.arena();
+        Caixa a = m.arenaLuta();
         int x = Math.max(a.x1(), Math.min(a.x2(), quer.getBlockX())), z = Math.max(a.z1(), Math.min(a.z2(), quer.getBlockZ()));
         World w = e.getWorld();
         for (int tent = 0; tent < 12; tent++) {
@@ -1221,15 +1227,18 @@ final class Chefe {
         for (Player p : vendo) p.hideBossBar(barra);
         vendo.clear();
         tirarTeias(true);
+        if (pl.tempestade != null) pl.tempestade.terminar(this, false);
         if (e != null && e.isValid()) e.remove();
     }
 
+    /** Chamado quando o chefe morre. */
     void esconderBarra() {
         tirarGelos();
         tirarVisual();
         for (Player p : vendo) p.hideBossBar(barra);
         vendo.clear();
         tirarTeias(true);
+        if (pl.tempestade != null) pl.tempestade.terminar(this, true);
     }
 
     static void atributo(LivingEntity e, Attribute a, double v) {

@@ -18,6 +18,10 @@ final class PacoteMusicaJava implements Listener {
     static final String URL_PADRAO = "https://raw.githubusercontent.com/PauloMiguel13000/corona-pacotes/main/corona_trilha_java-8d06254cdc.zip";
     static final String SHA1_PADRAO = "8d06254cdc4305e721dab6b5408ea1ac92013113";
     private static final UUID ID = UUID.nameUUIDFromBytes("corona-trilha-masmorras".getBytes());
+    /** 14/11: pacote pequeno so com a musica do Templo do Trovao (a nova + a primeira versao em seguida). */
+    static final String URL_TROVAO = "https://raw.githubusercontent.com/PauloMiguel13000/corona-pacotes/main/corona_trovao_java-f26ea96da2.zip";
+    static final String SHA1_TROVAO = "f26ea96da2163da210d7ea419ac715950aa14a79";
+    private static final UUID ID_TROVAO = UUID.nameUUIDFromBytes("corona-trilha-trovao".getBytes());
     private final Masmorras pl;
 
     PacoteMusicaJava(Masmorras pl) {
@@ -45,6 +49,10 @@ final class PacoteMusicaJava implements Listener {
                 String url = pl.getConfig().getString("trilha.pacote-java-url", URL_PADRAO);
                 byte[] sha = HexFormat.of().parseHex(pl.getConfig().getString("trilha.pacote-java-sha1", SHA1_PADRAO));
                 p.addResourcePack(ID, url, sha, "§e§lCorona Server§r\n§fTrilha sonora das masmorras §7(músicas novas)", false);
+                if (pl.getConfig().getBoolean("trilha.pacote-java-trovao", false))
+                    p.addResourcePack(ID_TROVAO, pl.getConfig().getString("trilha.pacote-java-trovao-url", URL_TROVAO),
+                            HexFormat.of().parseHex(pl.getConfig().getString("trilha.pacote-java-trovao-sha1", SHA1_TROVAO)),
+                            "§e§lCorona Server§r\n§fMúsica do Templo do Trovão", false);
             } catch (Throwable t) {
                 pl.getLogger().warning("Pacote de musica do Java para " + p.getName() + ": " + t);
             }

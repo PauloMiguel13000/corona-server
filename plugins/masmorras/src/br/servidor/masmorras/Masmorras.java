@@ -128,6 +128,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
     MundoMasmorras mundoNovo;
     LobbyMundo lobby;
     InfernoHerobrine inferno;
+    TempestadeTrovao tempestade;
     Ranking ranking;
     Missoes missoes;
     VendaClasses vendaClasses;
@@ -228,6 +229,9 @@ public final class Masmorras extends JavaPlugin implements Listener {
         // 14/11: o mundo de Herobrine (a luta dele leva todo mundo para o inferno dele)
         inferno = new InfernoHerobrine(this);
         getServer().getPluginManager().registerEvents(inferno, this);
+        // 14/11: segunda fase do Arauto do Trovao (o chao quebra e a luta continua numa arena no ceu)
+        tempestade = new TempestadeTrovao(this);
+        getServer().getPluginManager().registerEvents(tempestade, this);
         getServer().getPluginManager().registerEvents(new PacoteMusicaJava(this), this);
         Bukkit.getScheduler().runTaskLater(this, () -> { try { inferno.mundo(); } catch (Throwable ex) { getLogger().warning("Mundo de Herobrine: " + ex); } }, 200L);
         getServer().getPluginManager().registerEvents(new Vidas(this), this);
@@ -311,6 +315,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         if (inferno != null) inferno.desligar();
+        if (tempestade != null) tempestade.desligar();
         if (ranking != null) ranking.salvar();
         if (statusEntrada != null) statusEntrada.limpar();
         if (missoes != null) missoes.salvarAgora();
@@ -1339,7 +1344,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
             Caixa perto = m.tudo.crescer(24);
             List<Player> ps = new ArrayList<>();
             for (Player p : w.getPlayers())
-                if (p.getGameMode() != GameMode.SPECTATOR && perto.contem(p.getX(), p.getY(), p.getZ())) ps.add(p);
+                if (p.getGameMode() != GameMode.SPECTATOR && (perto.contem(p.getX(), p.getY(), p.getZ()) || m.extra != null && m.extra.contem(p.getX(), p.getY(), p.getZ()))) ps.add(p);
             if (ps.isEmpty() && m.chefe != null && inferno != null && inferno.ativo(m.chefe)) {   // todos no mundo de Herobrine
                 m.semNinguemDesde = -1;
                 continue;
@@ -1473,7 +1478,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         Bukkit.broadcast(txt(PREFIXO + "§e" + quem + " §7derrotou §c" + t.chefeNome + " §7(Nível " + t.nivel + ") na §f" + t.nome + "§7!"));
         // XP de habilidade (nivel de poder das classes) para quem lutou: quem esta na arena e quem matou
         Set<Player> lutaram = new HashSet<>();
-        Caixa ar = m.arena().crescer(3);
+        Caixa ar = m.arenaLuta().crescer(3);
         for (Player p : e.getEntity().getWorld().getPlayers())
             if (!p.isDead() && p.getGameMode() != GameMode.SPECTATOR && ar.contem(p.getX(), p.getY(), p.getZ())) lutaram.add(p);
         if (k != null) lutaram.add(k);
@@ -2351,6 +2356,16 @@ public final class Masmorras extends JavaPlugin implements Listener {
                     hm.chefe.e.setHealth(Math.min(hm.chefe.e.getHealth(), hm.chefe.vidaMax * 0.65));
                     s.sendMessage(PREFIXO + "Herobrine em 65% da vida: o mundo dele vai abrir.");
                 } else s.sendMessage(PREFIXO + "Herobrine ainda nao apareceu (espere a abertura de 24 s na arena).");
+            }
+            case "tempestade" -> {
+                // teste: /masmorras admin tempestade [id]  (segunda fase do Trovao; com outra masmorra forca a fase nela)
+                Masmorra tm = null;
+                if (a.length > 2) tm = porTexto(a[2]);
+                if (tm == null) for (Masmorra m : todas) if (m.tipo.id.equals("TROVAO")) { tm = m; break; }
+                if (tm == null || tm.chefe == null || !tm.chefe.vivo()) { s.sendMessage(PREFIXO + "O chefe dessa masmorra nao esta vivo (entre na arena primeiro)."); return true; }
+                if (!tm.tipo.id.equals("TROVAO")) tm.chefe.forcarTempestade = true;
+                tm.chefe.e.setHealth(Math.min(tm.chefe.e.getHealth(), tm.chefe.vidaMax * 0.58));
+                s.sendMessage(PREFIXO + "Chefe da masmorra #" + tm.id + " em 58% da vida: a tempestade vai comecar.");
             }
             case "galeria" -> galeria.refazer(s);
             case "reliquia" -> {

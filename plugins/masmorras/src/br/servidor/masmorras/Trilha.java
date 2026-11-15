@@ -73,6 +73,7 @@ final class Trilha implements Listener {
         DURACAO.put("coliseu", 38.40);
         DURACAO.put("coliseu_luta", 38.40);
         DURACAO.put("trovao", 25.60);
+        DURACAO.put("trovao2", 49.90);   // 14/11 (Paulo): a nova e, quando acaba, a primeira versao em seguida (pacote corona_trovao)
         DURACAO.put("trovao_luta", 25.60);
         DURACAO.put("fogo", 26.30);
         DURACAO.put("fogo_luta", 26.30);
@@ -181,7 +182,7 @@ final class Trilha implements Listener {
         if (m == null || m.demolindo) return null;
         String tema = faixaDe(m);
         // chefe vivo: na arena ou perto dele (os chefes ja aparecem logo que a gente entra) -> musica do chefe do tema
-        if (m.chefe != null && m.chefe.vivo() && (m.arena().contem(l.getBlockX(), l.getBlockY(), l.getBlockZ())
+        if (m.chefe != null && m.chefe.vivo() && (m.arenaLuta().contem(l.getBlockX(), l.getBlockY(), l.getBlockZ())
                 || (m.chefe.e.getWorld().equals(w) && m.chefe.e.getLocation().distanceSquared(l) < 28 * 28))) {
             if (m.tipo.secreta) return "herobrine";
             return DURACAO.containsKey("chefe_" + tema) ? "chefe_" + tema : "chefe";
@@ -194,7 +195,9 @@ final class Trilha implements Listener {
         }
         // a versao de luta da MESMA musica; so volta para a calma depois de 8 s sem monstro (nao fica trocando)
         Long ul = luta.get(p.getUniqueId());
-        return ul != null && agora - ul < 8000 ? tema + "_luta" : tema;
+        if (ul != null && agora - ul < 8000) return tema + "_luta";
+        if (tema.equals("trovao") && pl.getConfig().getBoolean("trilha.trovao-com-antiga", false)) return "trovao2";
+        return tema;
     }
 
     private void passo() {

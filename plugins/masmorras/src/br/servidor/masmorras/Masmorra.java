@@ -53,6 +53,14 @@ final class Masmorra {
         return salas.get(salas.size() - 1);
     }
 
+    /** 14/11: segunda fase do chefe numa arena temporaria (Templo do Trovao: arena no ceu). Nao e salvo. */
+    Caixa extra;
+
+    /** Onde a luta do chefe esta acontecendo agora: a arena extra (segunda fase) ou a arena normal. */
+    Caixa arenaLuta() {
+        return extra != null ? extra : arena();
+    }
+
     void fechar() {
         Caixa t = null;
         for (Caixa c : protecao) t = t == null ? c : t.juntar(c);
@@ -75,6 +83,7 @@ final class Masmorra {
 
     /** O bloco faz parte da masmorra (nao pode quebrar nem colocar)? */
     boolean protege(int x, int y, int z) {
+        if (!demolindo && extra != null && extra.contem(x, y, z)) return true;
         if (demolindo || tudo == null || !tudo.contem(x, y, z)) return false;
         if (blindagem != null && blindagem.contem(x, y, z)) return true;
         for (Caixa c : protecao) if (c.contem(x, y, z)) return true;
@@ -83,6 +92,7 @@ final class Masmorra {
 
     /** Ponto dentro da masmorra ou da blindagem (para o "sem PvP"). */
     boolean naArea(double x, double y, double z) {
+        if (!demolindo && extra != null && extra.contem(x, y, z)) return true;
         if (demolindo || tudo == null || !tudo.contem(x, y, z)) return false;
         if (blindagem != null && blindagem.contem(x, y, z)) return true;
         for (Caixa c : protecao) if (c.contem(x, y, z)) return true;
@@ -96,6 +106,7 @@ final class Masmorra {
     }
 
     boolean dentro(double x, double y, double z) {
+        if (!demolindo && extra != null && extra.contem(x, y, z)) return true;
         if (demolindo || tudo == null || !tudo.contem(x, y, z)) return false;
         for (Caixa c : protecao) if (c.contem(x, y, z)) return true;
         return false;
