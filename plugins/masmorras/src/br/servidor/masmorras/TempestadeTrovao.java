@@ -65,9 +65,11 @@ final class TempestadeTrovao implements Listener {
         final List<BlockData> chaoDados = new ArrayList<>();
         final List<Block> obra = new ArrayList<>();
         final Set<UUID> noCeu = new HashSet<>();
+        final Set<Block> placas = new HashSet<>();
         boolean emCena = true, acabou;
         BukkitTask cena, tarefa;
         long proximoRaio, proximaVentania, ventaniaEm = -1, proximoAmbiente;
+        int passo;
         Vector ventoDir;
     }
 
@@ -189,7 +191,8 @@ final class TempestadeTrovao implements Listener {
         f.proximoRaio = agora + 2500;
         f.proximaVentania = agora + 9000;
         f.emCena = false;
-        f.tarefa = Bukkit.getScheduler().runTaskTimer(pl, () -> tick(f), 10L, 10L);
+        placas(f);
+        f.tarefa = Bukkit.getScheduler().runTaskTimer(pl, () -> tick(f), 5L, 5L);
     }
 
     // ------------------------------------------------------------------ a fase no ceu
@@ -199,13 +202,30 @@ final class TempestadeTrovao implements Listener {
         Chefe c = f.c;
         if (!c.vivo()) return;   // a morte chama terminar()
         long agora = System.currentTimeMillis();
-        // quem chega depois (renasceu e subiu a torre) cai pelo buraco e vem tambem
-        for (Player p : jogadoresEm(f.w, f.arena.crescer(2))) if (caiu(f, p)) mandarProCeu(f, p);
-        List<Player> ps = jogadoresEm(f.w, f.ceu);
-        for (Player p : ps) if (p.getY() < f.ys - 3) {   // caiu da nuvem (nao deveria): volta para o meio
-            p.teleport(f.centro.clone().add(0, 1, 0));
-            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 40, 0, false, false, true));
+        // quem chega depois (renasceu e subiu a torre): pisa na placa dourada ou cai pelo buraco, e vem tambem
+        f.passo++;
+        for (Player p : jogadoresEm(f.w, f.arena.crescer(2))) {
+            Block pe = p.getLocation().subtract(0, 0.2, 0).getBlock();
+            if (caiu(f, p) || f.placas.contains(pe)) {
+                mandarProCeu(f, p);
+                continue;
+            }
+            if (f.passo % 4 == 0) p.sendActionBar(Masmorras.txt("§e§lPise numa placa dourada §7(nas paredes) para voltar à luta lá em cima!"));
         }
+        if (f.passo % 2 == 0) for (Block b : f.placas) f.w.spawnParticle(Particle.END_ROD, b.getLocation().add(0.5, 1.2, 0.5), 2, 0.2, 0.6, 0.2, 0.01);
+        // caiu da nuvem (15/11: "eu cai na luta"): qualquer um que estava la em cima e aparece caindo entre o ceu e o templo volta para o meio
+        for (UUID u : f.noCeu) {
+            Player p = Bukkit.getPlayer(u);
+            if (p == null || p.isDead() || p.getWorld() != f.w || p.getGameMode() == GameMode.SPECTATOR) continue;
+            if (p.getY() < f.ys - 0.5 && p.getY() > f.arena.y2() + 2 && Math.abs(p.getX() - f.centro.getX()) < R + 12 && Math.abs(p.getZ() - f.centro.getZ()) < R + 12) {
+                p.setFallDistance(0);
+                p.teleport(f.centro.clone().add(0, 1, 0));
+                p.setFallDistance(0);
+                p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 40, 0, false, false, true));
+            }
+        }
+        if (f.passo % 2 != 0) return;   // o resto da fase segue de meio em meio segundo
+        List<Player> ps = jogadoresEm(f.w, f.ceu);
         if (!f.ceu.crescer(1).contem(c.e.getX(), c.e.getY(), c.e.getZ())) c.e.teleport(f.centro);
         // chuva, nuvens e raios ao longe
         f.w.spawnParticle(Particle.FALLING_WATER, f.centro.clone().add(0, 7, 0), 60, R * 0.7, 2, R * 0.7, 0);
@@ -248,6 +268,23 @@ final class TempestadeTrovao implements Listener {
                 f.ventaniaEm = -1;
                 f.proximaVentania = agora + (furia ? 8000 : 11000) + rnd.nextInt(3000);
             }
+        }
+    }
+
+    /** 15/11 (Paulo): quem morreu com vida sobrando e voltou para a sala do chefe acha uma placa dourada em cada
+     *  parede (na beirada que sobrou do chao). Pisou, volta para a luta la em cima. So existe depois que a fase 2 comecou. */
+    private void placas(Fase f) {
+        Caixa a = f.arena;
+        int y = a.y1() - 1, cx = a.cx(), cz = a.cz();
+        int[][] lugares = {{cx - 1, a.z1()}, {cx, a.z1()}, {cx + 1, a.z1()}, {cx - 1, a.z2()}, {cx, a.z2()}, {cx + 1, a.z2()},
+                {a.x1(), cz - 1}, {a.x1(), cz}, {a.x1(), cz + 1}, {a.x2(), cz - 1}, {a.x2(), cz}, {a.x2(), cz + 1}};
+        for (int[] l : lugares) {
+            Block b = f.w.getBlockAt(l[0], y, l[1]);
+            if (b.getState() instanceof TileState || !f.w.getBlockAt(l[0], y + 1, l[1]).isPassable()) continue;
+            f.chao.add(b);
+            f.chaoDados.add(b.getBlockData());
+            b.setType(Material.GOLD_BLOCK, false);
+            f.placas.add(b);
         }
     }
 
@@ -381,7 +418,9 @@ final class TempestadeTrovao implements Listener {
                 if (d < R - 1.5) por(f, cx + dx, y - 1, cz + dz, Material.WHITE_WOOL);   // nuvem por baixo
                 if (d < R - 5 && rnd.nextInt(3) > 0) por(f, cx + dx, y - 2, cz + dz, Material.WHITE_WOOL);
                 // parede invisivel na borda (ninguem cai, nem com a ventania)
-                if (d > R - 0.6) for (int h = 1; h <= 5; h++) por(f, cx + dx, y + h, cz + dz, Material.BARRIER);
+                if (d > R - 0.6) for (int h = 1; h <= 13; h++) por(f, cx + dx, y + h, cz + dz, Material.BARRIER);
+                // chao sem buraco: embaixo da nuvem inteira vai uma camada invisivel
+                por(f, cx + dx, y - 3, cz + dz, Material.BARRIER);
             }
         // 4 colunas de cobre com para-raios
         for (int i = 0; i < 4; i++) {
