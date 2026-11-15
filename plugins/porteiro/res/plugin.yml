@@ -1,0 +1,16 @@
+name: OPorteiro
+version: '1.0'
+main: br.servidor.porteiro.Porteiro
+api-version: '1.21'
+author: Corona Server
+description: O Porteiro - terror original do Corona Server. Ache as chaves do Edificio Coroa sem ser ouvido pelo Porteiro e sem tirar os olhos da Sombra de Cartola.
+softdepend: [AuthMe, Multiverse-Core, BabyPets, Poderes, Geyser-Spigot, floodgate, CoronaPack]
+commands:
+  porteiro:
+    description: O Porteiro (/porteiro, /porteiro sair, /porteiro top)
+    aliases: [edificio]
+permissions:
+  porteiro.usar:
+    default: true
+  porteiro.admin:
+    default: op

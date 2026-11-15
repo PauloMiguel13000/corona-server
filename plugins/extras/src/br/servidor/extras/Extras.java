@@ -844,6 +844,9 @@ public final class Extras extends JavaPlugin implements Listener {
         h.inv.setItem(4, icone(Material.SPYGLASS, "§e§lEsconde-esconde",
                 "§7Um jogador procura e os outros", "§7se escondem na §fVila§7.", "§eQuem é pego vira pegador também.", "§7Começa com 3 jogadores.", "",
                 Bukkit.getPluginManager().isPluginEnabled("EscondeEsconde") ? "§eClique para entrar" : "§cIndisponível agora"));
+        h.inv.setItem(6, icone(Material.TRIPWIRE_HOOK, "§4§lO Porteiro",
+                "§7Trancado no §fEdifício Coroa§7 à meia-noite.", "§7O Porteiro é cego, mas §fouve§7 tudo.", "§7A Sombra de Cartola só anda", "§7quando ninguém olha para ela.", "§cTerror original do Corona. 1 a 4 jogadores.", "",
+                Bukkit.getPluginManager().isPluginEnabled("OPorteiro") ? "§eClique para entrar" : "§cIndisponível agora"));
         p.openInventory(h.inv);
     }
 
@@ -862,6 +865,7 @@ public final class Extras extends JavaPlugin implements Listener {
             case 20 -> "naochore entrar";
             case 24 -> "arena entrar";
             case 4 -> "esconde";
+            case 6 -> "porteiro";
             case 18 -> "turno";
             case 26 -> "fabrica";
             default -> null;

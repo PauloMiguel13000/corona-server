@@ -176,7 +176,7 @@ final class Cosmeticos implements Listener {
             new Cat("s", "Especiais", "§6", Material.ELYTRA, "Asas, auréola, coroa, órbita, tornado..."));
 
     static final Set<String> MUNDOS_MINIGAMES = Set.of(LobbyMinigames.MUNDO, LobbyTerror.MUNDO, "hotel", "slender", "vovo", "backrooms",
-            "fabrica", "naochore", "defesa", "arena", "turno_noite");
+            "fabrica", "naochore", "defesa", "arena", "turno_noite", "porteiro");
 
     private final Extras pl;
     private final NamespacedKey kChapeuItem, kDono, kNpc;

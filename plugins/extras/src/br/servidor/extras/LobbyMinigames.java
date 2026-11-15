@@ -91,10 +91,12 @@ final class LobbyMinigames implements Listener {
             new Portal("fabrica", "§6§lFÁBRICA ALEGRIA", "§7Luva de gancho, energia e o Tutu nos dutos (co-op)", "§6", "fabrica", 1, 1,
                     new String[] {"minecraft:orange_terracotta", "minecraft:yellow_terracotta", "minecraft:light_blue_concrete"}, Material.CARROT_ON_A_STICK, Color.fromRGB(255, 150, 40), true),
             new Portal("esconde", "§e§lESCONDE-ESCONDE", "§7Um procura, os outros se escondem na Vila\n§7Quem é pego vira pegador! (3+ jogadores)", "§e", "esconde", -1, 1,
-                    new String[] {"minecraft:oak_planks", "minecraft:oak_leaves[persistent=true]", "minecraft:hay_block"}, Material.SPYGLASS, Color.fromRGB(255, 230, 80), false)};
+                    new String[] {"minecraft:oak_planks", "minecraft:oak_leaves[persistent=true]", "minecraft:hay_block"}, Material.SPYGLASS, Color.fromRGB(255, 230, 80), false),
+            new Portal("porteiro", "§4§lO PORTEIRO", "§7Ele é cego, mas ouve. Ache as chaves e fuja!\n§7Não tire os olhos da Sombra de Cartola", "§4", "porteiro", 0, 1,
+                    new String[] {"minecraft:mangrove_planks", "minecraft:deepslate_bricks", "minecraft:red_nether_bricks"}, Material.TRIPWIRE_HOOK, Color.fromRGB(150, 20, 30), true)};
 
     /** Portal deste lobby que leva ao Lobby do Terror. */
-    static final Portal PORTAL_TERROR = new Portal("terror", "§4§lLOBBY DO TERROR", "§7Hotel • Porcelana • Vovó • Backrooms\n§7Não Chore • Turno • Fábrica", "§4", "terror", 0, 0,
+    static final Portal PORTAL_TERROR = new Portal("terror", "§4§lLOBBY DO TERROR", "§7Hotel • Porcelana • Vovó • Backrooms\n§7Não Chore • Turno • Fábrica • O Porteiro", "§4", "terror", 0, 0,
             new String[] {"minecraft:polished_blackstone_bricks", "minecraft:cracked_polished_blackstone_bricks", "minecraft:crying_obsidian"}, Material.WITHER_SKELETON_SKULL, Color.RED, false);
 
     /** Portais que ficam neste lobby: os minigames normais e a passagem para o terror. */

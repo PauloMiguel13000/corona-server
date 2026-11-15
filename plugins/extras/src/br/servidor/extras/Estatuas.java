@@ -43,7 +43,9 @@ final class Estatuas implements Listener {
             new Estatua("slender", "porcelana_f0", -1, 1.5f),
             new Estatua("vovo", "vovo_idle", 1, 1.4f),
             new Estatua("turno", "anim_capi_f0", -1, 1.3f),
-            new Estatua("turno", "anim_jaca_f0", 1, 1.3f)};
+            new Estatua("turno", "anim_jaca_f0", 1, 1.3f),
+            new Estatua("porteiro", "anim_figura_f0", -1, 1.3f),
+            new Estatua("porteiro", "anim_perseguidor_f0", 1, 1.3f)};
 
     private final Extras pl;
     private final LobbyTerror lobby;

@@ -1,0 +1,22 @@
+# O Porteiro - jogo de terror proprio do Corona Server (15/11).
+# Jogadores: /porteiro (entrar), /porteiro sair, /porteiro top. Admin: /porteiro admin <iniciar|refazer|tempo N|chave|info>
+mundo: porteiro
+maximo-jogadores: 4
+contagem-segundos: 15
+tempo-segundos: 600
+chaves: 5
+vidas-sozinho: 3
+vidas-em-grupo: 2
+sombra-depois-de-chaves: 2
+porteiro:
+  velocidade-ronda: 2.6
+  velocidade-cacando: 4.6
+  ouve-correndo: 18
+  ouve-andando: 8
+sombra:
+  velocidade: 3.9
+  some-depois-de-olhada-segundos: 10
+coronas:
+  por-chave: 10
+  fugiu: 80
+  fugiu-fantasma: 30

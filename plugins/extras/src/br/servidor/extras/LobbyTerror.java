@@ -53,7 +53,7 @@ import org.joml.Vector3f;
 final class LobbyTerror implements Listener {
 
     static final String MUNDO = "terror";
-    static final int Y = 100, R = 44, PORTAL = 30, VAGAS = 10, VERSAO = 2;
+    static final int Y = 100, R = 44, PORTAL = 30, VAGAS = 10, VERSAO = 3;
     /** Quantas arvores sairam na ultima construcao (para a conferencia). */
     int arvoresFeitas;
 
