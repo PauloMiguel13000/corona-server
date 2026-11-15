@@ -492,16 +492,16 @@ final class Operacao implements Listener {
         for (Player p : gente) if (!noJogo.contains(p.getUniqueId())) p.sendMessage(PREFIXO + "§eO esquadrão lotou (" + max + "). Você entra na próxima missão.");
         fase = Fase.ONDAS;
         onda = 0;
-        t = 5;
+        t = 9;
         pl.getLogger().info("Operacao: missao em " + MAPAS[mapa] + " com " + l.size() + " jogador(es), dificuldade " + dif);
     }
 
     private void proximaOnda() {
         onda++;
         int n = vivosNoInicio;
-        int base = 5 + onda * 2 + n * 2 + mapa;
+        int base = 3 + onda * 2 + n + mapa;   // 15/11: teste no cliente - a primeira onda matava quem estava sozinho em segundos
         soltar(Zumbis.Tipo.COMUM, base);
-        soltar(Zumbis.Tipo.CORREDOR, 1 + onda + n);
+        soltar(Zumbis.Tipo.CORREDOR, Math.max(0, onda + n - 1));
         if (onda >= 2) soltar(Zumbis.Tipo.CUSPIDOR, onda - 1 + mapa);
         if (onda >= 3) {
             soltar(Zumbis.Tipo.TANQUE, 1 + dif);
@@ -628,8 +628,8 @@ final class Operacao implements Listener {
                 barra.name(Tiro.txt("§eFase 2 §8| §fDefenda o gerador: " + t + "s " + (alguem ? "" : "§c(ninguém no ponto!) ") + "§8| §cInimigos: " + ini));
                 barra.progress(Math.max(0f, Math.min(1f, 1f - t / 75f)));
                 mundo.spawnParticle(Particle.END_ROD, g.clone().add(0, 3.2, 0), 6, 0.2, 0.6, 0.2, 0.01);
-                if (ini < 8 + vivosNoInicio * 3 && t % 4 == 0) {
-                    soltar(Zumbis.Tipo.COMUM, 2 + vivosNoInicio);
+                if (ini < 5 + vivosNoInicio * 3 && t % 4 == 0) {
+                    soltar(Zumbis.Tipo.COMUM, 1 + vivosNoInicio);
                     soltar(rnd.nextBoolean() ? Zumbis.Tipo.CORREDOR : Zumbis.Tipo.CUSPIDOR, 1 + dif);
                     if (t % 20 == 0) soltar(rnd.nextBoolean() ? Zumbis.Tipo.TANQUE : Zumbis.Tipo.EXPLOSIVO, 1 + mapa / 2);
                 }

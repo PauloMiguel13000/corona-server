@@ -84,7 +84,7 @@ import org.joml.Vector3f;
 public final class Porteiro extends JavaPlugin implements Listener {
 
     static final String PREFIXO = "§8[§4§lO Porteiro§8] §7";
-    static final int Y = 64, M = 24, N = 2 * M + 1, YSALA = 100, MAPA = 1;
+    static final int Y = 64, M = 24, N = 2 * M + 1, YSALA = 100, MAPA = 2;
     static final UUID PACOTE = UUID.nameUUIDFromBytes("corona-server-pack".getBytes(StandardCharsets.UTF_8));
     private static final Set<UUID> COM_PACOTE = ConcurrentHashMap.newKeySet();
 
@@ -482,13 +482,14 @@ public final class Porteiro extends JavaPlugin implements Listener {
                 b(x, Y, z, m);
                 if (m == Material.BOOKSHELF && r.nextBoolean()) b(x, Y + 1, z, m);
             }
-            luz((a[0] + a[2]) / 2, Y + 2, (a[1] + a[3]) / 2, 4);
+            // 15/11: no Bedrock o quarto ficava um breu; luz invisivel fraca espalhada (da para ver os moveis e o monstro)
+            for (int x = a[0] + 1; x <= a[2]; x += 3) for (int z = a[1] + 1; z <= a[3]; z += 3) luz(x, Y + 2, z, 8);
         }
         // luz invisivel bem fraca nos corredores e na portaria (escuro, mas da para andar)
         for (int x = -M + 1; x < M; x += 4)
             for (int z = -M + 1; z < M; z += 4) {
                 int mx = Math.max(Math.abs(x), Math.abs(z));
-                if (mx <= 12) luz(x, Y + 2, z, mx <= 8 ? 6 : 5);
+                if (mx <= 12) luz(x, Y + 2, z, mx <= 8 ? 10 : 9);
             }
         // sala de espera (em cima, fechada)
         caixa(-5, YSALA, -5, 5, YSALA, 5, Material.POLISHED_BLACKSTONE);
