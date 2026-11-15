@@ -1,4 +1,4 @@
-"""Armas de fogo dos jogos de tiro (desenho 32x32 de perfil, cano para a direita, cabo embaixo a esquerda).
+"""Armas de fogo dos jogos de tiro (desenho 32x32 de perfil; o arquivo sai espelhado: cano para a esquerda, cabo embaixo a direita).
 Java: item_model corona:armas/<id> (item/handheld). Bedrock: icone corona_arma_<id> (display_handheld).
 uso: python3 armas_tiro.py <saida>   (escreve <saida>/java/assets/corona/..., <saida>/bedrock/..., corona-tiro-armas.json)
 """
@@ -85,7 +85,8 @@ J = os.path.join(SAIDA, 'java', 'assets', 'corona')
 B = os.path.join(SAIDA, 'bedrock')
 mapa, item_tex, folha = {}, {}, Image.new('RGBA', (32 * 6 * 6, 32 * 6), (150, 158, 168, 255))
 for i, (ident, (item, nome, rets)) in enumerate(ARMAS.items()):
-    img = Image.fromarray(desenhar(rets), 'RGBA')
+    # espelhado: no jogo (item/handheld) o lado ESQUERDO do desenho e o que aponta para a frente (15/11: estava ao contrario)
+    img = Image.fromarray(np.ascontiguousarray(desenhar(rets)[:, ::-1]), 'RGBA')
     for pasta in (os.path.join(J, 'textures', 'item', 'armas'), os.path.join(B, 'textures', 'items', 'corona', 'tiro')):
         os.makedirs(pasta, exist_ok=True)
     img.save(os.path.join(J, 'textures', 'item', 'armas', ident + '.png'))
