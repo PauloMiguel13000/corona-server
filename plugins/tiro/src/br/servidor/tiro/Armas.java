@@ -262,6 +262,7 @@ final class Armas implements Listener {
         }
         proximoTiro.put(u, agora + a.cadencia() * 50L - 10);
         pente(p, it, n - 1);
+        if (pl.apocalipse != null) pl.apocalipse.barulho(p, a);
         World w = p.getWorld();
         Location olho = p.getEyeLocation();
         w.playSound(olho, a.som(), a.projeteis() > 1 || a.dano() > 15 ? 1.0f : 0.55f, a.tom() + (rnd.nextFloat() - 0.5f) * 0.1f);

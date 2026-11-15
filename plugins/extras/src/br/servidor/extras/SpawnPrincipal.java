@@ -132,7 +132,7 @@ final class SpawnPrincipal implements Listener {
      * alturas para nao encavalar). Tudo o que esta parte poe leva a marca spawn_parte = PARTE; enfeite antigo
      * nessas areas sem a marca e apagado quando carrega.
      */
-    static final int PARTE = 5, SUL_TERROR = -6, SUL_MINIGAMES = 6, LUGARES_OESTE = 11;
+    static final int PARTE = 6, SUL_TERROR = -12, SUL_MINIGAMES = 0, SUL_TIRO = 12, LUGARES_OESTE = 11;   // parte 6 (15/11): 3 portais no sul (Terror, Minigames, Tiro)
 
     private org.bukkit.NamespacedKey chaveParte() {
         return new org.bukkit.NamespacedKey(pl, "spawn_parte");
@@ -164,18 +164,23 @@ final class SpawnPrincipal implements Listener {
         return (v == null || v != PARTE) && areaNova(e.getLocation());
     }
 
-    /** Dois portais no sul: Lobby do Terror (oeste) e Lobby dos Minigames (leste), com uma placa no meio. */
+    /** Tres portais no sul: Lobby do Terror (oeste), Lobby dos Minigames (meio) e Lobby de Tiro (leste). */
     private void portaisSul(World w) {
         int z = CZ + PORTAL;
+        // tira os dois portais antigos (ficavam em -6 e +6) e a placa do meio
+        for (int cx : new int[] {CX - 6, CX + 6})
+            for (int s = -3; s <= 3; s++)
+                for (int y = 1; y <= 8; y++) {
+                    por(w, cx + s, PISO + y, z, "minecraft:air");
+                    if (y == 1) por(w, cx + s, PISO + 1, z - 1, "minecraft:air");
+                }
+        for (int y = 1; y <= 3; y++) por(w, CX, PISO + y, z, "minecraft:air");
         portalSul(w, CX + SUL_TERROR, z, new String[] {"minecraft:crying_obsidian", "minecraft:polished_blackstone_bricks", "minecraft:blackstone", "minecraft:obsidian"},
-                "§4§lLOBBY DO TERROR\n§7Hotel • Porcelana • Vovó • Backrooms\n§7Não Chore • Turno • Fábrica", true);
+                "§4§lLOBBY DO TERROR\n§7Hotel • Porcelana • Vovó • Backrooms\n§7Não Chore • Turno • Fábrica • O Porteiro", true);
         portalSul(w, CX + SUL_MINIGAMES, z, new String[] {"minecraft:quartz_bricks", "minecraft:polished_blackstone_bricks", "minecraft:red_nether_bricks", "minecraft:red_concrete"},
-                "§c§lLOBBY DOS MINIGAMES\n§7Defesa da Torre • Arena PvP", false);
-        // placa no meio, no fim do tapete vermelho
-        por(w, CX, PISO + 1, z, "minecraft:polished_blackstone_bricks");
-        por(w, CX, PISO + 2, z, "minecraft:quartz_pillar");
-        por(w, CX, PISO + 3, z, "minecraft:lantern[hanging=false]");
-        texto(w, new Location(w, CX + 0.5, PISO + 4.6, z - 0.4), "§c◀ §fMinigames   §8|   §4Terror §c▶", 0.9f);
+                "§c§lLOBBY DOS MINIGAMES\n§7Defesa da Torre • Arena PvP • Esconde-esconde", false);
+        portalSul(w, CX + SUL_TIRO, z, new String[] {"minecraft:green_concrete", "minecraft:polished_deepslate", "minecraft:deepslate_tiles", "minecraft:lime_concrete"},
+                "§2§lLOBBY DE TIRO\n§7Apocalipse Zumbi • Operação Coroa", false);
     }
 
     private void portalSul(World w, int cx, int z, String[] m, String nome, boolean terror) {
@@ -640,16 +645,18 @@ final class SpawnPrincipal implements Listener {
         boolean norte = Math.abs(bz - (CZ - PORTAL)) <= 1 && Math.abs(bx - CX) <= 1;
         boolean sul = Math.abs(bz - (CZ + PORTAL)) <= 1;
         boolean terror = sul && Math.abs(bx - (CX + SUL_TERROR)) <= 1, minigames = sul && Math.abs(bx - (CX + SUL_MINIGAMES)) <= 1;
-        if (!norte && !terror && !minigames) return;
+        boolean tiro = sul && Math.abs(bx - (CX + SUL_TIRO)) <= 1;
+        if (!norte && !terror && !minigames && !tiro) return;
         if (esperando(p)) return;
-        int vx = terror ? CX + SUL_TERROR : minigames ? CX + SUL_MINIGAMES : CX;
+        int vx = terror ? CX + SUL_TERROR : minigames ? CX + SUL_MINIGAMES : tiro ? CX + SUL_TIRO : CX;
         p.teleport(new Location(to.getWorld(), vx + 0.5, PISO + 1, (norte ? CZ - PORTAL + 6 : CZ + PORTAL - 6) + 0.5, to.getYaw(), to.getPitch()));
         p.playSound(p.getLocation(), Sound.BLOCK_PORTAL_TRAVEL, 0.25f, 1.6f);
         if (terror) {
             if (pl.terror != null) pl.terror.teleportar(p);
         } else if (minigames) {
             if (pl.lobby != null) pl.lobby.teleportar(p);
-        } else p.performCommand("masmorras spawn");
+        } else if (tiro) p.performCommand("tiro");
+        else p.performCommand("masmorras spawn");
     }
 
     @EventHandler(priority = EventPriority.LOWEST)

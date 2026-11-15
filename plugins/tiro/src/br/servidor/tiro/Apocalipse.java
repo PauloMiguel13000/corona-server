@@ -1,6 +1,7 @@
 package br.servidor.tiro;
 
 import java.time.Duration;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -72,6 +73,11 @@ final class Apocalipse implements Listener {
     private final Map<UUID, Integer> zonaDe = new HashMap<>();
     private final Map<UUID, Long> ultimaBandagem = new HashMap<>();
     private final Set<String> saques = new HashSet<>();
+    boolean ermo;
+    private final Map<UUID, Double> barulho = new HashMap<>();
+    private final Map<UUID, Long> ultimaHorda = new HashMap<>();
+    private final Map<String, Long> guardas = new HashMap<>();
+    private final Map<UUID, org.bukkit.boss.BossBar> barras = new HashMap<>();
 
     static final class Loja implements InventoryHolder {
         Inventory inv;
@@ -106,8 +112,63 @@ final class Apocalipse implements Listener {
 
     // ================================================================== mundo e Abrigo
 
+    static final int MAPA = 2;      // 2 (15/11): campos dourados e predios tombados (Ermo), no lugar do terreno comum do jogo
+
+    /** O mapa antigo sai de cena (a pasta e guardada, nao apagada) e o mundo nasce de novo com o gerador Ermo. */
+    private void trocarMapaAntigo() {
+        if (pl.dados.getInt("zumbi.mapa", 1) >= MAPA) return;
+        try {
+            World velho = Bukkit.getWorld(Tiro.ZUMBI);
+            if (velho != null) {
+                World principal = Bukkit.getWorlds().get(0);
+                for (Player p : velho.getPlayers()) p.teleport(principal.getSpawnLocation());
+                Bukkit.unloadWorld(velho, true);
+            }
+            File guardar = new File(pl.getDataFolder(), "mapa-antigo-v" + pl.dados.getInt("zumbi.mapa", 1));
+            File principal = Bukkit.getWorlds().get(0).getWorldFolder();
+            java.util.LinkedHashSet<File> onde = new java.util.LinkedHashSet<>();
+            for (File f = principal; f != null && onde.size() < 12; f = f.getAbsoluteFile().getParentFile()) {
+                onde.add(new File(f, Tiro.ZUMBI));
+                onde.add(new File(f, "dimensions/minecraft/" + Tiro.ZUMBI));
+                if (f.getAbsoluteFile().equals(Bukkit.getWorldContainer().getAbsoluteFile())) break;
+            }
+            onde.add(new File(Bukkit.getWorldContainer(), Tiro.ZUMBI));
+            int n = 0;
+            for (File f : onde) {
+                if (!f.isDirectory() || !new File(f, "region").isDirectory()) continue;
+                File para = new File(guardar, "copia" + (n == 0 ? "" : "-" + n));
+                para.getParentFile().mkdirs();
+                if (para.exists()) para = new File(guardar, para.getName() + "-" + System.currentTimeMillis());
+                if (f.renameTo(para)) pl.getLogger().info("Apocalipse: mapa antigo (" + f + ") guardado em " + para);
+                else {
+                    pl.getLogger().warning("Apocalipse: nao consegui guardar o mapa antigo (" + f + "); o mapa novo fica para a proxima partida.");
+                    return;
+                }
+                n++;
+            }
+            pl.getLogger().info("Apocalipse: mapa novo (v" + MAPA + "), pastas antigas guardadas: " + n + " (mundo principal em " + principal + ")");
+            pl.getConfig().set("zumbi.abrigo", null);
+            pl.saveConfig();
+            saques.clear();
+            pl.dados.set("zumbi.saques", new ArrayList<String>());
+            pl.dados.set("zumbi.mapa", MAPA);
+            pl.salvar();
+        } catch (Throwable t) {
+            pl.getLogger().warning("Apocalipse: troca do mapa: " + t);
+        }
+    }
+
     private void criarMundo() {
-        mundo = new WorldCreator(Tiro.ZUMBI).seed(pl.getConfig().getLong("zumbi.semente", 20261115L)).environment(World.Environment.NORMAL).createWorld();
+        trocarMapaAntigo();
+        boolean novo = pl.dados.getInt("zumbi.mapa", 1) >= MAPA;
+        WorldCreator wc = new WorldCreator(Tiro.ZUMBI).seed(pl.getConfig().getLong("zumbi.semente", 20261115L)).environment(World.Environment.NORMAL);
+        if (novo) {
+            Ermo.preparar();
+            Ermo g = new Ermo();
+            wc.generator(g).biomeProvider(g.getDefaultBiomeProvider(null)).generateStructures(false);
+        }
+        ermo = novo;
+        mundo = wc.createWorld();
         if (mundo == null) {
             pl.getLogger().severe("Nao consegui criar o mundo do Apocalipse Zumbi!");
             return;
@@ -129,7 +190,7 @@ final class Apocalipse implements Listener {
             String[] a = s.split(",");
             abrigo = new Location(mundo, Integer.parseInt(a[0]) + 0.5, Integer.parseInt(a[1]), Integer.parseInt(a[2]) + 0.5);
         } else {
-            abrigo = acharTerra();
+            abrigo = ermo ? new Location(mundo, 0.5, Ermo.altura(0, 0) + 1, 0.5) : acharTerra();
             construirAbrigo();
             pl.getConfig().set("zumbi.abrigo", abrigo.getBlockX() + "," + abrigo.getBlockY() + "," + abrigo.getBlockZ());
             pl.saveConfig();
@@ -376,6 +437,9 @@ final class Apocalipse implements Listener {
                 int n = a.length > 3 ? Integer.parseInt(a[3]) : 1;
                 for (int i = 0; i < n; i++) Bukkit.getScheduler().runTaskLater(pl, () -> Bukkit.getPluginManager().callEvent(new PlayerInteractEvent(alvo, Action.RIGHT_CLICK_AIR,
                         alvo.getInventory().getItemInMainHand(), null, org.bukkit.block.BlockFace.SELF, EquipmentSlot.HAND)), i * 8L);
+            } else if (o.equals("horda") && alvo != null && aqui(alvo)) {
+                s.sendMessage(PREFIXO + "lugar=" + lugar(alvo, 22, 38, -1) + " modo=" + alvo.getGameMode() + " abrigo=" + noAbrigo(alvo.getLocation()));
+                horda(alvo, "§7Teste.");
             } else if (o.equals("saque") && alvo != null && aqui(alvo)) {
                 ruina(alvo.getLocation().getBlockX() + 3, alvo.getLocation().getBlockZ() + 3);
             } else s.sendMessage(PREFIXO + "abrigo=" + abrigo.getBlockX() + "," + abrigo.getBlockY() + "," + abrigo.getBlockZ() + " jogadores=" + mundo.getPlayers().size()
@@ -461,40 +525,147 @@ final class Apocalipse implements Listener {
                 tem++;
                 if (t == Zumbis.Tipo.CHEFE) chefePerto = true;
             }
-            int max = (noite ? pl.getConfig().getInt("zumbi.zumbis-de-noite", 11) : pl.getConfig().getInt("zumbi.zumbis-de-dia", 5)) + z;
-            for (int i = 0; i < 2 && tem < max; i++) {
-                Location onde = lugar(l);
-                if (onde == null) continue;
-                Zumbis.Tipo t = sortear(z);
-                if (!chefePerto && ((z == 3 && rnd.nextInt(100) < 3) || (z == 2 && noite && rnd.nextInt(200) < 3))) {
-                    t = Zumbis.Tipo.CHEFE;
-                    chefePerto = true;
-                    for (Player o : ps) if (o.getLocation().distanceSquared(onde) < 120 * 120) {
-                        o.showTitle(Title.title(Tiro.txt("§4§lCHEFE DE HORDA"), Tiro.txt("§7Ele sentiu o seu cheiro...")));
-                        o.playSound(o.getLocation(), Sound.ENTITY_RAVAGER_ROAR, 1f, 0.5f);
+            // andarilhos soltos (poucos): nascem fora da vista, saindo do chao
+            int max = (noite ? pl.getConfig().getInt("zumbi.zumbis-de-noite", 11) : pl.getConfig().getInt("zumbi.zumbis-de-dia", 5)) / 2 + z;
+            if (tem < max) {
+                Location onde = lugar(p, 22, 38, -1);
+                if (onde != null) {
+                    Zumbis.Tipo t = sortear(z);
+                    if (!chefePerto && ((z == 3 && rnd.nextInt(100) < 3) || (z == 2 && noite && rnd.nextInt(200) < 3))) {
+                        t = Zumbis.Tipo.CHEFE;
+                        for (Player o : ps) if (o.getLocation().distanceSquared(onde) < 120 * 120) {
+                            o.showTitle(Title.title(Tiro.txt("§4§lCHEFE DE HORDA"), Tiro.txt("§7Ele sentiu o seu cheiro...")));
+                            o.playSound(o.getLocation(), Sound.ENTITY_RAVAGER_ROAR, 1f, 0.5f);
+                        }
                     }
+                    brotar(onde, t, 1.0 + 0.15 * z, null);
                 }
-                Zombie zu = pl.zumbis.nascer(onde, t, 1.0 + 0.15 * z);
-                zu.setTarget(p);
-                tem++;
             }
+            // barulho: cai aos poucos; de noite uma horda vem de tempos em tempos mesmo em silencio
+            UUID u = p.getUniqueId();
+            double b = Math.max(0, barulho.getOrDefault(u, 0.0) - 5);
+            barulho.put(u, b);
+            barra(p, b);
+            long agora = System.currentTimeMillis(), desde = agora - ultimaHorda.getOrDefault(u, agora - 240_000L);
+            if (noite && desde > (7 * 60_000L) && rnd.nextInt(20) == 0) horda(p, "§7A noite trouxe eles...");
+        }
+        barras.keySet().removeIf(id -> {
+            Player q = Bukkit.getPlayer(id);
+            if (q != null && q.getWorld() == mundo) return false;
+            barras.get(id).removeAll();
+            return true;
+        });
+    }
+
+    private int chao(int x, int z) {
+        return ermo ? Ermo.altura(x, z) : mundo.getHighestBlockYAt(x, z);
+    }
+
+    /**
+     * Um lugar no chao entre dMin e dMax blocos do jogador, fora do Abrigo e da agua. ang < 0: qualquer lado, de
+     * preferencia onde o jogador NAO esta vendo; ang >= 0: naquela direcao (hordas).
+     */
+    private Location lugar(Player p, double dMin, double dMax, double ang) {
+        Location l = p.getLocation(), reserva = null;
+        for (int i = 0; i < 10; i++) {
+            double a = ang < 0 ? rnd.nextDouble() * Math.PI * 2 : ang + (rnd.nextDouble() - 0.5) * 0.7, d = dMin + rnd.nextDouble() * (dMax - dMin);
+            int x = (int) Math.floor(l.getX() + Math.cos(a) * d), z = (int) Math.floor(l.getZ() + Math.sin(a) * d);
+            if (!mundo.isChunkLoaded(x >> 4, z >> 4)) continue;
+            int y = chao(x, z);
+            Block b = mundo.getBlockAt(x, y, z);
+            Material m = b.getType();
+            if (m == Material.WATER || m == Material.LAVA || !m.isSolid()) continue;
+            if (mundo.getBlockAt(x, y + 1, z).getType().isSolid() || mundo.getBlockAt(x, y + 2, z).getType().isSolid()) continue;   // dentro de parede
+            Location onde = new Location(mundo, x + 0.5, y + 1, z + 0.5);
+            if (noAbrigo(onde) || Math.abs(onde.getY() - l.getY()) > 22) continue;
+            if (ang >= 0) return onde;
+            if (reserva == null) reserva = onde;
+            // escondido: atras de alguma coisa, ou nas costas do jogador
+            org.bukkit.util.Vector para = onde.toVector().add(new org.bukkit.util.Vector(0, 1.2, 0)).subtract(p.getEyeLocation().toVector());
+            boolean nasCostas = para.clone().normalize().dot(p.getEyeLocation().getDirection()) < 0.2;
+            boolean tampado = mundo.rayTraceBlocks(p.getEyeLocation(), para.clone().normalize(), para.length(), org.bukkit.FluidCollisionMode.NEVER, true) != null;
+            if (nasCostas || tampado) return onde;
+        }
+        return reserva;
+    }
+
+    /** O infectado sai do chao: terra voando, som de cascalho e um instante lento antes de correr. */
+    private Zombie brotar(Location onde, Zumbis.Tipo t, double forca, Player alvo) {
+        Zombie z = pl.zumbis.nascer(onde, t, forca);
+        z.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 30, 4, false, false));
+        Block b = onde.getBlock().getRelative(0, -1, 0);
+        mundo.spawnParticle(Particle.BLOCK, onde.clone().add(0, 0.2, 0), 26, 0.3, 0.3, 0.3, 0, (b.getType().isSolid() ? b.getType() : Material.DIRT).createBlockData());
+        mundo.playSound(onde, Sound.BLOCK_GRAVEL_BREAK, 0.9f, 0.6f);
+        if (alvo != null) z.setTarget(alvo);
+        return z;
+    }
+
+    private static final String[] RUMOS = {"LESTE", "SUDESTE", "SUL", "SUDOESTE", "OESTE", "NOROESTE", "NORTE", "NORDESTE"};
+
+    /** Horda: um grupo grande vem de UM lado so, com aviso de onde. */
+    void horda(Player p, String motivo) {
+        if (!aqui(p) || noAbrigo(p.getLocation()) || p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR) return;
+        ultimaHorda.put(p.getUniqueId(), System.currentTimeMillis());
+        barulho.put(p.getUniqueId(), 0.0);
+        int z = zona(p.getLocation());
+        boolean noite = mundo.getTime() > 12800 && mundo.getTime() < 23200;
+        int n = pl.getConfig().getInt("zumbi.horda", 8) + 3 * z + (noite ? 4 : 0);
+        double ang = rnd.nextDouble() * Math.PI * 2;
+        String rumo = RUMOS[(int) Math.round(ang / (Math.PI / 4)) % 8];
+        for (Player o : mundo.getPlayers()) {
+            if (o.getLocation().distanceSquared(p.getLocation()) > 60 * 60) continue;
+            o.showTitle(Title.title(Tiro.txt("§c§lHORDA!"), Tiro.txt(motivo + " §fVindo do §e" + rumo), Title.Times.times(Duration.ofMillis(200), Duration.ofMillis(2800), Duration.ofMillis(600))));
+            o.playSound(o.getLocation(), Sound.ENTITY_RAVAGER_ROAR, 0.9f, 0.7f);
+            o.playSound(o.getLocation(), Sound.AMBIENT_CAVE, 1f, 0.6f);
+        }
+        for (int i = 0; i < n; i++) {
+            final int k = i;
+            Bukkit.getScheduler().runTaskLater(pl, () -> {
+                if (!p.isOnline() || !aqui(p) || p.isDead()) return;
+                Location onde = lugar(p, 26, 36, ang);
+                if (onde == null) return;
+                Zumbis.Tipo t = k % 4 == 0 ? Zumbis.Tipo.CORREDOR : sortear(z);
+                brotar(onde, t, 1.0 + 0.15 * z, p);
+            }, 20L + i * 9L);
         }
     }
 
-    /** Um lugar na superficie entre 20 e 34 blocos do jogador, fora do Abrigo e fora da agua. */
-    private Location lugar(Location l) {
-        for (int i = 0; i < 6; i++) {
-            double a = rnd.nextDouble() * Math.PI * 2, d = 20 + rnd.nextDouble() * 14;
-            int x = (int) Math.floor(l.getX() + Math.cos(a) * d), z = (int) Math.floor(l.getZ() + Math.sin(a) * d);
-            if (!mundo.isChunkLoaded(x >> 4, z >> 4)) continue;
-            Block b = mundo.getHighestBlockAt(x, z);
-            Material m = b.getType();
-            if (m == Material.WATER || m == Material.LAVA || !m.isSolid()) continue;
-            Location onde = new Location(mundo, x + 0.5, b.getY() + 1, z + 0.5);
-            if (noAbrigo(onde) || Math.abs(onde.getY() - l.getY()) > 22) continue;
-            return onde;
+    /** Cada tiro faz barulho; cheio o medidor, a horda vem. As armas pesadas enchem mais rapido. */
+    void barulho(Player p, Armas.Arma a) {
+        if (!aqui(p) || noAbrigo(p.getLocation())) return;
+        double soma = switch (a.id()) {
+            case "pistola" -> 5;
+            case "smg" -> 2.5;
+            case "escopeta" -> 12;
+            case "fuzil" -> 3.5;
+            case "sniper" -> 16;
+            default -> 3;
+        };
+        double b = barulho.getOrDefault(p.getUniqueId(), 0.0) + soma;
+        long desde = System.currentTimeMillis() - ultimaHorda.getOrDefault(p.getUniqueId(), 0L);
+        if (b >= 100 && desde > 75_000L) {
+            horda(p, "§7O barulho dos tiros atraiu eles.");
+            b = 0;
         }
-        return null;
+        barulho.put(p.getUniqueId(), Math.min(100, b));
+        barra(p, Math.min(100, b));
+    }
+
+    private void barra(Player p, double b) {
+        org.bukkit.boss.BossBar bar = barras.get(p.getUniqueId());
+        if (b < 12 || noAbrigo(p.getLocation())) {
+            if (bar != null) bar.removeAll();
+            barras.remove(p.getUniqueId());
+            return;
+        }
+        if (bar == null) {
+            bar = Bukkit.createBossBar("§eBarulho", org.bukkit.boss.BarColor.YELLOW, org.bukkit.boss.BarStyle.SEGMENTED_10);
+            bar.addPlayer(p);
+            barras.put(p.getUniqueId(), bar);
+        }
+        bar.setProgress(Math.max(0, Math.min(1, b / 100.0)));
+        bar.setColor(b > 70 ? org.bukkit.boss.BarColor.RED : org.bukkit.boss.BarColor.YELLOW);
+        bar.setTitle(b > 70 ? "§c§lBarulho — eles estão ouvindo!" : "§eBarulho §7(tiro atrai horda)");
     }
 
     // ------------------------------------------------------------------ saques (ruinas com barril de suprimento)
@@ -506,6 +677,23 @@ final class Apocalipse implements Listener {
             for (int dz = -1; dz <= 1; dz++) {
                 int qx = rx + dx, qz = rz + dz;
                 String k = qx + "," + qz;
+                // quem guarda o saque: um grupo parado em volta do barril, que volta de tempos em tempos
+                {
+                    Random rg = new Random(qx * 73856093L ^ qz * 19349663L ^ 20261115L);
+                    int gx = qx * 96 + 12 + rg.nextInt(72), gz = qz * 96 + 12 + rg.nextInt(72);
+                    double dg = Math.hypot(gx - l.getX(), gz - l.getZ());
+                    long agoraG = System.currentTimeMillis();
+                    if (dg < 44 && dg > 16 && saques.contains(k) && agoraG - guardas.getOrDefault(k, 0L) > 12 * 60_000L && mundo.isChunkLoaded(gx >> 4, gz >> 4)
+                            && !noAbrigo(new Location(mundo, gx, 0, gz))) {
+                        guardas.put(k, agoraG);
+                        int zg = zona(new Location(mundo, gx, 0, gz)), ng = 3 + zg + rnd.nextInt(3);
+                        for (int i = 0; i < ng; i++) {
+                            int x2 = gx + rnd.nextInt(11) - 5, z2 = gz + rnd.nextInt(11) - 5, y2 = chao(x2, z2);
+                            if (!mundo.getBlockAt(x2, y2, z2).getType().isSolid() || mundo.getBlockAt(x2, y2 + 1, z2).getType().isSolid()) continue;
+                            pl.zumbis.nascer(new Location(mundo, x2 + 0.5, y2 + 1, z2 + 0.5), sortear(zg), 1.0 + 0.15 * zg);
+                        }
+                    }
+                }
                 if (saques.contains(k)) continue;
                 Random r = new Random(qx * 73856093L ^ qz * 19349663L ^ 20261115L);
                 int x = qx * 96 + 12 + r.nextInt(72), z = qz * 96 + 12 + r.nextInt(72);
@@ -517,7 +705,7 @@ final class Apocalipse implements Listener {
     }
 
     private void ruina(int x, int z) {
-        Block topo = mundo.getHighestBlockAt(x, z);
+        Block topo = mundo.getBlockAt(x, chao(x, z), z);
         Material mt = topo.getType();
         if (mt == Material.WATER || mt == Material.LAVA) return;
         int y = topo.getY() + 1;
