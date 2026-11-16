@@ -21,11 +21,11 @@ COR = {
     'ztanque': dict(pele=(176, 124, 112), calca=(52, 56, 68), olho=(255, 230, 170)),
     'zcuspidor': dict(pele=(152, 162, 122), camisa=(178, 170, 118), calca=(40, 48, 38), bolha=(150, 240, 60), olho=(222, 255, 120), cabelo=(30, 24, 22)),
     'zexplosivo': dict(pele=(152, 142, 112), camisa=(44, 56, 76), calca=(42, 46, 38), bolha=(214, 200, 120), olho=(255, 204, 90)),
-    'zsoldado': dict(pele=(196, 150, 120), camisa=(78, 88, 62), calca=(64, 70, 52), couro=(50, 54, 44), metal=(52, 54, 58), faixa=(34, 36, 34), olho=(255, 230, 150), bolha=(255, 220, 110)),
-    'zescopeta': dict(pele=(176, 130, 100), camisa=(142, 124, 92), calca=(108, 96, 72), couro=(70, 60, 46), metal=(58, 56, 54), faixa=(40, 36, 32), olho=(255, 230, 150), bolha=(255, 220, 110)),
-    'zatirador': dict(pele=(190, 146, 116), camisa=(70, 84, 50), calca=(58, 70, 44), couro=(84, 98, 58), metal=(40, 42, 44), faixa=(66, 80, 46), olho=(255, 60, 40), bolha=(255, 60, 40)),
-    'zescudo': dict(pele=(186, 140, 112), camisa=(40, 44, 54), calca=(34, 38, 46), couro=(24, 26, 32), metal=(86, 92, 104), faixa=(24, 26, 30), olho=(160, 220, 255), bolha=(255, 220, 110)),
-    'zpesado': dict(pele=(180, 136, 108), camisa=(58, 60, 64), calca=(46, 48, 52), couro=(34, 36, 40), metal=(70, 72, 78), faixa=(28, 28, 30), olho=(255, 180, 60), bolha=(255, 200, 90)),
+    'zsoldado': dict(pele=(196, 150, 120), camisa=(72, 80, 94), calca=(62, 68, 80), couro=(40, 42, 40), metal=(56, 60, 58), faixa=(28, 28, 30), olho=(232, 228, 220), bolha=(255, 220, 110), lente=(40, 46, 54)),
+    'zescopeta': dict(pele=(176, 130, 100), camisa=(146, 130, 100), calca=(124, 110, 86), couro=(98, 82, 60), metal=(72, 66, 58), faixa=(52, 44, 36), olho=(232, 228, 220), bolha=(255, 220, 110), lente=(44, 40, 34)),
+    'zatirador': dict(pele=(190, 146, 116), camisa=(74, 90, 60), calca=(62, 76, 50), couro=(86, 100, 60), metal=(48, 50, 46), faixa=(40, 46, 34), olho=(232, 228, 220), bolha=(255, 60, 40), lente=(40, 60, 70)),
+    'zescudo': dict(pele=(186, 140, 112), camisa=(42, 46, 56), calca=(36, 40, 48), couro=(26, 28, 32), metal=(88, 94, 106), faixa=(22, 22, 26), olho=(232, 228, 220), bolha=(255, 220, 110), lente=(60, 90, 120)),
+    'zpesado': dict(pele=(180, 136, 108), camisa=(60, 62, 66), calca=(50, 52, 56), couro=(34, 36, 40), metal=(72, 74, 80), faixa=(26, 26, 28), olho=(255, 170, 60), bolha=(255, 200, 90), lente=(40, 44, 50)),
     # 16/11: chefe pesado proprio do Corona (blindagem grafite, faixas laranja de alerta, visor e nucleo da mochila
     # brilhando laranja). Inspirado no "soldado blindado de metralhadora" generico, nao no visual de nenhum jogo.
     'zjuggernaut': dict(pele=(52, 50, 48), camisa=(52, 50, 48), calca=(46, 44, 42), couro=(36, 37, 40), metal=(86, 92, 100), faixa=(232, 122, 30), olho=(255, 150, 40), bolha=(255, 220, 120)),
@@ -59,6 +59,8 @@ def pintar_face(c, f, wpx, hpx, sem, ident, esc):
     bri = np.zeros((hpx, wpx))
     if ident == 'zjuggernaut':
         return pintar_blindado(c, f, t, cor, mat, sem, bri)
+    if ident in TATICOS:
+        return pintar_tatico(c, f, t, cor, mat, sem, bri)
     if mat in ('pele', 'pele2'):
         p = cor['pele'] if mat == 'pele' else tuple(int(v * 0.8) for v in cor['pele'])
         t.base(p, 0.34, 0.55)
@@ -137,6 +139,82 @@ def pintar_face(c, f, wpx, hpx, sem, ident, esc):
         t.base(cor[mat], 0.3)
         if mat == 'carne':
             t.manchas((70, 6, 8), 0.5, 1.2, 0.7)
+        t.borda(0.7, 0.2)
+    return t.img(), bri
+
+
+TATICOS = ('zsoldado', 'zescopeta', 'zatirador', 'zescudo', 'zpesado')
+
+
+def pintar_tatico(c, f, t, cor, mat, sem, bri):
+    """16/11 (Paulo mandou fotos dos inimigos do jogo de tiro): soldado de verdade, limpo: farda camuflada digital,
+    colete com fitas MOLLE e bolsas, balaclava e luvas pretas, capacete com bisel, olhos de gente (sem brilho)."""
+    U, V, X, Y = t.U, t.V, t.X, t.Y
+    nome = c.nome
+    if mat in ('camisa', 'calca'):
+        base = np.array(cor[mat], float)
+        t.base(cor[mat], 0.08, 0.6)
+        gx, gy = np.floor(X * 2.0) / 2.0, np.floor(Y * 2.0) / 2.0          # camuflagem "digital" em quadradinhos
+        n1 = Z.fbm(gx * 0.5, gy * 0.5, sem % 7 + 11)
+        n2 = Z.fbm(gx * 0.5 + 9.1, gy * 0.5, sem % 7 + 23)
+        t.cor((n1 > 0.56).astype(float), tuple(base * 0.7), 0.9)
+        t.cor((n2 > 0.6).astype(float), tuple(np.minimum(base * 1.22, 255)), 0.85)
+        t.dobras(0.14, 1.0)
+        t.borda(0.78, 0.18)
+    elif mat == 'couro' and nome.startswith('ghillie'):                # capuz de folhas (atirador)
+        t.base(cor['couro'], 0.2, 1.2)
+        for k, tom in enumerate(((52, 66, 36), (110, 120, 70), (78, 70, 44))):
+            n = Z.fbm(X * 1.4 + k * 5.3, Y * 1.4, sem + 70 + k)
+            t.cor((n > 0.57).astype(float), tom, 0.9)
+        t.mult((Z.ruido(X * 4, Y * 1.2, sem + 90) > 0.8).astype(float), 0.6)
+    elif mat == 'couro':
+        t.base(cor['couro'], 0.1, 0.7)
+        if min(t.w, t.h) >= 2.0:
+            molle = (np.mod(Y, 1.1) < 0.28) * (np.mod(X, 1.6) > 0.25)
+            t.mult(molle.astype(float), 0.72)
+        if nome.startswith(('bolsa', 'radio')) and f == 'north':
+            t.mult((V < 0.3).astype(float), 0.78)                               # aba da bolsa
+        t.borda(0.62, 0.2)
+    elif mat == 'faixa':
+        t.base(cor['faixa'], 0.14, 1.4)
+        t.rgb *= (0.9 + 0.2 * Z.ruido(X * 5, Y * 5, sem + 4))[..., None]
+        t.borda(0.75, 0.2)
+    elif mat == 'metal':
+        t.base(cor['metal'], 0.1, 0.6)
+        t.cor(np.clip(1 - V * t.h / 0.4, 0, 1), tuple(min(255, v + 70) for v in cor['metal']), 0.35)
+        t.mult(np.clip(1 - (1 - V) * t.h / 0.4, 0, 1), 0.62)
+        risco = (Z.ruido(X * 7.0, Y * 1.1, sem + 61) > 0.88) * (Z.ruido(X * 1.3, Y * 9.0, sem + 62) > 0.5)
+        t.cor(risco.astype(float), tuple(min(255, v + 60) for v in cor['metal']), 0.5)
+        t.borda(0.7, 0.18)
+    elif mat in ('pele', 'pele2'):
+        p = cor['pele'] if mat == 'pele' else tuple(int(v * 0.85) for v in cor['pele'])
+        t.base(p, 0.12, 0.8)
+        t.borda(0.85, 0.25)
+    elif mat == 'olho':
+        if nome.startswith('olho'):                                        # olho de gente: branco e iris escura
+            t.base((226, 222, 214), 0.05)
+            t.cor(Z.elipse(U, V, 0.5, 0.5, 0.3, 0.45, 0.5), (46, 36, 28))
+        else:                                                              # visor, luneta, visor do escudo
+            top = np.array(cor['lente'], float) / 255 * 1.6
+            bot = np.array(cor['lente'], float) / 255 * 0.7
+            t.rgb[:] = np.clip(top * (1 - V[..., None]) + bot * V[..., None], 0, 1)
+            t.cor((np.abs((U * 0.6 - V) + 0.05) < 0.07).astype(float), (230, 236, 240), 0.45)
+            if nome.startswith('visor'):
+                t.rgb[:] = np.clip(t.rgb * 0.5 + np.array(cor['olho'], float) / 255 * 0.5, 0, 1)
+                bri[:] = 0.9
+        t.borda(0.8, 0.15)
+    elif mat == 'lente':
+        top = np.array(cor['lente'], float) / 255 * 1.7
+        bot = np.array(cor['lente'], float) / 255 * 0.6
+        t.rgb[:] = np.clip(top * (1 - V[..., None]) + bot * V[..., None], 0, 1)
+        t.cor((np.abs((U * 0.5 - V) + 0.1) < 0.09).astype(float), (240, 240, 230), 0.5)
+        t.borda(0.55, 0.22)
+    elif mat == 'bolha':
+        t.base(cor['bolha'], 0.2)
+        t.cor(Z.elipse(U, V, 0.5, 0.5, 0.3, 0.3, 0.8), (255, 255, 230), 0.7)
+        bri[:] = 0.6
+    else:
+        t.base(cor.get(mat, FIXO.get(mat, (40, 38, 36))), 0.15)
         t.borda(0.7, 0.2)
     return t.img(), bri
 
@@ -253,7 +331,7 @@ def ztanque(q):
     return esp(cs)
 
 
-def pernas(cs, q, afast=1.9, larg=3.0, topo=-4.0, mat='calca', pe='sapato', zc=8.5, comp=12.0):
+def pernas(cs, q, afast=1.9, larg=3.0, topo=-4.0, mat='calca', pe='sapato', zc=8.5, comp=12.0, joelho=None):
     """Duas pernas que alternam o passo: q=0 passo A, q=2 passo B, q=1 (ataque) paradas."""
     for sgn, lado in ((1, 'r'), (-1, 'l')):
         cx = 8 - sgn * afast
@@ -263,6 +341,9 @@ def pernas(cs, q, afast=1.9, larg=3.0, topo=-4.0, mat='calca', pe='sapato', zc=8
         cs += [C('coxa_' + lado, cx - h, cx + h, topo - comp * 0.5, topo, zc - h - 0.3, zc + h + 0.3, mat, rot),
                C('canela_' + lado, cx - h + 0.3, cx + h - 0.3, topo - comp + 1.6, topo - comp * 0.5 + 0.4, zc - h, zc + h, mat, rot),
                C('pe_' + lado, cx - h, cx + h, topo - comp, topo - comp + 1.8, zc - h - 2.0, zc + h, pe, rot)]
+        if joelho:
+            ky = topo - comp * 0.5
+            cs.append(C('joelho_' + lado, cx - h + 0.2, cx + h - 0.2, ky - 1.0, ky + 0.9, zc - h - 0.6, zc - h + 0.4, joelho, rot))
 
 
 def cabeca(cs, y0, z0, at, s=4.8, cx=8.0, mat='pele', dentes=True):
@@ -441,7 +522,7 @@ def soldado(q, tipo):
     grande = tipo in ('pesado', 'juggernaut')
     L = 1.25 if tipo == 'juggernaut' else 1.12 if tipo == 'pesado' else 1.0          # largura
     cs = []
-    pernas(cs, q, afast=1.9 * L, larg=3.0 * L, topo=-4.0, comp=12.0, pe='faixa')
+    pernas(cs, q, afast=1.9 * L, larg=3.0 * L, topo=-4.0, comp=12.0, pe='faixa', joelho=None if tipo == 'juggernaut' else 'couro')
     cs += [C('quadril', 8 - 3.7 * L, 8 + 3.7 * L, -5.4, -2.6, 6.2, 10.8, 'calca'),
            C('tronco', 8 - 3.9 * L, 8 + 3.9 * L, -3.0, 7.6, 5.8, 11.0, 'camisa'),
            C('colete', 8 - 4.1 * L, 8 + 4.1 * L, 0.2, 7.0, 5.2, 11.6, 'couro'),
@@ -450,13 +531,20 @@ def soldado(q, tipo):
            C('pescoco', 6.9, 9.1, 7.4, 9.0, 7.0, 9.6, 'faixa'),
            C('cabeca', 5.6, 10.4, 8.6, 13.4, 5.8, 10.6, 'faixa'),
            C('rosto', 6.2, 9.8, 10.4, 12.0, 5.5, 5.9, 'pele', so=('north',)),
-           C('olho_r', 6.6, 7.5, 10.9, 11.5, 5.36, 5.5, 'olho', emite=6, so=('north',)),
-           C('olho_l', 8.5, 9.4, 10.9, 11.5, 5.36, 5.5, 'olho', emite=6, so=('north',)),
+           C('olho_r', 6.6, 7.5, 10.9, 11.5, 5.36, 5.5, 'olho', so=('north',)),
+           C('olho_l', 8.5, 9.4, 10.9, 11.5, 5.36, 5.5, 'olho', so=('north',)),
            C('capacete', 5.2, 10.8, 12.4, 14.6, 5.4, 11.0, 'metal' if grande or tipo == 'escudo' else 'couro'),
            C('capacete_aba', 5.2, 10.8, 12.2, 12.9, 4.6, 5.6, 'metal' if grande or tipo == 'escudo' else 'couro')]
     for c in cs:
         if c.nome == 'cabeca':
             c.sem_rosto = True
+    if tipo != 'juggernaut':          # 16/11: equipamento de soldado de verdade
+        cs[:] = [c for c in cs if c.nome != 'bolso_d']
+        cs += [C('oculos', 5.8, 10.2, 12.9, 13.8, 4.9, 5.5, 'lente'), C('fone_d', 4.7, 5.4, 9.8, 11.8, 7.0, 9.4, 'couro'),
+               C('bolsa1', 8 - 3.0 * L, 8 - 1.2 * L, 0.6, 3.2, 4.5, 5.2, 'couro'), C('bolsa2', 7.1, 8.9, 0.6, 3.2, 4.5, 5.2, 'couro'),
+               C('bolsa3', 8 + 1.2 * L, 8 + 3.0 * L, 0.6, 3.2, 4.5, 5.2, 'couro'), C('radio', 8 + 2.0 * L, 8 + 3.0 * L, 4.0, 6.8, 4.7, 5.3, 'couro')]
+        if tipo != 'pesado':
+            cs.append(C('hidratacao', 5.6, 10.4, 0.6, 6.4, 11.0, 12.4, 'couro'))
     if tipo == 'atirador':            # capuz de camuflagem
         cs += [C('ghillie', 4.8, 11.2, 9.0, 15.0, 9.6, 11.6, 'couro'), C('ghillie_o', 3.0, 13.0, 5.6, 8.6, 5.4, 11.4, 'couro')]
     elif tipo == 'pesado':
