@@ -112,6 +112,12 @@ final class Zumbis implements Listener {
     Zombie nascer(Location l, Tipo t, double forca) {
         return l.getWorld().spawn(l, Zombie.class, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.CUSTOM, z -> {
             z.getPersistentDataContainer().set(kTipo, PersistentDataType.STRING, t.name());
+            // 16/11: LevelledMobs nao mexe nos inimigos do Tiro (nada de "Level 5" no nome, vida/velocidade extra ou mensagem em ingles)
+            for (String k : new String[]{"levelledmobs:nolevel", "levelledmobs:denylm_nametag"}) {
+                NamespacedKey nk = NamespacedKey.fromString(k);
+                if (nk != null) z.getPersistentDataContainer().set(nk, PersistentDataType.STRING, "tiro");
+            }
+            z.addScoreboardTag("clearlag_exclude");
             z.setAdult();
             z.setSilent(true);   // a voz de cada tipo sai do Visual (som proprio por tipo; soldado e gente)
             z.setShouldBurnInDay(false);
@@ -121,7 +127,7 @@ final class Zumbis implements Listener {
             z.customName(Tiro.txt(t.nome));
             z.setCustomNameVisible(t == Tipo.TANQUE || t == Tipo.CHEFE || t == Tipo.PESADO || t == Tipo.JUGGERNAUT);
             atributo(z, Attribute.MAX_HEALTH, t.vida * forca);
-            z.setHealth(t.vida * forca);
+            z.setHealth(Math.min(t.vida * forca, z.getAttribute(Attribute.MAX_HEALTH).getValue()));
             atributo(z, Attribute.MOVEMENT_SPEED, t.veloc);
             atributo(z, Attribute.ATTACK_DAMAGE, Math.max(0.5, t.dano));
             atributo(z, Attribute.SCALE, t.escala);

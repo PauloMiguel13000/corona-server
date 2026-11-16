@@ -67,6 +67,38 @@ final class Missao implements Listener {
 
     enum Fase { ESPERA, CONTAGEM, JOGO, FIM }
 
+    // 16/11 dificuldade (como no Warface: Normal, Dificil e Profissional). Escolhida na base, antes de comecar.
+    static final String[] DIF_NOME = {"§aNormal", "§6Difícil", "§4§lProfissional"};
+    static final double[] DIF_VIDA = {1.0, 1.4, 1.85}, DIF_DANO = {1.0, 1.3, 1.65}, DIF_QTD = {1.0, 1.25, 1.5}, DIF_PREMIO = {1.0, 1.6, 2.4};
+    static final Material[] DIF_ICONE = {Material.LIME_DYE, Material.ORANGE_DYE, Material.NETHER_STAR};   // nada que se vista (capacete daria armadura)
+    private int dif = 0;
+
+    /** Multiplicador do dano que os inimigos dao: cresce com o setor e com a dificuldade. */
+    private double fd() {
+        return (1 + 0.12 * setor) * DIF_DANO[dif];
+    }
+
+    private ItemStack itemDificuldade() {
+        return pl.armas.item("dificuldade", DIF_ICONE[dif], "§fDificuldade: " + DIF_NOME[dif] + " §7(clique para trocar)", 1,
+                "§7Normal: o padrão.", "§7Difícil: inimigos com mais vida, mais dano e em maior número.",
+                "§7Profissional: só para esquadrão bom. Paga muito mais.", "§8Recompensa: §6x" + String.format(java.util.Locale.ROOT, "%.1f", DIF_PREMIO[dif]));
+    }
+
+    private void trocarDificuldade(Player p) {
+        dif = (dif + 1) % DIF_NOME.length;
+        for (Player o : mundo.getPlayers()) {
+            if (!noJogo.contains(o.getUniqueId())) o.getInventory().setItem(7, itemDificuldade());
+            o.sendMessage(PREFIXO + "§f" + p.getName() + " §7mudou a dificuldade para " + DIF_NOME[dif] + "§7.");
+            o.playSound(o.getLocation(), dif == 2 ? Sound.ENTITY_WITHER_AMBIENT : Sound.UI_BUTTON_CLICK, dif == 2 ? 0.4f : 1f, 1f);
+        }
+    }
+
+    private String recorde(int d) {
+        int t = pl.dados.getInt("missao.recorde." + d + ".tempo", 0);
+        if (t <= 0) return "§7nenhum ainda";
+        return "§f" + String.format("%d:%02d", t / 60, t % 60) + " §7(" + pl.dados.getString("missao.recorde." + d + ".nomes", "?") + ")";
+    }
+
     /** O que cada inimigo faz: distancia que gosta, intervalo e dano do tiro, rajada, pontaria. */
     record Perfil(double perto, double longe, int intervalo, double dano, int rajada, double pontaria) {}
 
@@ -133,9 +165,9 @@ final class Missao implements Listener {
         g.customName(Tiro.txt("§4§lJUGGERNAUT"));
         g.setCustomNameVisible(true);
         g.setSilent(true);
-        double vida = 900 * (0.6 + 0.4 * n);
+        double vida = 900 * (0.6 + 0.4 * n) * DIF_VIDA[dif];
         atributo(g, org.bukkit.attribute.Attribute.MAX_HEALTH, vida);
-        g.setHealth(vida);
+        g.setHealth(g.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue());   // o servidor pode limitar a vida maxima
         atributo(g, org.bukkit.attribute.Attribute.SCALE, 1.6);
         atributo(g, org.bukkit.attribute.Attribute.KNOCKBACK_RESISTANCE, 1.0);
         atributo(g, org.bukkit.attribute.Attribute.MOVEMENT_SPEED, 0.2);
@@ -191,7 +223,7 @@ final class Missao implements Listener {
                     if (p.getLocation().distanceSquared(focoFoguete) <= 3.5 * 3.5) {
                         p.setNoDamageTicks(0);
                         feridoEm.put(p.getUniqueId(), agora);
-                        p.damage(9 * (1 + 0.12 * setor));
+                        p.damage(9 * fd());
                         p.setVelocity(empurrao(p.getLocation().toVector().subtract(focoFoguete.toVector()), 0.7, 0.5));
                     }
                 focoFoguete = null;
@@ -238,7 +270,7 @@ final class Missao implements Listener {
                 if (p.getLocation().distanceSquared(c) <= 4.5 * 4.5) {
                     p.setNoDamageTicks(0);
                     feridoEm.put(p.getUniqueId(), agora);
-                    p.damage(4);
+                    p.damage(4 * DIF_DANO[dif]);
                     p.setVelocity(empurrao(p.getLocation().toVector().subtract(c.toVector()), 1.3, 0.6));
                 }
         }
@@ -268,7 +300,7 @@ final class Missao implements Listener {
                 if (acertou) {
                     alvo.setNoDamageTicks(0);
                     feridoEm.put(alvo.getUniqueId(), agora);
-                    alvo.damage(2.2 * (1 + 0.12 * setor));
+                    alvo.damage(2.2 * fd());
                     alvo.playSound(alvo.getLocation(), Sound.ENTITY_PLAYER_HURT, 0.6f, 1.2f);
                 } else alvo.playSound(fim, Sound.ENTITY_ARROW_SHOOT, 0.35f, 1.9f);
             }
@@ -415,7 +447,7 @@ final class Missao implements Listener {
             if (acertou) {
                 alvo.setNoDamageTicks(0);
                 feridoEm.put(alvo.getUniqueId(), agora);
-                alvo.damage(2.5 * (1 + 0.12 * setor));
+                alvo.damage(2.5 * fd());
                 alvo.playSound(alvo.getLocation(), Sound.ENTITY_PLAYER_HURT, 0.6f, 1.2f);
             } else alvo.playSound(fim, Sound.ENTITY_ARROW_SHOOT, 0.35f, 1.9f);
             if (torretaRajada == 0) torretaProximo = agora + 2200;
@@ -910,6 +942,7 @@ final class Missao implements Listener {
             p.showTitle(Title.title(Tiro.txt("§c§lMISSÃO"), Tiro.txt("§7Invada a base e chegue ao Heliporto")));
             p.sendMessage(PREFIXO + "§fCo-op de 1 a 4§7 contra soldados inimigos. Avance §e5 setores§7; cada portão é um ponto de controle.");
             p.sendMessage(PREFIXO + "§7Escolha a classe com os itens da mão. §eUse cobertura§7: eles atiram de verdade, e a vida volta depois de 5 s sem levar tiro.");
+            p.sendMessage(PREFIXO + "§7Dificuldade no item do slot 8. Recorde " + DIF_NOME[dif] + "§7: " + recorde(dif));
             if (fase == Fase.JOGO) p.sendMessage(PREFIXO + "§eTem uma missão em andamento: você entra na próxima.");
         }, 10L);
     }
@@ -935,6 +968,7 @@ final class Missao implements Listener {
             }
             p.getInventory().setItem(i + 2, it);
         }
+        p.getInventory().setItem(7, itemDificuldade());
         p.showBossBar(barra);
     }
 
@@ -984,7 +1018,7 @@ final class Missao implements Listener {
                             + " tiro=" + (proximoTiro.getOrDefault(z.getUniqueId(), 0L) - System.currentTimeMillis()) + " raj=" + rajada.get(z.getUniqueId()) + " est=" + estado.get(z.getUniqueId()) + " cob=" + (cobertura.get(z.getUniqueId()) == null ? "-" : cobertura.get(z.getUniqueId()).toVector())
                             + " alt=" + String.format("%.2f", z.getHeight()) + " marca=" + marcas.containsKey(z.getUniqueId()) + " gran=" + granadasNoAr.size());
             }
-            else s.sendMessage(PREFIXO + "fase=" + fase + " setor=" + setor + " inimigos=" + inimigos().size() + " time=" + noJogo.size() + " | admin <iniciar|refazer|setor>");
+            else s.sendMessage(PREFIXO + "fase=" + fase + " dif=" + dif + " setor=" + setor + " inimigos=" + inimigos().size() + " time=" + noJogo.size() + " | admin <iniciar|refazer|setor>");
             return true;
         }
         if (!(s instanceof Player p)) return true;
@@ -1095,7 +1129,7 @@ final class Missao implements Listener {
         if (l == null) l = new Location(mundo, 0.5, Y + 1, z1(s) - 3.5);
         l.setYaw(180f);
         int n = Math.max(1, time().size());
-        Zombie z = pl.zumbis.nascer(l, t, (t == Zumbis.Tipo.JUGGERNAUT ? 0.6 + 0.4 * n : 0.8 + 0.2 * n));
+        Zombie z = pl.zumbis.nascer(l, t, (t == Zumbis.Tipo.JUGGERNAUT ? 0.6 + 0.4 * n : 0.8 + 0.2 * n) * DIF_VIDA[dif]);
         z.setSilent(true);
         try {
             Bukkit.getMobGoals().removeAllGoals(z);
@@ -1116,6 +1150,7 @@ final class Missao implements Listener {
         int[] g = reforco ? ref[s] : grupos[s];
         for (int i = 0; i < g.length; i++) {
             int q = g[i] == 0 ? 0 : (i >= 2 ? g[i] + (n >= 3 ? 1 : 0) : (int) Math.ceil(g[i] * (0.7 + 0.3 * n)));
+            if (q > 0) q = (int) Math.round(q * DIF_QTD[dif]);
             for (int k = 0; k < q; k++) soltar(tipos[i], s, reforco);
         }
         if (s == SETORES - 1 && !reforco) soltarMecha(s);
@@ -1130,7 +1165,8 @@ final class Missao implements Listener {
         }
         int na = mundo.getPlayers().size();
         if (fase == Fase.ESPERA) {
-            barra.name(Tiro.txt("§c§lMISSÃO §7— escolha a classe" + (na > 0 ? " §8| §f" + na + " no esquadrão" : "")));
+            if (na == 0) dif = 0;   // base vazia: o proximo esquadrao comeca no Normal
+            barra.name(Tiro.txt("§c§lMISSÃO §7— escolha a classe §8| " + DIF_NOME[dif] + (na > 0 ? " §8| §f" + na + " no esquadrão" : "")));
             barra.progress(1f);
             if (na > 0) {
                 fase = Fase.CONTAGEM;
@@ -1143,7 +1179,7 @@ final class Missao implements Listener {
                 fase = Fase.ESPERA;
                 return;
             }
-            barra.name(Tiro.txt("§c§lMISSÃO §7começa em §f" + contagem + "s §8| §f" + na + " no esquadrão"));
+            barra.name(Tiro.txt("§c§lMISSÃO §7começa em §f" + contagem + "s §8| " + DIF_NOME[dif] + " §8| §f" + na + " no esquadrão"));
             barra.progress(Math.max(0f, Math.min(1f, contagem / 20f)));
             if (contagem <= 5 && contagem > 0) for (Player p : mundo.getPlayers()) p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1f, 1f);
             if (contagem-- <= 0) comecar();
@@ -1223,7 +1259,7 @@ final class Missao implements Listener {
                 }
                 p.setHealth(p.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue());
                 municao(p);
-                pl.coronas(p, 10, "pelo setor " + setor + " da Missão");
+                pl.coronas(p, (int) Math.round(10 * DIF_PREMIO[dif]), "pelo setor " + setor + " da Missão");
             }
             aviso("§a§lPONTO DE CONTROLE " + setor + "/" + (SETORES - 1), "§fPróximo: §e" + NOMES[setor] + " §7— vida e munição repostas", Sound.ENTITY_PLAYER_LEVELUP);
         }
@@ -1242,7 +1278,7 @@ final class Missao implements Listener {
         contagem = 12;
         for (Player p : time()) {
             if (vitoria) {
-                int premio = 120 + Math.max(0, 600 - tempo) / 10;
+                int premio = (int) Math.round((120 + Math.max(0, 600 - tempo) / 10) * DIF_PREMIO[dif]);
                 p.showTitle(Title.title(Tiro.txt("§a§lMISSÃO CUMPRIDA"), Tiro.txt("§7Tempo §f" + String.format("%d:%02d", tempo / 60, tempo % 60))));
                 p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
                 pl.coronas(p, premio, "por completar a Missão");
@@ -1250,12 +1286,26 @@ final class Missao implements Listener {
                 pl.dados.set("missao.vitorias." + p.getUniqueId(), n);
                 int melhor = pl.dados.getInt("missao.tempo." + p.getUniqueId(), 99999);
                 if (tempo < melhor) pl.dados.set("missao.tempo." + p.getUniqueId(), tempo);
+                if (dif > 0) pl.dados.set("missao.vitorias" + dif + "." + p.getUniqueId(), pl.dados.getInt("missao.vitorias" + dif + "." + p.getUniqueId(), 0) + 1);
             } else {
                 p.showTitle(Title.title(Tiro.txt("§c§lMISSÃO FRACASSADA"), Tiro.txt(sub)));
                 p.playSound(p.getLocation(), Sound.ENTITY_WITHER_DEATH, 0.5f, 0.8f);
             }
             if (caidos.remove(p.getUniqueId())) p.setGameMode(GameMode.ADVENTURE);
             levantar(p, 0);
+        }
+        if (vitoria) {
+            int rec = pl.dados.getInt("missao.recorde." + dif + ".tempo", 0);
+            List<String> nomes = new ArrayList<>();
+            for (Player p : time()) nomes.add(p.getName());
+            String linha = PREFIXO + "§fMissão cumprida no " + DIF_NOME[dif] + "§f em §e" + String.format("%d:%02d", tempo / 60, tempo % 60) + "§f por " + String.join(", ", nomes) + "§f!";
+            if (rec <= 0 || tempo < rec) {
+                pl.dados.set("missao.recorde." + dif + ".tempo", tempo);
+                pl.dados.set("missao.recorde." + dif + ".nomes", String.join(", ", nomes));
+                linha += " §6§lNOVO RECORDE!";
+                for (Player p : time()) p.playSound(p.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_TWINKLE, 1f, 1f);
+            }
+            Bukkit.broadcast(Tiro.txt(linha));
         }
         derrubados.clear();
         socorro.clear();
@@ -1570,7 +1620,7 @@ final class Missao implements Listener {
         feridoEm.put(alvo.getUniqueId(), agora);
         bala = true;
         try {
-            alvo.damage(3 * (1 + 0.12 * setor));
+            alvo.damage(3 * fd());
         } finally {
             bala = false;
         }
@@ -1790,7 +1840,7 @@ final class Missao implements Listener {
             feridoEm.put(p.getUniqueId(), agora);
             bala = true;
             try {
-                p.damage(13 * (1 - d / 5.2) * (1 + 0.12 * setor));
+                p.damage(13 * (1 - d / 5.2) * fd());
             } finally {
                 bala = false;
             }
@@ -1925,7 +1975,7 @@ final class Missao implements Listener {
             alvo.playSound(fim, Sound.ENTITY_ARROW_SHOOT, 0.35f, 1.9f);       // zunido da bala passando
             return;
         }
-        double dano = pf.dano() * (t == Zumbis.Tipo.ESCOPETA ? Math.max(0.3, 1 - d / 9) : 1) * (1 + 0.12 * setor);
+        double dano = pf.dano() * (t == Zumbis.Tipo.ESCOPETA ? Math.max(0.3, 1 - d / 9) : 1) * fd();
         alvo.setNoDamageTicks(0);
         feridoEm.put(alvo.getUniqueId(), System.currentTimeMillis());
         alvo.damage(dano);   // sem "quem bateu": dano de mob muda com a dificuldade do mundo (zero no pacifico)
@@ -2026,6 +2076,11 @@ final class Missao implements Listener {
         if (e.getAction() != Action.RIGHT_CLICK_AIR && e.getAction() != Action.RIGHT_CLICK_BLOCK && e.getAction() != Action.LEFT_CLICK_AIR) return;
         String id = pl.armas.idItem(p.getInventory().getItemInMainHand());
         if (id == null) return;
+        if (id.equals("dificuldade")) {
+            e.setCancelled(true);
+            if (fase == Fase.ESPERA || fase == Fase.CONTAGEM) trocarDificuldade(p);
+            return;
+        }
         if (id.startsWith("classe") && fase != Fase.JOGO) {
             int c = id.charAt(6) - '0';
             classe.put(p.getUniqueId(), c);
