@@ -14,6 +14,18 @@ commands:
   youtube:
     description: Canal do YouTube do servidor
     aliases: [yt, canal, videos]
+  redes:
+    description: Todas as redes oficiais do servidor
+    aliases: [social, sociais, facebook, face, fb, redessociais]
+  tiktok:
+    description: TikTok do servidor
+    aliases: [tt]
+  instagram:
+    description: Instagram do servidor
+    aliases: [insta, ig]
+  twitch:
+    description: Lives do servidor na Twitch
+    aliases: [live, lives]
   semana:
     description: Os rankings semanais (tempo, chefes, Prisao) e a sua posicao
     aliases: [rankings, rankingsemanal, top]

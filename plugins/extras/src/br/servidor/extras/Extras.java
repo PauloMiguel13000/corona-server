@@ -904,9 +904,50 @@ public final class Extras extends JavaPlugin implements Listener {
 
     void youtube(org.bukkit.command.CommandSender s) {
         s.sendMessage(txt("§c§l▶ YouTube do Corona Server §7— gameplay de verdade: masmorras, chefes e tour!"));
-        s.sendMessage(txt("§f" + YT).clickEvent(net.kyori.adventure.text.event.ClickEvent.openUrl(YT))
-                .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(txt("§eClique para abrir o canal"))));
-        s.sendMessage(txt("§7Se inscreva e deixe o like — ajuda muito o servidor a crescer! §8(link também no /discord)"));
+        link(s, YT, "§eClique para abrir o canal");
+        s.sendMessage(txt("§7Se inscreva e deixe o like — ajuda muito o servidor a crescer! §8(todas as redes: /redes)"));
+    }
+
+    /** 16/11: as outras redes oficiais (Instagram e Facebook novos). */
+    static final String TIKTOK = "https://www.tiktok.com/@paulomiguel6113";
+    static final String INSTAGRAM = "https://www.instagram.com/coronadooscar_minecraft";
+    static final String TWITCH = "https://twitch.tv/miguel13000";
+
+    static void link(org.bukkit.command.CommandSender s, String url, String dica) {
+        s.sendMessage(txt("§f§n" + url).clickEvent(net.kyori.adventure.text.event.ClickEvent.openUrl(url))
+                .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(txt(dica))));
+    }
+
+    void rede(org.bukkit.command.CommandSender s, String qual) {
+        switch (qual) {
+            case "tiktok" -> {
+                s.sendMessage(txt("§d§l♪ TikTok do Corona Server §7— lutas de chefe e cortes rápidos!"));
+                link(s, TIKTOK, "§eClique para abrir o TikTok");
+            }
+            case "instagram" -> {
+                s.sendMessage(txt("§d§l◎ Instagram do Corona Server §7— Reels novos todo dia!"));
+                link(s, INSTAGRAM, "§eClique para abrir o Instagram");
+            }
+            case "twitch" -> {
+                s.sendMessage(txt("§5§l● Twitch §7— lives do coronadooscar jogando no servidor"));
+                link(s, TWITCH, "§eClique para abrir a Twitch");
+            }
+            default -> {
+                s.sendMessage(txt("§6§l✦ Redes oficiais do Corona Server §7(clique no link)"));
+                s.sendMessage(txt("§9Discord §7— avisos, sorteios e suporte:"));
+                link(s, divulgacao != null ? divulgacao.linkDiscord() : "https://discord.gg/uhEaWb9sJA", "§eClique para entrar no Discord");
+                s.sendMessage(txt("§cYouTube:"));
+                link(s, YT, "§eClique para abrir o canal");
+                s.sendMessage(txt("§dTikTok:"));
+                link(s, TIKTOK, "§eClique para abrir o TikTok");
+                s.sendMessage(txt("§dInstagram:"));
+                link(s, INSTAGRAM, "§eClique para abrir o Instagram");
+                s.sendMessage(txt("§9Facebook: §fpágina §e\"Corona Server - Minecraft\""));
+                s.sendMessage(txt("§5Twitch:"));
+                link(s, TWITCH, "§eClique para abrir a Twitch");
+                s.sendMessage(txt("§7Seguir e compartilhar ajuda muito o servidor a crescer!"));
+            }
+        }
     }
     TorneioPesca torneioPesca;
     Pinata pinata;
@@ -928,6 +969,11 @@ public final class Extras extends JavaPlugin implements Listener {
         }
         if (cmd.getName().equalsIgnoreCase("youtube")) {
             youtube(s);
+            return true;
+        }
+        if (cmd.getName().equalsIgnoreCase("redes") || cmd.getName().equalsIgnoreCase("tiktok")
+                || cmd.getName().equalsIgnoreCase("instagram") || cmd.getName().equalsIgnoreCase("twitch")) {
+            rede(s, cmd.getName().toLowerCase());
             return true;
         }
         if (cmd.getName().equalsIgnoreCase("semana")) {

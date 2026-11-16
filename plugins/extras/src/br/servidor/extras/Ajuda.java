@@ -53,7 +53,7 @@ final class Ajuda implements Listener {
             new Item(41, Material.FIREWORK_ROCKET, "§d§lEventos", "eventos", "§7Lua de Sangue, chuva de coronas no spawn,", "§7XP em dobro, monstro lendário e tesouro."),
             new Item(42, Material.ANVIL, "§7§lFerreiro", "reparar", "§7Conserta o item da sua mão por coronas", "§7(só no Survival)."),
             new Item(43, Material.MAP, "§b§lTesouro", "tesouro", "§7Caça ao tesouro no mundo aberto:", "§7veja a pista e o prêmio."),
-            new Item(44, Material.RED_CONCRETE, "§c§lYouTube", "youtube", "§7Vídeos do servidor: masmorras,", "§7chefes e tour. Se inscreva!"),
+            new Item(44, Material.RED_CONCRETE, "§c§lRedes do servidor", "redes", "§7Discord, YouTube, TikTok, Instagram,", "§7Facebook e Twitch §8(/redes)"),
     };
 
     private final Extras pl;

@@ -91,6 +91,7 @@ final class Divulgacao implements Listener {
             "&6&l>> &eDe hora em hora tem &e&lSORTEIO&e: um jogador ativo ganha &6100 coronas&e. Fique ativo para concorrer!",
             "&6&l>> &eFique de olho: aparece &d&lPIÑATA &eno spawn e &b&lTORNEIO DE PESCA &eno Survival — prêmios em coronas!",
             "&c&l▶ &eTem vídeo novo do servidor no YouTube! Masmorras, chefes e tour: &f/youtube &7(se inscreva!)",
+            "&d&l◎ &eO servidor agora tem &dInstagram &ee &9Facebook&e! Reels novos todo dia: &f/instagram &7— todas as redes: &f/redes",
             "&6&l>> &eTodo dia tem &e&lCONTRATO &enas masmorras: derrote 30 monstros da masmorra do dia e ganhe coronas! &f/contrato",
             "&6&l>> &eFique ligado no chat: &e&lPERGUNTA RELÂMPAGO &e— quem responder primeiro ganha coronas!",
             "&6&l>> &eA primeira vitória contra um chefe de masmorra no dia vale &6coronas em DOBRO&e!",
