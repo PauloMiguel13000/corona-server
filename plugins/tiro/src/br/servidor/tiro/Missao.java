@@ -60,7 +60,7 @@ import org.bukkit.util.Vector;
 final class Missao implements Listener {
 
     static final String PREFIXO = "§8[§c§lMissão§8] §7";
-    static final int Y = 64, SETORES = 5, COMP = 40, LARG = 12, MAPA = 3;
+    static final int Y = 64, SETORES = 5, COMP = 40, LARG = 12, MAPA = 4;
     static final String[] NOMES = {"Entrada da Favela", "Becos", "Campo de Terra", "Galpão da Milícia", "Topo do Morro"};
     static final String[] CLASSES = {"fuzileiro", "medico", "engenheiro", "atirador"};
     static final String[] CLASSE_NOME = {"§aFuzileiro", "§dMédico", "§eEngenheiro", "§bAtirador"};
@@ -601,7 +601,9 @@ final class Missao implements Listener {
 
     /** Morro do fundo: so a "pele" (3 camadas) de grama, terra e pedra, com mato e palmeira de vez em quando. */
     private void morro(int x, int z, int altura, Random r) {
-        for (int y = altura - 3; y <= altura; y++) b(x, y, z, y == altura ? (r.nextInt(7) == 0 ? Material.STONE : Material.GRASS_BLOCK) : y >= altura - 1 ? Material.DIRT : Material.STONE);
+        // 16/11: o morro vai ate o chao (so a "pele" ficava flutuando no ceu, visto de baixo)
+        for (int y = Y; y <= altura; y++) b(x, y, z, y == altura ? (r.nextInt(7) == 0 ? Material.STONE : Material.GRASS_BLOCK) : y >= altura - 2 ? Material.DIRT
+                : (x * 3 + y * 5 + z) % 7 == 0 ? Material.ANDESITE : Material.STONE);
         int k = r.nextInt(40);
         if (k == 0) palmeira(x, altura + 1, z, r);
         else if (k < 3) folha(x, altura + 1, z);
@@ -719,9 +721,9 @@ final class Missao implements Listener {
         }
         // serra no fim do mapa (fecha a vista do heliponto) e um morro alto "pao de acucar" ao fundo
         for (int x = -45; x <= 45; x++)
-            for (int k = 0; k < 8; k++) {
+            for (int k = 0; k < 22; k++) {
                 int zz = fim + 3 + k;
-                int alt = Y + 22 + (int) (9 * Math.sin(x / 9.0) + k * 2) + (int) Math.max(0, 22 - Math.abs(x - 12) * 1.6);
+                int alt = Y + 9 + (int) (5 * Math.sin(x / 9.0) + k * 1.4) + (int) Math.max(0, 16 - Math.abs(x - 12) * 1.2 - Math.max(0, 12 - k) * 1.3);
                 morro(x, zz, alt, r);
             }
         // portoes entre setores: muro de tijolo grafitado
@@ -1166,8 +1168,8 @@ final class Missao implements Listener {
                 povoar(setor, false);
                 if (setor == SETOR_TORRETA) {
                     montarTorreta();
-                    aviso("§c§lTORRETA!", "§7Bala não derruba. §eSabote o gerador §7(agachado do lado, parede esquerda)", Sound.BLOCK_BEACON_ACTIVATE);
-                    for (Player p : time()) p.sendMessage(PREFIXO + "§cTorreta no fundo do Armazém! §fAche o §egerador§f (faíscas, parede esquerda) e fique §eagachado§f do lado 3 s. §7Engenheiro sabota em 1 s.");
+                    aviso("§c§lTORRETA!", "§7Bala não derruba. §eSabote o gerador §7(agachado do lado, beco da esquerda)", Sound.BLOCK_BEACON_ACTIVATE);
+                    for (Player p : time()) p.sendMessage(PREFIXO + "§cTorreta no fundo dos Becos! §fAche o §egerador§f (faíscas, beco da esquerda) e fique §eagachado§f do lado 3 s. §7Engenheiro sabota em 1 s.");
                 }
             }
         } else if (ini.size() <= 2 && !reforcoVeio) {

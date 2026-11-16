@@ -143,24 +143,38 @@ final class SemPets implements Listener {
         // 15/11: o BabyPets, ao trocar de mundo, guarda o pet e marca para solta-lo de novo em meio segundo (e avisa
         // "apareceu do seu lado"). Em mundo sem pets cancelamos essa volta marcada; o pet fica guardado ate o jogador
         // voltar para um mundo com pets.
-        if (pl.getConfig().getBoolean("pets.esconder-fora", true) && pronto() && !permitido(e.getPlayer().getWorld().getName())) {
-            try {
-                UUID id = e.getPlayer().getUniqueId();
-                for (org.bukkit.plugin.RegisteredListener rl : PlayerChangedWorldEvent.getHandlerList().getRegisteredListeners()) {
-                    Object l = rl.getListener();
-                    if (!l.getClass().getName().equals("com.petsplugin.listener.PlayerListener")) continue;
-                    Method m = l.getClass().getDeclaredMethod("cancelPendingPetRespawn", UUID.class);
-                    m.setAccessible(true);
-                    m.invoke(l, id);
-                    if (escolhido.invoke(gerente, id) != null) guardados.add(id);
-                    break;
-                }
-            } catch (Throwable t) {
-                if (!avisou) pl.getLogger().warning("Pets: nao consegui cancelar a volta do pet (" + t + ")");
-                avisou = true;
-            }
-        }
+        if (pl.getConfig().getBoolean("pets.esconder-fora", true) && pronto() && !permitido(e.getPlayer().getWorld().getName())) cancelarVolta(e.getPlayer().getUniqueId());
         for (long t : new long[] {5L, 30L, 70L}) Bukkit.getScheduler().runTaskLater(pl, this::conferir, t);
+    }
+
+    private void cancelarVolta(UUID id) {
+        try {
+            for (org.bukkit.plugin.RegisteredListener rl : PlayerChangedWorldEvent.getHandlerList().getRegisteredListeners()) {
+                Object l = rl.getListener();
+                if (!l.getClass().getName().equals("com.petsplugin.listener.PlayerListener")) continue;
+                Method m = l.getClass().getDeclaredMethod("cancelPendingPetRespawn", UUID.class);
+                m.setAccessible(true);
+                m.invoke(l, id);
+                if (escolhido.invoke(gerente, id) != null) guardados.add(id);
+                break;
+            }
+        } catch (Throwable t) {
+            if (!avisou) pl.getLogger().warning("Pets: nao consegui cancelar a volta do pet (" + t + ")");
+            avisou = true;
+        }
+    }
+
+    /**
+     * 16/11 (vi no teste da Missao: "Lhama apareceu do seu lado" depois de cair): ao renascer, o BabyPets tambem
+     * marca a volta do pet. Num mundo sem pets cancelamos essa volta (na hora e de novo no tique seguinte).
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void renasceu(org.bukkit.event.player.PlayerRespawnEvent e) {
+        if (!pl.getConfig().getBoolean("pets.esconder-fora", true) || !pronto() || permitido(e.getRespawnLocation().getWorld().getName())) return;
+        UUID id = e.getPlayer().getUniqueId();
+        cancelarVolta(id);
+        Bukkit.getScheduler().runTaskLater(pl, () -> cancelarVolta(id), 1L);
+        for (long t : new long[] {5L, 30L}) Bukkit.getScheduler().runTaskLater(pl, this::conferir, t);
     }
 
     /**
