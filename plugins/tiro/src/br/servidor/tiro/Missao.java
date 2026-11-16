@@ -21,6 +21,7 @@ import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.IronGolem;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Zombie;
@@ -33,6 +34,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
@@ -103,6 +105,186 @@ final class Missao implements Listener {
     private boolean torretaViva;
     private int sabotagem, torretaRajada;
     private long torretaProximo, torretaMira;
+
+    /*
+     * 16/11 (Warface: o "Mech" do fim da fase, blindado, com metralhadoras e foguetes; o ponto fraco e o bloco de
+     * energia nas costas). No Heliporto o chefe agora e o MECHA W-2300: de frente quase nao toma dano (x0,2), de lado
+     * x0,6, pelas costas x2. Depois de 3 rajadas ele SUPERAQUECE 6 s: para, solta fumaca e o nucleo fica exposto
+     * (x3 de qualquer lado). Foguete: marca um circulo vermelho no chao e explode 1,6 s depois. Chegou perto: pisao.
+     */
+    private IronGolem mecha;
+    private int mechaRajada, mechaRajadas;
+    private long mechaProximo, mechaFoguete, mechaPisao, mechaQuenteAte;
+    private Location focoFoguete;
+    private long fogueteEm;
+
+    private boolean mechaVivo() {
+        return mecha != null && mecha.isValid() && !mecha.isDead();
+    }
+
+    private void soltarMecha(int s) {
+        int n = Math.max(1, time().size());
+        Location l = new Location(mundo, 0.5, Y + 1, z1(s) - 7 + 0.5, 180f, 0f);
+        mecha = mundo.spawn(l, IronGolem.class, CreatureSpawnEvent.SpawnReason.CUSTOM, g -> {
+            g.customName(Tiro.txt("§4§lMECHA W-2300"));
+            g.setCustomNameVisible(true);
+            g.setPlayerCreated(false);
+            g.setRemoveWhenFarAway(false);
+            g.setPersistent(false);
+            double vida = 900 * (0.6 + 0.4 * n);
+            atributo(g, org.bukkit.attribute.Attribute.MAX_HEALTH, vida);
+            g.setHealth(vida);
+            atributo(g, org.bukkit.attribute.Attribute.SCALE, 1.7);
+            atributo(g, org.bukkit.attribute.Attribute.KNOCKBACK_RESISTANCE, 1.0);
+            atributo(g, org.bukkit.attribute.Attribute.MOVEMENT_SPEED, 0.2);
+        });
+        try {
+            Bukkit.getMobGoals().removeAllGoals(mecha);
+        } catch (Throwable ignorado) {
+            // sem metas: so anda pelo que mandamos
+        }
+        long agora = System.currentTimeMillis();
+        mechaRajada = 0;
+        mechaRajadas = 0;
+        mechaProximo = agora + 2500;
+        mechaFoguete = agora + 7000;
+        mechaPisao = agora;
+        mechaQuenteAte = 0;
+        focoFoguete = null;
+        aviso("§4§lMECHA W-2300", "§7Blindado na frente. §fAtaque pelas costas§7 ou quando ele §cSUPERAQUECER", Sound.ENTITY_WITHER_SPAWN);
+        for (Player p : time()) p.sendMessage(PREFIXO + "§4Mecha W-2300! §fFrente blindada; o §enúcleo de energia§f fica nas costas. A cada 3 rajadas ele §csuperaquece§f e o núcleo fica exposto. §7Saia do círculo vermelho: é foguete.");
+    }
+
+    private static void atributo(LivingEntity e, org.bukkit.attribute.Attribute a, double v) {
+        var at = e.getAttribute(a);
+        if (at != null) at.setBaseValue(v);
+    }
+
+    /** Empurra para longe no plano (se estiver bem no centro, para um lado qualquer) e um pouco para cima. */
+    private Vector empurrao(Vector de, double forca, double cima) {
+        de.setY(0);
+        if (de.lengthSquared() < 1e-4) de = new Vector(rnd.nextDouble() - 0.5, 0, rnd.nextDouble() - 0.5);
+        if (de.lengthSquared() < 1e-6) de = new Vector(1, 0, 0);
+        return de.normalize().multiply(forca).setY(cima);
+    }
+
+    private boolean superaquecido() {
+        return System.currentTimeMillis() < mechaQuenteAte;
+    }
+
+    private void mechaIa(List<Player> alvos, long agora) {
+        if (!mechaVivo()) return;
+        Location c = mecha.getLocation();
+        // foguete marcado: explode no tempo
+        if (focoFoguete != null) {
+            Particle.DustOptions po = new Particle.DustOptions(Color.RED, 1.2f);
+            for (int k = 0; k < 16; k++) {
+                double a = k * Math.PI / 8;
+                mundo.spawnParticle(Particle.DUST, focoFoguete.clone().add(Math.cos(a) * 3.5, 0.2, Math.sin(a) * 3.5), 1, 0, 0, 0, 0, po);
+            }
+            if (agora >= fogueteEm) {
+                mundo.spawnParticle(Particle.EXPLOSION, focoFoguete, 4, 1.2, 0.4, 1.2, 0);
+                mundo.playSound(focoFoguete, Sound.ENTITY_GENERIC_EXPLODE, 2f, 0.9f);
+                for (Player p : alvos)
+                    if (p.getLocation().distanceSquared(focoFoguete) <= 3.5 * 3.5) {
+                        p.setNoDamageTicks(0);
+                        feridoEm.put(p.getUniqueId(), agora);
+                        p.damage(9 * (1 + 0.12 * setor));
+                        p.setVelocity(empurrao(p.getLocation().toVector().subtract(focoFoguete.toVector()), 0.7, 0.5));
+                    }
+                focoFoguete = null;
+            }
+        }
+        if (superaquecido()) {
+            mecha.getPathfinder().stopPathfinding();
+            Location costas = c.clone().add(c.getDirection().setY(0).normalize().multiply(-0.9)).add(0, 2.6, 0);
+            mundo.spawnParticle(Particle.LARGE_SMOKE, costas, 4, 0.3, 0.3, 0.3, 0.03);
+            mundo.spawnParticle(Particle.LAVA, costas, 1, 0.2, 0.2, 0.2, 0);
+            if (tick % 4 == 0) for (Player p : alvos) p.sendActionBar(Tiro.txt("§c§lNÚCLEO EXPOSTO! §fATIREM AGORA §7(dano x3)"));
+            return;
+        }
+        Player alvo = null;
+        double dm = 1e9;
+        for (Player p : alvos) {
+            double d = p.getLocation().distanceSquared(c);
+            if (d < dm) {
+                dm = d;
+                alvo = p;
+            }
+        }
+        if (alvo == null) return;
+        double d = Math.sqrt(dm);
+        Vector dir = alvo.getLocation().toVector().subtract(c.toVector());
+        float yaw = (float) Math.toDegrees(Math.atan2(-dir.getX(), dir.getZ()));
+        mecha.setRotation(yaw, 0f);
+        try {
+            mecha.setBodyYaw(yaw);
+        } catch (Throwable ignorado) {
+            // versao sem setBodyYaw
+        }
+        boolean ve = mecha.hasLineOfSight(alvo);
+        if (mechaRajada <= 0) {
+            if (!ve || d > 18) mecha.getPathfinder().moveTo(alvo.getLocation(), 0.9);
+            else if (d < 9) mecha.getPathfinder().stopPathfinding();
+        } else mecha.getPathfinder().stopPathfinding();
+        // pisao em quem chega perto
+        if (d < 4.2 && agora >= mechaPisao) {
+            mechaPisao = agora + 4000;
+            mundo.playSound(c, Sound.ENTITY_IRON_GOLEM_ATTACK, 1.5f, 0.6f);
+            mundo.spawnParticle(Particle.EXPLOSION, c, 2, 1, 0.1, 1, 0);
+            for (Player p : alvos)
+                if (p.getLocation().distanceSquared(c) <= 4.5 * 4.5) {
+                    p.setNoDamageTicks(0);
+                    feridoEm.put(p.getUniqueId(), agora);
+                    p.damage(4);
+                    p.setVelocity(empurrao(p.getLocation().toVector().subtract(c.toVector()), 1.3, 0.6));
+                }
+        }
+        // foguete
+        if (focoFoguete == null && agora >= mechaFoguete && ve) {
+            mechaFoguete = agora + 11000;
+            focoFoguete = alvo.getLocation().clone();
+            fogueteEm = agora + 1600;
+            mundo.playSound(c, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 2f, 0.5f);
+            alvo.sendActionBar(Tiro.txt("§c§lFOGUETE! §fSaia do círculo vermelho!"));
+        }
+        // metralhadoras: rajada de 10
+        if (mechaRajada > 0) {
+            mechaRajada--;
+            if (ve) {
+                Location boca = c.clone().add(0, 2.2, 0).add(empurrao(new Vector(-dir.getZ(), 0, dir.getX()), mechaRajada % 2 == 0 ? 1.1 : -1.1, 0));
+                boolean acertou = rnd.nextDouble() < (alvo.isSneaking() ? 0.33 : 0.55);
+                Location fim = alvo.getEyeLocation().subtract(0, 0.4, 0);
+                if (!acertou) fim.add(rnd.nextGaussian() * 1.1, rnd.nextGaussian() * 0.7, rnd.nextGaussian() * 1.1);
+                Vector v = fim.toVector().subtract(boca.toVector());
+                double len = v.length();
+                v.normalize();
+                for (double k = 1; k < len; k += 1.6) mundo.spawnParticle(Particle.ELECTRIC_SPARK, boca.clone().add(v.clone().multiply(k)), 1, 0, 0, 0, 0);
+                mundo.playSound(boca, Sound.ENTITY_FIREWORK_ROCKET_LARGE_BLAST, 1f, 0.8f);
+                if (acertou) {
+                    alvo.setNoDamageTicks(0);
+                    feridoEm.put(alvo.getUniqueId(), agora);
+                    alvo.damage(2.2 * (1 + 0.12 * setor));
+                    alvo.playSound(alvo.getLocation(), Sound.ENTITY_PLAYER_HURT, 0.6f, 1.2f);
+                } else alvo.playSound(fim, Sound.ENTITY_ARROW_SHOOT, 0.35f, 1.9f);
+            }
+            if (mechaRajada == 0) {
+                mechaProximo = agora + 2600;
+                if (++mechaRajadas >= 3) {
+                    mechaRajadas = 0;
+                    mechaQuenteAte = agora + 6000;
+                    mundo.playSound(c, Sound.BLOCK_FIRE_EXTINGUISH, 2f, 0.6f);
+                    mundo.playSound(c, Sound.BLOCK_BEACON_DEACTIVATE, 2f, 0.6f);
+                    aviso("§c§lSUPERAQUECEU!", "§fNúcleo exposto por 6 s: §eATIREM!", null);
+                }
+            }
+            return;
+        }
+        if (ve && d <= 30 && agora >= mechaProximo) {
+            mechaRajada = 10;
+            mundo.playSound(c, Sound.BLOCK_PISTON_EXTEND, 1.5f, 0.5f);
+        }
+    }
 
     private Location bocaTorreta() {
         return new Location(mundo, 0.5, Y + 4.5, z1(SETOR_TORRETA) - 3 + 0.5);
@@ -598,6 +780,9 @@ final class Missao implements Listener {
 
     private void limpar() {
         for (Zombie z : mundo.getEntitiesByClass(Zombie.class)) z.remove();
+        for (IronGolem g : mundo.getEntitiesByClass(IronGolem.class)) g.remove();
+        mecha = null;
+        focoFoguete = null;
         proximoTiro.clear();
         miraAte.clear();
         rajada.clear();
@@ -645,10 +830,7 @@ final class Missao implements Listener {
             int q = g[i] == 0 ? 0 : (i >= 2 ? g[i] + (n >= 3 ? 1 : 0) : (int) Math.ceil(g[i] * (0.7 + 0.3 * n)));
             for (int k = 0; k < q; k++) soltar(tipos[i], s, reforco);
         }
-        if (s == SETORES - 1 && !reforco) {
-            soltar(Zumbis.Tipo.JUGGERNAUT, s, true).setGlowing(true);
-            aviso("§4§lJUGGERNAUT", "§7Blindado pela frente. §fAtire nas costas!", Sound.ENTITY_RAVAGER_ROAR);
-        }
+        if (s == SETORES - 1 && !reforco) soltarMecha(s);
     }
 
     private void segundo() {
@@ -730,6 +912,8 @@ final class Missao implements Listener {
             reforcoVeio = true;
             povoar(setor, true);
             aviso("§e§lREFORÇOS!", "§7Mais soldados chegando pelo fundo", Sound.BLOCK_BELL_USE);
+        } else if (ini.isEmpty() && mechaVivo()) {
+            if (tempo % 8 == 0) for (Player p : time()) p.sendActionBar(Tiro.txt("§4Derrube o §lMECHA§4 para tomar o Heliporto!"));
         } else if (ini.isEmpty() && torretaViva) {
             if (tempo % 6 == 0) for (Player p : time()) p.sendActionBar(Tiro.txt("§eO portão só abre sem a torreta: §fsabote o gerador §7(parede esquerda)"));
         } else if (ini.isEmpty()) {
@@ -753,6 +937,12 @@ final class Missao implements Listener {
                 pl.coronas(p, 10, "pelo setor " + setor + " da Missão");
             }
             aviso("§a§lPONTO DE CONTROLE " + setor + "/" + (SETORES - 1), "§fPróximo: §e" + NOMES[setor] + " §7— vida e munição repostas", Sound.ENTITY_PLAYER_LEVELUP);
+        }
+        if (mechaVivo()) {
+            double max = mecha.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue();
+            barra.name(Tiro.txt("§4§lMECHA W-2300 §8| " + (superaquecido() ? "§c§lSUPERAQUECIDO" : "§7blindado") + " §8| §7soldados §f" + ini.size()));
+            barra.progress((float) Math.max(0.01, Math.min(1, mecha.getHealth() / max)));
+            return;
         }
         barra.name(Tiro.txt("§c§lSETOR " + (setor + 1) + "/" + SETORES + " §f" + NOMES[setor] + " §8| §7inimigos §f" + ini.size() + " §8| §7" + String.format("%d:%02d", tempo / 60, tempo % 60)));
         barra.progress(setorAtivo ? Math.max(0.05f, Math.min(1f, ini.size() / 10f)) : 1f);
@@ -793,6 +983,7 @@ final class Missao implements Listener {
         if (alvos.isEmpty()) return;
         long agora = System.currentTimeMillis();
         torretaIa(alvos, agora);
+        mechaIa(alvos, agora);
         for (Zombie z : inimigos()) {
             Zumbis.Tipo t = pl.zumbis.tipo(z);
             Perfil pf = PERFIS.get(t);
@@ -937,6 +1128,45 @@ final class Missao implements Listener {
                 p.playSound(p.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 0.6f, 0.8f);
             } else if (t == Zumbis.Tipo.JUGGERNAUT) e.setDamage(e.getDamage() * 0.45);
         }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void golpeMecha(EntityDamageEvent e) {
+        if (!mechaVivo() || e.getEntity() != mecha) return;
+        if (!(e instanceof EntityDamageByEntityEvent ev) || !(ev.getDamager() instanceof Player p)) {
+            if (e.getCause() != EntityDamageEvent.DamageCause.CUSTOM) e.setCancelled(true);   // queda, sufocar etc.
+            return;
+        }
+        if (superaquecido()) {
+            e.setDamage(e.getDamage() * 3);
+            p.playSound(p.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 0.5f, 0.6f);
+            return;
+        }
+        Vector olha = mecha.getLocation().getDirection().setY(0).normalize();
+        Vector para = p.getLocation().toVector().subtract(mecha.getLocation().toVector()).setY(0).normalize();
+        double frente = olha.dot(para);
+        if (frente < -0.3) {
+            e.setDamage(e.getDamage() * 2);
+            p.playSound(p.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 0.5f, 0.8f);
+            mundo.spawnParticle(Particle.ELECTRIC_SPARK, mecha.getLocation().add(0, 2.4, 0), 8, 0.3, 0.3, 0.3, 0.1);
+        } else if (frente > 0.35) {
+            e.setDamage(e.getDamage() * 0.2);
+            if (rnd.nextInt(6) == 0) p.sendActionBar(Tiro.txt("§7Blindagem frontal! §eAtaque pelas costas§7 ou espere ele superaquecer."));
+            mundo.playSound(mecha.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.25f, 2f);
+        } else e.setDamage(e.getDamage() * 0.6);
+    }
+
+    @EventHandler
+    public void mechaCaiu(EntityDeathEvent e) {
+        if (mecha == null || e.getEntity() != mecha) return;
+        e.getDrops().clear();
+        e.setDroppedExp(0);
+        Location l = mecha.getLocation();
+        mundo.spawnParticle(Particle.EXPLOSION_EMITTER, l.clone().add(0, 1.5, 0), 1, 0, 0, 0, 0);
+        mundo.spawnParticle(Particle.LARGE_SMOKE, l.clone().add(0, 1.5, 0), 40, 1, 1.5, 1, 0.05);
+        mundo.playSound(l, Sound.ENTITY_GENERIC_EXPLODE, 3f, 0.6f);
+        aviso("§a§lMECHA DESTRUÍDO", "§7Limpem o resto do Heliporto!", null);
+        focoFoguete = null;
     }
 
     void morreu(Zombie z, Zumbis.Tipo t, Player matador) {
