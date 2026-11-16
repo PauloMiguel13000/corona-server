@@ -12,7 +12,7 @@ import org.bukkit.entity.Player;
  * tiro.missao, tiro.missao_luta). Cada jogador tem a faixa do momento; ela recomeca sozinha quando acaba.
  */
 final class Musica {
-    private static final Map<String, Double> DURACAO = Map.of("horda", 45.71, "horda_luta", 45.71, "horda_chefe", 27.83, "missao", 35.56, "missao_luta", 35.56, "chefe", 50.53);
+    private static final Map<String, Double> DURACAO = Map.of("horda", 45.71, "horda_luta", 45.71, "horda_chefe", 27.83, "missao", 30.97, "missao_luta", 30.97, "chefe", 50.53);
     private final Tiro pl;
     private final Map<UUID, String> faixa = new HashMap<>();
     private final Map<UUID, Long> desde = new HashMap<>();
