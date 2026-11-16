@@ -196,6 +196,16 @@ final class InfernoHerobrine implements Listener {
         LivingEntity e = c.e;
         e.setInvulnerable(true);
         World aw = e.getWorld();
+        // 15/11: a ARENA fica carregada enquanto todos estao no mundo dele. Sem isso o pedaco do mapa descarregava, o
+        // Herobrine de verdade (que fica la, parado) sumia junto, a fase acabava sozinha e ele voltava sem tomar dano.
+        soltarArena();
+        Caixa ar = c.m.arena();
+        arenaMundo = aw;
+        for (int cx = (ar.x1() >> 4) - 1; cx <= (ar.x2() >> 4) + 1; cx++)
+            for (int cz = (ar.z1() >> 4) - 1; cz <= (ar.z2() >> 4) + 1; cz++) {
+                aw.getChunkAt(cx, cz).addPluginChunkTicket(pl);
+                arenaChunks.add(new int[] {cx, cz});
+            }
         for (Player p : ps) {
             p.showTitle(titulo("§4§lVENHAM PARA O MEU MUNDO", "§7§o...ninguém sai de lá do mesmo jeito", 3));
             p.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 20 * 4, 0, false, false));
@@ -285,6 +295,16 @@ final class InfernoHerobrine implements Listener {
         if (x != null && y != null) y.setBaseValue(x.getValue());
     }
 
+    private boolean avisouSumico;
+    private World arenaMundo;
+    private final List<int[]> arenaChunks = new ArrayList<>();
+
+    private void soltarArena() {
+        if (arenaMundo != null) for (int[] ch : arenaChunks) arenaMundo.removePluginChunkTicket(ch[0], ch[1], pl);
+        arenaChunks.clear();
+        arenaMundo = null;
+    }
+
     private void tirarCorpo() {
         if (seguir != null) { seguir.cancel(); seguir = null; }
         if (tarefa != null) { tarefa.cancel(); tarefa = null; }
@@ -301,6 +321,13 @@ final class InfernoHerobrine implements Listener {
     void tick() {
         Chefe c = chefe;
         if (c == null || saindo) return;
+        // so "caiu" se a vida zerou de verdade (entidade descarregada com o pedaco do mapa nao e morte)
+        if (!c.vivo() && c.e != null && c.e.getHealth() > 0) {
+            if (!avisouSumico) pl.getLogger().warning("Mundo de Herobrine: o Herobrine da arena ficou invalido sem morrer (vida " + c.e.getHealth() + ").");
+            avisouSumico = true;
+            return;
+        }
+        avisouSumico = false;
         if (!c.vivo()) {
             if (w != null) for (Player p : w.getPlayers()) {
                 p.showTitle(titulo("§a§lHEROBRINE CAIU", "§7O mundo dele se desfaz...", 3));
@@ -479,6 +506,7 @@ final class InfernoHerobrine implements Listener {
             }
           } finally {
             if (c.vivo()) c.e.setInvulnerable(false);
+            soltarArena();
             voltaAntiga.clear();
             voltaAntiga.putAll(volta);
             volta.clear();
@@ -497,6 +525,7 @@ final class InfernoHerobrine implements Listener {
             if (dest != null && dest.getWorld() != null) p.teleport(dest);
             else pl.irParaSpawnMasmorras(p);
         }
+        soltarArena();
         voltaAntiga.clear();
         voltaAntiga.putAll(volta);
         volta.clear();
@@ -513,6 +542,7 @@ final class InfernoHerobrine implements Listener {
             else pl.irParaSpawnMasmorras(p);
         }
         tirarCorpo();
+        soltarArena();
         chefe = null;
     }
 
