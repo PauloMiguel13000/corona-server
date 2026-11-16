@@ -271,6 +271,10 @@ final class InfernoHerobrine implements Listener {
             if (z.getEquipment() != null) z.getEquipment().clear();
             copiar(c.e, z, org.bukkit.attribute.Attribute.ATTACK_DAMAGE);
             copiar(c.e, z, org.bukkit.attribute.Attribute.MOVEMENT_SPEED);
+            // 15/11 (Paulo: "no outro mundo ele ta andando em camera lenta"): zumbi comum anda devagar demais para o chefe
+            // final. Aqui ele corre como um jogador correndo (e mais ainda na furia, ver tick).
+            var vel = z.getAttribute(org.bukkit.attribute.Attribute.MOVEMENT_SPEED);
+            if (vel != null) vel.setBaseValue(Math.max(vel.getBaseValue(), 0.36));
             copiar(c.e, z, org.bukkit.attribute.Attribute.ARMOR);
             var mh = z.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
             if (mh != null) mh.setBaseValue(1000);
@@ -370,6 +374,9 @@ final class InfernoHerobrine implements Listener {
         if (corpo instanceof Mob mob && (mob.getTarget() == null || !ps.contains(mob.getTarget()))) mob.setTarget(alvo);
         if (corpo.getLocation().getY() < Y - 3 || corpo.getLocation().toVector().setY(0).length() > R) corpo.teleport(new Location(inf, 0.5, Y + 1, 0.5));
         if (corpo.getHealth() < 900) corpo.setHealth(1000);
+        // furia: abaixo de metade da vida ele fica ainda mais rapido (como na arena)
+        if (c.e.getHealth() <= c.vidaMax / 2 && !corpo.hasPotionEffect(PotionEffectType.SPEED))
+            corpo.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, PotionEffect.INFINITE_DURATION, 1, false, false));
         // ambiente: esporos, cinzas e brasas no ar
         for (Player p : ps) {
             inf.spawnParticle(Particle.CRIMSON_SPORE, p.getLocation().add(0, 2, 0), 12, 6, 3, 6, 0);
