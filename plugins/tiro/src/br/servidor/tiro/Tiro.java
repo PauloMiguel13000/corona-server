@@ -197,8 +197,24 @@ public final class Tiro extends JavaPlugin implements Listener {
         lobby.getBlockAt(x, y, z).setType(m, false);
     }
 
-    private void texto(double x, double y, double z, String t, float escala) {
-        lobby.spawn(new Location(lobby, x, y, z), TextDisplay.class, d -> {
+    // 16/11: placar dos recordes da Missao (um por dificuldade), do lado do portao norte
+    private TextDisplay placarMissao;
+
+    void atualizarPlacarMissao() {
+        if (lobby == null) return;
+        StringBuilder sb = new StringBuilder("§c§lRECORDES DA MISSÃO§r");
+        for (int d = 0; d < Missao.DIF_NOME.length; d++) {
+            int t = dados.getInt("missao.recorde." + d + ".tempo", 0);
+            sb.append("\n").append(Missao.DIF_NOME[d]).append("§r§7: ")
+                    .append(t <= 0 ? "§8ninguém ainda" : "§f" + String.format("%d:%02d", t / 60, t % 60) + " §7" + dados.getString("missao.recorde." + d + ".nomes", "?"));
+        }
+        sb.append("\n§8escolha a dificuldade na base");
+        if (placarMissao != null && placarMissao.isValid()) placarMissao.text(txt(sb.toString()));
+        else placarMissao = texto(7.5, Y + 2.9, -13.5, sb.toString(), 0.8f);
+    }
+
+    private TextDisplay texto(double x, double y, double z, String t, float escala) {
+        return lobby.spawn(new Location(lobby, x, y, z), TextDisplay.class, d -> {
             d.text(txt(t));
             d.setBillboard(Display.Billboard.CENTER);
             d.setTransformation(new org.bukkit.util.Transformation(new org.joml.Vector3f(), new org.joml.Quaternionf(), new org.joml.Vector3f(escala, escala, escala), new org.joml.Quaternionf()));
@@ -230,6 +246,7 @@ public final class Tiro extends JavaPlugin implements Listener {
         texto(14.5, Y + 5.6, 0.5, "§6§lMODO HORDA\n§fCo-op de 1 a 4: missões contra a horda\n§7classes • patentes • chefes\n§a▶ entre no portão", 1.1f);
         texto(0.5, Y + 5.6, -13.5, "§c§lMISSÃO\n§fCo-op de 1 a 4 contra soldados inimigos\n§75 setores até o Heliporto • eles atiram de volta\n§a▶ entre no portão", 1.1f);
         texto(0.5, Y + 3.2, 13.5, "§a§lVOLTAR AOS MINIGAMES\n§7pise na esmeralda", 0.9f);
+        atualizarPlacarMissao();
     }
 
     private void construirLobby() {

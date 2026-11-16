@@ -1269,7 +1269,7 @@ final class Missao implements Listener {
             barra.progress((float) Math.max(0.01, Math.min(1, mecha.getHealth() / max)));
             return;
         }
-        barra.name(Tiro.txt("§c§lSETOR " + (setor + 1) + "/" + SETORES + " §f" + NOMES[setor] + " §8| §7inimigos §f" + ini.size() + " §8| §7" + String.format("%d:%02d", tempo / 60, tempo % 60)));
+        barra.name(Tiro.txt("§c§lSETOR " + (setor + 1) + "/" + SETORES + " §f" + NOMES[setor] + " §8| §7inimigos §f" + ini.size() + " §8| §7" + String.format("%d:%02d", tempo / 60, tempo % 60) + (dif > 0 ? " §8| " + DIF_NOME[dif] : "")));
         barra.progress(setorAtivo ? Math.max(0.05f, Math.min(1f, ini.size() / 10f)) : 1f);
     }
 
@@ -1303,6 +1303,7 @@ final class Missao implements Listener {
                 pl.dados.set("missao.recorde." + dif + ".tempo", tempo);
                 pl.dados.set("missao.recorde." + dif + ".nomes", String.join(", ", nomes));
                 linha += " §6§lNOVO RECORDE!";
+                pl.atualizarPlacarMissao();
                 for (Player p : time()) p.playSound(p.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_TWINKLE, 1f, 1f);
             }
             Bukkit.broadcast(Tiro.txt(linha));
