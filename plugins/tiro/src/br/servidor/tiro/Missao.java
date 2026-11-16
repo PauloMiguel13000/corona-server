@@ -1288,7 +1288,9 @@ final class Missao implements Listener {
             if (t == Zumbis.Tipo.ESCUDO) pancada(z, alvo, d, agora);
             // 16/11 (Warface): soldado e atirador usam cobertura (agacham, levantam para atirar, trocam de lugar)
             boolean taticos = t == Zumbis.Tipo.SOLDADO || t == Zumbis.Tipo.ATIRADOR;
-            if (taticos && tatica(z, t, pf, alvo, d, agora)) {
+            if (alvo.getLocation().getZ() < z0(setor) - 1) {
+                z.getPathfinder().stopPathfinding();                    // jogador voltou para tras do portao: nao invadem a base
+            } else if (taticos && tatica(z, t, pf, alvo, d, agora)) {
                 // a tatica ja cuidou de andar/agachar
             } else if (t != Zumbis.Tipo.ATIRADOR && rajada.getOrDefault(u, 0) <= 0) {
             // anda: chega ate a distancia que gosta; sem visao, procura; perto demais (menos o escudo e a escopeta), recua
@@ -1505,6 +1507,7 @@ final class Missao implements Listener {
             Integer by = chao(bx, zl.getBlockY(), bz);
             if (by == null) continue;
             Location c = new Location(mundo, bx + 0.5, by, bz + 0.5);
+            if (bz < z0(setor) || bz > z1(setor)) continue;            // cobertura so dentro do proprio setor
             if (velha != null && velha.distanceSquared(c) < 9) continue;
             if (ocupada(c, z)) continue;
             double dc = Math.sqrt(c.distanceSquared(alvo.getLocation()));
@@ -1609,7 +1612,7 @@ final class Missao implements Listener {
         timeVermelho().addEntry(z.getUniqueId().toString());
         olhadas.remove(z.getUniqueId());
         org.bukkit.entity.TextDisplay m = mundo.spawn(z.getLocation().add(0, z.getHeight() + 0.55, 0), org.bukkit.entity.TextDisplay.class, x -> {
-            x.text(Tiro.txt("§c§l▼"));
+            x.text(Tiro.txt("§c§l◆!◆"));                                  // (o Bedrock mostra como plaquinha de nome)
             x.setBillboard(org.bukkit.entity.Display.Billboard.CENTER);
             x.setSeeThrough(true);
             x.setDefaultBackground(false);
