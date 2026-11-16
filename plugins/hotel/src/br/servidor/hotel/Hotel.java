@@ -517,6 +517,11 @@ public final class Hotel extends JavaPlugin implements Listener {
             case "olhos" -> s.sendMessage(PREFIXO + partida.testeEvento("olhos"));
             case "sussurro" -> s.sendMessage(PREFIXO + partida.testeEvento("sussurro"));
             case "campainha" -> s.sendMessage(PREFIXO + partida.testeEvento("campainha"));
+            case "batida" -> {
+                String r = p == null ? "Só no jogo." : partida.testeBatida(p);
+                s.sendMessage(PREFIXO + r);
+                getLogger().info("[batida] " + r);
+            }
             case "recarregar" -> {
                 reloadConfig();
                 s.sendMessage(PREFIXO + "Config recarregada.");
@@ -524,7 +529,7 @@ public final class Hotel extends JavaPlugin implements Listener {
             case "tp" -> {
                 if (p != null) mover(p, Recepcao.spawn(mundo));
             }
-            default -> s.sendMessage(PREFIXO + "/hotel admin <iniciar|parar|status|porta <n>|estrondo|retorno|olhos|sussurro|tp|recarregar>");
+            default -> s.sendMessage(PREFIXO + "/hotel admin <iniciar|parar|status|porta <n>|estrondo|retorno|olhos|sussurro|batida|tp|recarregar>");
         }
         return true;
     }
@@ -536,7 +541,7 @@ public final class Hotel extends JavaPlugin implements Listener {
             op.addAll(List.of("entrar", "sair", "status"));
             if (s.hasPermission("hotel.admin")) op.add("admin");
         } else if (a.length == 2 && a[0].equalsIgnoreCase("admin") && s.hasPermission("hotel.admin")) {
-            op.addAll(List.of("iniciar", "parar", "status", "porta", "estrondo", "retorno", "olhos", "sussurro", "tp", "recarregar"));
+            op.addAll(List.of("iniciar", "parar", "status", "porta", "estrondo", "retorno", "olhos", "sussurro", "batida", "tp", "recarregar"));
         }
         String ult = a.length == 0 ? "" : a[a.length - 1].toLowerCase(Locale.ROOT);
         op.removeIf(x -> !x.startsWith(ult));
@@ -649,6 +654,12 @@ public final class Hotel extends JavaPlugin implements Listener {
         if ((e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK) && e.getItem() != null) {
             partida.usarItem(p, e.getItem());
         }
+    }
+
+    /** 16/11: o desafio do batimento (Figura escutando o armario) e na troca de slot da barra. */
+    @EventHandler(ignoreCancelled = true)
+    public void trocarSlot(org.bukkit.event.player.PlayerItemHeldEvent e) {
+        if (noMundo(e.getPlayer()) && partida.trocouSlot(e.getPlayer())) e.setCancelled(true);
     }
 
     /** Agachar dentro do armario: sai dele. */

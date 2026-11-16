@@ -517,6 +517,11 @@ final class Planta {
 
     /** Biblioteca (a ultima sala): fileiras de estantes, mesas com livros e a Figura andando. */
     private void biblioteca(Comodo c, Map<Long, Boolean> o) {
+        // 16/11: os 2 armarios ANTES das estantes (as estantes da parede tomavam todo o lugar e a biblioteca ficava sem
+        // armario). Um em cada parede, entre duas fileiras de estantes, para se esconder da Figura (desafio do batimento).
+        int feitos = 0;
+        for (int x = c.x0 + 10; x < c.x1 - 6 && feitos < 1; x += 4) if (armario(c, o, x, true)) feitos++;
+        for (int x = c.x0 + 10 + 4 * ((c.x1 - 16 - c.x0) / 4); x > c.x0 + 6 && feitos < 2; x -= 4) if (armario(c, o, x, false)) feitos++;
         // fileiras de estantes em z, com corredores de 2 blocos entre elas e um corredor largo no meio (x)
         int meioZ = (c.z0 + c.z1) / 2;
         for (int x = c.x0 + 4; x <= c.x1 - 4; x += 4) {
@@ -553,7 +558,7 @@ final class Planta {
                 boolean ladoEstante = o.containsKey(chave2(x + 1, z)) || o.containsKey(chave2(x - 1, z));
                 if (ladoEstante && (x + z) % 3 == 0) c.livros.add(new int[] {x, z});
             }
-        armarios(c, o, 2);
+        if (feitos < 2) armarios(c, o, 2 - feitos);
     }
 
     /** Corredor da perseguicao: muretas para pular e as portas ja abertas. */

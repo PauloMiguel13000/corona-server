@@ -444,6 +444,7 @@ final class Partida {
     void rapido() {
         rtick++;
         if (estado != Estado.JOGANDO) return;
+        batimentos();
         if (elevador != null && !elevador.tick()) elevador = null;
         if (investida != null && !investida.tick()) investida = null;
         if (perseguidor != null && !perseguidor.tick()) {
@@ -584,6 +585,105 @@ final class Partida {
 
     boolean escondido(Jogador j) {
         return j.armario != null;
+    }
+
+    // ================================================================== 16/11 batimento (Figura x armario)
+    /*
+     * Paulo: "o monstro da porta [da biblioteca] ouvir o batimento cardiaco, com 2 armarios la dentro onde o jogador tem
+     * que ficar quieto para nao ser ouvido". Quando a Figura chega perto do armario, ela para e escuta: o coracao bate
+     * e o jogador tem que TROCAR DE SLOT da barra (rodinha, numero ou toque no celular) so quando aparece "♥ AGORA".
+     * Errou ou deixou passar: ela ouve, abre o armario e caca. Acertou as batidas: ela vai embora.
+     */
+    static final class Batida {
+        long proxima, janelaAte;
+        int acertos, precisa;
+        boolean apertou;
+    }
+
+    private final Map<UUID, Batida> batidas = new HashMap<>();
+    private final Map<UUID, Long> batidaPausa = new HashMap<>();
+    private boolean batidaLog;   // so depois do /hotel admin batida: escreve no console quando abre cada janela
+
+    private void batimentos() {
+        if (figura == null || figura.motor == null || !figura.motor.isValid()) {
+            batidas.clear();
+            return;
+        }
+        Location v = figura.motor.getLocation();
+        for (Player p : vivos()) {
+            Jogador j = jogadores.get(p.getUniqueId());
+            if (j == null) continue;
+            Batida b = batidas.get(p.getUniqueId());
+            if (j.armario == null || !p.getWorld().equals(v.getWorld())) {
+                if (b != null) batidas.remove(p.getUniqueId());
+                continue;
+            }
+            if (!figura.sala.armarios.contains(j.armario)) continue;   // so os armarios da biblioteca
+            if (b == null) {
+                if (p.getLocation().distanceSquared(v) > 6.5 * 6.5 || rtick < batidaPausa.getOrDefault(p.getUniqueId(), 0L)) continue;
+                b = new Batida();
+                b.proxima = rtick + 35;
+                b.precisa = 4 + (vivos().size() > 2 ? 1 : 0);
+                batidas.put(p.getUniqueId(), b);
+                titulo(p, "§4§l♥ FIQUE QUIETO ♥", "§7Troque de slot só quando o coração ficar §c§lvermelho", 2.5);
+                p.sendMessage(Hotel.PREFIXO + "§4A Figura parou do lado do armário e está escutando! §fTroque de slot da barra §7(rodinha, número ou toque no celular) §fsó quando aparecer §c§l♥ AGORA§f. Fora da hora ela te ouve.");
+                p.playSound(p.getLocation(), Sound.ENTITY_WARDEN_LISTENING, 1f, 0.8f);
+            }
+            j.escondidoDesde = rtick;   // enquanto escuta, o "algo no armario" nao empurra ninguem
+            figura.escutar(p.getLocation());
+            if (b.janelaAte > 0 && rtick > b.janelaAte) {
+                if (!b.apertou) {
+                    ouviu(p, j, "§7você não acompanhou o coração");
+                    continue;
+                }
+                b.janelaAte = 0;
+                if (b.acertos >= b.precisa) {
+                    batidas.remove(p.getUniqueId());
+                    batidaPausa.put(p.getUniqueId(), rtick + 20 * 8);
+                    p.sendActionBar(Hotel.txt("§a§l♥ §aEla não te ouviu... §7e foi embora."));
+                    if (batidaLog) pl.getLogger().info("[batida] escapou " + p.getName());
+                    p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_BREATH, 1f, 0.8f);
+                    figura.afastar();
+                    continue;
+                }
+                b.proxima = rtick + 14 + rnd.nextInt(16);
+            }
+            if (b.janelaAte == 0 && rtick >= b.proxima) {
+                b.janelaAte = rtick + 15;   // 0,75 s para reagir (da para o celular)
+                b.apertou = false;
+                p.playSound(p.getLocation(), Sound.ENTITY_WARDEN_HEARTBEAT, 1.4f, 1f);
+                p.sendActionBar(Hotel.txt("§c§l♥ AGORA ♥ §8" + b.acertos + "/" + b.precisa));
+                if (batidaLog) pl.getLogger().info("[batida] janela " + p.getName() + " " + b.acertos + "/" + b.precisa);
+            } else if (b.janelaAte == 0 && rtick % 5 == 0) {
+                p.sendActionBar(Hotel.txt("§8♥ §7quieto... §8" + b.acertos + "/" + b.precisa));
+            }
+        }
+    }
+
+    /** Trocou de slot da barra: dentro da janela conta a batida; fora dela, a Figura ouve. Devolve true se estava no desafio. */
+    boolean trocouSlot(Player p) {
+        Batida b = batidas.get(p.getUniqueId());
+        Jogador j = jogadores.get(p.getUniqueId());
+        if (b == null || j == null) return false;
+        if (b.janelaAte > 0 && !b.apertou) {
+            b.apertou = true;
+            b.acertos++;
+            p.sendActionBar(Hotel.txt("§a§l♥ §a" + b.acertos + "/" + b.precisa));
+            p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASEDRUM, 0.7f, 0.7f);
+        } else {
+            ouviu(p, j, "§7você se mexeu fora da hora");
+        }
+        return true;
+    }
+
+    private void ouviu(Player p, Jogador j, String porque) {
+        if (batidaLog) pl.getLogger().info("[batida] ouviu " + p.getName() + ": " + porque);
+        batidas.remove(p.getUniqueId());
+        batidaPausa.put(p.getUniqueId(), rtick + 20 * 10);
+        titulo(p, "§4§lELA TE OUVIU", porque, 1.5);
+        p.playSound(p.getLocation(), Sound.ENTITY_WARDEN_ROAR, 1f, 0.9f);
+        sairDoArmario(p, j, true);
+        if (figura != null) figura.cacar(p);
     }
 
     /** Ninguem fica no armario para sempre: depois de um tempo algo la dentro te empurra para fora. */
@@ -782,6 +882,23 @@ final class Partida {
             ultimoEvento = idx;
             iniciarCampainha();
         }
+    }
+
+    /** Teste do batimento (admin): entra no armario da biblioteca e a Figura vem escutar. */
+    String testeBatida(Player p) {
+        Jogador j = jogadores.get(p.getUniqueId());
+        if (estado != Estado.JOGANDO || planta == null || j == null) return "Sem partida (ou você não está nela).";
+        if (figura == null || figura.motor == null || !figura.motor.isValid()) return "A Figura ainda não apareceu (vá até a biblioteca: /hotel admin porta <n>).";
+        Planta.Comodo c = figura.sala;
+        if (c.armarios.isEmpty()) return "A biblioteca não tem armário.";
+        Planta.Armario a = c.armarios.get(0);
+        j.armario = a;
+        j.escondidoDesde = rtick;
+        pl.mover(p, new Location(mundo, a.x() + 0.5, Planta.Y, a.z() + 0.5, a.norte() ? 0f : 180f, 0f));
+        figura.motor.teleport(new Location(mundo, a.x() + 0.5, Planta.Y, a.foraZ() + (a.foraZ() > a.z() ? 2.5 : -1.5)));
+        batidaPausa.remove(p.getUniqueId());
+        batidaLog = true;
+        return "No armário " + a.x() + "," + a.z() + "; a Figura está do lado.";
     }
 
     String testeEvento(String nome) {
@@ -1481,6 +1598,7 @@ final class Partida {
             titulo(p, "§4§lA BIBLIOTECA", "§7Ache §f" + livrosPrecisa() + " livros§7. §cAnde AGACHADO.", 4);
             p.sendMessage(Hotel.PREFIXO + "§fA §4Figura §fé cega, mas ouve tudo. §eAnde agachado§f e não corra. Ache os §e" + livrosPrecisa()
                     + " livros brilhantes§f nas estantes para abrir a porta " + String.format("%04d", c.porta()) + ".");
+            if (!c.armarios.isEmpty()) p.sendMessage(Hotel.PREFIXO + "§7Tem §f" + c.armarios.size() + " armários§7 nas paredes. Se ela parar do lado e escutar, §ctroque de slot só no ritmo do coração§7.");
         }
         Bukkit.getScheduler().runTaskLater(pl, () -> {
             if (estado != Estado.JOGANDO || planta == null) return;
@@ -1543,6 +1661,7 @@ final class Partida {
         Location destino;
         int modo; // 0 ronda, 1 investigando, 2 cacando
         long ateModo, proximoSom;
+        boolean escutando;   // parada do lado de um armario (desafio do batimento)
         UUID alvo;
 
         Figura(Planta.Comodo sala) {
@@ -1634,6 +1753,37 @@ final class Partida {
             }
         }
 
+        /** Para do lado do armario e escuta (batimento). */
+        void escutar(Location l) {
+            if (motor == null || !motor.isValid() || modo == 2) return;
+            escutando = true;
+            modo = 1;
+            ateModo = tick + seg(2);
+            if (destino == null || destino.distanceSquared(l) > 2.5) {
+                destino = l.clone();
+                motor.getPathfinder().moveTo(destino, 0.6);
+            }
+            if (motor.getLocation().distanceSquared(l) < 2.6 * 2.6) motor.getPathfinder().stopPathfinding();
+        }
+
+        void afastar() {
+            if (motor == null || !motor.isValid()) return;
+            escutando = false;
+            modo = 0;
+            destino = null;
+            proximoSom = tick + seg(2);
+        }
+
+        void cacar(Player p) {
+            if (motor == null || !motor.isValid()) return;
+            escutando = false;
+            mundo.playSound(motor.getLocation(), Sound.ENTITY_WARDEN_ROAR, 2.5f, 0.7f);
+            modo = 2;
+            alvo = p.getUniqueId();
+            ateModo = tick + seg(5);
+            motor.getPathfinder().moveTo(p, 1.55);
+        }
+
         void ouvir(Player p, Jogador j) {
             if (motor == null || !motor.isValid() || escondido(j)) return;
             Location l = p.getLocation(), v = motor.getLocation();
@@ -1667,7 +1817,9 @@ final class Partida {
             if (motor == null || !motor.isValid()) return;
             Location v = motor.getLocation();
             if (!sala.contem(v.getX(), v.getZ())) motor.teleport(new Location(mundo, sala.meioX(), Planta.Y, sala.meioZ() + 0.5));
-            if (modo == 2) {
+            if (escutando) {
+                escutando = false;   // o batimento renova a cada tick enquanto ela escuta; aqui ela so fica parada
+            } else if (modo == 2) {
                 Player a = alvo == null ? null : Bukkit.getPlayer(alvo);
                 if (a == null || tick > ateModo || !vivo(a)) modo = 0;
                 else motor.getPathfinder().moveTo(a, 1.55);
