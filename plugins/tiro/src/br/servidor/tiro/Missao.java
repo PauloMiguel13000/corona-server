@@ -73,6 +73,40 @@ final class Missao implements Listener {
     static final Material[] DIF_ICONE = {Material.LIME_DYE, Material.ORANGE_DYE, Material.NETHER_STAR};   // nada que se vista (capacete daria armadura)
     private int dif = 0;
 
+    // 16/11 placar da partida (como a tela de resultado do Warface): abates, na cabeca, levantadas e quedas
+    private final Map<UUID, int[]> placar = new HashMap<>();
+    private final Map<UUID, Boolean> ultimoNaCabeca = new HashMap<>();
+
+    private int[] pp(Player p) {
+        return placar.computeIfAbsent(p.getUniqueId(), k -> new int[4]);
+    }
+
+    void acertou(Player a, LivingEntity alvo, boolean cabeca) {
+        if (fase == Fase.JOGO && alvo instanceof Zombie) ultimoNaCabeca.put(alvo.getUniqueId(), cabeca);
+    }
+
+    private void resultado() {
+        List<Player> t = new ArrayList<>(time());
+        if (t.isEmpty()) return;
+        t.sort((x, y) -> {
+            int[] a = pp(x), b = pp(y);
+            return a[0] != b[0] ? b[0] - a[0] : b[1] - a[1];
+        });
+        Player mvp = pp(t.get(0))[0] > 0 ? t.get(0) : null;
+        List<String> linhas = new ArrayList<>();
+        linhas.add("§8§m                    §r §6§lRESULTADO §8§m                    ");
+        for (Player p : t) {
+            int[] v = pp(p);
+            linhas.add((p == mvp ? "§6★ " : "§7• ") + "§f" + p.getName() + " §8| §a" + v[0] + " abates §7(" + v[1] + " na cabeça) §8| §d" + v[2] + " levantou §8| §c" + v[3] + " caiu");
+        }
+        if (mvp != null && t.size() > 1) linhas.add("§6§lMVP: §f" + mvp.getName() + " §6+" + (int) Math.round(15 * DIF_PREMIO[dif]) + " coronas");
+        for (Player p : t) for (String l : linhas) p.sendMessage(l);
+        if (mvp != null && t.size() > 1) {
+            pl.coronas(mvp, (int) Math.round(15 * DIF_PREMIO[dif]), "por ser o MVP da Missão");
+            mvp.playSound(mvp.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1.3f);
+        }
+    }
+
     /** Multiplicador do dano que os inimigos dao: cresce com o setor e com a dificuldade. */
     private double fd() {
         return (1 + 0.12 * setor) * DIF_DANO[dif];
@@ -1058,6 +1092,8 @@ final class Missao implements Listener {
     private void comecar() {
         noJogo.clear();
         caidos.clear();
+        placar.clear();
+        ultimoNaCabeca.clear();
         int max = pl.getConfig().getInt("missao.maximo-jogadores", 4);
         for (Player p : mundo.getPlayers()) {
             if (noJogo.size() >= max) {
@@ -1276,6 +1312,7 @@ final class Missao implements Listener {
     private void acabar(boolean vitoria, String sub) {
         fase = Fase.FIM;
         contagem = 12;
+        resultado();
         for (Player p : time()) {
             if (vitoria) {
                 int premio = (int) Math.round((120 + Math.max(0, 600 - tempo) / 10) * DIF_PREMIO[dif]);
@@ -2065,7 +2102,13 @@ final class Missao implements Listener {
         proximoTiro.remove(z.getUniqueId());
         miraAte.remove(z.getUniqueId());
         rajada.remove(z.getUniqueId());
-        if (matador != null) matador.sendActionBar(Tiro.txt("§a+ " + t.nome + " §7abatido"));
+        boolean cabeca = Boolean.TRUE.equals(ultimoNaCabeca.remove(z.getUniqueId()));
+        if (matador != null && noJogo.contains(matador.getUniqueId())) {
+            int[] v = pp(matador);
+            v[0]++;
+            if (cabeca) v[1]++;
+        }
+        if (matador != null) matador.sendActionBar(Tiro.txt("§a+ " + t.nome + " §7abatido" + (cabeca ? " §c§lNA CABEÇA" : "")));
     }
 
     // ================================================================== jogador: classe, habilidade, queda
@@ -2136,6 +2179,7 @@ final class Missao implements Listener {
     }
 
     private void derrubar(Player p) {
+        pp(p)[3]++;
         derrubados.put(p.getUniqueId(), System.currentTimeMillis() + SANGRA_S * 1000L);
         socorro.remove(p.getUniqueId());
         p.setHealth(Math.min(p.getHealth(), 4));
@@ -2171,6 +2215,7 @@ final class Missao implements Listener {
         caido.playSound(caido.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.6f);
         mundo.spawnParticle(Particle.HEART, caido.getLocation().add(0, 1.2, 0), 6, 0.4, 0.3, 0.4, 0);
         if (kit) mundo.playSound(caido.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1f, 1.8f);
+        pp(quem)[2]++;
         quem.sendActionBar(Tiro.txt("§aVocê levantou §f" + caido.getName() + "§a! §6+5 coronas"));
         pl.coronas(quem, 5, "por levantar um companheiro na Missão");
     }

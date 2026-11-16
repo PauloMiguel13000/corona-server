@@ -327,12 +327,12 @@ final class Armas implements Listener {
                 if (alvo instanceof LivingEntity le) {
                     boolean cabeca = r.getHitPosition().getY() >= le.getLocation().getY() + le.getHeight() * 0.78;
                     double dano = a.dano() * (cabeca ? 1.8 : 1.0);
+                    regras.acertou(p, le, dano, cabeca);   // antes do dano: se o tiro mata, quem conta sabe que foi na cabeca
                     le.setNoDamageTicks(0);
                     le.damage(dano, p);
                     le.setNoDamageTicks(0);
                     w.spawnParticle(Particle.BLOCK, r.getHitPosition().toLocation(w), cabeca ? 14 : 7, 0.1, 0.1, 0.1, 0, Material.REDSTONE_BLOCK.createBlockData());
                     if (cabeca) p.playSound(p.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 0.6f, 1.7f);
-                    regras.acertou(p, le, dano, cabeca);
                 } else if (r.getHitBlock() != null) {
                     w.spawnParticle(Particle.BLOCK, r.getHitPosition().toLocation(w), 6, 0.05, 0.05, 0.05, 0, r.getHitBlock().getBlockData());
                 }

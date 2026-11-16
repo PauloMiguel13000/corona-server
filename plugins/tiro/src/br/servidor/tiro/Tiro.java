@@ -112,6 +112,7 @@ public final class Tiro extends JavaPlugin implements Listener {
             @Override
             public void acertou(Player a, org.bukkit.entity.LivingEntity alvo, double dano, boolean cabeca) {
                 if (a.getWorld().getName().equals(OPERACAO)) operacao.acertou(a, alvo, dano, cabeca);
+                else if (missao != null && a.getWorld().getName().equals(MISSAO)) missao.acertou(a, alvo, cabeca);
             }
         };
         zumbis.dono = (z, t, matador) -> {
