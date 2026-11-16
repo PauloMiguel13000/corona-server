@@ -375,8 +375,16 @@ final class Operacao implements Listener {
         String minha = classe.getOrDefault(p.getUniqueId(), "fuzileiro");
         for (int i = 0; i < CLASSES.length; i++) {
             Classe c = CLASSES[i];
-            h.inv.setItem(10 + i * 2, pl.armas.item("classe", c.icone(), c.nome() + (c.id().equals(minha) ? " §a§l✔" : ""), 1,
-                    "§7Arma: §f" + Armas.ARMAS.get(c.arma()).nome() + " §7+ pistola", "§7Habilidade: " + c.habilidade(), "§8" + c.descricao(), "", c.id().equals(minha) ? "§aSua classe" : "§eClique para escolher"));
+            ItemStack ic = pl.armas.item("classe", c.icone(), c.nome() + (c.id().equals(minha) ? " §a§l✔" : ""), 1,
+                    "§7Arma: §f" + Armas.ARMAS.get(c.arma()).nome() + " §7+ pistola", "§7Habilidade: " + c.habilidade(), "§8" + c.descricao(), "", c.id().equals(minha) ? "§aSua classe" : "§eClique para escolher");
+            // 15/11 (Paulo: "sem textura tambem"): o icone da classe mostra a arma dela para quem tem o pacote
+            if (pl.visual != null && pl.visual.tem(p) && c.icone() == Armas.ARMAS.get(c.arma()).item()) {
+                ic.setData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL, net.kyori.adventure.key.Key.key("corona", "armas/" + c.arma()));
+                var im = ic.getItemMeta();
+                im.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES);
+                ic.setItemMeta(im);
+            }
+            h.inv.setItem(10 + i * 2, ic);
         }
         h.inv.setItem(22, pl.armas.item("dif", Material.COMPARATOR, "§fDificuldade: " + DIFS[dif], 1, "§7Mais difícil = inimigos mais fortes,", "§7mais XP e mais coronas (" + PREMIO[dif] + ").", "",
                 fase == Fase.ESPERA || fase == Fase.CONTAGEM ? "§eClique para trocar" : "§8(missão em andamento)"));
@@ -520,7 +528,7 @@ final class Operacao implements Listener {
         boolean vivos = false;
         for (Zombie z : mundo.getEntitiesByClass(Zombie.class)) if (pl.zumbis.tipo(z) != null && !z.isDead()) vivos = true;
         String f = switch (fase) {
-            case CHEFE -> "horda_chefe";
+            case CHEFE -> "chefe";   // 15/11: musica de chefe dos modos de tiro
             case ONDAS, DEFESA -> vivos ? "horda_luta" : "horda";
             case FIM -> null;
             default -> "horda";

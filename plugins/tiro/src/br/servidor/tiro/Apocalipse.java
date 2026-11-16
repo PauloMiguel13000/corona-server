@@ -559,6 +559,16 @@ final class Apocalipse implements Listener {
                 mundo.playSound(b.getLocation(), Sound.ENTITY_ZOMBIE_BREAK_WOODEN_DOOR, 1f, 0.9f);
             }
         }
+        // musica de chefe: toca enquanto um Chefe de Horda ou um Tanque estiver a menos de 45 blocos
+        if (pl.musica != null) for (Player p : ps) {
+            boolean chefao = false;
+            for (Zombie zb : mundo.getEntitiesByClass(Zombie.class)) {
+                Zumbis.Tipo tz = pl.zumbis.tipo(zb);
+                if ((tz == Zumbis.Tipo.CHEFE || tz == Zumbis.Tipo.TANQUE) && !zb.isDead() && zb.getLocation().distanceSquared(p.getLocation()) < 45 * 45) chefao = true;
+            }
+            if (chefao) pl.musica.tocar(p, "chefe");
+            else if ("chefe".equals(pl.musica.atual(p))) pl.musica.tocar(p, null);
+        }
         for (Player p : ps) {
             Location l = p.getLocation();
             int z = zona(l);

@@ -481,7 +481,7 @@ final class Missao implements Listener {
         if (mundo == null) return;
         for (Player p : mundo.getPlayers()) {
             if (p.getY() < Y - 10) p.teleport(noJogo.contains(p.getUniqueId()) && fase == Fase.JOGO ? partida(setor) : sala());
-            if (pl.musica != null) pl.musica.tocar(p, fase == Fase.JOGO ? (setorAtivo ? "missao_luta" : "missao") : fase == Fase.FIM ? null : "missao");
+            if (pl.musica != null) pl.musica.tocar(p, fase == Fase.JOGO ? (setorAtivo ? (setor == SETORES - 1 ? "chefe" : "missao_luta") : "missao") : fase == Fase.FIM ? null : "missao");
         }
         int na = mundo.getPlayers().size();
         if (fase == Fase.ESPERA) {
