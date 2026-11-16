@@ -274,6 +274,15 @@ final class Armas implements Listener {
         }
     }
 
+    /** 16/11: gatilho por codigo (piloto de gravacao do admin, /missao admin piloto): como segurar o botao direito. */
+    void gatilho(Player p) {
+        ItemStack it = p.getInventory().getItemInMainHand();
+        Arma a = armaDe(it);
+        if (a == null || !pl.mundoDeTiro(p.getWorld())) return;
+        segurandoAte.put(p.getUniqueId(), System.currentTimeMillis() + 260);
+        atirar(p, a, it);
+    }
+
     void recarregar(Player p) {
         ItemStack it = p.getInventory().getItemInMainHand();
         Arma a = armaDe(it);

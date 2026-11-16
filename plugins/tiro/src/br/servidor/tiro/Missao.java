@@ -462,6 +462,7 @@ final class Missao implements Listener {
         limpar();
         Bukkit.getScheduler().runTaskTimer(pl, this::segundo, 20L, 20L);
         Bukkit.getScheduler().runTaskTimer(pl, this::ia, 5L, 4L);
+        Bukkit.getScheduler().runTaskTimer(pl, this::piloto, 6L, 1L);
     }
 
     void desligar() {
@@ -960,6 +961,18 @@ final class Missao implements Listener {
             } else if (o.equals("setor") && fase == Fase.JOGO) {
                 limparSetor();
                 destruirTorreta(null);
+            }
+            else if (o.equals("piloto") && s instanceof Player eu) {
+                // 16/11 (gravar gameplay pelo PC remoto): mira sozinho no inimigo visivel mais perto e atira. So admin.
+                int seg = 120;
+                try {
+                    if (a.length > 2) seg = Integer.parseInt(a[2]);
+                } catch (NumberFormatException ignorado) {
+                    // fica 120
+                }
+                if (seg <= 0) pilotoAte.remove(eu.getUniqueId());
+                else pilotoAte.put(eu.getUniqueId(), System.currentTimeMillis() + seg * 1000L);
+                s.sendMessage(PREFIXO + (seg <= 0 ? "piloto desligado" : "piloto por " + seg + " s"));
             }
             else if (o.equals("ver")) {
                 for (Zombie z : inimigos()) for (Player q : vivos())
@@ -1833,6 +1846,49 @@ final class Missao implements Listener {
     private void pararAmbiente(Player p) {
         if (ambProx.remove(p.getUniqueId()) == null) return;
         for (String som : new String[]{"amb_cidade", "amb_helicoptero", "amb_sirene"}) p.stopSound("tiro." + som, org.bukkit.SoundCategory.AMBIENT);
+    }
+
+
+    // ================================================================== 16/11 piloto de gravacao (admin)
+    private final Map<UUID, Long> pilotoAte = new HashMap<>();
+
+    private void piloto() {
+        if (pilotoAte.isEmpty() || mundo == null) return;
+        long agora = System.currentTimeMillis();
+        for (java.util.Iterator<Map.Entry<UUID, Long>> i = pilotoAte.entrySet().iterator(); i.hasNext(); ) {
+            Map.Entry<UUID, Long> en = i.next();
+            Player p = Bukkit.getPlayer(en.getKey());
+            if (p == null || agora > en.getValue()) {
+                i.remove();
+                continue;
+            }
+            if (p.getWorld() != mundo || derrubado(p)) continue;
+            Zombie alvo = null;
+            double dm = 42 * 42;
+            for (Zombie z : mundo.getNearbyEntitiesByType(Zombie.class, p.getLocation(), 42)) {
+                if (pl.zumbis.tipo(z) == null || z.isDead()) continue;
+                double d = z.getLocation().distanceSquared(p.getLocation());
+                if (d < dm && p.hasLineOfSight(z)) {
+                    dm = d;
+                    alvo = z;
+                }
+            }
+            if (alvo == null) continue;
+            Location olho = p.getEyeLocation();
+            double mira = alvo == mecha ? 0.75 : 0.62;
+            Vector v = alvo.getLocation().add(0, alvo.getHeight() * mira, 0).toVector().subtract(olho.toVector());
+            float yawAlvo = (float) Math.toDegrees(Math.atan2(-v.getX(), v.getZ()));
+            float pitchAlvo = (float) -Math.toDegrees(Math.atan2(v.getY(), Math.hypot(v.getX(), v.getZ())));
+            float dy = yawAlvo - olho.getYaw();
+            while (dy > 180) dy -= 360;
+            while (dy < -180) dy += 360;
+            float dp = pitchAlvo - olho.getPitch();
+            float passo = 7f;                                         // gira suave, como gente mirando
+            float ny = olho.getYaw() + Math.max(-passo, Math.min(passo, dy));
+            float np = olho.getPitch() + Math.max(-passo, Math.min(passo, dp));
+            if (Math.abs(dy) > 0.6f || Math.abs(dp) > 0.6f) p.setRotation(ny, np);
+            if (Math.abs(dy) < 3.5f && Math.abs(dp) < 3.5f && pl.armas != null) pl.armas.gatilho(p);
+        }
     }
 
     private void laser(Zombie z, Player alvo) {
