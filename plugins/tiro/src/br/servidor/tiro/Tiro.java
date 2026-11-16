@@ -207,9 +207,9 @@ public final class Tiro extends JavaPlugin implements Listener {
         for (int d = 0; d < Missao.DIF_NOME.length; d++) {
             int t = dados.getInt("missao.recorde." + d + ".tempo", 0);
             sb.append("\n").append(Missao.DIF_NOME[d]).append("§r§7: ")
-                    .append(t <= 0 ? "§8ninguém ainda" : "§f" + String.format("%d:%02d", t / 60, t % 60) + " §7" + dados.getString("missao.recorde." + d + ".nomes", "?"));
+                    .append(t <= 0 ? "§7ninguém ainda" : "§f" + String.format("%d:%02d", t / 60, t % 60) + " §7" + dados.getString("missao.recorde." + d + ".nomes", "?"));
         }
-        sb.append("\n§8escolha a dificuldade na base");
+        sb.append("\n§7escolha a dificuldade na base");
         if (placarMissao != null && placarMissao.isValid()) placarMissao.text(txt(sb.toString()));
         else placarMissao = texto(7.5, Y + 2.9, -13.5, sb.toString(), 0.8f);
     }

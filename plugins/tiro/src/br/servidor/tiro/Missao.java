@@ -113,13 +113,14 @@ final class Missao implements Listener {
     }
 
     private ItemStack itemDificuldade() {
-        return pl.armas.item("dificuldade", DIF_ICONE[dif], "§fDificuldade: " + DIF_NOME[dif] + " §7(clique para trocar)", 1,
+        return pl.armas.item("dificuldade", DIF_ICONE[dif], "§fDificuldade: " + DIF_NOME[dif] + " §7(clique ou Q)", 1,
                 "§7Normal: o padrão.", "§7Difícil: inimigos com mais vida, mais dano e em maior número.",
                 "§7Profissional: só para esquadrão bom. Paga muito mais.", "§8Recompensa: §6x" + String.format(java.util.Locale.ROOT, "%.1f", DIF_PREMIO[dif]));
     }
 
-    private void trocarDificuldade(Player p) {
-        dif = (dif + 1) % DIF_NOME.length;
+    /** nivel -1 = proximo. */
+    private void trocarDificuldade(Player p, int nivel) {
+        dif = nivel < 0 ? (dif + 1) % DIF_NOME.length : Math.min(DIF_NOME.length - 1, nivel);
         for (Player o : mundo.getPlayers()) {
             if (!noJogo.contains(o.getUniqueId())) o.getInventory().setItem(7, itemDificuldade());
             o.sendMessage(PREFIXO + "§f" + p.getName() + " §7mudou a dificuldade para " + DIF_NOME[dif] + "§7.");
@@ -976,7 +977,7 @@ final class Missao implements Listener {
             p.showTitle(Title.title(Tiro.txt("§c§lMISSÃO"), Tiro.txt("§7Invada a base e chegue ao Heliporto")));
             p.sendMessage(PREFIXO + "§fCo-op de 1 a 4§7 contra soldados inimigos. Avance §e5 setores§7; cada portão é um ponto de controle.");
             p.sendMessage(PREFIXO + "§7Escolha a classe com os itens da mão. §eUse cobertura§7: eles atiram de verdade, e a vida volta depois de 5 s sem levar tiro.");
-            p.sendMessage(PREFIXO + "§7Dificuldade no item do slot 8. Recorde " + DIF_NOME[dif] + "§7: " + recorde(dif) + " §8(/missao recordes)");
+            p.sendMessage(PREFIXO + "§7Dificuldade: item do slot 8 §8(clique ou Q)§7 ou §f/missao dificuldade§7. Recorde " + DIF_NOME[dif] + "§7: " + recorde(dif) + " §8(/missao recordes)");
             if (fase == Fase.JOGO) p.sendMessage(PREFIXO + "§eTem uma missão em andamento: você entra na próxima.");
         }, 10L);
     }
@@ -1059,6 +1060,14 @@ final class Missao implements Listener {
         if (sub.equals("sair")) {
             if (aqui(p)) tirar(p, true);
             else p.sendMessage(PREFIXO + "Você não está na Missão.");
+        } else if (sub.equals("dificuldade") || sub.equals("dif")) {
+            if (!aqui(p) || noJogo.contains(p.getUniqueId()) || !(fase == Fase.ESPERA || fase == Fase.CONTAGEM)) {
+                p.sendMessage(PREFIXO + "§7Escolha a dificuldade na base, antes da missão começar §8(" + DIF_NOME[dif] + "§8)§7.");
+                return true;
+            }
+            String n = a.length > 1 ? a[1].toLowerCase(java.util.Locale.ROOT) : "";
+            int nivel = n.startsWith("n") || n.equals("1") ? 0 : n.startsWith("d") || n.equals("2") ? 1 : n.startsWith("p") || n.equals("3") ? 2 : -1;
+            trocarDificuldade(p, nivel);
         } else if (sub.equals("recordes") || sub.equals("top") || sub.equals("stats")) {
             p.sendMessage(PREFIXO + "§c§lRECORDES DA MISSÃO");
             for (int d = 0; d < DIF_NOME.length; d++) p.sendMessage("§7• " + DIF_NOME[d] + "§r§7: " + recorde(d));
@@ -2129,7 +2138,7 @@ final class Missao implements Listener {
         if (id == null) return;
         if (id.equals("dificuldade")) {
             e.setCancelled(true);
-            if (fase == Fase.ESPERA || fase == Fase.CONTAGEM) trocarDificuldade(p);
+            if (fase == Fase.ESPERA || fase == Fase.CONTAGEM) trocarDificuldade(p, -1);
             return;
         }
         if (id.startsWith("classe") && fase != Fase.JOGO) {
@@ -2320,6 +2329,9 @@ final class Missao implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void largar(PlayerDropItemEvent e) {
         if (aqui(e.getPlayer()) && pl.armas.armaDe(e.getItemDrop().getItemStack()) == null) e.setCancelled(true);
+        // Q (ou soltar no celular) no item da dificuldade tambem troca: no Bedrock o clique no ar com corante nao chega
+        if (aqui(e.getPlayer()) && "dificuldade".equals(pl.armas.idItem(e.getItemDrop().getItemStack())) && (fase == Fase.ESPERA || fase == Fase.CONTAGEM))
+            trocarDificuldade(e.getPlayer(), -1);
     }
 
     @EventHandler
