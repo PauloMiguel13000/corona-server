@@ -120,12 +120,35 @@ final class Divulgacao implements Listener {
                 .append(Extras.txt(" §7(clique ou digite §f/discord§7)"));
     }
 
+    // 16/11 (redes): o aviso de 50 em 50 min alterna Discord, YouTube e Instagram, e ate sexta 20/11 20h lembra o evento da Missao
+    private static final long FIM_EVENTO_MISSAO = java.time.ZonedDateTime.of(2026, 11, 20, 20, 0, 0, 0, java.time.ZoneId.of("America/Bahia")).toInstant().toEpochMilli();
+    private int proximaRede;
+
+    private static Component linhaRede(String url, String dica, String cmd) {
+        return Extras.txt("§9§l>> §e§n" + url).clickEvent(ClickEvent.openUrl(url)).hoverEvent(HoverEvent.showText(Extras.txt(dica)))
+                .append(Extras.txt(" §7(clique ou digite §f" + cmd + "§7)"));
+    }
+
     private void avisoDiscord() {
         if (Bukkit.getOnlinePlayers().isEmpty()) return;
-        String m = pl.getConfig().getString("divulgacao.discord.mensagem",
-                "&9&l>> &bEntre no nosso Discord! &fNovidades, call com música, grupos para masmorra e suporte.");
-        Bukkit.broadcast(Extras.txt(Placas.cor(m)));
-        Bukkit.broadcast(linhaLink());
+        if (System.currentTimeMillis() < FIM_EVENTO_MISSAO)
+            Bukkit.broadcast(Extras.txt("§6§l>> §eSexta (20/11) às 20h: §c§lEsquadrão da Missão no PROFISSIONAL§e! Combine no Discord: §f/discord §7| treine: §f/warface"));
+        switch (proximaRede++ % 3) {
+            case 1 -> {
+                Bukkit.broadcast(Extras.txt("§c§l>> §fLutas de chefe e novidades no §cYouTube§f! Se inscreva: ajuda muito o servidor."));
+                Bukkit.broadcast(linhaRede(Extras.YT, "§aClique para abrir o canal", "/youtube"));
+            }
+            case 2 -> {
+                Bukkit.broadcast(Extras.txt("§d§l>> §fReels novos todo dia no §dInstagram§f do servidor!"));
+                Bukkit.broadcast(linhaRede(Extras.INSTAGRAM, "§aClique para abrir o Instagram", "/instagram"));
+            }
+            default -> {
+                String m = pl.getConfig().getString("divulgacao.discord.mensagem",
+                        "&9&l>> &bEntre no nosso Discord! &fNovidades, call com música, grupos para masmorra e suporte.");
+                Bukkit.broadcast(Extras.txt(Placas.cor(m)));
+                Bukkit.broadcast(linhaLink());
+            }
+        }
     }
 
     void discord(CommandSender s) {
