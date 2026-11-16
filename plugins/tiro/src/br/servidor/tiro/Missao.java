@@ -976,7 +976,7 @@ final class Missao implements Listener {
             p.showTitle(Title.title(Tiro.txt("§c§lMISSÃO"), Tiro.txt("§7Invada a base e chegue ao Heliporto")));
             p.sendMessage(PREFIXO + "§fCo-op de 1 a 4§7 contra soldados inimigos. Avance §e5 setores§7; cada portão é um ponto de controle.");
             p.sendMessage(PREFIXO + "§7Escolha a classe com os itens da mão. §eUse cobertura§7: eles atiram de verdade, e a vida volta depois de 5 s sem levar tiro.");
-            p.sendMessage(PREFIXO + "§7Dificuldade no item do slot 8. Recorde " + DIF_NOME[dif] + "§7: " + recorde(dif));
+            p.sendMessage(PREFIXO + "§7Dificuldade no item do slot 8. Recorde " + DIF_NOME[dif] + "§7: " + recorde(dif) + " §8(/missao recordes)");
             if (fase == Fase.JOGO) p.sendMessage(PREFIXO + "§eTem uma missão em andamento: você entra na próxima.");
         }, 10L);
     }
@@ -1059,6 +1059,13 @@ final class Missao implements Listener {
         if (sub.equals("sair")) {
             if (aqui(p)) tirar(p, true);
             else p.sendMessage(PREFIXO + "Você não está na Missão.");
+        } else if (sub.equals("recordes") || sub.equals("top") || sub.equals("stats")) {
+            p.sendMessage(PREFIXO + "§c§lRECORDES DA MISSÃO");
+            for (int d = 0; d < DIF_NOME.length; d++) p.sendMessage("§7• " + DIF_NOME[d] + "§r§7: " + recorde(d));
+            String u = p.getUniqueId().toString();
+            int v = pl.dados.getInt("missao.vitorias." + u, 0), m = pl.dados.getInt("missao.tempo." + u, 0);
+            p.sendMessage(PREFIXO + "§fVocê: §a" + v + " vitórias §7(§6" + pl.dados.getInt("missao.vitorias1." + u, 0) + " no Difícil§7, §4"
+                    + pl.dados.getInt("missao.vitorias2." + u, 0) + " no Profissional§7)" + (m > 0 && m < 99999 ? " §8| §7melhor tempo §f" + String.format("%d:%02d", m / 60, m % 60) : ""));
         } else entrar(p);
         return true;
     }

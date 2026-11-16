@@ -15,7 +15,7 @@ commands:
     description: Modo Horda, co-op contra ondas de infectados (/horda, /horda sair, /horda top)
     aliases: [horda, modohorda, coop]
   missao:
-    description: Missao co-op contra soldados inimigos, 5 setores ate o Heliporto (/missao, /missao sair)
+    description: Missao co-op contra soldados inimigos, 5 setores ate o Heliporto (/missao, /missao sair, /missao recordes)
     aliases: [warface, missoes]
 permissions:
   tiro.usar:
