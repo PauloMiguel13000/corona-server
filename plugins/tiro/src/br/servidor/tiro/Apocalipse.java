@@ -958,16 +958,49 @@ final class Apocalipse implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void quebrar(BlockBreakEvent e) {
         if (mundo == null || e.getBlock().getWorld() != mundo || e.getPlayer().getGameMode() == GameMode.CREATIVE) return;
-        if (noAbrigo(e.getBlock().getLocation())) {
+        if (protegido(e.getBlock().getLocation())) {
             e.setCancelled(true);
-            e.getPlayer().sendActionBar(Tiro.txt("§7O Abrigo é protegido. Construa a sua base lá fora."));
+            e.getPlayer().sendActionBar(Tiro.txt("§7Em volta do Abrigo nada quebra. §fConstrua a sua base a mais de " + raioProtegido() + " blocos daqui."));
         } else if (e.getBlock().getState() instanceof Barrel ba && ba.getPersistentDataContainer().has(kSaque)) e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void colocar(BlockPlaceEvent e) {
         if (mundo == null || e.getBlock().getWorld() != mundo || e.getPlayer().getGameMode() == GameMode.CREATIVE) return;
-        if (noAbrigo(e.getBlock().getLocation())) e.setCancelled(true);
+        if (protegido(e.getBlock().getLocation())) {
+            e.setCancelled(true);
+            e.getPlayer().sendActionBar(Tiro.txt("§7Em volta do Abrigo não dá para construir. §fVá a mais de " + raioProtegido() + " blocos daqui."));
+        }
+    }
+
+    /** 15/11 (Paulo: "continuo quebrando as plantacoes e ate os predios perto do lobby"): em volta do Abrigo (150 blocos)
+     *  nada quebra, nada e colocado e a plantacao nao e pisoteada. Mais longe o mundo e do jogador. */
+    int raioProtegido() {
+        return pl.getConfig().getInt("zumbi.protecao-raio", 150);
+    }
+
+    boolean protegido(Location l) {
+        if (l.getWorld() != mundo) return false;
+        if (noAbrigo(l)) return true;
+        double dx = l.getX() - abrigo.getX(), dz = l.getZ() - abrigo.getZ();
+        int r = raioProtegido();
+        return dx * dx + dz * dz <= (double) r * r;
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void naoPisoteia(PlayerInteractEvent e) {
+        if (mundo == null || e.getClickedBlock() == null || e.getPlayer().getGameMode() == GameMode.CREATIVE) return;
+        if (e.getAction() == Action.PHYSICAL && e.getClickedBlock().getType() == Material.FARMLAND && protegido(e.getClickedBlock().getLocation())) e.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void bichoNaoPisoteia(org.bukkit.event.entity.EntityChangeBlockEvent e) {
+        if (mundo != null && !(e.getEntity() instanceof Player) && e.getBlock().getType() == Material.FARMLAND && protegido(e.getBlock().getLocation())) e.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void naoExplodePerto(org.bukkit.event.entity.EntityExplodeEvent e) {
+        if (mundo != null && e.getLocation().getWorld() == mundo) e.blockList().removeIf(b -> protegido(b.getLocation()));
     }
 
     @EventHandler(priority = EventPriority.HIGH)
