@@ -260,7 +260,7 @@ final class Missao implements Listener {
                 Vector v = fim.toVector().subtract(boca.toVector());
                 double len = v.length();
                 v.normalize();
-                // 16/11: tiro sem rastro (bala normal); o clarao fica na arma do modelo
+                for (double k = 1; k < len; k += 1.6) mundo.spawnParticle(Particle.ELECTRIC_SPARK, boca.clone().add(v.clone().multiply(k)), 1, 0, 0, 0, 0);
                 mundo.playSound(boca, Sound.ENTITY_FIREWORK_ROCKET_LARGE_BLAST, 1f, 0.8f);
                 if (acertou) {
                     alvo.setNoDamageTicks(0);
@@ -405,7 +405,7 @@ final class Missao implements Listener {
             v = fim.toVector().subtract(boca.toVector());
             double len = v.length();
             v.normalize();
-            // 16/11: tiro sem rastro (bala normal); o clarao fica na arma do modelo
+            for (double k = 1; k < len; k += 1.6) mundo.spawnParticle(Particle.ELECTRIC_SPARK, boca.clone().add(v.clone().multiply(k)), 1, 0, 0, 0, 0);
             mundo.playSound(boca, Sound.ENTITY_FIREWORK_ROCKET_BLAST, 0.9f, 0.7f);
             mundo.playSound(boca, Sound.BLOCK_DISPENSER_LAUNCH, 0.6f, 1.6f);
             if (acertou) {
@@ -1915,7 +1915,8 @@ final class Missao implements Listener {
         Vector v = fim.toVector().subtract(boca.toVector());
         double len = v.length();
         v.normalize();
-        // 16/11: tiro sem rastro (bala normal); o clarao fica na arma do modelo
+        // rastro fino (no Bedrock a poeira colorida sai enorme e tapa a visao)
+        for (double k = 0.8; k < len; k += 1.6) mundo.spawnParticle(Particle.ELECTRIC_SPARK, boca.clone().add(v.clone().multiply(k)), 1, 0, 0, 0, 0);
         if (!acertou) {
             alvo.playSound(fim, Sound.ENTITY_ARROW_SHOOT, 0.35f, 1.9f);       // zunido da bala passando
             return;

@@ -330,15 +330,21 @@ final class Armas implements Listener {
                     le.setNoDamageTicks(0);
                     le.damage(dano, p);
                     le.setNoDamageTicks(0);
-                    // 16/11 (Paulo: "as balas sao balas normais"): respingo pequeno e escuro (o bloco de redstone virava quadradao vermelho no Bedrock)
-                    w.spawnParticle(Particle.DUST, r.getHitPosition().toLocation(w), cabeca ? 5 : 3, 0.06, 0.06, 0.06, 0, new Particle.DustOptions(Color.fromRGB(96, 8, 10), 0.55f));
+                    w.spawnParticle(Particle.BLOCK, r.getHitPosition().toLocation(w), cabeca ? 14 : 7, 0.1, 0.1, 0.1, 0, Material.REDSTONE_BLOCK.createBlockData());
                     if (cabeca) p.playSound(p.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 0.6f, 1.7f);
                     regras.acertou(p, le, dano, cabeca);
                 } else if (r.getHitBlock() != null) {
                     w.spawnParticle(Particle.BLOCK, r.getHitPosition().toLocation(w), 6, 0.05, 0.05, 0.05, 0, r.getHitBlock().getBlockData());
                 }
             }
-            // 16/11: sem rastro desenhado (bala de verdade nao se ve; no Bedrock a poeira amarela saia vermelha)
+            // rastro da bala
+            Particle.DustOptions po = new Particle.DustOptions(Color.fromRGB(0xFFE08A), 0.45f);
+            Vector passo = dir.clone().multiply(1.6);
+            Location l = olho.clone().add(dir.clone().multiply(1.2)).subtract(0, 0.15, 0);
+            for (double d = 1.2; d < Math.min(dist, 34); d += 1.6) {
+                w.spawnParticle(Particle.DUST, l, 1, 0, 0, 0, 0, po);
+                l.add(passo);
+            }
         }
         // coice leve
         if (a.dano() > 15 || a.projeteis() > 1) p.setVelocity(p.getVelocity().add(olho.getDirection().multiply(-0.12).setY(0)));
