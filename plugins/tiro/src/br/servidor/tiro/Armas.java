@@ -354,6 +354,11 @@ final class Armas implements Listener {
             if (e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK) p.sendActionBar(Tiro.txt("§7As armas só funcionam nos jogos de tiro."));
             return;
         }
+        if (pl.missao != null && pl.missao.derrubado(p)) {
+            e.setCancelled(true);
+            p.sendActionBar(Tiro.txt("§cDerrubado: §7espere um companheiro te levantar"));
+            return;
+        }
         if (e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK) {
             if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock() != null && e.getClickedBlock().getType().isInteractable() && !p.isSneaking()) return;
             e.setUseInteractedBlock(Event.Result.DENY);

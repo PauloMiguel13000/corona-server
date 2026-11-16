@@ -85,6 +85,18 @@ final class Missao implements Listener {
     private final Map<UUID, Integer> classe = new HashMap<>(), usos = new HashMap<>();
     private final Map<UUID, Long> proximoTiro = new HashMap<>(), miraAte = new HashMap<>(), ultimoKit = new HashMap<>();
     private final Map<UUID, Integer> rajada = new HashMap<>();
+    /**
+     * 16/11 (Warface): quem toma o tiro final nao morre na hora, cai DERRUBADO (deitado, sem atirar, sangrando 30 s).
+     * Um companheiro agachado do lado levanta ele em 3 s; o Medico em 1 s, ou na hora com o kit (desfibrilador).
+     * Valor = quando sangra ate morrer; progresso = segundos de socorro acumulados.
+     */
+    private final Map<UUID, Long> derrubados = new HashMap<>();
+    private final Map<UUID, Integer> socorro = new HashMap<>();
+    static final int SANGRA_S = 30;
+
+    boolean derrubado(Player p) {
+        return derrubados.containsKey(p.getUniqueId());
+    }
     /** Quando cada jogador levou o ultimo tiro (a vida volta sozinha depois de 5 s em cobertura) e quando alguem
      *  comecou a atirar nele (os soldados se revezam: nao abrem fogo todos no mesmo instante). */
     private final Map<UUID, Long> feridoEm = new HashMap<>(), fogoEm = new HashMap<>();
@@ -269,7 +281,7 @@ final class Missao implements Listener {
 
     private List<Player> vivos() {
         List<Player> l = time();
-        l.removeIf(p -> caidos.contains(p.getUniqueId()) || p.isDead());
+        l.removeIf(p -> caidos.contains(p.getUniqueId()) || p.isDead() || derrubados.containsKey(p.getUniqueId()));
         return l;
     }
 
@@ -320,6 +332,7 @@ final class Missao implements Listener {
     void tirar(Player p, boolean avisar) {
         noJogo.remove(p.getUniqueId());
         caidos.remove(p.getUniqueId());
+        levantar(p, 0);
         p.hideBossBar(barra);
         if (pl.musica != null) pl.musica.tocar(p, null);
         if (aqui(p)) {
@@ -523,12 +536,17 @@ final class Missao implements Listener {
             double max = p.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue();
             if (p.getHealth() < max && System.currentTimeMillis() - feridoEm.getOrDefault(p.getUniqueId(), 0L) > 5000) p.setHealth(Math.min(max, p.getHealth() + 2));
         }
+        sangrar();
         List<Player> vivos = vivos();
         if (time().isEmpty()) {
             acabar(false, "");
             return;
         }
         if (vivos.isEmpty()) {
+            for (Player p : time()) if (derrubados.containsKey(p.getUniqueId())) {
+                levantar(p, 0);
+                p.setHealth(0);
+            }
             acabar(false, "§7O esquadrão inteiro caiu no setor " + (setor + 1) + ".");
             return;
         }
@@ -555,6 +573,7 @@ final class Missao implements Listener {
             portao(setor, true);
             // ponto de controle: cura, municao e quem caiu volta
             for (Player p : time()) {
+                levantar(p, 0);
                 if (caidos.remove(p.getUniqueId())) {
                     p.setGameMode(GameMode.ADVENTURE);
                     p.teleport(partida(setor));
@@ -588,7 +607,10 @@ final class Missao implements Listener {
                 p.playSound(p.getLocation(), Sound.ENTITY_WITHER_DEATH, 0.5f, 0.8f);
             }
             if (caidos.remove(p.getUniqueId())) p.setGameMode(GameMode.ADVENTURE);
+            levantar(p, 0);
         }
+        derrubados.clear();
+        socorro.clear();
         limpar();
     }
 
@@ -770,6 +792,7 @@ final class Missao implements Listener {
         }
         if (!id.equals("kitmed") && !id.equals("placas")) return;
         e.setCancelled(true);
+        if (derrubado(p)) return;
         long agora = System.currentTimeMillis(), espera = id.equals("kitmed") ? 18000 : 25000;
         long falta = espera - (agora - ultimoKit.getOrDefault(p.getUniqueId(), 0L));
         if (falta > 0) {
@@ -777,6 +800,12 @@ final class Missao implements Listener {
             return;
         }
         ultimoKit.put(p.getUniqueId(), agora);
+        if (id.equals("kitmed")) for (Player o : time()) {
+            if (derrubados.containsKey(o.getUniqueId()) && o.getLocation().distanceSquared(p.getLocation()) <= 9) {
+                levantar(o, 14);
+                reanimou(p, o, true);
+            }
+        }
         for (Player o : vivos()) {
             if (o.getLocation().distanceSquared(p.getLocation()) > 36) continue;
             if (id.equals("kitmed")) {
@@ -787,6 +816,103 @@ final class Missao implements Listener {
                 o.getWorld().spawnParticle(Particle.CRIT, o.getLocation().add(0, 1, 0), 14, 0.3, 0.5, 0.3, 0.1);
             }
             o.playSound(o.getLocation(), id.equals("kitmed") ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ITEM_ARMOR_EQUIP_IRON, 0.8f, 1.4f);
+        }
+    }
+
+    /** Tiro que mataria: cai derrubado (se ainda tem companheiro de pe para socorrer). */
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void quaseMorte(EntityDamageEvent e) {
+        if (!(e.getEntity() instanceof Player p) || !aqui(p) || fase != Fase.JOGO || !noJogo.contains(p.getUniqueId())) return;
+        if (derrubados.containsKey(p.getUniqueId())) {
+            e.setCancelled(true);   // derrubado nao toma mais tiro (os soldados procuram quem esta de pe)
+            return;
+        }
+        if (e.getFinalDamage() < p.getHealth()) return;
+        boolean temQuemSocorra = false;
+        for (Player o : vivos()) if (o != p) temQuemSocorra = true;
+        if (!temQuemSocorra) return;   // sozinho: cai de vez, como antes
+        e.setCancelled(true);
+        derrubar(p);
+    }
+
+    private void derrubar(Player p) {
+        derrubados.put(p.getUniqueId(), System.currentTimeMillis() + SANGRA_S * 1000L);
+        socorro.remove(p.getUniqueId());
+        p.setHealth(Math.min(p.getHealth(), 4));
+        p.setPose(org.bukkit.entity.Pose.SWIMMING, true);
+        p.setGlowing(true);
+        p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 20 * (SANGRA_S + 2), 3, false, false, false));
+        p.showTitle(Title.title(Tiro.txt("§c§lDERRUBADO"), Tiro.txt("§7Um companheiro precisa vir te levantar"),
+                Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(2500), Duration.ofMillis(400))));
+        p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_HURT, 1f, 0.6f);
+        for (Player o : time()) if (o != p) {
+            o.sendMessage(PREFIXO + "§c" + p.getName() + " §7foi §cderrubado§7! §fAgache do lado dele§7 para levantar"
+                    + (classe.getOrDefault(o.getUniqueId(), 0) == 1 ? " §d(ou use o kit médico)" : "") + "§7.");
+            o.playSound(o.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1f, 0.7f);
+        }
+    }
+
+    /** Tira o estado de derrubado. vida > 0: levantou com essa vida. */
+    private void levantar(Player p, double vida) {
+        if (derrubados.remove(p.getUniqueId()) == null) return;
+        socorro.remove(p.getUniqueId());
+        if (!p.isOnline()) return;
+        p.setPose(org.bukkit.entity.Pose.STANDING, false);
+        p.setGlowing(false);
+        p.removePotionEffect(PotionEffectType.SLOWNESS);
+        if (vida > 0 && !p.isDead()) {
+            p.setHealth(Math.min(vida, p.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue()));
+            feridoEm.put(p.getUniqueId(), System.currentTimeMillis());
+        }
+    }
+
+    private void reanimou(Player quem, Player caido, boolean kit) {
+        caido.showTitle(Title.title(Tiro.txt("§a§lDE PÉ!"), Tiro.txt("§f" + quem.getName() + " §7te levantou")));
+        caido.playSound(caido.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.6f);
+        mundo.spawnParticle(Particle.HEART, caido.getLocation().add(0, 1.2, 0), 6, 0.4, 0.3, 0.4, 0);
+        if (kit) mundo.playSound(caido.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1f, 1.8f);
+        quem.sendActionBar(Tiro.txt("§aVocê levantou §f" + caido.getName() + "§a! §6+5 coronas"));
+        pl.coronas(quem, 5, "por levantar um companheiro na Missão");
+    }
+
+    /** A cada segundo: quem esta sendo socorrido avanca; quem sangrou demais cai de vez. */
+    private void sangrar() {
+        if (derrubados.isEmpty()) return;
+        long agora = System.currentTimeMillis();
+        for (UUID u : new ArrayList<>(derrubados.keySet())) {
+            Player p = Bukkit.getPlayer(u);
+            if (p == null || !aqui(p) || p.isDead()) {
+                derrubados.remove(u);
+                socorro.remove(u);
+                continue;
+            }
+            Player ajudante = null;
+            for (Player o : vivos())
+                if (o.isSneaking() && o.getLocation().distanceSquared(p.getLocation()) <= 4) {
+                    ajudante = o;
+                    if (classe.getOrDefault(o.getUniqueId(), 0) == 1) break;   // medico tem preferencia
+                }
+            if (ajudante != null) {
+                int precisa = classe.getOrDefault(ajudante.getUniqueId(), 0) == 1 ? 1 : 3;
+                int feito = socorro.merge(u, 1, Integer::sum);
+                ajudante.sendActionBar(Tiro.txt("§eLevantando §f" + p.getName() + " §e" + "█".repeat(feito) + "§8" + "█".repeat(Math.max(0, precisa - feito))));
+                p.sendActionBar(Tiro.txt("§a" + ajudante.getName() + " está te levantando..."));
+                mundo.playSound(p.getLocation(), Sound.ITEM_ARMOR_EQUIP_LEATHER, 0.8f, 1.2f);
+                if (feito >= precisa) {
+                    levantar(p, 8);
+                    reanimou(ajudante, p, false);
+                }
+                continue;
+            }
+            socorro.remove(u);
+            long falta = (derrubados.get(u) - agora) / 1000;
+            if (falta <= 0) {
+                levantar(p, 0);
+                p.setHealth(0);   // sangrou: cai de vez e volta no proximo ponto de controle
+                continue;
+            }
+            p.sendActionBar(Tiro.txt("§c§lDERRUBADO §7— sangrando: §f" + falta + "s §8| §7chame o time!"));
+            mundo.spawnParticle(Particle.DUST, p.getLocation().add(0, 0.3, 0), 4, 0.3, 0.1, 0.3, 0, new Particle.DustOptions(Color.fromRGB(150, 0, 0), 1f));
         }
     }
 

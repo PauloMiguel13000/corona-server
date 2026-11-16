@@ -355,7 +355,9 @@ public final class TesteBot extends JavaPlugin implements org.bukkit.event.Liste
                 log("CLIQUEAR " + ac + " com " + mao.getType() + " cancelado=" + ev.isCancelled() + " mao depois=" + p.getInventory().getItemInMainHand().getType());
             }
             case "agachar" -> {
-                Bukkit.getPluginManager().callEvent(new org.bukkit.event.player.PlayerToggleSneakEvent(p, true));
+                boolean sim = a.length < 3 || !a[2].equals("nao");
+                Bukkit.getPluginManager().callEvent(new org.bukkit.event.player.PlayerToggleSneakEvent(p, sim));
+                p.setSneaking(sim);
                 log("AGACHOU em " + fmt(p.getLocation()));
             }
             case "slot" -> {
