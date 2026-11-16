@@ -95,6 +95,8 @@ final class Missao implements Listener {
     private final Map<UUID, Long> derrubados = new HashMap<>();
     private final Map<UUID, Integer> socorro = new HashMap<>();
     static final int SANGRA_S = 30;
+    /** Bala dos inimigos: pontos dourados (16/11: voltou; a linha de faisca parecia laser). */
+    static final Particle.DustOptions BALA = new Particle.DustOptions(Color.fromRGB(0xFFD27A), 0.4f);
 
     /*
      * 16/11 (Warface: "torreta de defesa cujo gerador tem que ser destruido de perto"): no Armazem (setor 2) uma torreta
@@ -260,7 +262,8 @@ final class Missao implements Listener {
                 Vector v = fim.toVector().subtract(boca.toVector());
                 double len = v.length();
                 v.normalize();
-                for (double k = 1; k < len; k += 1.6) mundo.spawnParticle(Particle.ELECTRIC_SPARK, boca.clone().add(v.clone().multiply(k)), 1, 0, 0, 0, 0);
+                // 16/11 (Paulo: "volte as balas", "nada de laser"): bala dourada como antes, nao a linha de faisca
+                for (double k = 0.6; k < len; k += 1.4) mundo.spawnParticle(Particle.DUST, boca.clone().add(v.clone().multiply(k)), 1, 0, 0, 0, 0, BALA);
                 mundo.playSound(boca, Sound.ENTITY_FIREWORK_ROCKET_LARGE_BLAST, 1f, 0.8f);
                 if (acertou) {
                     alvo.setNoDamageTicks(0);
@@ -405,7 +408,8 @@ final class Missao implements Listener {
             v = fim.toVector().subtract(boca.toVector());
             double len = v.length();
             v.normalize();
-            for (double k = 1; k < len; k += 1.6) mundo.spawnParticle(Particle.ELECTRIC_SPARK, boca.clone().add(v.clone().multiply(k)), 1, 0, 0, 0, 0);
+            // 16/11 (Paulo: "volte as balas", "nada de laser"): bala dourada como antes, nao a linha de faisca
+            for (double k = 0.6; k < len; k += 1.4) mundo.spawnParticle(Particle.DUST, boca.clone().add(v.clone().multiply(k)), 1, 0, 0, 0, 0, BALA);
             mundo.playSound(boca, Sound.ENTITY_FIREWORK_ROCKET_BLAST, 0.9f, 0.7f);
             mundo.playSound(boca, Sound.BLOCK_DISPENSER_LAUNCH, 0.6f, 1.6f);
             if (acertou) {
@@ -1915,8 +1919,8 @@ final class Missao implements Listener {
         Vector v = fim.toVector().subtract(boca.toVector());
         double len = v.length();
         v.normalize();
-        // rastro fino (no Bedrock a poeira colorida sai enorme e tapa a visao)
-        for (double k = 0.8; k < len; k += 1.6) mundo.spawnParticle(Particle.ELECTRIC_SPARK, boca.clone().add(v.clone().multiply(k)), 1, 0, 0, 0, 0);
+        // 16/11 (Paulo: "volte as balas", "nada de laser"): bala dourada como antes, nao a linha de faisca
+        for (double k = 0.6; k < len; k += 1.4) mundo.spawnParticle(Particle.DUST, boca.clone().add(v.clone().multiply(k)), 1, 0, 0, 0, 0, BALA);
         if (!acertou) {
             alvo.playSound(fim, Sound.ENTITY_ARROW_SHOOT, 0.35f, 1.9f);       // zunido da bala passando
             return;
