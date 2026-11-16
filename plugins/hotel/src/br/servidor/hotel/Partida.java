@@ -622,7 +622,7 @@ final class Partida {
             if (b == null) {
                 if (p.getLocation().distanceSquared(v) > 6.5 * 6.5 || rtick < batidaPausa.getOrDefault(p.getUniqueId(), 0L)) continue;
                 b = new Batida();
-                b.proxima = rtick + 35;
+                b.proxima = rtick + 50;   // da tempo de ler o titulo
                 b.precisa = 4 + (vivos().size() > 2 ? 1 : 0);
                 batidas.put(p.getUniqueId(), b);
                 titulo(p, "§4§l♥ FIQUE QUIETO ♥", "§7Troque de slot só quando o coração ficar §c§lvermelho", 2.5);
@@ -653,6 +653,8 @@ final class Partida {
                 b.apertou = false;
                 p.playSound(p.getLocation(), Sound.ENTITY_WARDEN_HEARTBEAT, 1.4f, 1f);
                 p.sendActionBar(Hotel.txt("§c§l♥ AGORA ♥ §8" + b.acertos + "/" + b.precisa));
+                p.showTitle(net.kyori.adventure.title.Title.title(Hotel.txt(" "), Hotel.txt("§c§l♥  AGORA  ♥"),
+                        net.kyori.adventure.title.Title.Times.times(Duration.ZERO, Duration.ofMillis(650), Duration.ofMillis(100))));
                 if (batidaLog) pl.getLogger().info("[batida] janela " + p.getName() + " " + b.acertos + "/" + b.precisa);
             } else if (b.janelaAte == 0 && rtick % 5 == 0) {
                 p.sendActionBar(Hotel.txt("§8♥ §7quieto... §8" + b.acertos + "/" + b.precisa));
@@ -2022,6 +2024,7 @@ final class Partida {
                 p.sendActionBar(Hotel.txt("§7Espectador §8| §6Porta §f" + String.format("%04d", abertas) + " §8| §fvivos §e" + nv));
                 continue;
             }
+            if (batidas.containsKey(j.id)) continue;   // no desafio do batimento a barra de baixo e do coracao
             String extra = j.armario != null ? " §8| §7escondido §8(agache para sair)" : "";
             Planta.Comodo c = planta.onde(p.getX(), p.getZ());
             if (c != null && c.tipo == Planta.Tipo.BIBLIOTECA) extra = " §8| §fLivros §e" + livros + "§7/" + livrosPrecisa() + extra;

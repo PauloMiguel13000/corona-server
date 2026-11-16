@@ -118,11 +118,21 @@ final class Missao implements Listener {
                 "§7Profissional: só para esquadrão bom. Paga muito mais.", "§8Recompensa: §6x" + String.format(java.util.Locale.ROOT, "%.1f", DIF_PREMIO[dif]));
     }
 
+    private final Map<UUID, Long> ultimaTroca = new HashMap<>();
+
     /** nivel -1 = proximo. */
     private void trocarDificuldade(Player p, int nivel) {
+        long agora = System.currentTimeMillis();
+        // no Bedrock o Q tambem balanca o braco (vira "clique"): um aperto so troca uma vez
+        if (nivel < 0 && agora - ultimaTroca.getOrDefault(p.getUniqueId(), 0L) < 600) return;
+        ultimaTroca.put(p.getUniqueId(), agora);
         dif = nivel < 0 ? (dif + 1) % DIF_NOME.length : Math.min(DIF_NOME.length - 1, nivel);
         for (Player o : mundo.getPlayers()) {
-            if (!noJogo.contains(o.getUniqueId())) o.getInventory().setItem(7, itemDificuldade());
+            if (!noJogo.contains(o.getUniqueId())) {
+                var inv = o.getInventory();
+                for (int i = 0; i < inv.getSize(); i++) if (i != 7 && "dificuldade".equals(pl.armas.idItem(inv.getItem(i)))) inv.setItem(i, null);
+                inv.setItem(7, itemDificuldade());
+            }
             o.sendMessage(PREFIXO + "§f" + p.getName() + " §7mudou a dificuldade para " + DIF_NOME[dif] + "§7.");
             o.playSound(o.getLocation(), dif == 2 ? Sound.ENTITY_WITHER_AMBIENT : Sound.UI_BUTTON_CLICK, dif == 2 ? 0.4f : 1f, 1f);
         }
@@ -2330,8 +2340,13 @@ final class Missao implements Listener {
     public void largar(PlayerDropItemEvent e) {
         if (aqui(e.getPlayer()) && pl.armas.armaDe(e.getItemDrop().getItemStack()) == null) e.setCancelled(true);
         // Q (ou soltar no celular) no item da dificuldade tambem troca: no Bedrock o clique no ar com corante nao chega
-        if (aqui(e.getPlayer()) && "dificuldade".equals(pl.armas.idItem(e.getItemDrop().getItemStack())) && (fase == Fase.ESPERA || fase == Fase.CONTAGEM))
-            trocarDificuldade(e.getPlayer(), -1);
+        if (aqui(e.getPlayer()) && "dificuldade".equals(pl.armas.idItem(e.getItemDrop().getItemStack())) && (fase == Fase.ESPERA || fase == Fase.CONTAGEM)) {
+            Player p = e.getPlayer();
+            // um tique depois: o item que "caiu" (cancelado) volta para o inventario e so entao arrumamos a barra
+            Bukkit.getScheduler().runTask(pl, () -> {
+                if (p.isOnline() && aqui(p) && (fase == Fase.ESPERA || fase == Fase.CONTAGEM)) trocarDificuldade(p, -1);
+            });
+        }
     }
 
     @EventHandler
