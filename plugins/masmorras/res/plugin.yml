@@ -3,6 +3,9 @@ version: '1.0'
 main: br.servidor.masmorras.Masmorras
 api-version: '1.21'
 softdepend: [Multiverse-Core, LevelledMobs, EliteMobs, AuraSkills]
+# 15/11: o GriefPrevention so carrega os terrenos dos mundos que ja existem quando ele liga. Este plugin cria o mundo
+# das masmorras, entao tem que ligar ANTES dele (senao os terrenos de la somem a cada reinicio).
+loadbefore: [GriefPrevention]
 description: Masmorras (dungeons) com chefes no mundo normal, Nether e End, e borda do mundo.
 commands:
   masmorras:
