@@ -308,6 +308,9 @@ public final class CoronaPack extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
+        // 16/11: sinal para os outros plugins de que o CoronaPack junta os pacotes do Java num pedido so
+        Bukkit.getServicesManager().register(java.util.function.Predicate.class, (java.util.function.Predicate<Object>) o -> true, this,
+                org.bukkit.plugin.ServicePriority.Normal);
         saveDefaultConfig();
         try {
             aplicar(lerPacote());
@@ -429,10 +432,32 @@ public final class CoronaPack extends JavaPlugin implements Listener {
         if (zip == null || !p.isOnline() || bedrock(p) || !getConfig().getBoolean("enviar-java", true)) return false;
         String u = url(p);
         if (u == null) return false;
-        getLogger().info("Oferecendo o pacote para " + p.getName() + " (" + u + ")");
+        // 16/11: o principal + os dos outros plugins (musica das masmorras, Trovao, jogos de tiro) num pedido so.
+        // Antes cada um chegava numa hora (3 s, 12 s e 17 s) e o Java recarregava as texturas 3 vezes a cada entrada.
+        List<net.kyori.adventure.resource.ResourcePackInfo> packs = new ArrayList<>();
+        packs.add(net.kyori.adventure.resource.ResourcePackInfo.resourcePackInfo(ID, java.net.URI.create(u), sha1Hex));
+        List<String> nomes = new ArrayList<>();
+        for (String dono : new String[] {"Masmorras", "CoronaTiro"}) {
+            for (var r : Bukkit.getServicesManager().getRegistrations(java.util.function.Function.class)) {
+                if (!r.getPlugin().getName().equals(dono) || !r.getPlugin().isEnabled()) continue;
+                try {
+                    @SuppressWarnings("unchecked") Object o = ((java.util.function.Function<Object, Object>) r.getProvider()).apply(p);
+                    if (!(o instanceof List<?> v)) continue;
+                    for (int i = 0; i + 3 < v.size(); i += 4) {
+                        packs.add(net.kyori.adventure.resource.ResourcePackInfo.resourcePackInfo(UUID.fromString(String.valueOf(v.get(i))),
+                                java.net.URI.create(String.valueOf(v.get(i + 1))), String.valueOf(v.get(i + 2))));
+                        nomes.add(String.valueOf(v.get(i + 3)));
+                    }
+                } catch (Throwable t) {
+                    getLogger().warning("Pacote extra de " + dono + " para " + p.getName() + ": " + t);
+                }
+            }
+        }
+        getLogger().info("Oferecendo " + packs.size() + " pacote(s) para " + p.getName() + " (" + u + (nomes.isEmpty() ? "" : " + " + String.join(", ", nomes)) + ")");
         Component msg = LegacyComponentSerializer.legacySection().deserialize(
-                getConfig().getString("mensagem", "§e§lCorona Server§r\n§fSons dos minigames (Backrooms e outros). §aRecomendado!"));
-        p.setResourcePack(ID, u, sha1, msg, getConfig().getBoolean("obrigatorio", false));
+                getConfig().getString("mensagem-tudo", "§e§lCorona Server§r\n§fTexturas, sons e músicas do servidor. §aRecomendado!"));
+        p.sendResourcePacks(net.kyori.adventure.resource.ResourcePackRequest.resourcePackRequest()
+                .packs(packs).replace(true).required(getConfig().getBoolean("obrigatorio", false)).prompt(msg).build());
         return true;
     }
 

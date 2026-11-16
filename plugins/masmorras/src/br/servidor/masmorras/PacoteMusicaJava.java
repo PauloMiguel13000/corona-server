@@ -26,6 +26,23 @@ final class PacoteMusicaJava implements Listener {
 
     PacoteMusicaJava(Masmorras pl) {
         this.pl = pl;
+        // 16/11: o CoronaPack junta estes pacotes com o principal e manda tudo de uma vez (uma tela de carregamento so)
+        java.util.function.Function<Player, java.util.List<String>> pacotes = p -> {
+            if (!pl.getConfig().getBoolean("trilha.pacote-java", true) || bedrock(p)) return java.util.List.of();
+            java.util.List<String> l = new java.util.ArrayList<>(java.util.List.of(ID.toString(), pl.getConfig().getString("trilha.pacote-java-url", URL_PADRAO),
+                    pl.getConfig().getString("trilha.pacote-java-sha1", SHA1_PADRAO), "Trilha sonora das masmorras"));
+            if (pl.getConfig().getBoolean("trilha.pacote-java-trovao", true))
+                l.addAll(java.util.List.of(ID_TROVAO.toString(), pl.getConfig().getString("trilha.pacote-java-trovao-url", URL_TROVAO),
+                        pl.getConfig().getString("trilha.pacote-java-trovao-sha1", SHA1_TROVAO), "Musica do Templo do Trovao"));
+            return l;
+        };
+        Bukkit.getServicesManager().register(java.util.function.Function.class, pacotes, pl, org.bukkit.plugin.ServicePriority.Normal);
+    }
+
+    private static boolean coronaPackJunta() {
+        for (var r : Bukkit.getServicesManager().getRegistrations(java.util.function.Predicate.class))
+            if (r.getPlugin().getName().equals("CoronaPack") && r.getPlugin().isEnabled()) return true;
+        return false;
     }
 
     private static boolean bedrock(Player p) {
@@ -41,7 +58,7 @@ final class PacoteMusicaJava implements Listener {
     @EventHandler
     public void entrou(PlayerJoinEvent e) {
         Player p = e.getPlayer();
-        if (!pl.getConfig().getBoolean("trilha.pacote-java", true) || bedrock(p)) return;
+        if (!pl.getConfig().getBoolean("trilha.pacote-java", true) || bedrock(p) || coronaPackJunta()) return;   // o CoronaPack ja manda junto
         // depois do pacote principal (o CoronaPack manda o dele ~3 s depois de entrar e "set" troca a lista inteira)
         Bukkit.getScheduler().runTaskLater(pl, () -> {
             if (!p.isOnline()) return;

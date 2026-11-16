@@ -2069,16 +2069,39 @@ public final class Masmorras extends JavaPlugin implements Listener {
         return id == null ? null : porId.get(id);
     }
 
+    // 16/11 (jogador: "a bussola de masmorra fica piscando na tela"): a distancia ia na barra de acao, mandada de novo a
+    // cada segundo, e no Bedrock ela some e volta a cada envio. Agora fica numa barra de chefe fixa enquanto segura a bussola.
+    private final Map<java.util.UUID, net.kyori.adventure.bossbar.BossBar> barraBussola = new HashMap<>();
+    private final Map<java.util.UUID, String> textoBussola = new HashMap<>();
+
     private void mostrarDistancia(Player p, Masmorra m) {
-        if (!m.mundo.equals(p.getWorld().getName())) {
-            p.sendActionBar(txt("§7Essa masmorra fica em outro mundo."));
-            return;
+        String txt;
+        float prog = 1f;
+        if (!m.mundo.equals(p.getWorld().getName())) txt = "§7Essa masmorra fica em outro mundo.";
+        else {
+            int d = (int) Math.sqrt(dist2(m, p.getLocation()));
+            String cor = d < 50 ? "§a" : d < 300 ? "§e" : "§6";
+            txt = d < 8 ? "§a§lVocê chegou! §7Entrada da " + m.tipo.nome
+                    : "§6" + m.tipo.nome + " §8| " + cor + d + " blocos §7" + direcao(p.getLocation(), m) + " §8| §7altura da entrada: §f" + m.saidaY;
+            prog = (float) Math.max(0.02, Math.min(1, 1 - d / 1000.0));
         }
-        int d = (int) Math.sqrt(dist2(m, p.getLocation()));
-        String cor = d < 50 ? "§a" : d < 300 ? "§e" : "§6";
-        String txt = d < 8 ? "§a§lVocê chegou! §7Entrada da " + m.tipo.nome
-                : "§6" + m.tipo.nome + " §8| " + cor + d + " blocos §7" + direcao(p.getLocation(), m) + " §8| §7altura da entrada: §f" + m.saidaY;
-        p.sendActionBar(txt(txt));
+        java.util.UUID u = p.getUniqueId();
+        net.kyori.adventure.bossbar.BossBar b = barraBussola.get(u);
+        if (b == null) {
+            b = net.kyori.adventure.bossbar.BossBar.bossBar(txt(txt), prog, net.kyori.adventure.bossbar.BossBar.Color.YELLOW, net.kyori.adventure.bossbar.BossBar.Overlay.PROGRESS);
+            barraBussola.put(u, b);
+            p.showBossBar(b);
+        } else if (!txt.equals(textoBussola.get(u))) {
+            b.name(txt(txt));
+            b.progress(prog);
+        }
+        textoBussola.put(u, txt);
+    }
+
+    private void esconderBussola(Player p) {
+        net.kyori.adventure.bossbar.BossBar b = barraBussola.remove(p.getUniqueId());
+        textoBussola.remove(p.getUniqueId());
+        if (b != null) p.hideBossBar(b);
     }
 
     /** Apertou a bussola: mostra quanto falta. */
@@ -2096,7 +2119,10 @@ public final class Masmorras extends JavaPlugin implements Listener {
         for (Player p : Bukkit.getOnlinePlayers()) {
             Masmorra m = daBussola(p.getInventory().getItemInMainHand());
             if (m != null) mostrarDistancia(p, m);
+            else if (barraBussola.containsKey(p.getUniqueId())) esconderBussola(p);
         }
+        barraBussola.keySet().removeIf(u -> Bukkit.getPlayer(u) == null);
+        textoBussola.keySet().retainAll(barraBussola.keySet());
     }
 
     boolean darBussola(Player p, Masmorra m) {

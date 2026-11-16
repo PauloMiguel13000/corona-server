@@ -76,6 +76,11 @@ final class Visual implements Listener {
 
     Visual(Tiro pl) {
         this.pl = pl;
+        // 16/11: o CoronaPack junta este pacote com o principal e manda tudo de uma vez (uma tela de carregamento so)
+        java.util.function.Function<Player, java.util.List<String>> pacote = p -> ligado() && !bedrock(p)
+                ? java.util.List.of(ID.toString(), pl.getConfig().getString("pacote.java-url", URL_PADRAO), pl.getConfig().getString("pacote.java-sha1", SHA1_PADRAO),
+                "Armas e infectados 3D dos jogos de tiro") : java.util.List.of();
+        Bukkit.getServicesManager().register(java.util.function.Function.class, pacote, pl, org.bukkit.plugin.ServicePriority.Normal);
         Bukkit.getScheduler().runTaskTimer(pl, this::tique, 2L, 1L);
         Bukkit.getScheduler().runTaskTimer(pl, this::rosnados, 40L, 20L);
     }
@@ -98,9 +103,15 @@ final class Visual implements Listener {
     @EventHandler
     public void entrou(PlayerJoinEvent e) {
         Player p = e.getPlayer();
-        if (!ligado() || bedrock(p)) return;
+        if (!ligado() || bedrock(p) || coronaPackJunta()) return;   // o CoronaPack ja manda este junto com o principal
         // depois do pacote principal (~3 s) e dos de musica (12 s)
         Bukkit.getScheduler().runTaskLater(pl, () -> mandar(p), 20L * 17);
+    }
+
+    static boolean coronaPackJunta() {
+        for (var r : Bukkit.getServicesManager().getRegistrations(java.util.function.Predicate.class))
+            if (r.getPlugin().getName().equals("CoronaPack") && r.getPlugin().isEnabled()) return true;
+        return false;
     }
 
     void mandar(Player p) {
