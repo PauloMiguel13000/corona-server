@@ -112,7 +112,7 @@ final class Missao implements Listener {
      * x0,6, pelas costas x2. Depois de 3 rajadas ele SUPERAQUECE 6 s: para, solta fumaca e o nucleo fica exposto
      * (x3 de qualquer lado). Foguete: marca um circulo vermelho no chao e explode 1,6 s depois. Chegou perto: pisao.
      */
-    private IronGolem mecha;
+    private Zombie mecha;
     private int mechaRajada, mechaRajadas;
     private long mechaProximo, mechaFoguete, mechaPisao, mechaQuenteAte;
     private Location focoFoguete;
@@ -125,19 +125,19 @@ final class Missao implements Listener {
     private void soltarMecha(int s) {
         int n = Math.max(1, time().size());
         Location l = new Location(mundo, 0.5, Y + 1, z1(s) - 7 + 0.5, 180f, 0f);
-        mecha = mundo.spawn(l, IronGolem.class, CreatureSpawnEvent.SpawnReason.CUSTOM, g -> {
-            g.customName(Tiro.txt("§4§lMECHA W-2300"));
-            g.setCustomNameVisible(true);
-            g.setPlayerCreated(false);
-            g.setRemoveWhenFarAway(false);
-            g.setPersistent(false);
-            double vida = 900 * (0.6 + 0.4 * n);
-            atributo(g, org.bukkit.attribute.Attribute.MAX_HEALTH, vida);
-            g.setHealth(vida);
-            atributo(g, org.bukkit.attribute.Attribute.SCALE, 1.7);
-            atributo(g, org.bukkit.attribute.Attribute.KNOCKBACK_RESISTANCE, 1.0);
-            atributo(g, org.bukkit.attribute.Attribute.MOVEMENT_SPEED, 0.2);
-        });
+        // 16/11 (Paulo: "ate o juggernaut e o iron golem"): agora e o JUGGERNAUT do Warface, com modelo proprio
+        // (armadura caqui, visor azul, metralhadora giratoria e a MOCHILA de energia nas costas) e 1,6x maior
+        Zombie g = pl.zumbis.nascer(l, Zumbis.Tipo.JUGGERNAUT, 1.0);
+        g.customName(Tiro.txt("§4§lJUGGERNAUT"));
+        g.setCustomNameVisible(true);
+        g.setSilent(true);
+        double vida = 900 * (0.6 + 0.4 * n);
+        atributo(g, org.bukkit.attribute.Attribute.MAX_HEALTH, vida);
+        g.setHealth(vida);
+        atributo(g, org.bukkit.attribute.Attribute.SCALE, 1.6);
+        atributo(g, org.bukkit.attribute.Attribute.KNOCKBACK_RESISTANCE, 1.0);
+        atributo(g, org.bukkit.attribute.Attribute.MOVEMENT_SPEED, 0.2);
+        mecha = g;
         try {
             Bukkit.getMobGoals().removeAllGoals(mecha);
         } catch (Throwable ignorado) {
@@ -151,8 +151,8 @@ final class Missao implements Listener {
         mechaPisao = agora;
         mechaQuenteAte = 0;
         focoFoguete = null;
-        aviso("§4§lMECHA W-2300", "§7Blindado na frente. §fAtaque pelas costas§7 ou quando ele §cSUPERAQUECER", Sound.ENTITY_WITHER_SPAWN);
-        for (Player p : time()) p.sendMessage(PREFIXO + "§4Mecha W-2300! §fFrente blindada; o §enúcleo de energia§f fica nas costas. A cada 3 rajadas ele §csuperaquece§f e o núcleo fica exposto. §7Saia do círculo vermelho: é foguete.");
+        aviso("§4§lJUGGERNAUT", "§7Blindado na frente. §fAtire na MOCHILA§7 (costas) ou quando a arma §cSUPERAQUECER", Sound.ENTITY_WITHER_SPAWN);
+        for (Player p : time()) p.sendMessage(PREFIXO + "§4Juggernaut! §fFrente blindada; o ponto fraco é a §emochila de energia§f nas costas (um chama a atenção, o outro dá a volta). A cada 3 rajadas a metralhadora §csuperaquece§f e ele fica exposto. §7Saia do círculo vermelho: é foguete.");
     }
 
     private static void atributo(LivingEntity e, org.bukkit.attribute.Attribute a, double v) {
@@ -197,10 +197,10 @@ final class Missao implements Listener {
         }
         if (superaquecido()) {
             mecha.getPathfinder().stopPathfinding();
-            Location costas = c.clone().add(c.getDirection().setY(0).normalize().multiply(-0.9)).add(0, 2.6, 0);
+            Location costas = c.clone().add(c.getDirection().setY(0).normalize().multiply(-0.7)).add(0, 2.2, 0);
             mundo.spawnParticle(Particle.LARGE_SMOKE, costas, 4, 0.3, 0.3, 0.3, 0.03);
             mundo.spawnParticle(Particle.LAVA, costas, 1, 0.2, 0.2, 0.2, 0);
-            if (tick % 4 == 0) for (Player p : alvos) p.sendActionBar(Tiro.txt("§c§lNÚCLEO EXPOSTO! §fATIREM AGORA §7(dano x3)"));
+            if (tick % 4 == 0) for (Player p : alvos) p.sendActionBar(Tiro.txt("§c§lJUGGERNAUT EXPOSTO! §fATIREM AGORA §7(dano x3)"));
             return;
         }
         Player alvo = null;
@@ -252,7 +252,8 @@ final class Missao implements Listener {
         if (mechaRajada > 0) {
             mechaRajada--;
             if (ve) {
-                Location boca = c.clone().add(0, 2.2, 0).add(empurrao(new Vector(-dir.getZ(), 0, dir.getX()), mechaRajada % 2 == 0 ? 1.1 : -1.1, 0));
+                if (pl.visual != null) pl.visual.atirando(mecha);
+                Location boca = c.clone().add(0, 1.6, 0).add(empurrao(new Vector(-dir.getZ(), 0, dir.getX()), 0.35, 0)).add(empurrao(dir.clone(), 1.4, 0));
                 boolean acertou = rnd.nextDouble() < (alvo.isSneaking() ? 0.33 : 0.55);
                 Location fim = alvo.getEyeLocation().subtract(0, 0.4, 0);
                 if (!acertou) fim.add(rnd.nextGaussian() * 1.1, rnd.nextGaussian() * 0.7, rnd.nextGaussian() * 1.1);
@@ -275,7 +276,7 @@ final class Missao implements Listener {
                     mechaQuenteAte = agora + 6000;
                     mundo.playSound(c, Sound.BLOCK_FIRE_EXTINGUISH, 2f, 0.6f);
                     mundo.playSound(c, Sound.BLOCK_BEACON_DEACTIVATE, 2f, 0.6f);
-                    aviso("§c§lSUPERAQUECEU!", "§fNúcleo exposto por 6 s: §eATIREM!", null);
+                    aviso("§c§lSUPERAQUECEU!", "§fA metralhadora travou por 6 s: §eATIREM!", null);
                 }
             }
             return;
@@ -1177,7 +1178,7 @@ final class Missao implements Listener {
             povoar(setor, true);
             aviso("§e§lREFORÇOS!", "§7Mais soldados chegando pelo fundo", Sound.BLOCK_BELL_USE);
         } else if (ini.isEmpty() && mechaVivo()) {
-            if (tempo % 8 == 0) for (Player p : time()) p.sendActionBar(Tiro.txt("§4Derrube o §lMECHA§4 para tomar o Heliporto!"));
+            if (tempo % 8 == 0) for (Player p : time()) p.sendActionBar(Tiro.txt("§4Derrube o §lJUGGERNAUT§4 para tomar o Topo do Morro!"));
         } else if (ini.isEmpty() && torretaViva) {
             if (tempo % 6 == 0) for (Player p : time()) p.sendActionBar(Tiro.txt("§eO portão só abre sem a torreta: §fsabote o gerador §7(parede esquerda)"));
         } else if (ini.isEmpty()) {
@@ -1204,7 +1205,7 @@ final class Missao implements Listener {
         }
         if (mechaVivo()) {
             double max = mecha.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue();
-            barra.name(Tiro.txt("§4§lMECHA W-2300 §8| " + (superaquecido() ? "§c§lSUPERAQUECIDO" : "§7blindado") + " §8| §7soldados §f" + ini.size()));
+            barra.name(Tiro.txt("§4§lJUGGERNAUT §8| " + (superaquecido() ? "§c§lSUPERAQUECIDO" : "§7mire na mochila") + " §8| §7soldados §f" + Math.max(0, ini.size() - 1)));
             barra.progress((float) Math.max(0.01, Math.min(1, mecha.getHealth() / max)));
             return;
         }
@@ -1249,6 +1250,7 @@ final class Missao implements Listener {
         torretaIa(alvos, agora);
         mechaIa(alvos, agora);
         for (Zombie z : inimigos()) {
+            if (z == mecha) continue;   // o Juggernaut chefe tem IA propria (mechaIa)
             Zumbis.Tipo t = pl.zumbis.tipo(z);
             Perfil pf = PERFIS.get(t);
             if (pf == null) continue;
@@ -1379,6 +1381,7 @@ final class Missao implements Listener {
         Zumbis.Tipo t = pl.zumbis.tipo(e.getEntity());
         if (t == null || !(e.getDamager() instanceof Player p) || !(e.getEntity() instanceof LivingEntity alvo)) return;
         if (t != Zumbis.Tipo.ESCUDO && t != Zumbis.Tipo.PESADO && t != Zumbis.Tipo.JUGGERNAUT) return;
+        if (e.getEntity() == mecha) return;
         Vector olha = alvo.getLocation().getDirection().setY(0).normalize();
         Vector para = p.getLocation().toVector().subtract(alvo.getLocation().toVector()).setY(0).normalize();
         double frente = olha.dot(para);                                          // 1 = de frente, -1 = pelas costas
@@ -1415,7 +1418,7 @@ final class Missao implements Listener {
             mundo.spawnParticle(Particle.ELECTRIC_SPARK, mecha.getLocation().add(0, 2.4, 0), 8, 0.3, 0.3, 0.3, 0.1);
         } else if (frente > 0.35) {
             e.setDamage(e.getDamage() * 0.2);
-            if (rnd.nextInt(6) == 0) p.sendActionBar(Tiro.txt("§7Blindagem frontal! §eAtaque pelas costas§7 ou espere ele superaquecer."));
+            if (rnd.nextInt(6) == 0) p.sendActionBar(Tiro.txt("§7Blindagem frontal! §eAtire na mochila§7 (costas) ou espere a arma superaquecer."));
             mundo.playSound(mecha.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.25f, 2f);
         } else e.setDamage(e.getDamage() * 0.6);
     }
@@ -1429,7 +1432,7 @@ final class Missao implements Listener {
         mundo.spawnParticle(Particle.EXPLOSION_EMITTER, l.clone().add(0, 1.5, 0), 1, 0, 0, 0, 0);
         mundo.spawnParticle(Particle.LARGE_SMOKE, l.clone().add(0, 1.5, 0), 40, 1, 1.5, 1, 0.05);
         mundo.playSound(l, Sound.ENTITY_GENERIC_EXPLODE, 3f, 0.6f);
-        aviso("§a§lMECHA DESTRUÍDO", "§7Limpem o resto do Heliporto!", null);
+        aviso("§a§lJUGGERNAUT ABATIDO", "§7Limpem o resto do Topo do Morro!", null);
         focoFoguete = null;
     }
 

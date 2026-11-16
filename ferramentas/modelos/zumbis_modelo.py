@@ -26,7 +26,9 @@ COR = {
     'zatirador': dict(pele=(190, 146, 116), camisa=(70, 84, 50), calca=(58, 70, 44), couro=(84, 98, 58), metal=(40, 42, 44), faixa=(66, 80, 46), olho=(255, 60, 40), bolha=(255, 60, 40)),
     'zescudo': dict(pele=(186, 140, 112), camisa=(40, 44, 54), calca=(34, 38, 46), couro=(24, 26, 32), metal=(86, 92, 104), faixa=(24, 26, 30), olho=(160, 220, 255), bolha=(255, 220, 110)),
     'zpesado': dict(pele=(180, 136, 108), camisa=(58, 60, 64), calca=(46, 48, 52), couro=(34, 36, 40), metal=(70, 72, 78), faixa=(28, 28, 30), olho=(255, 180, 60), bolha=(255, 200, 90)),
-    'zjuggernaut': dict(pele=(60, 60, 64), camisa=(44, 46, 52), calca=(36, 38, 44), couro=(26, 28, 32), metal=(96, 100, 110), faixa=(160, 30, 30), olho=(255, 40, 30), bolha=(255, 190, 80)),
+    # 16/11: chefe pesado proprio do Corona (blindagem grafite, faixas laranja de alerta, visor e nucleo da mochila
+    # brilhando laranja). Inspirado no "soldado blindado de metralhadora" generico, nao no visual de nenhum jogo.
+    'zjuggernaut': dict(pele=(52, 50, 48), camisa=(52, 50, 48), calca=(46, 44, 42), couro=(36, 37, 40), metal=(86, 92, 100), faixa=(232, 122, 30), olho=(255, 150, 40), bolha=(255, 220, 120)),
     'zchefe': dict(pele=(152, 62, 60), couro=(98, 72, 48), metal=(106, 100, 94), faixa=(142, 130, 110), calca=(142, 130, 110), olho=(255, 44, 30)),
 }
 FIXO = dict(sapato=(30, 26, 24), carne=(132, 20, 22), osso=(216, 206, 178), boca=(26, 6, 8), dente=(224, 214, 182))
@@ -55,6 +57,8 @@ def pintar_face(c, f, wpx, hpx, sem, ident, esc):
     t = Tela(wpx, hpx, esc, sem)
     grande = min(t.w, t.h) >= 3.0
     bri = np.zeros((hpx, wpx))
+    if ident == 'zjuggernaut':
+        return pintar_blindado(c, f, t, cor, mat, sem, bri)
     if mat in ('pele', 'pele2'):
         p = cor['pele'] if mat == 'pele' else tuple(int(v * 0.8) for v in cor['pele'])
         t.base(p, 0.34, 0.55)
@@ -133,6 +137,62 @@ def pintar_face(c, f, wpx, hpx, sem, ident, esc):
         t.base(cor[mat], 0.3)
         if mat == 'carne':
             t.manchas((70, 6, 8), 0.5, 1.2, 0.7)
+        t.borda(0.7, 0.2)
+    return t.img(), bri
+
+
+def pintar_blindado(c, f, t, cor, mat, sem, bri):
+    """Pintura limpa de armadura militar: placas com bisel, linhas de painel, rebites e riscos; tecido acolchoado;
+    borracha com nervuras; faixas laranja com listras de alerta; visor/nucleo com degrade e reflexo."""
+    U, V, X, Y = t.U, t.V, t.X, t.Y
+    if mat == 'metal':
+        t.base(cor['metal'], 0.1, 0.6)
+        if t.w >= 7:
+            t.mult(np.abs(U - 0.5) * t.w < 0.1, 0.66)                        # uma linha de painel so nas placas grandes
+        t.cor(np.clip(1 - V * t.h / 0.45, 0, 1), (200, 208, 216), 0.35)          # bisel claro em cima
+        t.mult(np.clip(1 - (1 - V) * t.h / 0.45, 0, 1), 0.6)                     # sombra embaixo
+        t.mult(np.clip(1 - np.minimum(U, 1 - U) * t.w / 0.35, 0, 1), 0.78)
+        risco = (Z.ruido(X * 7.0, Y * 1.1, sem + 61) > 0.86) * (Z.ruido(X * 1.3, Y * 9.0, sem + 62) > 0.5)
+        t.cor(risco.astype(float), (176, 182, 188), 0.55)
+        if t.w >= 3 and t.h >= 3:
+            for cx in (0.12, 0.88):
+                for cy in (0.14, 0.86):
+                    m = (np.abs(U - cx) * t.w < 0.22) * (np.abs(V - cy) * t.h < 0.22)
+                    t.cor(m.astype(float), (40, 42, 46), 0.8)
+        t.sujeira(0.75, 0.25)
+    elif mat == 'faixa':
+        t.base(cor['faixa'], 0.12, 0.8)
+        if c.nome.startswith(('ombreira_faixa', 'elmo_crista', 'anel')) and max(t.w, t.h) >= 2.5:
+            lst = np.mod((X + Y) * 0.55, 1.0) < 0.5
+            t.cor(lst.astype(float), (28, 26, 24), 0.85)
+        t.mult(Z.ruido(X * 6, Y * 6, sem + 3) > 0.9, 0.7)
+        t.borda(0.55, 0.2)
+    elif mat in ('camisa', 'calca', 'pele', 'pele2'):
+        base = cor['camisa'] if mat in ('camisa', 'pele', 'pele2') else cor['calca']
+        t.base(base, 0.16, 0.9)
+        q = (np.abs(np.mod((X + Y) * 0.7, 1.0) - 0.5) < 0.06) | (np.abs(np.mod((X - Y) * 0.7, 1.0) - 0.5) < 0.06)
+        t.mult(q.astype(float), 0.62)                                            # costura acolchoada em losango
+        t.rgb *= (0.92 + 0.16 * Z.fbm(X * 0.9, Y * 0.9, sem + 8))[..., None]
+        t.borda(0.7, 0.22)
+    elif mat in ('couro', 'sapato'):
+        t.base(cor['couro'] if mat == 'couro' else (30, 29, 28), 0.12)
+        nerv = np.mod(Y * 1.6 if t.h >= t.w else X * 1.6, 1.0) < 0.22
+        t.mult(nerv.astype(float), 0.7)
+        t.borda(0.6, 0.25)
+    elif mat == 'olho':
+        top = np.array((255, 214, 120), float) / 255
+        bot = np.array((214, 84, 18), float) / 255
+        t.rgb[:] = top * (1 - V[..., None]) + bot * V[..., None]
+        gl = (np.abs((U * 0.6 - V) + 0.05) < 0.06) * (U < 0.55)
+        t.cor(gl.astype(float), (255, 246, 220), 0.5)
+        t.borda(0.75, 0.12)
+        bri[:] = 1.0
+    elif mat == 'bolha':
+        t.base(cor['bolha'], 0.2)
+        t.cor(Z.elipse(U, V, 0.5, 0.5, 0.3, 0.3, 0.8), (255, 255, 230), 0.7)
+        bri[:] = 0.6
+    else:
+        t.base(cor.get(mat, (60, 60, 60)), 0.2)
         t.borda(0.7, 0.2)
     return t.img(), bri
 
@@ -403,10 +463,21 @@ def soldado(q, tipo):
         cs += [C('mochila', 4.6, 11.4, -1.0, 8.0, 11.0, 14.6, 'metal'), C('ombreira_d', 2.0, 5.0, 6.0, 9.0, 5.6, 11.2, 'metal'),
                C('visor', 5.9, 10.1, 10.2, 11.8, 5.2, 5.6, 'olho', emite=8, so=('north',))]
     elif tipo == 'juggernaut':
-        cs += [C('placa', 3.2, 12.8, -1.0, 8.4, 4.0, 5.4, 'metal'), C('placa_c', 3.4, 12.6, -1.0, 8.4, 11.4, 12.8, 'metal'),
-               C('ombreira_d', 0.8, 4.8, 5.6, 9.8, 5.0, 11.8, 'metal'), C('elmo', 5.0, 11.0, 8.2, 14.8, 5.0, 11.2, 'metal'),
-               C('visor', 5.8, 10.2, 10.4, 11.8, 4.7, 5.1, 'olho', emite=13, so=('north',)), C('faixa_r', 3.2, 12.8, 5.0, 5.9, 3.9, 4.1, 'faixa', so=('north',)),
-               C('tanque', 5.6, 10.4, 0.0, 7.0, 12.8, 15.6, 'metal')]
+        cs[:] = [c for c in cs if c.nome not in ('capacete', 'capacete_aba', 'rosto', 'olho_r', 'olho_l')]   # capacete fechado
+        cs += [C('placa', 3.0, 13.0, -1.4, 7.8, 4.0, 5.4, 'metal'), C('placa_c', 3.2, 12.8, -1.0, 8.0, 11.4, 12.6, 'metal'),
+               C('emblema', 7.0, 9.0, 3.6, 5.8, 3.85, 4.0, 'faixa', so=('north',)),
+               C('colar', 4.0, 12.0, 7.0, 8.8, 4.2, 12.0, 'metal'),
+               C('elmo', 4.6, 11.4, 8.4, 15.0, 4.6, 11.6, 'metal'), C('elmo_crista', 7.2, 8.8, 14.8, 15.8, 5.4, 11.2, 'faixa'),
+               C('elmo_topo', 5.4, 10.6, 15.0, 15.6, 5.4, 10.8, 'metal'),
+               C('visor_aro', 4.9, 11.1, 9.9, 13.1, 4.35, 4.6, 'couro', so=('north',)),
+               C('visor', 5.4, 10.6, 10.4, 12.6, 4.15, 4.35, 'olho', emite=12, so=('north',)),
+               C('respirador', 6.6, 9.4, 8.6, 10.0, 4.0, 4.6, 'couro'),
+               C('ombreira_d', 0.2, 4.8, 5.0, 10.4, 4.4, 12.2, 'metal'), C('ombreira_faixa_d', 0.0, 4.8, 9.2, 10.6, 4.3, 12.3, 'faixa'),
+               C('coxal_d', 3.0, 7.6, -6.8, -3.2, 4.3, 5.2, 'metal'), C('bolsa_d', 2.6, 4.8, -3.6, -0.8, 5.2, 7.6, 'couro'),
+               C('tanque', 4.2, 11.8, -1.2, 8.0, 12.6, 16.6, 'couro'), C('tanque_tampa', 4.0, 12.0, 8.0, 9.0, 12.4, 16.8, 'metal'),
+               C('cilindro_d', 3.4, 5.6, -0.4, 7.4, 16.6, 17.8, 'metal'),
+               C('nucleo', 6.4, 9.6, 1.2, 6.2, 16.6, 17.0, 'olho', emite=15, so=('south',)),
+               C('tubo_d', 2.6, 3.8, 2.6, 7.6, 10.6, 12.8, 'couro')]
     else:
         cs += [C('ombreira_d', 2.6, 4.6, 6.2, 8.2, 6.0, 10.8, 'faixa')]
     # bracos para a frente segurando a arma (o cano aponta para o norte)
@@ -416,6 +487,11 @@ def soldado(q, tipo):
         cs += [C('escudo', 2.6, 13.4, -12.0, 9.6, -2.6, -1.6, 'metal'), C('escudo_visor', 5.6, 10.4, 5.4, 7.6, -2.8, -2.6, 'olho', emite=4, so=('north',)),
                C('escudo_faixa', 2.6, 13.4, -2.0, -0.8, -2.75, -2.6, 'faixa', so=('north',)), C('pistola', 12.6, 13.6, 3.8, 5.4, -4.6, -1.0, 'faixa')]
         boca = (13.1, 4.8, -5.2)
+    elif tipo == 'juggernaut':      # metralhadora giratoria grande, com aneis laranja e caixa de municao
+        cs += [C('arma', 5.8, 10.2, 0.0, 4.0, -4.0, 6.0, 'couro'), C('canos', 6.6, 9.4, 0.8, 3.2, -11.6, -4.0, 'metal'),
+               C('anel1', 6.2, 9.8, 0.4, 3.6, -11.0, -10.2, 'faixa'), C('anel2', 6.2, 9.8, 0.4, 3.6, -7.0, -6.2, 'faixa'),
+               C('caixa', 10.2, 13.0, -1.4, 3.4, 0.4, 5.4, 'metal'), C('fita', 10.6, 12.6, 3.4, 4.0, -0.6, 4.6, 'faixa')]
+        boca = (8.0, 2.0, -12.4)
     elif grande:                    # metralhadora giratoria
         cs += [C('arma', 6.4, 9.6, 0.4, 3.6, -3.0, 6.0, 'metal'), C('canos', 7.0, 9.0, 1.0, 3.0, -9.0, -3.0, 'faixa'),
                C('cano2', 6.6, 9.4, 0.6, 3.4, -6.4, -5.6, 'metal'), C('caixa', 9.6, 12.0, -0.6, 3.0, 1.0, 5.0, 'couro')]
@@ -435,6 +511,13 @@ def soldado(q, tipo):
     t = 1.3 if at else 0.3
     bz = boca[2] - (1.3 if at else -2.4)
     cs.append(C('clarao', boca[0] - t, boca[0] + t, boca[1] - t, boca[1] + t, bz - 0.5, bz + 0.5, 'bolha', emite=15))
+    if tipo == 'juggernaut':           # luvas, cinto e botas escuros/blindados (o laranja fica so nos detalhes)
+        for c in cs:
+            n0 = c.nome.split('_')[0]
+            if n0 in ('mao', 'cinto', 'pescoco', 'cabeca', 'bolso'):
+                c.pele = 'couro'
+            elif n0 == 'pe':
+                c.pele = 'metal'
     return esp(cs)
 
 
