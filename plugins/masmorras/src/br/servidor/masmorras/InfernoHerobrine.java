@@ -230,7 +230,7 @@ final class InfernoHerobrine implements Listener {
                 p.teleport(dest);
                 p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 25, 0, false, false));
                 p.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 20 * 4, 0, false, false));
-                p.showTitle(titulo("§4§lO MUNDO DE HEROBRINE", "§cSobreviva... e lute", 3));
+                p.showTitle(titulo("§4§lO MUNDO DE HEROBRINE", "§cA luta termina aqui: derrote-o", 3));
                 p.playSound(p, "minecraft:entity.ghast.scream", 1f, 0.5f);
                 p.playSound(p, "minecraft:ambient.crimson_forest.mood", 1f, 0.8f);
             }
@@ -241,7 +241,7 @@ final class InfernoHerobrine implements Listener {
             if (tarefa != null) tarefa.cancel();
             tarefa = Bukkit.getScheduler().runTaskTimer(pl, this::tick, 10L, 10L);
             long agoraMs = System.currentTimeMillis();
-            fim = agoraMs + 45_000;
+            fim = Long.MAX_VALUE;   // sem tempo: a luta termina aqui
             proxPilar = agoraMs + 3000; proxChuva = agoraMs + 6000; proxRaio = agoraMs + 1500; proxVulto = agoraMs + 5000; proxFala = agoraMs + 9000;
         });
     }
@@ -301,7 +301,16 @@ final class InfernoHerobrine implements Listener {
     void tick() {
         Chefe c = chefe;
         if (c == null || saindo) return;
-        if (!c.vivo()) { encerrarSemVolta(); return; }
+        if (!c.vivo()) {
+            if (w != null) for (Player p : w.getPlayers()) {
+                p.showTitle(titulo("§a§lHEROBRINE CAIU", "§7O mundo dele se desfaz...", 3));
+                p.playSound(p, "minecraft:entity.wither.death", 0.8f, 0.7f);
+            }
+            saindo = true;   // para o tique; em 3 s todos voltam para a arena (o premio esta la)
+            tirarCorpo();
+            pl.depois(60L, () -> { saindo = false; encerrarSemVolta(); });
+            return;
+        }
         World inf = w;
         if (inf == null || corpo == null) return;   // ainda na abertura
         if (!corpo.isValid()) {
@@ -452,6 +461,7 @@ final class InfernoHerobrine implements Listener {
             c.sumidoAte = 0;
         }
         pl.depois(8L, () -> {
+          try {
             for (Player p : la) {
                 if (!p.isOnline() || !p.getWorld().equals(w)) continue;
                 Location dest = volta.getOrDefault(p.getUniqueId(), meio);
@@ -467,11 +477,14 @@ final class InfernoHerobrine implements Listener {
                     }
                 }
             }
+          } finally {
+            if (c.vivo()) c.e.setInvulnerable(false);
             voltaAntiga.clear();
             voltaAntiga.putAll(volta);
             volta.clear();
             chefe = null;
             saindo = false;
+          }
         });
     }
 
@@ -484,6 +497,8 @@ final class InfernoHerobrine implements Listener {
             if (dest != null && dest.getWorld() != null) p.teleport(dest);
             else pl.irParaSpawnMasmorras(p);
         }
+        voltaAntiga.clear();
+        voltaAntiga.putAll(volta);
         volta.clear();
         chefe = null;
         saindo = false;
@@ -520,11 +535,8 @@ final class InfernoHerobrine implements Listener {
         Chefe c = chefe;
         if (c != null && corpo != null && ev.getEntity() == corpo && !(ev instanceof org.bukkit.event.entity.EntityDamageByEntityEvent)) { ev.setCancelled(true); return; }
         if (c == null || ev.getEntity() != c.e) return;
-        double vida = c.e.getHealth();
-        if (vida - ev.getFinalDamage() <= limite) {
-            ev.setDamage(Math.max(0, vida - limite - 0.5));
-            Bukkit.getScheduler().runTask(pl, this::voltar);
-        }
+        // 15/11 (Paulo: "e para permanecermos na fase final"): nao existe mais a trava de 30% nem a volta para a arena no
+        // meio da luta. Ele morre aqui, no mundo dele; so depois todos voltam para a arena buscar o premio.
     }
 
     /** Quem saiu do jogo la dentro volta para o spawn das masmorras. */
