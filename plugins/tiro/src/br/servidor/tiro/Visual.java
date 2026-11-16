@@ -46,8 +46,8 @@ import org.joml.Vector3f;
  */
 final class Visual implements Listener {
 
-    static final String URL_PADRAO = "https://corona-server.duckdns.org/pacotes/corona_tiro_java-545f42d911.zip";
-    static final String SHA1_PADRAO = "545f42d911428e66208cd5edfe2c3827937ffcc6";
+    static final String URL_PADRAO = "https://corona-server.duckdns.org/pacotes/corona_tiro_java-18f3f2e36b.zip";
+    static final String SHA1_PADRAO = "18f3f2e36b6baacd61e9151553148dab28b2c081";
     private static final UUID ID = UUID.nameUUIDFromBytes("corona-tiro-pack".getBytes(StandardCharsets.UTF_8));
 
     private final Tiro pl;

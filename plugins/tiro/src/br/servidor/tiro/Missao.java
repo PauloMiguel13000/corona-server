@@ -934,6 +934,7 @@ final class Missao implements Listener {
     }
 
     void tirar(Player p, boolean avisar) {
+        pararAmbiente(p);
         noJogo.remove(p.getUniqueId());
         caidos.remove(p.getUniqueId());
         levantar(p, 0);
@@ -1108,6 +1109,7 @@ final class Missao implements Listener {
         for (Player p : mundo.getPlayers()) {
             if (p.getY() < Y - 10) p.teleport(noJogo.contains(p.getUniqueId()) && fase == Fase.JOGO ? partida(setor) : sala());
             if (pl.musica != null) pl.musica.tocar(p, fase == Fase.JOGO ? (setorAtivo ? (setor == SETORES - 1 ? "chefe" : "missao_luta") : "missao") : fase == Fase.FIM ? null : "missao");
+            ambiente(p, System.currentTimeMillis());
         }
         int na = mundo.getPlayers().size();
         if (fase == Fase.ESPERA) {
@@ -1777,6 +1779,60 @@ final class Missao implements Listener {
             }
             p.setVelocity(empurrao(p.getLocation().toVector().subtract(c.toVector()), 0.8, 0.45));
         }
+    }
+
+
+    // ================================================================== 16/11 som ambiente
+    /*
+     * Paulo: "som ambiente para o jogador ouvir durante o jogo". Fundo em loop (vento, cidade ao longe, cigarras e
+     * passarinhos) e, de vez em quando, coisas acontecendo em volta: tiroteio distante (mais seguido durante a luta),
+     * explosao, helicoptero passando, sirene e o radio da equipe. Os sons de longe saem de um ponto a 10-16 blocos,
+     * cada vez de um lado. Tudo na categoria "ambiente" (o jogador controla no volume de ambiente).
+     */
+    private final Map<UUID, long[]> ambProx = new HashMap<>();   // cidade, tiroteio, explosao, helicoptero, radio, sirene
+
+    private void ambiente(Player p, long agora) {
+        if (fase != Fase.JOGO || !noJogo.contains(p.getUniqueId())) {
+            pararAmbiente(p);
+            return;
+        }
+        long[] px = ambProx.computeIfAbsent(p.getUniqueId(), k -> new long[]{0L, agora + 4000, agora + 15000 + rnd.nextInt(15000),
+                agora + 40000 + rnd.nextInt(30000), agora + 10000 + rnd.nextInt(10000), agora + 50000 + rnd.nextInt(40000)});
+        if (agora >= px[0]) {
+            p.playSound(p, "tiro.amb_cidade", org.bukkit.SoundCategory.AMBIENT, 0.45f, 1f);
+            px[0] = agora + 40000 - 150;
+        }
+        if (agora >= px[1]) {
+            longe(p, "tiro.amb_tiroteio", 1.6f, 0.9f + rnd.nextFloat() * 0.2f);
+            px[1] = agora + (setorAtivo ? 5000 + rnd.nextInt(7000) : 9000 + rnd.nextInt(12000));
+        }
+        if (agora >= px[2]) {
+            longe(p, "tiro.amb_explosao", 2.0f, 0.85f + rnd.nextFloat() * 0.3f);
+            px[2] = agora + 22000 + rnd.nextInt(25000);
+        }
+        if (agora >= px[3]) {
+            longe(p, "tiro.amb_helicoptero", 2.2f, 0.95f + rnd.nextFloat() * 0.1f);
+            px[3] = agora + 55000 + rnd.nextInt(45000);
+        }
+        if (agora >= px[4]) {
+            p.playSound(p, "tiro.amb_radio", org.bukkit.SoundCategory.AMBIENT, 0.5f, 1f);
+            px[4] = agora + 25000 + rnd.nextInt(25000);
+        }
+        if (agora >= px[5]) {
+            longe(p, "tiro.amb_sirene", 1.6f, 0.9f + rnd.nextFloat() * 0.2f);
+            px[5] = agora + 60000 + rnd.nextInt(50000);
+        }
+    }
+
+    private void longe(Player p, String som, float vol, float tom) {
+        double a = rnd.nextDouble() * Math.PI * 2, r = 10 + rnd.nextDouble() * 6;
+        Location l = p.getLocation().add(Math.cos(a) * r, 4 + rnd.nextDouble() * 4, Math.sin(a) * r);
+        p.playSound(l, som, org.bukkit.SoundCategory.AMBIENT, vol, tom);
+    }
+
+    private void pararAmbiente(Player p) {
+        if (ambProx.remove(p.getUniqueId()) == null) return;
+        for (String som : new String[]{"amb_cidade", "amb_helicoptero", "amb_sirene"}) p.stopSound("tiro." + som, org.bukkit.SoundCategory.AMBIENT);
     }
 
     private void laser(Zombie z, Player alvo) {
