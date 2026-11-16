@@ -40,8 +40,8 @@ commands:
     usage: /trilha [nivel]
     aliases: [caminho, jornada]
   nivel:
-    description: Mostra o nivel do seu equipamento e quais areas de masmorra voce pode entrar
-    usage: /nivel
+    description: Nivel de Masmorra (1 a 5) - quais chefes faltam para liberar o proximo (/nivel equipamento = nivel do equipamento)
+    usage: /nivel [equipamento]
     aliases: [level, equipamento, equip, lvl]
   musica:
     description: Liga e desliga a trilha das masmorras so para voce

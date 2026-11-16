@@ -391,6 +391,23 @@ final class Torretas implements Listener {
         Vector dir = alvo.getEyeLocation().subtract(0, 0.4, 0).toVector().subtract(origem.toVector());
         if (dir.lengthSquared() < 0.01) return;
         dir.normalize();
+        // 16/11 (Sui: "alguns boss sao imunes a projeteis como a torre de flechas"): enderman, breeze e wither com
+        // armadura nao tomam flecha; nesses a torre dispara uma flecha de energia que acerta direto
+        if (imuneAFlecha(alvo)) {
+            Location ate = alvo.getLocation().add(0, alvo.getHeight() * 0.6, 0);
+            double dist = origem.distance(ate);
+            Vector passo = ate.toVector().subtract(origem.toVector()).normalize().multiply(0.6);
+            Location pt = origem.clone();
+            for (double d = 0; d < dist; d += 0.6) {
+                Fx.p(w, Particle.CRIT, pt, 1, 0.02, 0.02, 0.02, 0);
+                pt.add(passo);
+            }
+            Fx.p(w, Particle.ENCHANTED_HIT, ate, 10, 0.3, 0.3, 0.3, 0.2);
+            w.playSound(origem, Sound.BLOCK_DISPENSER_LAUNCH, 0.7f, 1.6f);
+            w.playSound(ate, Sound.ENTITY_ARROW_HIT, 0.8f, 1.2f);
+            plugin.causarDano(alvo, fa(t, alvo, DANO_ARQUEIRA * f), dono);
+            return;
+        }
         Arrow flecha = w.spawnArrow(origem.clone().add(dir.clone().multiply(0.9)), dir, 2.8f, 0f);
         flecha.setShooter(dono);
         flecha.setGravity(false);
@@ -404,6 +421,16 @@ final class Torretas implements Listener {
         }, 40L);
         w.playSound(origem, Sound.BLOCK_DISPENSER_LAUNCH, 0.7f, 1.4f);
         Fx.p(w, Particle.SMOKE, origem, 4, 0.1, 0.1, 0.1, 0.01);
+    }
+
+    /** Bichos que o Minecraft deixa sem dano de flecha (desviam ou rebatem). */
+    static boolean imuneAFlecha(LivingEntity e) {
+        if (e instanceof org.bukkit.entity.Enderman || e instanceof org.bukkit.entity.Breeze || e instanceof org.bukkit.entity.EnderDragon) return true;
+        if (e instanceof org.bukkit.entity.Wither wi) {
+            var a = wi.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
+            return a != null && wi.getHealth() <= a.getValue() / 2;
+        }
+        return false;
     }
 
     private void gelo(Player dono, ArmorStand t, LivingEntity alvo, double f) {

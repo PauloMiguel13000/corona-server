@@ -136,6 +136,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
     Coroas coroas;
     Portoes portoes;
     PortaisNivel portaisNivel;
+    Progresso progresso;
     Trilha trilha;
 
     /** A masmorra que tem esse bloco dentro (ou null). */
@@ -296,6 +297,9 @@ public final class Masmorras extends JavaPlugin implements Listener {
         } catch (Throwable ex) {
             getLogger().warning("Portais dos niveis nao iniciaram: " + ex);
         }
+        progresso = new Progresso(this);
+        getServer().getPluginManager().registerEvents(progresso, this);
+        progresso.iniciar();
         ConfigurationSection ms = banco.getConfigurationSection("mapas");
         if (ms != null)
             for (String k : ms.getKeys(false)) {
@@ -1367,6 +1371,11 @@ public final class Masmorras extends JavaPlugin implements Listener {
             for (Player p : ps) if (p.getGameMode() != GameMode.CREATIVE && m.dentro(p.getX(), p.getY(), p.getZ())) dentro.add(p);
             for (Player p : dentro) {
                 int s = m.sala(p.getX(), p.getY(), p.getZ());
+                // 16/11: masmorra acima do Nivel de Masmorra do jogador: volta para a entrada
+                if (s >= 0 && progresso != null && !progresso.pode(p, m.tipo.nivel)) {
+                    progresso.barrar(p, m);
+                    continue;
+                }
                 if (s >= 0 && s < m.salas.size() - 1 && m.armada[s]) {
                     m.armada[s] = false;
                     povoar(m, s, dentro);
@@ -1487,6 +1496,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         if (ranking != null) for (Player p : lutaram) ranking.chefeDerrotado(p);
         if (missoes != null) for (Player p : lutaram) missoes.chefeMorto(p, t.nivel);
         if (missoes != null) for (Player p : lutaram) missoes.trilhaChefe(p, t);
+        if (progresso != null) for (Player p : lutaram) progresso.recalcular(p, true);
         long cor = (t.secreta ? getConfig().getLong("coronas.secreta", 5000) : getConfig().getLong("coronas.chefe", 250) * t.nivel) * Destaque.mult(t);
         if (Destaque.eh(t)) Bukkit.broadcast(txt(PREFIXO + "§6⭐ Era a masmorra em destaque: §acoronas e XP em DOBRO§7!"));
         if (Destaque.relampago(t)) Bukkit.broadcast(txt(PREFIXO + "§e⚡ Era a masmorra relâmpago: §6coronas e XP x3§7!"));
@@ -1544,6 +1554,9 @@ public final class Masmorras extends JavaPlugin implements Listener {
             p.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 100, 0));
     }
 
+    @SuppressWarnings("deprecation")
+    private static final NamespacedKey KEY_BALA_TORRE = new NamespacedKey("poderes", "torreta_bala");
+
     /** Escudo (chefe imune), reflexo de projeteis e roubo de vida. */
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
     public void especiais(EntityDamageEvent e) {
@@ -1589,8 +1602,9 @@ public final class Masmorras extends JavaPlugin implements Listener {
                 });
                 c.e.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, bat.getLocation().add(0, 1, 0), 4, 0.3, 0.3, 0.3, 0.1);
             }
+            // 16/11: flecha da torre do Engenheiro nao e rebatida (voltava e machucava o dono, que nem estava atirando)
             if (m.tipo.esp == Tipo.Esp.REFLEXO && e instanceof EntityDamageByEntityEvent d && d.getDamager() instanceof Projectile pr
-                    && pr.getShooter() instanceof Player atirador && rnd.nextDouble() < 0.35) {
+                    && pr.getShooter() instanceof Player atirador && !pr.getPersistentDataContainer().has(KEY_BALA_TORRE) && rnd.nextDouble() < 0.35) {
                 e.setCancelled(true);
                 pr.remove();
                 atirador.damage(Math.min(10, e.getDamage() * 0.5), c.e);
@@ -2188,7 +2202,8 @@ public final class Masmorras extends JavaPlugin implements Listener {
                 s.sendMessage("So no jogo.");
                 return true;
             }
-            PortaisNivel.comando(p);
+            if (progresso != null && progresso.ativo() && !(a.length > 0 && a[0].toLowerCase(java.util.Locale.ROOT).startsWith("equip"))) progresso.comando(p);
+            else PortaisNivel.comando(p);
             return true;
         }
         if (cmd.getName().equalsIgnoreCase("musica")) {

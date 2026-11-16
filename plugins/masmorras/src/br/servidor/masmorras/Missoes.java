@@ -181,8 +181,28 @@ final class Missoes implements Listener {
         boolean tinha = dados.contains("jogadores." + c) || dados.contains("trilha." + c);
         dados.set("jogadores." + c, null);
         dados.set("trilha." + c, null);
+        dados.set("progresso." + c, null);
         salvarAgora();
         return tinha;
+    }
+
+    // 16/11: Nivel de Masmorra (ver Progresso)
+    int nivelMasmorra(Player p) {
+        return dados.getInt("progresso." + chave(p.getName()) + ".nivel", 0);
+    }
+
+    void definirNivelMasmorra(Player p, int n) {
+        dados.set("progresso." + chave(p.getName()) + ".nivel", n);
+        salvarAgora();
+    }
+
+    boolean mestreMasmorras(Player p) {
+        return dados.getBoolean("progresso." + chave(p.getName()) + ".mestre", false);
+    }
+
+    void marcarMestreMasmorras(Player p) {
+        dados.set("progresso." + chave(p.getName()) + ".mestre", true);
+        salvarAgora();
     }
 
     void salvarAgora() {

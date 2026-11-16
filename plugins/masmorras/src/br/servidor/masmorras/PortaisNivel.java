@@ -73,7 +73,7 @@ final class PortaisNivel implements Listener {
     }
 
     /** Moldura e cor de cada nivel (quanto mais alto, mais "perigoso"). */
-    private static String[] visual(int nivel) {
+    static String[] visual(int nivel) {
         return switch (nivel) {
             case 2 -> new String[] {"minecraft:mossy_stone_bricks", "minecraft:oxidized_copper", "minecraft:moss_block", "§a"};
             case 3 -> new String[] {"minecraft:deepslate_bricks", "minecraft:gold_block", "minecraft:polished_deepslate", "§e"};
@@ -226,11 +226,9 @@ final class PortaisNivel implements Listener {
         if (ate != null && agora < ate) return;
         espera.put(p.getUniqueId(), agora + 4000L);
         int nivel = NIVEIS[i];
-        int tem = nivelDosItens(p);
-        if (tem < nivel && !p.hasPermission("masmorras.admin")) {
-            p.sendMessage(Masmorras.txt(Masmorras.PREFIXO + "§cEste portal é da §fárea de nível " + nivel + "§c. Seu equipamento está no nível §f" + tem
-                    + "§c — volte com armadura e arma melhores (couro 1, pedra/ouro 2, ferro 3, diamante 4, netherite 5)."));
-            p.playSound(p.getLocation(), Sound.BLOCK_CHEST_LOCKED, 1f, 0.8f);
+        // 16/11: o portal agora pede o Nivel de Masmorra (vencer todas as do nivel anterior), nao mais o equipamento
+        if (pl.progresso != null && !pl.progresso.pode(p, nivel)) {
+            pl.progresso.avisarTrancado(p, "A área de nível " + nivel, nivel);
             Location fora = new Location(w, PX + 1.5, to.getY(), b.getZ() + 0.5, to.getYaw(), to.getPitch());
             p.teleport(fora);
             return;

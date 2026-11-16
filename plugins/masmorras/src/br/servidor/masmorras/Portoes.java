@@ -242,11 +242,10 @@ final class Portoes implements Listener {
             boolean nether = Math.abs(b.getZ() - PZ_NETHER) <= 1;
             World destino = nether ? mm.nether : mm.end;
             if (destino == null) return;
-            int exige = nivelExigido();
-            int poder = Aura.poder(p);
-            if (!p.hasPermission("masmorras.admin") && poder >= 0 && poder < exige) {
-                p.sendMessage(Masmorras.txt(Masmorras.PREFIXO + "§cEste portal só abre para quem tem §bnível de poder " + exige + "§c (a 4ª habilidade). Você está no §b" + poder + "§c."));
-                p.playSound(p.getLocation(), Sound.BLOCK_CHEST_LOCKED, 1f, 0.8f);
+            // 16/11: os portoes pedem o Nivel de Masmorra (Nether 3, End 4), nao mais o nivel de poder
+            int exige = nether ? Progresso.NETHER : Progresso.END;
+            if (pl.progresso != null && !pl.progresso.pode(p, exige)) {
+                pl.progresso.avisarTrancado(p, nether ? "O portão do Nether" : "O portão do End", exige);
                 Location fora = new Location(w, PX - 1.5, to.getY(), b.getZ() + 0.5, to.getYaw(), to.getPitch());
                 p.teleport(fora);
                 return;
