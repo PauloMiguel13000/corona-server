@@ -5,6 +5,9 @@ api-version: '1.21'
 loadbefore: [Geyser-Spigot]
 description: Pacote de recursos do Corona Server (sons dos minigames) para Java e Bedrock.
 commands:
+  texturas:
+    description: Baixa de novo as texturas do servidor (Java)
+    aliases: [pacote, resourcepack]
   coronapack:
     description: Pacote de recursos (status, recarregar a config, atualizar o pacote sem reiniciar)
     permission: coronapack.admin

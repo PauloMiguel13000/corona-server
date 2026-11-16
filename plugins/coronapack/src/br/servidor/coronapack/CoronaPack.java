@@ -508,6 +508,13 @@ public final class CoronaPack extends JavaPlugin implements Listener {
 
     @Override
     public boolean onCommand(CommandSender s, Command c, String label, String[] a) {
+        if (c.getName().equalsIgnoreCase("texturas")) {   // 16/11: o jogador pede o pacote de novo
+            if (!(s instanceof Player p)) return true;
+            if (bedrock(p)) p.sendMessage("§e[Texturas] §7No Bedrock as texturas chegam sozinhas quando você entra no servidor.");
+            else if (oferecer(p)) p.sendMessage("§e[Texturas] §aMandei as texturas de novo. §7Aceite na tela que abrir.");
+            else p.sendMessage("§e[Texturas] §cAgora não deu para mandar. §7Tente de novo em instantes.");
+            return true;
+        }
         if (a.length > 0 && a[0].equalsIgnoreCase("atualizar")) {
             atualizar(s);
             return true;
@@ -540,6 +547,17 @@ public final class CoronaPack extends JavaPlugin implements Listener {
     public void status(PlayerResourcePackStatusEvent e) {
         if (!ID.equals(e.getID())) return;
         getLogger().info("Pacote de " + e.getPlayer().getName() + ": " + e.getStatus());
+        // 16/11: quem recusou ou nao conseguiu baixar ficava com armas e monstros sem visual sem saber por que
+        Player p = e.getPlayer();
+        String msg = switch (e.getStatus()) {
+            case DECLINED -> "§e[Texturas] §7Você recusou as texturas do servidor: armas, monstros e sons ficam sem o visual. "
+                    + "§fPara ativar: §7Multijogador > selecione o §fCorona Server§7 > §fEditar§7 > §fPacotes de recursos do servidor: Ativado§7, ou digite §f/texturas§7.";
+            case FAILED_DOWNLOAD, INVALID_URL, FAILED_RELOAD -> "§e[Texturas] §cAs texturas não carregaram. §7Digite §f/texturas§7 para tentar de novo.";
+            default -> null;
+        };
+        if (msg != null) Bukkit.getScheduler().runTaskLater(this, () -> {
+            if (p.isOnline()) p.sendMessage(msg);
+        }, 60L);
     }
 
     private static final byte[] GET = {'G', 'E', 'T', ' '};
