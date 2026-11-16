@@ -301,7 +301,19 @@ final class Missao implements Listener {
         for (PotionEffect e : p.getActivePotionEffects()) p.removePotionEffect(e.getType());
         Material[] ic = {Material.IRON_HOE, Material.RED_DYE, Material.IRON_INGOT, Material.SPYGLASS};
         String[] d = {"§7Fuzil de assalto. Bom em tudo.", "§7Escopeta + kit que cura o time.", "§7Submetralhadora + placas de blindagem para o time.", "§7Rifle de precisão. Fique atrás."};
-        for (int i = 0; i < 4; i++) p.getInventory().setItem(i + 2, pl.armas.item("classe" + i, ic[i], CLASSE_NOME[i] + " §7(clique)", 1, d[i]));
+        // 15/11 (Paulo: "os itens ainda aparecem como enxada"): quem tem o pacote ve a ARMA de cada classe no icone
+        String[] armaDaClasse = {"fuzil", "escopeta", "smg", "sniper"};
+        boolean desenho = pl.visual != null && pl.visual.tem(p);
+        for (int i = 0; i < 4; i++) {
+            ItemStack it = pl.armas.item("classe" + i, desenho ? Armas.ARMAS.get(armaDaClasse[i]).item() : ic[i], CLASSE_NOME[i] + " §7(clique)", 1, d[i]);
+            if (desenho) {
+                it.setData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL, net.kyori.adventure.key.Key.key("corona", "armas/" + armaDaClasse[i]));
+                var m = it.getItemMeta();
+                m.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES);
+                it.setItemMeta(m);
+            }
+            p.getInventory().setItem(i + 2, it);
+        }
         p.showBossBar(barra);
     }
 
