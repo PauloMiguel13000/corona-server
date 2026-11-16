@@ -42,7 +42,7 @@ import org.bukkit.inventory.meta.ItemMeta;
  */
 final class MissoesDiarias implements Listener {
 
-    enum Tipo { MONSTROS, MONSTROS_MASMORRA, MINERIOS, PESCAR, COLHER, COMER, ENCANTAR, ANDAR, TEMPO, MINIGAMES }
+    enum Tipo { MONSTROS, MONSTROS_MASMORRA, MONSTROS_TIRO, MINERIOS, PESCAR, COLHER, COMER, ENCANTAR, ANDAR, TEMPO, MINIGAMES }
 
     /** id fixo (vai para o arquivo), tipo, meta, coronas, icone, texto (com %n = a meta). */
     record Missao(String id, Tipo tipo, int meta, int coronas, Material icone, String texto) {}
@@ -60,7 +60,11 @@ final class MissoesDiarias implements Listener {
             new Missao("andar1500", Tipo.ANDAR, 1500, 30, Material.LEATHER_BOOTS, "Ande %n blocos"),
             new Missao("tempo30", Tipo.TEMPO, 30, 40, Material.CLOCK, "Jogue por %n minutos"),
             new Missao("minigames2", Tipo.MINIGAMES, 2, 50, Material.ENDER_EYE, "Entre em %n minigames diferentes"),
+            // 16/11: missao dos Jogos de Tiro (Missao, Horda e Apocalipse). So entra no sorteio a partir de 17/11, para nao mudar as de hoje.
+            new Missao("tiro25", Tipo.MONSTROS_TIRO, 25, 60, Material.CROSSBOW, "Abata %n inimigos nos Jogos de Tiro (/warface)"),
     };
+
+    private static final Set<String> MUNDOS_TIRO = Set.of("tiro", "zumbi", "operacao", "missao");
 
     /** Mundos que contam como minigame (entrar no mundo = entrou no jogo). */
     private static final Set<String> MINIGAMES = Set.of("turno_noite", "hotel", "fabrica", "backrooms", "naochore", "slender", "vovo", "defesa", "arena", "esconde", "porteiro", "operacao", "missao");
@@ -116,6 +120,7 @@ final class MissoesDiarias implements Listener {
     static List<Missao> doDia(String dia) {
         Random r = new Random(dia.hashCode() * 31L + 7);
         List<Missao> pool = new ArrayList<>(List.of(TODAS));
+        if (dia.compareTo("2026-11-17") < 0) pool.removeIf(m -> m.id().equals("tiro25"));
         List<Missao> l = new ArrayList<>();
         while (l.size() < 3 && !pool.isEmpty()) {
             Missao m = pool.remove(r.nextInt(pool.size()));
@@ -197,6 +202,7 @@ final class MissoesDiarias implements Listener {
         if (p == null || !(e.getEntity() instanceof Monster)) return;
         somar(p, Tipo.MONSTROS, 1);
         if (p.getWorld().getName().startsWith("masmorras")) somar(p, Tipo.MONSTROS_MASMORRA, 1);
+        if (MUNDOS_TIRO.contains(p.getWorld().getName())) somar(p, Tipo.MONSTROS_TIRO, 1);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
