@@ -963,7 +963,8 @@ final class Missao implements Listener {
             else if (o.equals("ver")) {
                 for (Zombie z : inimigos()) for (Player q : vivos())
                     s.sendMessage(pl.zumbis.tipo(z) + " d=" + (int) z.getLocation().distance(q.getLocation()) + " ve=" + z.hasLineOfSight(q) + " z=" + (int) z.getLocation().getZ()
-                            + " tiro=" + (proximoTiro.getOrDefault(z.getUniqueId(), 0L) - System.currentTimeMillis()) + " raj=" + rajada.get(z.getUniqueId()) + " tick=" + tick + " ai=" + z.hasAI());
+                            + " tiro=" + (proximoTiro.getOrDefault(z.getUniqueId(), 0L) - System.currentTimeMillis()) + " raj=" + rajada.get(z.getUniqueId()) + " est=" + estado.get(z.getUniqueId()) + " cob=" + (cobertura.get(z.getUniqueId()) == null ? "-" : cobertura.get(z.getUniqueId()).toVector())
+                            + " alt=" + String.format("%.2f", z.getHeight()) + " marca=" + marcas.containsKey(z.getUniqueId()) + " gran=" + granadasNoAr.size());
             }
             else s.sendMessage(PREFIXO + "fase=" + fase + " setor=" + setor + " inimigos=" + inimigos().size() + " time=" + noJogo.size() + " | admin <iniciar|refazer|setor>");
             return true;
@@ -1051,10 +1052,14 @@ final class Missao implements Listener {
         proximoTiro.clear();
         miraAte.clear();
         rajada.clear();
+        limparTatica();
     }
 
     private void limparSetor() {
-        for (Zombie z : inimigos()) z.remove();
+        for (Zombie z : inimigos()) {
+            esquecer(z);
+            z.remove();
+        }
         reforcoVeio = true;
     }
 
@@ -1249,7 +1254,10 @@ final class Missao implements Listener {
         long agora = System.currentTimeMillis();
         torretaIa(alvos, agora);
         mechaIa(alvos, agora);
-        for (Zombie z : inimigos()) {
+        List<Zombie> zs = inimigos();
+        marcacoes(zs, alvos, agora);
+        granadas(zs, alvos, agora);
+        for (Zombie z : zs) {
             if (z == mecha) continue;   // o Juggernaut chefe tem IA propria (mechaIa)
             Zumbis.Tipo t = pl.zumbis.tipo(z);
             Perfil pf = PERFIS.get(t);
@@ -1276,8 +1284,14 @@ final class Missao implements Listener {
             } catch (Throwable ignorado) {
                 // versao sem setBodyYaw
             }
+            if (ve) alvoVistoEm.put(alvo.getUniqueId(), agora);
+            if (t == Zumbis.Tipo.ESCUDO) pancada(z, alvo, d, agora);
+            // 16/11 (Warface): soldado e atirador usam cobertura (agacham, levantam para atirar, trocam de lugar)
+            boolean taticos = t == Zumbis.Tipo.SOLDADO || t == Zumbis.Tipo.ATIRADOR;
+            if (taticos && tatica(z, t, pf, alvo, d, agora)) {
+                // a tatica ja cuidou de andar/agachar
+            } else if (t != Zumbis.Tipo.ATIRADOR && rajada.getOrDefault(u, 0) <= 0) {
             // anda: chega ate a distancia que gosta; sem visao, procura; perto demais (menos o escudo e a escopeta), recua
-            if (t != Zumbis.Tipo.ATIRADOR && rajada.getOrDefault(u, 0) <= 0) {
                 if (!ve || d > pf.longe()) z.getPathfinder().moveTo(alvo.getLocation(), t == Zumbis.Tipo.ESCOPETA ? 1.25 : 1.0);
                 else if (d < pf.perto() && t != Zumbis.Tipo.ESCUDO && t != Zumbis.Tipo.ESCOPETA) {
                     Location tras = z.getLocation().add(dir.clone().setY(0).normalize().multiply(-4));
@@ -1288,7 +1302,12 @@ final class Missao implements Listener {
                     z.getPathfinder().moveTo(z.getLocation().add(lado), 1.0);
                 } else if (tick % 12 == ((u.getLeastSignificantBits() & 7) + 5) % 12) z.getPathfinder().stopPathfinding();
             }
-            // tiro
+            // tiro (escondido atras da cobertura ou correndo ate ela nao atira)
+            if (taticos && !podeAtirar(u)) {
+                rajada.remove(u);
+                miraAte.remove(u);
+                continue;
+            }
             int rj = rajada.getOrDefault(u, 0);
             if (rj > 0) {
                 rajada.put(u, rj - 1);
@@ -1307,6 +1326,7 @@ final class Missao implements Listener {
                     proximoTiro.put(u, agora + pf.intervalo() * 50L + rnd.nextInt(600));
                     if (pf.rajada() > 1) rajada.put(u, pf.rajada());
                     else disparo(z, t, pf, alvo, d);
+                    if (t == Zumbis.Tipo.ATIRADOR) esconder(z, t, agora, 2600 + rnd.nextInt(1800));
                 }
                 continue;
             }
@@ -1322,6 +1342,437 @@ final class Missao implements Listener {
             proximoTiro.put(u, agora + pf.intervalo() * 50L + rnd.nextInt(500));
             if (pf.rajada() > 1) rajada.put(u, pf.rajada());
             else disparo(z, t, pf, alvo, d);
+        }
+    }
+
+
+    // ================================================================== 16/11 tatica dos inimigos (Warface)
+    /*
+     * Como nos videos do Paulo: o soldado corre ate uma cobertura (sacos, muro, caixa), AGACHA atras dela, levanta para dar
+     * uma rajada e abaixa de novo; depois de 2-4 espiadas (ou se o jogador flanqueou) troca de cobertura. Um em cada quatro
+     * procura cobertura pelo lado (flanco). O atirador de elite agacha depois de cada tiro. Quem fica muito tempo escondido
+     * leva GRANADA. Inimigo que ninguem enxerga ha 10 s fica marcado de VERMELHO (contorno no Java, seta que aparece atraves
+     * da parede no Java e no Bedrock) ate alguem olhar para ele uns segundos.
+     */
+    static final double AGACHADO = 0.72;
+    static final long ESQUECIDO_MS = 10000;
+    private final Map<UUID, Integer> estado = new HashMap<>();          // 0 livre, 1 indo para a cobertura, 2 agachado, 3 espiando
+    private final Map<UUID, Long> estadoAte = new HashMap<>(), buscaEm = new HashMap<>(), pancadaEm = new HashMap<>();
+    private final Map<UUID, Location> cobertura = new HashMap<>(), coberturaVelha = new HashMap<>();
+    private final Map<UUID, Integer> espiadas = new HashMap<>(), olhadas = new HashMap<>();
+    private final Map<UUID, Long> vistoEm = new HashMap<>(), alvoVistoEm = new HashMap<>();
+    private final Map<UUID, org.bukkit.entity.TextDisplay> marcas = new HashMap<>();
+    private record Granada(org.bukkit.entity.Item item, long explode) {}
+    private final List<Granada> granadasNoAr = new ArrayList<>();
+    private long proximaGranada;
+
+    private boolean podeAtirar(UUID u) {
+        int e = estado.getOrDefault(u, 0);
+        return e == 0 || e == 3;
+    }
+
+    private void agachar(Zombie z, Zumbis.Tipo t, boolean sim) {
+        var a = z.getAttribute(org.bukkit.attribute.Attribute.SCALE);
+        if (a != null) a.setBaseValue(t.escala * (sim ? AGACHADO : 1.0));
+        if (pl.visual != null) pl.visual.agachado(z, sim);
+    }
+
+    private void esconder(Zombie z, Zumbis.Tipo t, long agora, long ms) {
+        UUID u = z.getUniqueId();
+        z.getPathfinder().stopPathfinding();
+        agachar(z, t, true);
+        estado.put(u, 2);
+        estadoAte.put(u, agora + ms);
+        rajada.remove(u);
+        miraAte.remove(u);
+    }
+
+    private void liberar(Zombie z, Zumbis.Tipo t) {
+        UUID u = z.getUniqueId();
+        if (estado.getOrDefault(u, 0) == 2) agachar(z, t, false);
+        estado.put(u, 0);
+        Location c = cobertura.remove(u);
+        if (c != null) coberturaVelha.put(u, c);
+        espiadas.remove(u);
+    }
+
+    /** true = a tatica decidiu o movimento deste soldado neste tique. */
+    private boolean tatica(Zombie z, Zumbis.Tipo t, Perfil pf, Player alvo, double d, long agora) {
+        UUID u = z.getUniqueId();
+        int e = estado.getOrDefault(u, 0);
+        long ate = estadoAte.getOrDefault(u, 0L);
+        if (t == Zumbis.Tipo.ATIRADOR) {                       // nao anda: so agacha entre os tiros
+            if (e == 2 && agora >= ate) {
+                agachar(z, t, false);
+                estado.put(u, 3);
+            }
+            return true;
+        }
+        Location cob = cobertura.get(u);
+        if (d < 4.0 && e != 0) {                                // jogador colado: larga a cobertura e briga
+            liberar(z, t);
+            return false;
+        }
+        switch (e) {
+            case 1 -> {
+                if (cob == null || agora > ate) {
+                    liberar(z, t);
+                    return false;
+                }
+                double dx = z.getLocation().getX() - cob.getX(), dz = z.getLocation().getZ() - cob.getZ();
+                if (dx * dx + dz * dz < 0.6 * 0.6) esconder(z, t, agora, 700 + rnd.nextInt(1300));
+                else if (tick % 4 == 0 || !z.getPathfinder().hasPath()) z.getPathfinder().moveTo(cob, 1.3);
+                return true;
+            }
+            case 2 -> {
+                z.getPathfinder().stopPathfinding();
+                if (agora >= ate) {
+                    if (cob != null && !protege(cob, alvo)) {     // flanquearam: a cobertura nao serve mais
+                        liberar(z, t);
+                        buscaEm.put(u, 0L);
+                        return false;
+                    }
+                    agachar(z, t, false);
+                    estado.put(u, 3);
+                    estadoAte.put(u, agora + 1500 + rnd.nextInt(1300));
+                    if (proximoTiro.getOrDefault(u, 0L) > agora + 300) proximoTiro.put(u, agora + 200 + rnd.nextInt(300));
+                }
+                return true;
+            }
+            case 3 -> {
+                z.getPathfinder().stopPathfinding();
+                if (agora >= ate && rajada.getOrDefault(u, 0) <= 0) {
+                    int n = espiadas.merge(u, 1, Integer::sum);
+                    // de pe ainda nao enxerga o jogador (cobertura alta demais) ou ja espiou bastante: troca de lugar
+                    if (n >= 2 + rnd.nextInt(3) || !z.hasLineOfSight(alvo) || (cob != null && !protege(cob, alvo))) {
+                        liberar(z, t);
+                        buscaEm.put(u, 0L);
+                        return false;
+                    }
+                    esconder(z, t, agora, 1100 + rnd.nextInt(1900));
+                }
+                return true;
+            }
+            default -> {
+                if (agora >= buscaEm.getOrDefault(u, 0L)) {
+                    buscaEm.put(u, agora + 2200 + rnd.nextInt(1600));
+                    Location c = acharCobertura(z, alvo, pf, (u.getLeastSignificantBits() & 3) == 0);
+                    if (c != null) {
+                        cobertura.put(u, c);
+                        estado.put(u, 1);
+                        estadoAte.put(u, agora + 7000);
+                        espiadas.put(u, 0);
+                        z.getPathfinder().moveTo(c, 1.3);
+                        return true;
+                    }
+                }
+                return false;                                   // sem cobertura por perto: o jeito antigo
+            }
+        }
+    }
+
+    /** Agachado em c, o jogador fica escondido (bloco no caminho bem pertinho)? */
+    private boolean protege(Location c, Player alvo) {
+        return bloqueado(c.clone().add(0, 1.05, 0), alvo.getEyeLocation(), 2.6);
+    }
+
+    private boolean bloqueado(Location de, Location para, double ate) {
+        Vector v = para.toVector().subtract(de.toVector());
+        double len = v.length();
+        if (len < 0.1) return false;
+        var hit = mundo.rayTraceBlocks(de, v.multiply(1 / len), len, org.bukkit.FluidCollisionMode.NEVER, true);
+        return hit != null && hit.getHitPosition().distance(de.toVector()) <= ate;
+    }
+
+    private Location acharCobertura(Zombie z, Player alvo, Perfil pf, boolean flanco) {
+        Location zl = z.getLocation(), olho = alvo.getEyeLocation();
+        Vector para = olho.toVector().subtract(zl.toVector()).setY(0);
+        double dist = para.length();
+        if (dist < 0.5) return null;
+        para.multiply(1 / dist);
+        Vector lado = new Vector(-para.getZ(), 0, para.getX()).multiply(rnd.nextBoolean() ? 1 : -1);
+        double quer = Math.min(Math.max(dist, pf.perto() + 3), pf.longe() + 4);
+        Location velha = coberturaVelha.get(z.getUniqueId());
+        Location melhor = null;
+        double nota = -1e9;
+        for (int i = 0; i < 26; i++) {
+            double ox = (rnd.nextDouble() * 2 - 1) * 8, oz = (rnd.nextDouble() * 2 - 1) * 8;
+            if (flanco) {
+                ox += lado.getX() * 5;
+                oz += lado.getZ() * 5;
+            }
+            int bx = (int) Math.floor(zl.getX() + ox), bz = (int) Math.floor(zl.getZ() + oz);
+            Integer by = chao(bx, zl.getBlockY(), bz);
+            if (by == null) continue;
+            Location c = new Location(mundo, bx + 0.5, by, bz + 0.5);
+            if (velha != null && velha.distanceSquared(c) < 9) continue;
+            if (ocupada(c, z)) continue;
+            double dc = Math.sqrt(c.distanceSquared(alvo.getLocation()));
+            if (dc < Math.max(4, pf.perto() - 1)) continue;
+            if (!protege(c, alvo)) continue;
+            boolean espia = !bloqueado(c.clone().add(0, 1.62, 0), olho, Math.max(1, dc - 1.2));
+            double n = (espia ? 10 : 1) - Math.abs(dc - quer) * 0.5 - Math.sqrt(c.distanceSquared(zl)) * 0.35;
+            if (flanco) n += Math.abs(c.toVector().subtract(alvo.getLocation().toVector()).setY(0).normalize().dot(lado)) * 3;
+            if (n > nota) {
+                nota = n;
+                melhor = c;
+            }
+        }
+        return nota > 0 ? melhor : null;
+    }
+
+    /** Altura dos pes de quem fica de pe em (x, z) perto de y0 (chao firme e dois blocos livres), ou null. */
+    private Integer chao(int x, int y0, int z) {
+        for (int y = y0 + 3; y >= y0 - 4; y--) {
+            var baixo = mundo.getBlockAt(x, y - 1, z);
+            if (!baixo.getType().isSolid() || baixo.isLiquid()) continue;
+            var b1 = mundo.getBlockAt(x, y, z);
+            var b2 = mundo.getBlockAt(x, y + 1, z);
+            if (b1.isPassable() && !b1.isLiquid() && b2.isPassable() && !b2.isLiquid()) return y;
+        }
+        return null;
+    }
+
+    private boolean ocupada(Location c, Zombie eu) {
+        for (Map.Entry<UUID, Location> en : cobertura.entrySet())
+            if (!en.getKey().equals(eu.getUniqueId()) && en.getValue().getWorld() == c.getWorld() && en.getValue().distanceSquared(c) < 2.5) return true;
+        return false;
+    }
+
+    /** Escudeiro colado: pancada com o escudo (empurra e machuca um pouco). */
+    private void pancada(Zombie z, Player alvo, double d, long agora) {
+        if (d > 2.4 || agora < pancadaEm.getOrDefault(z.getUniqueId(), 0L)) return;
+        pancadaEm.put(z.getUniqueId(), agora + 2600);
+        mundo.playSound(z.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.8f, 1.4f);
+        alvo.setNoDamageTicks(0);
+        feridoEm.put(alvo.getUniqueId(), agora);
+        bala = true;
+        try {
+            alvo.damage(3 * (1 + 0.12 * setor));
+        } finally {
+            bala = false;
+        }
+        alvo.setVelocity(empurrao(alvo.getLocation().toVector().subtract(z.getLocation().toVector()), 1.0, 0.35));
+    }
+
+    // ------------------------------------------------------------------ marcados de vermelho
+
+    private boolean enxerga(Player p, Zombie z) {
+        Location o = p.getEyeLocation();
+        Vector v = z.getLocation().add(0, z.getHeight() * 0.6, 0).toVector().subtract(o.toVector());
+        double len = v.length();
+        if (len > 70 || len < 0.1) return len < 0.1;
+        if (o.getDirection().dot(v.multiply(1 / len)) < 0.45) return false;
+        return p.hasLineOfSight(z);
+    }
+
+    private void marcacoes(List<Zombie> zs, List<Player> alvos, long agora) {
+        boolean checar = tick % 3 == 0;
+        for (Zombie z : zs) {
+            UUID u = z.getUniqueId();
+            org.bukkit.entity.TextDisplay m = marcas.get(u);
+            if (checar && setorAtivo) {
+                boolean visto = false;
+                for (Player p : alvos)
+                    if (enxerga(p, z)) {
+                        visto = true;
+                        break;
+                    }
+                vistoEm.putIfAbsent(u, agora);
+                if (visto) {
+                    if (m == null) vistoEm.put(u, agora);
+                    else if (olhadas.merge(u, 1, Integer::sum) >= 5) {     // olhou ~2,5 s: tira o vermelho
+                        desmarcar(z);
+                        m = null;
+                    }
+                } else if (m == null && agora - vistoEm.get(u) > ESQUECIDO_MS) m = marcar(z);
+            }
+            if (m != null) {
+                if (!m.isValid()) marcas.remove(u);
+                else m.teleport(z.getLocation().add(0, z.getHeight() + 0.55, 0));
+            }
+        }
+    }
+
+    private org.bukkit.scoreboard.Team timeVermelho() {
+        var sb = Bukkit.getScoreboardManager().getMainScoreboard();
+        var tm = sb.getTeam("missao_alvo");
+        if (tm == null) {
+            tm = sb.registerNewTeam("missao_alvo");
+            tm.color(net.kyori.adventure.text.format.NamedTextColor.RED);
+        }
+        return tm;
+    }
+
+    private org.bukkit.entity.TextDisplay marcar(Zombie z) {
+        z.setGlowing(true);
+        timeVermelho().addEntry(z.getUniqueId().toString());
+        olhadas.remove(z.getUniqueId());
+        org.bukkit.entity.TextDisplay m = mundo.spawn(z.getLocation().add(0, z.getHeight() + 0.55, 0), org.bukkit.entity.TextDisplay.class, x -> {
+            x.text(Tiro.txt("§c§l▼"));
+            x.setBillboard(org.bukkit.entity.Display.Billboard.CENTER);
+            x.setSeeThrough(true);
+            x.setDefaultBackground(false);
+            x.setBackgroundColor(Color.fromARGB(0, 0, 0, 0));
+            x.setShadowed(true);
+            x.setTeleportDuration(4);
+            x.setViewRange(2f);
+            x.setPersistent(false);
+            x.addScoreboardTag("missao_marca");
+            x.setTransformation(new org.bukkit.util.Transformation(new org.joml.Vector3f(), new org.joml.Quaternionf(),
+                    new org.joml.Vector3f(1.6f, 1.6f, 1.6f), new org.joml.Quaternionf()));
+        });
+        marcas.put(z.getUniqueId(), m);
+        return m;
+    }
+
+    private void desmarcar(Zombie z) {
+        UUID u = z.getUniqueId();
+        z.setGlowing(false);
+        timeVermelho().removeEntry(u.toString());
+        org.bukkit.entity.TextDisplay m = marcas.remove(u);
+        if (m != null && m.isValid()) m.remove();
+        olhadas.remove(u);
+        vistoEm.put(u, System.currentTimeMillis());
+    }
+
+    /** Some com tudo que a tatica guardava deste inimigo (morreu ou o setor foi limpo). */
+    private void esquecer(Zombie z) {
+        UUID u = z.getUniqueId();
+        org.bukkit.entity.TextDisplay m = marcas.remove(u);
+        if (m != null && m.isValid()) m.remove();
+        try {
+            timeVermelho().removeEntry(u.toString());
+        } catch (Throwable ignorado) {
+            // placar indisponivel
+        }
+        if (pl.visual != null) pl.visual.agachado(z, false);
+        estado.remove(u);
+        estadoAte.remove(u);
+        buscaEm.remove(u);
+        pancadaEm.remove(u);
+        cobertura.remove(u);
+        coberturaVelha.remove(u);
+        espiadas.remove(u);
+        olhadas.remove(u);
+        vistoEm.remove(u);
+    }
+
+    private void limparTatica() {
+        for (org.bukkit.entity.TextDisplay m : marcas.values()) if (m.isValid()) m.remove();
+        marcas.clear();
+        for (Granada g : granadasNoAr) if (g.item().isValid()) g.item().remove();
+        granadasNoAr.clear();
+        try {
+            var tm = timeVermelho();
+            for (String en : new ArrayList<>(tm.getEntries())) tm.removeEntry(en);
+        } catch (Throwable ignorado) {
+            // placar indisponivel
+        }
+        estado.clear();
+        estadoAte.clear();
+        buscaEm.clear();
+        pancadaEm.clear();
+        cobertura.clear();
+        coberturaVelha.clear();
+        espiadas.clear();
+        olhadas.clear();
+        vistoEm.clear();
+        alvoVistoEm.clear();
+        if (mundo != null)
+            for (org.bukkit.entity.TextDisplay m : mundo.getEntitiesByClass(org.bukkit.entity.TextDisplay.class)) if (m.getScoreboardTags().contains("missao_marca")) m.remove();
+    }
+
+    // ------------------------------------------------------------------ granadas
+
+    private void granadas(List<Zombie> zs, List<Player> alvos, long agora) {
+        for (java.util.Iterator<Granada> i = granadasNoAr.iterator(); i.hasNext(); ) {
+            Granada g = i.next();
+            if (!g.item().isValid()) {
+                i.remove();
+                continue;
+            }
+            Location c = g.item().getLocation();
+            if (agora >= g.explode()) {
+                explodir(c, agora);
+                g.item().remove();
+                i.remove();
+                continue;
+            }
+            Particle.DustOptions po = new Particle.DustOptions(Color.RED, 1.1f);
+            for (int k = 0; k < 14; k++) {
+                double a = k * Math.PI / 7;
+                mundo.spawnParticle(Particle.DUST, c.clone().add(Math.cos(a) * 3.5, 0.15, Math.sin(a) * 3.5), 1, 0, 0, 0, 0, po);
+            }
+            if (tick % 2 == 0) mundo.playSound(c, Sound.BLOCK_NOTE_BLOCK_PLING, 0.9f, 2f);
+            for (Player p : alvos)
+                if (p.getLocation().distanceSquared(c) < 7 * 7) p.sendActionBar(Tiro.txt("§c§l⚠ GRANADA! §fSaia de perto!"));
+        }
+        if (!setorAtivo || setor < 1 || agora < proximaGranada) return;
+        for (Player p : alvos) {
+            alvoVistoEm.putIfAbsent(p.getUniqueId(), agora);
+            if (agora - alvoVistoEm.get(p.getUniqueId()) < 5000) continue;
+            Zombie quem = null;
+            double dq = 1e9;
+            for (Zombie z : zs) {
+                Zumbis.Tipo t = pl.zumbis.tipo(z);
+                if (z == mecha || (t != Zumbis.Tipo.SOLDADO && t != Zumbis.Tipo.ESCOPETA)) continue;
+                double d = z.getLocation().distanceSquared(p.getLocation());
+                if (d >= 3 * 3 && d <= 18 * 18 && d < dq) {
+                    dq = d;
+                    quem = z;
+                }
+            }
+            if (quem == null) continue;
+            lancar(quem, p, agora);
+            proximaGranada = agora + 9000 + rnd.nextInt(5000);
+            alvoVistoEm.put(p.getUniqueId(), agora);
+            return;
+        }
+    }
+
+    private void lancar(Zombie z, Player p, long agora) {
+        Location o = z.getEyeLocation();
+        Vector h = p.getLocation().toVector().subtract(o.toVector());
+        double dy = h.getY();
+        h.setY(0);
+        double dist = h.length();
+        if (dist < 0.1) return;
+        double T = 20;                                              // ticks de voo
+        Vector v = h.multiply(1 / dist).multiply(Math.min(1.15, dist / T * 1.25));
+        v.setY(Math.max(0.2, Math.min(0.8, 0.04 * T / 2 + dy / T + 0.08)));
+        org.bukkit.entity.Item it = mundo.dropItem(o, new ItemStack(Material.FIREWORK_STAR), x -> {
+            x.setPickupDelay(32767);
+            x.setCanMobPickup(false);
+            x.setPersistent(false);
+            x.setUnlimitedLifetime(true);
+        });
+        it.setVelocity(v);
+        try {
+            z.swingMainHand();
+        } catch (Throwable ignorado) {
+            // versao sem animacao de braco
+        }
+        mundo.playSound(o, Sound.ENTITY_SNOWBALL_THROW, 1.2f, 0.6f);
+        granadasNoAr.add(new Granada(it, agora + 2700));
+    }
+
+    private void explodir(Location c, long agora) {
+        mundo.spawnParticle(Particle.EXPLOSION, c, 3, 0.8, 0.4, 0.8, 0);
+        mundo.spawnParticle(Particle.LARGE_SMOKE, c, 20, 1, 0.5, 1, 0.03);
+        mundo.playSound(c, Sound.ENTITY_GENERIC_EXPLODE, 2f, 1.1f);
+        for (Player p : vivos()) {
+            double d = p.getLocation().distance(c);
+            if (d > 4.5) continue;
+            p.setNoDamageTicks(0);
+            feridoEm.put(p.getUniqueId(), agora);
+            bala = true;
+            try {
+                p.damage(13 * (1 - d / 5.2) * (1 + 0.12 * setor));
+            } finally {
+                bala = false;
+            }
+            p.setVelocity(empurrao(p.getLocation().toVector().subtract(c.toVector()), 0.8, 0.45));
         }
     }
 
@@ -1380,6 +1831,9 @@ final class Missao implements Listener {
         }
         Zumbis.Tipo t = pl.zumbis.tipo(e.getEntity());
         if (t == null || !(e.getDamager() instanceof Player p) || !(e.getEntity() instanceof LivingEntity alvo)) return;
+        if (t == Zumbis.Tipo.SOLDADO && e.getEntity() instanceof Zombie zz && estado.getOrDefault(zz.getUniqueId(), 0) == 3 && rnd.nextInt(10) < 6)
+            esconder(zz, t, System.currentTimeMillis(), 1300 + rnd.nextInt(1200));       // levou tiro espiando: abaixa
+        vistoEm.put(e.getEntity().getUniqueId(), System.currentTimeMillis());
         if (t != Zumbis.Tipo.ESCUDO && t != Zumbis.Tipo.PESADO && t != Zumbis.Tipo.JUGGERNAUT) return;
         if (e.getEntity() == mecha) return;
         Vector olha = alvo.getLocation().getDirection().setY(0).normalize();
@@ -1437,6 +1891,7 @@ final class Missao implements Listener {
     }
 
     void morreu(Zombie z, Zumbis.Tipo t, Player matador) {
+        esquecer(z);
         proximoTiro.remove(z.getUniqueId());
         miraAte.remove(z.getUniqueId());
         rajada.remove(z.getUniqueId());

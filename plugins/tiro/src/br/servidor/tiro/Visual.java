@@ -46,8 +46,8 @@ import org.joml.Vector3f;
  */
 final class Visual implements Listener {
 
-    static final String URL_PADRAO = "https://corona-server.duckdns.org/pacotes/corona_tiro_java-83ee859667.zip";
-    static final String SHA1_PADRAO = "83ee859667578e12bf3d84b8d36104986fe596d3";
+    static final String URL_PADRAO = "https://corona-server.duckdns.org/pacotes/corona_tiro_java-0cd73ddd04.zip";
+    static final String SHA1_PADRAO = "0cd73ddd0495ac984fa20ec10530d3a3425ba33f";
     private static final UUID ID = UUID.nameUUIDFromBytes("corona-tiro-pack".getBytes(StandardCharsets.UTF_8));
 
     private final Tiro pl;
@@ -64,6 +64,14 @@ final class Visual implements Listener {
 
     void atirando(Zombie z) {
         tiroAte.put(z.getUniqueId(), conta + 3);
+    }
+
+    /** 16/11: soldados da Missao agachados atras da cobertura (quadro 5 do modelo). */
+    private final Set<UUID> agachados = ConcurrentHashMap.newKeySet();
+
+    void agachado(Zombie z, boolean sim) {
+        if (sim) agachados.add(z.getUniqueId());
+        else agachados.remove(z.getUniqueId());
     }
 
     Visual(Tiro pl) {
@@ -161,7 +169,85 @@ final class Visual implements Listener {
     }
 
     private static Transformation forma(float e) {
-        return new Transformation(new Vector3f(0, 1.5f * e, 0), new Quaternionf(), new Vector3f(e, e, e), new Quaternionf());
+        return forma(e, 0f, 0f, 0f);
+    }
+
+    private static Transformation forma(float e, float dy, float dz, float incl) {
+        return new Transformation(new Vector3f(0, 1.5f * e + dy, dz), new Quaternionf().rotateX(incl), new Vector3f(e, e, e), new Quaternionf());
+    }
+
+    /*
+     * 16/11 (Paulo: "anime pra ficar perfeito"): por cima dos quadros do modelo, o proprio ItemDisplay se mexe com
+     * interpolacao suave: sobe e desce a cada passo, da o tranco do coice no tiro, respira parado e afunda/levanta
+     * devagar ao agachar (em vez de pular de uma pose para a outra). Java; no Bedrock fica so a troca de quadro.
+     */
+    private final Map<UUID, float[]> pose = new HashMap<>();          // dy, dz, inclinacao aplicados agora
+    private final Map<UUID, Integer> soltarEm = new HashMap<>();
+
+    private void animar(UUID u, ItemDisplay d, int ant, int q, boolean andando, int fase) {
+        float e = escalas.getOrDefault(u, 0.92f);
+        float[] agora = pose.computeIfAbsent(u, k -> new float[3]);
+        float dy, dz, incl;
+        int dur;
+        if (q == 1 && ant != 1) {                                       // coice do tiro: vai para tras na hora
+            dy = 0.035f * e;                                            // (so vertical: o sentido do eixo Z do display varia)
+            dz = 0f;
+            incl = 0f;
+            dur = 1;
+            soltarEm.put(u, conta + 2);
+        } else if (q == 5 && ant != 5) {                                // agachou: comeca alto e afunda
+            aplicar(d, e, 0.3f * e, 0f, 0f, 0);
+            agora[0] = Float.NaN;
+            dy = 0f;
+            dz = 0f;
+            incl = 0f;
+            dur = 4;
+        } else if (ant == 5 && q != 5) {                                // levantou: comeca baixo e sobe
+            aplicar(d, e, -0.3f * e, 0f, 0f, 0);
+            agora[0] = Float.NaN;
+            dy = 0f;
+            dz = 0f;
+            incl = 0f;
+            dur = 4;
+        } else if (conta < soltarEm.getOrDefault(u, 0)) {
+            return;                                                     // ainda no coice
+        } else if (andando) {
+            boolean alto = q == 3;                                      // na passagem o corpo sobe, no passo desce
+            dy = alto ? 0.045f * e : -0.01f * e;
+            dz = 0f;
+            incl = 0f;
+            dur = 3;
+        } else {
+            dy = 0.012f * e * (float) Math.sin(fase * 0.12);            // respiracao parado
+            dz = 0f;
+            incl = 0f;
+            dur = 10;
+        }
+        if (agora[0] == dy && agora[1] == dz && agora[2] == incl) return;
+        if (!andando && q != 1 && q != 5 && ant == q && conta % 10 != 0 && !Float.isNaN(agora[0])) return;   // respiracao: so a cada 10 tiques
+        if (Float.isNaN(agora[0])) {
+            // a pose de partida acabou de ser aplicada sem interpolacao: a volta vem no proximo tique
+            agora[0] = 1e9f;
+            final float fy = dy, fz = dz, fi = incl;
+            final int fdur = dur;
+            Bukkit.getScheduler().runTaskLater(pl, () -> {
+                if (d.isValid()) aplicar(d, e, fy, fz, fi, fdur);
+            }, 1L);
+            agora[0] = dy;
+            agora[1] = dz;
+            agora[2] = incl;
+            return;
+        }
+        aplicar(d, e, dy, dz, incl, dur);
+        agora[0] = dy;
+        agora[1] = dz;
+        agora[2] = incl;
+    }
+
+    private static void aplicar(ItemDisplay d, float e, float dy, float dz, float incl, int dur) {
+        d.setInterpolationDelay(0);
+        d.setInterpolationDuration(dur);
+        d.setTransformation(forma(e, dy, dz, incl));
     }
 
     private void tique() {
@@ -194,7 +280,8 @@ final class Visual implements Listener {
                 boolean atacando = alvo != null && alvo.getWorld() == w && alvo.getLocation().distanceSquared(z.getLocation()) < 7.0;
                 int fase = conta + (int) (u.getLeastSignificantBits() & 7);
                 int q;
-                if (t.soldado()) q = tiroAte.getOrDefault(u, 0) >= conta ? 1 : andando ? CICLO[(fase / 3) % 4] : 3;
+                if (t.soldado()) q = tiroAte.getOrDefault(u, 0) >= conta ? 1 : t != Zumbis.Tipo.JUGGERNAUT && agachados.contains(u) ? 5
+                        : andando ? CICLO[(fase / 3) % 4] : 3;
                 else if (atacando) q = (fase / 5) % 2 == 0 ? 1 : 4;
                 else if (andando) q = CICLO[(fase / (t.veloc >= 0.3 ? 3 : 4)) % 4];
                 else q = 3;
@@ -202,7 +289,9 @@ final class Visual implements Listener {
                 boolean novo = d == null || !d.isValid();
                 if (novo) {
                     var esc = z.getAttribute(Attribute.SCALE);
-                    float e = (float) ((esc == null ? 1.0 : esc.getBaseValue()) * 0.92);
+                    double base = esc == null ? 1.0 : esc.getBaseValue();
+                    if (agachados.contains(u)) base /= Missao.AGACHADO;          // agachado encolhe o zumbi, nao o modelo
+                    float e = (float) (base * 0.92);
                     escalas.put(u, e);
                     final int fq = q;
                     d = w.spawn(l, ItemDisplay.class, x -> {
@@ -215,6 +304,7 @@ final class Visual implements Listener {
                         x.setTeleportDuration(2);
                         x.setPersistent(false);
                         x.setVisibleByDefault(false);
+                        if (t.soldado()) x.setGlowColorOverride(org.bukkit.Color.RED);   // marcado: contorno vermelho
                     });
                     modelos.put(u, d);
                     quadros.put(u, q);
@@ -225,10 +315,12 @@ final class Visual implements Listener {
                         d.setTeleportDuration(dist > 9 ? 0 : 2);
                         d.teleport(l);
                     }
-                    if (quadros.getOrDefault(u, 0) != q) {
+                    int ant = quadros.getOrDefault(u, 0);
+                    if (ant != q) {
                         d.setItemStack(item(t, q));
                         quadros.put(u, q);
                     }
+                    if (t.soldado() && t != Zumbis.Tipo.JUGGERNAUT) animar(u, d, ant, q, andando, fase);
                 }
                 if (d.isGlowing() != z.isGlowing()) d.setGlowing(z.isGlowing());
                 if (novo || rever) {
@@ -247,6 +339,9 @@ final class Visual implements Listener {
                 if (z != null && z.isValid() && !z.isDead() && en.getValue().isValid()) continue;
                 if (en.getValue().isValid()) en.getValue().remove();
                 quadros.remove(en.getKey());
+                agachados.remove(en.getKey());
+                pose.remove(en.getKey());
+                soltarEm.remove(en.getKey());
                 ultimo.remove(en.getKey());
                 escalas.remove(en.getKey());
                 i.remove();
