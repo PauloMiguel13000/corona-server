@@ -4,9 +4,7 @@ main: br.servidor.tiro.Tiro
 api-version: '1.21'
 author: Corona Server
 description: Jogos de tiro do Corona Server - Lobby de Tiro, Apocalipse Zumbi (survival) e Operacao Coroa (co-op estilo Warface).
-softdepend: [AuthMe, Multiverse-Core, BabyPets, Poderes, Geyser-Spigot, floodgate, CoronaPack, Extras]
-# 15/11: cria o mundo do Apocalipse (onde o jogador marca terreno): liga antes do GriefPrevention para os terrenos carregarem
-loadbefore: [GriefPrevention]
+softdepend: [AuthMe, Multiverse-Core, BabyPets, Poderes, Geyser-Spigot, floodgate, CoronaPack, GriefPrevention, Extras]
 commands:
   tiro:
     description: Lobby dos jogos de tiro

@@ -48,6 +48,10 @@ public final class TerrenoMasmorra extends JavaPlugin implements Listener {
         margemMonstros = getConfig().getInt("margem-monstros", 16);
         Bukkit.getPluginManager().registerEvents(this, this);
         Bukkit.getScheduler().runTaskTimer(this, this::liberarMundos, 100L, 200L);
+        // 15/11 (Paulo: "meu terreno no mundo masmorra esta ficando desclaimado"): o GriefPrevention liga antes dos mundos
+        // das masmorras e do Apocalipse existirem e PULA os terrenos de la a cada reinicio. Depois que tudo ligou, carrega os que faltaram.
+        Bukkit.getScheduler().runTaskLater(this, this::carregarTerrenosPulados, 140L);
+        Bukkit.getScheduler().runTaskLater(this, this::carregarTerrenosPulados, 600L);
     }
 
     /** O GriefPrevention so conhece os mundos que existiam quando ele ligou; o das masmorras nasce depois. */
@@ -64,6 +68,32 @@ public final class TerrenoMasmorra extends JavaPlugin implements Listener {
                 }
             }
         } catch (Throwable t) { avisar("gp", "Nao consegui liberar terrenos no GriefPrevention: " + t); }
+    }
+
+    private void carregarTerrenosPulados() {
+        try {
+            GriefPrevention gp = GriefPrevention.instance;
+            if (gp == null || gp.dataStore == null) return;
+            File pasta = new File(gp.getDataFolder().getParentFile(), "GriefPreventionData" + File.separator + "ClaimData");
+            File[] todos = pasta.listFiles((d, n) -> n.endsWith(".yml"));
+            if (todos == null) return;
+            List<File> faltam = new ArrayList<>();
+            for (File f : todos) {
+                long id;
+                try { id = Long.parseLong(f.getName().substring(0, f.getName().length() - 4)); } catch (NumberFormatException e) { continue; }
+                if (gp.dataStore.getClaim(id) != null) continue;
+                // so os de mundo que agora existe (os outros continuam esperando)
+                String mundo = YamlConfiguration.loadConfiguration(f).getString("Lesser Boundary Corner", "").split(";")[0];
+                if (!mundo.isEmpty() && Bukkit.getWorld(mundo) != null) faltam.add(f);
+            }
+            if (faltam.isEmpty()) return;
+            Method m = gp.dataStore.getClass().getDeclaredMethod("loadClaimData", File[].class);
+            m.setAccessible(true);
+            m.invoke(gp.dataStore, (Object) faltam.toArray(new File[0]));
+            int ok = 0;
+            for (File f : faltam) if (gp.dataStore.getClaim(Long.parseLong(f.getName().substring(0, f.getName().length() - 4))) != null) ok++;
+            getLogger().info("Terrenos que o GriefPrevention tinha pulado (mundo criado depois dele): " + ok + " de " + faltam.size() + " carregados.");
+        } catch (Throwable t) { avisar("pulados", "Nao consegui carregar os terrenos pulados: " + t); }
     }
 
     private void avisar(String chave, String msg) { if (avisado.add(chave)) getLogger().warning(msg); }
