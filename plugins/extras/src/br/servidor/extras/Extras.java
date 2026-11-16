@@ -56,6 +56,7 @@ public final class Extras extends JavaPlugin implements Listener {
     Divulgacao divulgacao;
     MissoesDiarias missoesDiarias;
     Ajuda ajuda;
+    MenuJogos menuJogos;
     BossMundial bossMundial;
 
     @Override
@@ -125,6 +126,8 @@ public final class Extras extends JavaPlugin implements Listener {
         }
         terror = new LobbyTerror(this);
         Bukkit.getPluginManager().registerEvents(terror, this);
+        menuJogos = new MenuJogos(this);   // 16/11: "ESCOLHA UM JOGO" (NPC JOGAR no spawn, /jogar, abre na primeira entrada)
+        Bukkit.getPluginManager().registerEvents(menuJogos, this);
         try {
             terror.iniciar();
             new Estatuas(this, terror).iniciar();
@@ -221,6 +224,7 @@ public final class Extras extends JavaPlugin implements Listener {
         if (torneioPesca != null) torneioPesca.desligar();
         if (pinata != null) pinata.desligar();
         if (cosmeticos != null) cosmeticos.desligar();
+        if (menuJogos != null) menuJogos.desligar();
         if (missoesDiarias != null) missoesDiarias.parar();
         if (bossMundial != null) bossMundial.parar();
         if (entradas != null) entradas.parar();
@@ -1078,6 +1082,11 @@ public final class Extras extends JavaPlugin implements Listener {
                 return true;
             }
             if (s instanceof Player p) missoesDiarias.abrir(p);
+            else s.sendMessage("Somente jogadores.");
+            return true;
+        }
+        if (cmd.getName().equalsIgnoreCase("jogar")) {
+            if (s instanceof Player p) menuJogos.abrir(p);
             else s.sendMessage("Somente jogadores.");
             return true;
         }

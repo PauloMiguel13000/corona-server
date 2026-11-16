@@ -39,4 +39,21 @@ final class FormBedrock {
             return false;
         }
     }
+
+    /** 16/11: menu "Escolha um jogo" com icones. Devolve true se mandou o formulario. */
+    static boolean jogos(Extras pl, Player p, MenuJogos.Modo[] modos, java.util.function.IntConsumer ir) {
+        try {
+            var b = org.geysermc.cumulus.form.SimpleForm.builder().title("Escolha um jogo")
+                    .content("Toque no modo que você quer jogar. Este menu abre quando quiser com /jogar ou no NPC JOGAR do spawn.");
+            for (MenuJogos.Modo m : modos) b.button(limpar(m.nome()), org.geysermc.cumulus.util.FormImage.Type.PATH, m.bedrockIcone());
+            b.validResultHandler(r -> {
+                int id = r.clickedButtonId();
+                if (id >= 0 && id < modos.length) Bukkit.getScheduler().runTask(pl, () -> ir.accept(id));
+            });
+            org.geysermc.floodgate.api.FloodgateApi.getInstance().sendForm(p.getUniqueId(), b.build());
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
 }

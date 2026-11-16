@@ -37,7 +37,14 @@ final class Musica {
         String atual = faixa.get(u);
         if (f != null && !ligada()) f = null;
         if (java.util.Objects.equals(atual, f)) return;
-        if (atual != null) p.stopSound("tiro." + atual, SoundCategory.MUSIC);
+        if (atual != null) {
+            p.stopSound("tiro." + atual, SoundCategory.MUSIC);
+            // 16/11 (Paulo: "a musica do modo PvE de 4 pessoas esta bugada na segunda fase, misturou 2 musicas"): na troca de
+            // faixa para TUDO da categoria musica (no Bedrock a parada pelo nome nem sempre pega e a faixa velha seguia
+            // tocando por baixo da nova; tambem cala a musica de fundo do proprio jogo). O som ambiente da Missao recomeca.
+            p.stopSound(SoundCategory.MUSIC);
+            if (pl.missao != null && Visual.bedrock(p)) pl.missao.retomarAmbiente(p);   // no Bedrock a parada geral cala o ambiente tambem
+        }
         if (f == null) {
             faixa.remove(u);
             desde.remove(u);

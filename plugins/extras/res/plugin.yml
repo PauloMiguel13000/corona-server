@@ -76,7 +76,10 @@ commands:
     aliases: [indicacao, quemmechamou]
   minigames:
     description: Abre o menu de minigames
-    aliases: [minijogos, jogos]
+    aliases: [minijogos]
+  jogar:
+    description: Escolha um modo de jogo (Masmorras, Missao, Minigames, Terror, Prisao, Survival)
+    aliases: [jogos, menu, modos, play, games]
   terror:
     description: Vai para o Lobby do Terror (jogos de terror)
     aliases: [lobbyterror]

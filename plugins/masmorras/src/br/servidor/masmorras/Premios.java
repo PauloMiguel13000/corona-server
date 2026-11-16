@@ -47,7 +47,9 @@ final class Premios {
             case 1 -> new Opcao[] {o("IRON_INGOT", 4, 7), o("GOLD_INGOT", 1, 3), o("EXPERIENCE_BOTTLE", 2, 4)};
             case 2 -> new Opcao[] {o("DIAMOND", 1, 2), o("IRON_INGOT", 5, 9), o("GOLDEN_APPLE", 1, 1, 0.6), o("EXPERIENCE_BOTTLE", 4, 7)};
             case 3 -> new Opcao[] {o("DIAMOND", 2, 4), o("GOLDEN_APPLE", 1, 1), o("EXPERIENCE_BOTTLE", 8, 12)};
-            case 4 -> new Opcao[] {o("DIAMOND", 3, 6), o("NETHERITE_SCRAP", 1, 1, 0.7), o("GOLDEN_APPLE", 1, 2), o("EXPERIENCE_BOTTLE", 10, 16)};
+            // 16/11: Paulo avisou no Discord que o molde de melhoria de netherite aparece do nivel 4 para cima
+            case 4 -> new Opcao[] {o("DIAMOND", 3, 6), o("NETHERITE_SCRAP", 1, 1, 0.7), o("NETHERITE_UPGRADE_SMITHING_TEMPLATE", 1, 1, 0.3),
+                    o("GOLDEN_APPLE", 1, 2), o("EXPERIENCE_BOTTLE", 10, 16)};
             default -> new Opcao[] {o("NETHERITE_INGOT", 1, 1, 0.5), o("NETHERITE_UPGRADE_SMITHING_TEMPLATE", 1, 1, 0.7), o("DIAMOND", 5, 8),
                     o("TOTEM_OF_UNDYING", 1, 1, 0.5), o("EXPERIENCE_BOTTLE", 16, 24)};
         };

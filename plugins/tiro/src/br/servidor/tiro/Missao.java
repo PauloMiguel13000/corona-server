@@ -1922,6 +1922,12 @@ final class Missao implements Listener {
      */
     private final Map<UUID, long[]> ambProx = new HashMap<>();   // cidade, tiroteio, explosao, helicoptero, radio, sirene
 
+    /** Depois de uma parada geral de som (troca de musica): o fundo da cidade volta no proximo segundo. */
+    void retomarAmbiente(Player p) {
+        long[] px = ambProx.get(p.getUniqueId());
+        if (px != null) px[0] = 0L;
+    }
+
     private void ambiente(Player p, long agora) {
         if (fase != Fase.JOGO || !noJogo.contains(p.getUniqueId())) {
             pararAmbiente(p);
