@@ -301,7 +301,8 @@ final class MundoMasmorras implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public void renascer(PlayerRespawnEvent e) {
         if (!ehNosso(e.getPlayer().getWorld()) || normal == null) return;
-        if (e.isBedSpawn() || e.isAnchorSpawn()) return;
+        // 15/11 (Paulo: "eles nao tem relacao"): cama/ancora de OUTRO mundo nao vale aqui; morreu nas masmorras, volta no lobby delas
+        if ((e.isBedSpawn() || e.isAnchorSpawn()) && e.getRespawnLocation().getWorld() != null && ehNosso(e.getRespawnLocation().getWorld())) return;
         e.setRespawnLocation(spawnLobby());
     }
 

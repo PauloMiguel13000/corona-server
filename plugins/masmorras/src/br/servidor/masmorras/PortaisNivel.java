@@ -163,11 +163,15 @@ final class PortaisNivel implements Listener {
 
     /** Para onde o portal leva: perto de uma masmorra daquele nivel; se nao houver, no anel daquele nivel. */
     private Location destino(int nivel) {
-        World w = mm.normal;
-        List<Masmorra> l = new ArrayList<>();
-        for (Masmorra m : pl.todas)
-            if (m.mundo.equals(w.getName()) && m.tipo.nivel == nivel && !m.demolindo && !m.tipo.secreta) l.add(m);
-        if (!l.isEmpty()) {
+        // 15/11: as de nivel 5 ficam no End (e algumas de nivel 4 no Nether): procura nos tres mundos das masmorras,
+        // primeiro no normal. Nunca fora da borda (Paulo morreu na hora: o anel do nivel 5 caia fora do mundo).
+        for (World w : new World[] {mm.normal, mm.nether, mm.end}) {
+            if (w == null) continue;
+            List<Masmorra> l = new ArrayList<>();
+            for (Masmorra m : pl.todas)
+                if (m.mundo.equals(w.getName()) && m.tipo.nivel == nivel && !m.demolindo && !m.tipo.secreta
+                        && w.getWorldBorder().isInside(new Location(w, m.saidaX, m.saidaY, m.saidaZ))) l.add(m);
+            if (l.isEmpty()) continue;
             Masmorra m = l.get(ThreadLocalRandom.current().nextInt(l.size()));
             Location d = Loja.lugarPerto(w, m.saidaX, m.saidaY, m.saidaZ);
             return d != null ? d : new Location(w, m.saidaX + 0.5, m.saidaY + 1, m.saidaZ + 0.5);
@@ -179,7 +183,8 @@ final class PortaisNivel implements Listener {
     private Location noAnel(int nivel) {
         World w = mm.normal;
         int[] z = mm.zonas();
-        int borda = pl.borda(Tipo.Onde.NORMAL);
+        // a borda da config e o LADO do quadrado: o raio e a metade, com folga para nao nascer colado nela
+        int borda = Math.max(z[2] + 200, pl.borda(Tipo.Onde.NORMAL) / 2 - 150);
         double r = switch (nivel) {
             case 2 -> (z[0] + z[1]) / 2.0;
             case 3 -> (z[1] + z[2]) / 2.0;
