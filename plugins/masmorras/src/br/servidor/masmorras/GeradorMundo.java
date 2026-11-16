@@ -407,6 +407,6 @@ final class GeradorMundo extends ChunkGenerator {
 
     @Override
     public Location getFixedSpawnLocation(World world, Random random) {
-        return new Location(world, 0.5, LOBBY_Y + 1, 0.5, 180f, 0f);
+        return new Location(world, 0.5, LOBBY_Y + 1, 3.5, 0f, 0f);
     }
 }

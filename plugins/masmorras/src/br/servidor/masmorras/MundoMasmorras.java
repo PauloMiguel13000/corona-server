@@ -76,7 +76,7 @@ final class MundoMasmorras implements Listener {
             return;
         }
         regras(normal);
-        normal.setSpawnLocation(new Location(normal, 0.5, GeradorMundo.LOBBY_Y + 1, 0.5, 180f, 0f));
+        normal.setSpawnLocation(new Location(normal, 0.5, GeradorMundo.LOBBY_Y + 1, 3.5, 0f, 0f));
         pl.getLogger().info("Mundo das Masmorras pronto: " + normal.getName() + " (zonas " + zonas()[0] + "/" + zonas()[1] + "/" + zonas()[2] + ").");
         if (pl.getConfig().getBoolean("mundo-novo.nether-end", true)) {
             nether = new WorldCreator(pl.getConfig().getString("mundos.nether", "masmorras_nether")).environment(World.Environment.NETHER)
@@ -123,8 +123,22 @@ final class MundoMasmorras implements Listener {
         return w.equals(normal) || w.equals(nether) || w.equals(end);
     }
 
+    /**
+     * 15/11 (Paulo: "os players estao spawnando dentro da cachoeira do spawn da masmorra"): o ponto era o meio da
+     * fonte. Agora e o primeiro lugar LIVRE em volta dela (chao firme, dois blocos de ar, sem agua), de costas para a fonte.
+     */
     Location spawnLobby() {
-        return new Location(normal, 0.5, GeradorMundo.LOBBY_Y + 1, 0.5, 180f, 0f);
+        int y = GeradorMundo.LOBBY_Y;
+        for (int r = 3; r <= 10; r++)
+            for (int[] d : new int[][] {{0, r}, {0, -r}, {r, 0}, {-r, 0}, {r, r}, {-r, -r}, {r, -r}, {-r, r}}) {
+                Block chao = normal.getBlockAt(d[0], y, d[1]);
+                Block pe = chao.getRelative(0, 1, 0), cabeca = chao.getRelative(0, 2, 0);
+                if (chao.getType().isSolid() && pe.getType().isAir() && cabeca.getType().isAir()) {
+                    float yaw = (float) Math.toDegrees(Math.atan2(-d[0], d[1]));
+                    return new Location(normal, d[0] + 0.5, y + 1, d[1] + 0.5, yaw, 0f);
+                }
+            }
+        return new Location(normal, 0.5, y + 1, 3.5, 0f, 0f);
     }
 
     private boolean livre(Player p) {
