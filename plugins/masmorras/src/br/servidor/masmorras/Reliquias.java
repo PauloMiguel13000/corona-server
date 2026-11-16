@@ -228,10 +228,17 @@ final class Reliquias implements Listener {
         try {
             ItemMeta m = it.getItemMeta();
             if (m == null) return it;
+            boolean tinhaMaldicao = false;
+            for (org.bukkit.enchantments.Enchantment en : new ArrayList<>(m.getEnchants().keySet()))
+                if (en.isCursed()) {
+                    m.removeEnchant(en);
+                    tinhaMaldicao = true;
+                }
             Uso tipo = uso(it.getType());
             m.customName(Masmorras.txt(tm.cor() + "§l" + peca + " " + tm.de()));
             List<net.kyori.adventure.text.Component> lore = new ArrayList<>();
             lore.add(Masmorras.txt("§8Relíquia: " + (t.secreta ? "???" : t.nome) + " §8• Nível " + (t.secreta ? "?" : String.valueOf(t.nivel))));
+            if (t.secreta && tipo == Uso.ARMADURA) lore.add(Masmorras.txt(AMALDICOADA));
             lore.add(Masmorras.txt(""));
             if (tipo == Uso.ARMADURA) {
                 lore.add(Masmorras.txt(tm.cor() + "» " + tm.passivoNome() + ": §7" + tm.passivoDesc()));
@@ -367,11 +374,43 @@ final class Reliquias implements Listener {
      * armadura/espada do tema (o Geyser casa o item pelo item_model) e o Java ganhar o icone proprio.
      */
     @SuppressWarnings("UnstableApiUsage")
+    /**
+     * 15/11 (Paulo: "tire essa maldicao da uniao das roupas do herobrine... pode chamar de roupa amaldicoada pelo
+     * herobrine"): os baus da masmorra usam a tabela do jogo, que as vezes poe Maldicao da Uniao/do Desaparecimento.
+     * Reliquia nenhuma fica com maldicao de verdade; a do Herobrine ganha so o NOME de amaldicoada, na descricao.
+     */
+    static final String AMALDICOADA = "§4§oRoupa amaldiçoada por Herobrine";
+
+    static boolean semMaldicao(ItemStack it, String tema) {
+        ItemMeta m = it.getItemMeta();
+        if (m == null) return false;
+        boolean mudou = false;
+        for (org.bukkit.enchantments.Enchantment en : new ArrayList<>(m.getEnchants().keySet()))
+            if (en.isCursed()) {
+                m.removeEnchant(en);
+                mudou = true;
+            }
+        if (mudou) {
+            boolean hero = tema.equalsIgnoreCase("SECRETA") || tema.equalsIgnoreCase("herobrine");
+            if (hero && uso(it.getType()) == Uso.ARMADURA) {
+                List<net.kyori.adventure.text.Component> lore = m.lore() == null ? new ArrayList<>() : new ArrayList<>(m.lore());
+                lore.add(Math.min(1, lore.size()), Masmorras.txt(AMALDICOADA));
+                m.lore(lore);
+            }
+            it.setItemMeta(m);
+        }
+        return mudou;
+    }
+
     boolean atualizar(ItemStack it) {
         if (it == null || it.getType().isAir() || !it.hasItemMeta()) return false;
         String tema = de(it);
         if (tema == null) tema = it.getItemMeta().getPersistentDataContainer().get(new NamespacedKey(pl, "cosmetico"), PersistentDataType.STRING);
         if (tema == null) return false;
+        if (semMaldicao(it, tema)) {
+            atualizar(it);
+            return true;
+        }
         String n = it.getType().name();
         boolean armadura = n.endsWith("_HELMET") || n.endsWith("_CHESTPLATE") || n.endsWith("_LEGGINGS") || n.endsWith("_BOOTS");
         if (!armadura && modelo(n) == null && !(tema.equalsIgnoreCase("herobrine") && pecaHerobrine(n) != null)) return false;

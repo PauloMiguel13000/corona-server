@@ -61,6 +61,8 @@ final class InfernoHerobrine implements Listener {
     private double limite;
     private boolean saindo;
     private final Map<UUID, Location> volta = new HashMap<>();
+    /** Onde cada um estava na ULTIMA fase que acabou: quem estava morto na hora da volta renasce la, nao no lobby. */
+    private final Map<UUID, Location> voltaAntiga = new HashMap<>();
     /** O Herobrine que aparece no mundo dele: um corpo (invisivel) + o boneco com a cara dele. O chefe de verdade
      *  fica parado e escondido na arena; todo golpe no corpo vai para ele (mesma vida, mesmo premio, mesma forca). */
     private LivingEntity corpo;
@@ -313,11 +315,15 @@ final class InfernoHerobrine implements Listener {
         // barra de vida para quem esta la
         c.barra.progress((float) Math.max(0, Math.min(1, c.e.getHealth() / c.vidaMax)));
         for (Player p : ps) if (!c.vendo.contains(p)) { p.showBossBar(c.barra); c.vendo.add(p); }
-        if (ps.isEmpty() || agora >= fim) {
+        // quem morreu e ainda nao renasceu continua contando: ele renasce na ilha e a luta segue (antes a fase acabava na hora)
+        boolean alguemMorto = false;
+        for (Player p : inf.getPlayers()) if (p.isDead() && volta.containsKey(p.getUniqueId())) alguemMorto = true;
+        if ((ps.isEmpty() && !alguemMorto) || agora >= fim) {
             pl.getLogger().info("Mundo de Herobrine: fim da fase (" + (ps.isEmpty() ? "ninguem la" : "tempo") + ").");
             voltar();
             return;
         }
+        if (ps.isEmpty()) return;
         // ele persegue o mais perto
         Player alvo = null;
         double melhor = Double.MAX_VALUE;
@@ -461,6 +467,8 @@ final class InfernoHerobrine implements Listener {
                     }
                 }
             }
+            voltaAntiga.clear();
+            voltaAntiga.putAll(volta);
             volta.clear();
             chefe = null;
             saindo = false;
@@ -533,7 +541,14 @@ final class InfernoHerobrine implements Listener {
     public void renasceu(PlayerRespawnEvent ev) {
         Player p = ev.getPlayer();
         if (!p.getWorld().getName().equals(MUNDO) && (ev.getRespawnLocation().getWorld() == null || !ev.getRespawnLocation().getWorld().getName().equals(MUNDO))) return;
+        // 15/11 (Paulo: voltou sozinho para a arena e nao conseguiu mais lutar): quem morre com a fase ainda rolando
+        // renasce NA ILHA, junto da luta; so volta para a arena quando a fase acaba (ou se ela ja acabou).
+        if (chefe != null && !saindo && w != null && corpo != null && corpo.isValid() && volta.containsKey(p.getUniqueId())) {
+            ev.setRespawnLocation(new Location(w, 0.5, Y + 1, 8.5, 180, 0));
+            return;
+        }
         Location dest = volta.get(p.getUniqueId());
+        if (dest == null) dest = voltaAntiga.get(p.getUniqueId());
         if (dest != null && dest.getWorld() != null) ev.setRespawnLocation(dest);
         else Bukkit.getScheduler().runTaskLater(pl, () -> { if (p.isOnline() && p.getWorld().getName().equals(MUNDO)) pl.irParaSpawnMasmorras(p); }, 5L);
     }
