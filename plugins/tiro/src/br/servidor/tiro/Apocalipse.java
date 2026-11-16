@@ -491,6 +491,39 @@ final class Apocalipse implements Listener {
         return Zumbis.Tipo.COMUM;
     }
 
+    private boolean sangueAvisada;
+
+    boolean noiteDeSangue() {
+        if (mundo == null) return false;
+        long t = mundo.getTime();
+        return t > 12800 && t < 23200 && (mundo.getFullTime() / 24000) % 4 == 3;
+    }
+
+    /** Dentro de um terreno marcado (GriefPrevention) em que o jogador pode construir: seguro, menos na Noite de Sangue. */
+    boolean seguroNoTerreno(Player p) {
+        if (mundo == null || p.getWorld() != mundo || noiteDeSangue()) return false;
+        try {
+            me.ryanhamshire.GriefPrevention.Claim c = me.ryanhamshire.GriefPrevention.GriefPrevention.instance.dataStore.getClaimAt(p.getLocation(), false, null);
+            return c != null && (p.getUniqueId().equals(c.getOwnerID()) || c.allowBuild(p, Material.STONE) == null);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void terrenoProtege(org.bukkit.event.entity.EntityDamageByEntityEvent e) {
+        if (mundo == null || !(e.getEntity() instanceof Player p) || p.getWorld() != mundo) return;
+        org.bukkit.entity.Entity d = e.getDamager();
+        if (d instanceof org.bukkit.entity.Projectile pr && pr.getShooter() instanceof org.bukkit.entity.Entity at) d = at;
+        if (pl.zumbis.tipo(d) != null && seguroNoTerreno(p)) e.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void terrenoSemAlvo(org.bukkit.event.entity.EntityTargetLivingEntityEvent e) {
+        if (mundo == null || !(e.getTarget() instanceof Player p) || p.getWorld() != mundo || pl.zumbis.tipo(e.getEntity()) == null) return;
+        if (seguroNoTerreno(p)) e.setCancelled(true);
+    }
+
     private void ciclo() {
         if (mundo == null) return;
         List<Player> ps = new ArrayList<>();
@@ -504,6 +537,28 @@ final class Apocalipse implements Listener {
         }
         if (ps.isEmpty()) return;
         boolean noite = mundo.getTime() > 12800 && mundo.getTime() < 23200;
+        // 15/11 (Paulo): Noite de Sangue (1 em cada 4 noites): so nela os infectados atacam dentro de terreno marcado e quebram portas
+        boolean sangue = noiteDeSangue();
+        if (sangue != sangueAvisada) {
+            sangueAvisada = sangue;
+            for (Player p : ps) {
+                if (sangue) {
+                    p.showTitle(Title.title(Tiro.txt("§4§l☾ NOITE DE SANGUE ☽"), Tiro.txt("§cHoje o seu terreno NÃO segura os infectados")));
+                    p.sendMessage(PREFIXO + "§4§lNoite de Sangue! §7Até amanhecer os infectados §catacam dentro dos terrenos§7 e §cquebram portas§7.");
+                    p.playSound(p.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.5f, 0.6f);
+                } else p.sendMessage(PREFIXO + "§aA Noite de Sangue acabou. §7Dentro do seu terreno você está seguro de novo.");
+            }
+        }
+        if (sangue) for (Zombie zb : mundo.getEntitiesByClass(Zombie.class)) {
+            if (pl.zumbis.tipo(zb) == null) continue;
+            Block base = zb.getLocation().getBlock();
+            for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) for (int dy = 0; dy <= 1; dy++) {
+                Block b = base.getRelative(dx, dy, dz);
+                if (!org.bukkit.Tag.DOORS.isTagged(b.getType()) || noAbrigo(b.getLocation())) continue;
+                b.setType(Material.AIR, true);
+                mundo.playSound(b.getLocation(), Sound.ENTITY_ZOMBIE_BREAK_WOODEN_DOOR, 1f, 0.9f);
+            }
+        }
         for (Player p : ps) {
             Location l = p.getLocation();
             int z = zona(l);

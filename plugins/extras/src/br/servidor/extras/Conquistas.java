@@ -74,13 +74,24 @@ final class Conquistas implements Listener {
         this.pl = pl;
         // a cada 2 minutos avisa quem completou alguma meta e ainda nao pegou o premio
         Bukkit.getScheduler().runTaskTimer(pl, () -> {
+            // 15/11 (Paulo: "quando entro toca um som extremamente alto e aparecem essas mensagens"): cada conquista era avisada
+            // de novo a cada reinicio, uma linha e um som por conquista. Agora: uma linha so, som baixo, e avisa cada uma UMA vez.
             for (Player p : Bukkit.getOnlinePlayers()) {
+                int novas = 0, coronas = 0;
+                String ultima = "";
                 for (Meta m : METAS) {
                     if (pego(p, m) || m.leitor().ler(p) < m.alvo()) continue;
-                    if (!avisados.add(p.getUniqueId() + m.id())) continue;
-                    p.sendMessage(Extras.txt("§6🏆 Conquista completa: §e" + m.nome() + " §7— pegue §6" + m.premio() + " coronas §7em §e/conquistas"));
-                    p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.6f, 1.2f);
+                    NamespacedKey av = new NamespacedKey(pl, "conq_av_" + m.id());
+                    if (p.getPersistentDataContainer().has(av, PersistentDataType.BYTE)) continue;
+                    p.getPersistentDataContainer().set(av, PersistentDataType.BYTE, (byte) 1);
+                    novas++;
+                    coronas += m.premio();
+                    ultima = m.nome();
                 }
+                if (novas == 0) continue;
+                p.sendMessage(Extras.txt(novas == 1 ? "§6🏆 Conquista completa: §e" + ultima + " §7— pegue §6" + coronas + " coronas §7em §e/conquistas"
+                        : "§6🏆 Você tem §e" + novas + " conquistas §6prontas (§e" + coronas + " coronas§6): pegue em §e/conquistas"));
+                p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.35f, 1.1f);
             }
         }, 20L * 60, 20L * 120);
     }
