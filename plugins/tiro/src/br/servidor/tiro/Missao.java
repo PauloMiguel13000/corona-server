@@ -94,6 +94,163 @@ final class Missao implements Listener {
     private final Map<UUID, Integer> socorro = new HashMap<>();
     static final int SANGRA_S = 30;
 
+    /*
+     * 16/11 (Warface: "torreta de defesa cujo gerador tem que ser destruido de perto"): no Armazem (setor 2) uma torreta
+     * no fundo varre o corredor com rajadas. Bala nao a derruba: alguem tem que chegar no GERADOR (parede esquerda, meio
+     * do setor) e ficar agachado do lado 3 s (engenheiro: 1 s) para sabotar. O portao so abre com a torreta morta.
+     */
+    static final int SETOR_TORRETA = 1;
+    private boolean torretaViva;
+    private int sabotagem, torretaRajada;
+    private long torretaProximo, torretaMira;
+
+    private Location bocaTorreta() {
+        return new Location(mundo, 0.5, Y + 4.5, z1(SETOR_TORRETA) - 3 + 0.5);
+    }
+
+    private Location gerador() {
+        return new Location(mundo, -LARG + 1 + 0.5, Y + 1, z0(SETOR_TORRETA) + 20 + 0.5);
+    }
+
+    private void montarTorreta() {
+        int tz = z1(SETOR_TORRETA) - 3;
+        caixa(-2, Y + 1, tz - 2, 2, Y + 6, tz + 2, Material.AIR);
+        caixa(-1, Y + 1, tz - 1, 1, Y + 1, tz + 1, Material.POLISHED_BLACKSTONE_BRICKS);
+        caixa(0, Y + 2, tz, 0, Y + 3, tz, Material.POLISHED_BASALT);
+        b(0, Y + 4, tz, Material.DISPENSER);
+        if (mundo.getBlockAt(0, Y + 4, tz).getBlockData() instanceof org.bukkit.block.data.Directional d) {
+            d.setFacing(org.bukkit.block.BlockFace.NORTH);
+            mundo.getBlockAt(0, Y + 4, tz).setBlockData(d, false);
+        }
+        b(0, Y + 4, tz - 1, Material.IRON_BARS);
+        b(-1, Y + 4, tz, Material.IRON_TRAPDOOR);
+        b(1, Y + 4, tz, Material.IRON_TRAPDOOR);
+        b(0, Y + 5, tz, Material.LIGHTNING_ROD);
+        // gerador: nucleo de redstone com para-raios, encostado na parede
+        Location g = gerador();
+        int gx = g.getBlockX(), gz = g.getBlockZ();
+        caixa(gx, Y + 1, gz - 2, gx + 2, Y + 4, gz + 2, Material.AIR);
+        caixa(gx, Y + 1, gz - 1, gx, Y + 1, gz + 1, Material.WAXED_OXIDIZED_CUT_COPPER);
+        b(gx, Y + 2, gz, Material.REDSTONE_BLOCK);
+        b(gx, Y + 2, gz - 1, Material.WAXED_COPPER_GRATE);
+        b(gx, Y + 2, gz + 1, Material.WAXED_COPPER_GRATE);
+        b(gx, Y + 3, gz, Material.LIGHTNING_ROD);
+        torretaViva = true;
+        sabotagem = 0;
+        torretaRajada = 0;
+        torretaMira = 0;
+        torretaProximo = System.currentTimeMillis() + 3000;
+    }
+
+    private void destruirTorreta(Player quem) {
+        if (!torretaViva) return;
+        torretaViva = false;
+        int tz = z1(SETOR_TORRETA) - 3;
+        b(0, Y + 4, tz, Material.BLACKSTONE);
+        b(0, Y + 4, tz - 1, Material.AIR);
+        b(0, Y + 5, tz, Material.AIR);
+        b(-1, Y + 4, tz, Material.AIR);
+        b(1, Y + 4, tz, Material.AIR);
+        Location g = gerador();
+        b(g.getBlockX(), Y + 2, g.getBlockZ(), Material.COAL_BLOCK);
+        b(g.getBlockX(), Y + 3, g.getBlockZ(), Material.AIR);
+        for (Location l : new Location[] {bocaTorreta(), g.clone().add(0, 1, 0)}) {
+            mundo.spawnParticle(Particle.EXPLOSION, l, 3, 0.5, 0.5, 0.5, 0);
+            mundo.spawnParticle(Particle.LARGE_SMOKE, l, 25, 0.5, 0.8, 0.5, 0.02);
+            mundo.playSound(l, Sound.ENTITY_GENERIC_EXPLODE, 1.5f, 0.8f);
+        }
+        aviso("§a§lTORRETA DESTRUÍDA", "§7" + (quem != null ? quem.getName() + " sabotou o gerador" : "Caminho livre"), null);
+        if (quem != null) pl.coronas(quem, 10, "por sabotar a torreta na Missão");
+    }
+
+    private void desmontarTorreta() {
+        int tz = z1(SETOR_TORRETA) - 3;
+        caixa(-2, Y + 1, tz - 2, 2, Y + 6, tz + 2, Material.AIR);
+        Location g = gerador();
+        caixa(g.getBlockX(), Y + 1, g.getBlockZ() - 2, g.getBlockX() + 2, Y + 4, g.getBlockZ() + 2, Material.AIR);
+        torretaViva = false;
+    }
+
+    /** A cada segundo: sabotagem do gerador e a faisca que mostra onde ele esta. */
+    private void geradorSegundo() {
+        if (!torretaViva) return;
+        Location g = gerador().add(0, 1.5, 0);
+        mundo.spawnParticle(Particle.ELECTRIC_SPARK, g, 12, 0.4, 0.6, 0.4, 0.05);
+        if (tempo % 2 == 0) mundo.playSound(g, Sound.BLOCK_BEACON_AMBIENT, 1f, 1.6f);
+        Player quem = null;
+        for (Player p : vivos()) if (p.isSneaking() && p.getLocation().distanceSquared(gerador()) <= 6.5) {
+            quem = p;
+            if (classe.getOrDefault(p.getUniqueId(), 0) == 2) break;
+        }
+        if (quem == null) {
+            sabotagem = 0;
+            return;
+        }
+        int precisa = classe.getOrDefault(quem.getUniqueId(), 0) == 2 ? 1 : 3;
+        sabotagem++;
+        quem.sendActionBar(Tiro.txt("§eSabotando o gerador " + "█".repeat(sabotagem) + "§8" + "█".repeat(Math.max(0, precisa - sabotagem))));
+        mundo.playSound(g, Sound.BLOCK_ANVIL_USE, 0.6f, 1.8f);
+        if (sabotagem >= precisa) destruirTorreta(quem);
+    }
+
+    /** A torreta mira (laser vermelho) e solta uma rajada em quem ela ve. Chamado pela IA (a cada 4 ticks). */
+    private void torretaIa(List<Player> alvos, long agora) {
+        if (!torretaViva) return;
+        Location boca = bocaTorreta();
+        Player alvo = null;
+        double dm = 34 * 34;
+        for (Player p : alvos) {
+            double d = p.getEyeLocation().distanceSquared(boca);
+            if (d > dm) continue;
+            Vector v = p.getEyeLocation().toVector().subtract(boca.toVector());
+            var hit = mundo.rayTraceBlocks(boca.clone().add(v.clone().normalize().multiply(1.2)), v, Math.sqrt(d) - 1.2, org.bukkit.FluidCollisionMode.NEVER, true);
+            if (hit != null && hit.getHitBlock() != null) continue;   // atras de cobertura
+            dm = d;
+            alvo = p;
+        }
+        if (alvo == null) {
+            torretaRajada = 0;
+            torretaMira = 0;
+            return;
+        }
+        if (torretaRajada > 0) {
+            torretaRajada--;
+            Vector v = alvo.getEyeLocation().subtract(0, 0.4, 0).toVector().subtract(boca.toVector());
+            boolean acertou = rnd.nextDouble() < (alvo.isSneaking() ? 0.35 : 0.6);
+            Location fim = alvo.getEyeLocation().subtract(0, 0.4, 0);
+            if (!acertou) fim.add(rnd.nextGaussian() * 1.1, rnd.nextGaussian() * 0.7, rnd.nextGaussian() * 1.1);
+            v = fim.toVector().subtract(boca.toVector());
+            double len = v.length();
+            v.normalize();
+            for (double k = 1; k < len; k += 1.6) mundo.spawnParticle(Particle.ELECTRIC_SPARK, boca.clone().add(v.clone().multiply(k)), 1, 0, 0, 0, 0);
+            mundo.playSound(boca, Sound.ENTITY_FIREWORK_ROCKET_BLAST, 0.9f, 0.7f);
+            mundo.playSound(boca, Sound.BLOCK_DISPENSER_LAUNCH, 0.6f, 1.6f);
+            if (acertou) {
+                alvo.setNoDamageTicks(0);
+                feridoEm.put(alvo.getUniqueId(), agora);
+                alvo.damage(2.5 * (1 + 0.12 * setor));
+                alvo.playSound(alvo.getLocation(), Sound.ENTITY_PLAYER_HURT, 0.6f, 1.2f);
+            } else alvo.playSound(fim, Sound.ENTITY_ARROW_SHOOT, 0.35f, 1.9f);
+            if (torretaRajada == 0) torretaProximo = agora + 2200;
+            return;
+        }
+        if (agora < torretaProximo) return;
+        if (torretaMira == 0) {
+            torretaMira = agora + 1100;
+            mundo.playSound(boca, Sound.BLOCK_NOTE_BLOCK_BIT, 1.2f, 0.5f);
+        }
+        // laser de mira
+        Vector v = alvo.getEyeLocation().subtract(0, 0.3, 0).toVector().subtract(boca.toVector());
+        double len = v.length();
+        v.normalize();
+        Particle.DustOptions po = new Particle.DustOptions(Color.RED, 0.6f);
+        for (double k = 1; k < len; k += 0.9) mundo.spawnParticle(Particle.DUST, boca.clone().add(v.clone().multiply(k)), 1, 0, 0, 0, 0, po);
+        if (agora >= torretaMira) {
+            torretaMira = 0;
+            torretaRajada = 6;
+        }
+    }
+
     boolean derrubado(Player p) {
         return derrubados.containsKey(p.getUniqueId());
     }
@@ -352,7 +509,10 @@ final class Missao implements Listener {
             else if (o.equals("refazer")) {
                 construir();
                 s.sendMessage(PREFIXO + "base refeita");
-            } else if (o.equals("setor") && fase == Fase.JOGO) limparSetor();
+            } else if (o.equals("setor") && fase == Fase.JOGO) {
+                limparSetor();
+                destruirTorreta(null);
+            }
             else if (o.equals("ver")) {
                 for (Zombie z : inimigos()) for (Player q : vivos())
                     s.sendMessage(pl.zumbis.tipo(z) + " d=" + (int) z.getLocation().distance(q.getLocation()) + " ve=" + z.hasLineOfSight(q) + " z=" + (int) z.getLocation().getZ()
@@ -410,6 +570,7 @@ final class Missao implements Listener {
             p.sendMessage(PREFIXO + "§fClasse: " + CLASSE_NOME[classe.getOrDefault(p.getUniqueId(), 0)] + "§7. Botão direito atira; esquerdo no ar ou Q recarrega.");
         }
         limpar();
+        desmontarTorreta();
         for (int s = 0; s < SETORES; s++) portao(s, false);
         fase = Fase.JOGO;
         setor = 0;
@@ -537,6 +698,7 @@ final class Missao implements Listener {
             if (p.getHealth() < max && System.currentTimeMillis() - feridoEm.getOrDefault(p.getUniqueId(), 0L) > 5000) p.setHealth(Math.min(max, p.getHealth() + 2));
         }
         sangrar();
+        geradorSegundo();
         List<Player> vivos = vivos();
         if (time().isEmpty()) {
             acabar(false, "");
@@ -558,11 +720,18 @@ final class Missao implements Listener {
                 setorAtivo = true;
                 reforcoVeio = false;
                 povoar(setor, false);
+                if (setor == SETOR_TORRETA) {
+                    montarTorreta();
+                    aviso("§c§lTORRETA!", "§7Bala não derruba. §eSabote o gerador §7(agachado do lado, parede esquerda)", Sound.BLOCK_BEACON_ACTIVATE);
+                    for (Player p : time()) p.sendMessage(PREFIXO + "§cTorreta no fundo do Armazém! §fAche o §egerador§f (faíscas, parede esquerda) e fique §eagachado§f do lado 3 s. §7Engenheiro sabota em 1 s.");
+                }
             }
         } else if (ini.size() <= 2 && !reforcoVeio) {
             reforcoVeio = true;
             povoar(setor, true);
             aviso("§e§lREFORÇOS!", "§7Mais soldados chegando pelo fundo", Sound.BLOCK_BELL_USE);
+        } else if (ini.isEmpty() && torretaViva) {
+            if (tempo % 6 == 0) for (Player p : time()) p.sendActionBar(Tiro.txt("§eO portão só abre sem a torreta: §fsabote o gerador §7(parede esquerda)"));
         } else if (ini.isEmpty()) {
             setorAtivo = false;
             if (setor == SETORES - 1) {
@@ -611,6 +780,7 @@ final class Missao implements Listener {
         }
         derrubados.clear();
         socorro.clear();
+        desmontarTorreta();
         limpar();
     }
 
@@ -622,6 +792,7 @@ final class Missao implements Listener {
         List<Player> alvos = vivos();
         if (alvos.isEmpty()) return;
         long agora = System.currentTimeMillis();
+        torretaIa(alvos, agora);
         for (Zombie z : inimigos()) {
             Zumbis.Tipo t = pl.zumbis.tipo(z);
             Perfil pf = PERFIS.get(t);
@@ -736,7 +907,9 @@ final class Missao implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void semAlvoProprio(EntityTargetLivingEntityEvent e) {
-        if (mundo != null && e.getEntity().getWorld() == mundo && PERFIS.containsKey(pl.zumbis.tipo(e.getEntity()))) e.setCancelled(true);
+        if (mundo == null || e.getEntity().getWorld() != mundo) return;
+        Zumbis.Tipo t = pl.zumbis.tipo(e.getEntity());
+        if (t != null && PERFIS.containsKey(t)) e.setCancelled(true);
     }
 
     /** Soldado nao da soco. Escudo e blindados so tomam dano de verdade de lado ou pelas costas. */
