@@ -264,7 +264,10 @@ final class Trilha implements Listener {
 
     @EventHandler
     public void trocouDeMundo(PlayerChangedWorldEvent e) {
-        calar(e.getPlayer());
+        // 16/11: so a faixa que estava tocando. O calar() manda ~150 "StopSound" (um por faixa), e isso a cada troca
+        // de mundo pesava para quem joga no Bedrock (era o pacote mais mandado logo depois de entrar ou trocar de jogo).
+        String a = tocando.get(e.getPlayer().getUniqueId());
+        if (a != null) parar(e.getPlayer(), a);
     }
 
     @EventHandler
