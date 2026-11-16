@@ -60,8 +60,8 @@ import org.bukkit.util.Vector;
 final class Missao implements Listener {
 
     static final String PREFIXO = "§8[§c§lMissão§8] §7";
-    static final int Y = 64, SETORES = 5, COMP = 40, LARG = 12, MAPA = 2;
-    static final String[] NOMES = {"Pátio de Carga", "Armazém", "Rua dos Contêineres", "Laboratório", "Heliporto"};
+    static final int Y = 64, SETORES = 5, COMP = 40, LARG = 12, MAPA = 3;
+    static final String[] NOMES = {"Entrada da Favela", "Becos", "Campo de Terra", "Galpão da Milícia", "Topo do Morro"};
     static final String[] CLASSES = {"fuzileiro", "medico", "engenheiro", "atirador"};
     static final String[] CLASSE_NOME = {"§aFuzileiro", "§dMédico", "§eEngenheiro", "§bAtirador"};
 
@@ -451,8 +451,8 @@ final class Missao implements Listener {
         if (mundo == null) return;
         Tiro.regrasDeLobby(mundo);
         mundo.setDifficulty(org.bukkit.Difficulty.NORMAL);
-        mundo.setTime(13500);
-        for (int cx = -3; cx <= 2; cx++) for (int cz = -3; cz <= (SETORES * COMP + 30) / 16; cz++) mundo.addPluginChunkTicket(cx, cz, pl);
+        mundo.setTime(4500);   // 16/11: mapa Favela, de dia
+        for (int cx = -4; cx <= 3; cx++) for (int cz = -3; cz <= (SETORES * COMP + 30) / 16; cz++) mundo.addPluginChunkTicket(cx, cz, pl);
         if (pl.getConfig().getInt("missao-mapa", 0) != MAPA) {
             construir();
             pl.getConfig().set("missao-mapa", MAPA);
@@ -506,86 +506,348 @@ final class Missao implements Listener {
         for (int x = -1; x <= 1; x++) for (int y = 1; y <= 3; y++) for (int dz = 0; dz <= 1; dz++) b(x, Y + y, z + dz, aberto ? Material.AIR : Material.IRON_BARS);
     }
 
+// ---------------------------------------------------------------- 16/11: mapa "Favela" (Paulo mandou fotos do mapa
+    // Favela do Warface): ruas de asfalto rachado, casas de tijolo e reboco colorido empilhadas no morro, lajes com caixa
+    // d'agua, varais, postes com fios, palmeiras, campo de terra com traves, galpao e o heliponto no alto, com serras no fundo.
+
+    private static final Material[] PAREDES = {Material.BRICKS, Material.BRICKS, Material.BRICKS, Material.TERRACOTTA, Material.WHITE_TERRACOTTA,
+            Material.LIGHT_BLUE_TERRACOTTA, Material.YELLOW_TERRACOTTA, Material.LIME_TERRACOTTA, Material.PINK_TERRACOTTA, Material.CYAN_TERRACOTTA,
+            Material.LIGHT_GRAY_TERRACOTTA, Material.ORANGE_TERRACOTTA};
+
+    private void bd(int x, int y, int z, org.bukkit.block.data.BlockData d) {
+        mundo.getBlockAt(x, y, z).setBlockData(d, false);
+    }
+
+    /** Grade/cerca/barra de ferro ligada nos lados pedidos (sem fisica elas viram so um poste). */
+    private void ligado(int x, int y, int z, Material m, boolean norteSul, boolean lesteOeste) {
+        org.bukkit.block.data.BlockData d = Bukkit.createBlockData(m);
+        if (d instanceof org.bukkit.block.data.MultipleFacing f) {
+            if (norteSul) {
+                f.setFace(org.bukkit.block.BlockFace.NORTH, true);
+                f.setFace(org.bukkit.block.BlockFace.SOUTH, true);
+            }
+            if (lesteOeste) {
+                f.setFace(org.bukkit.block.BlockFace.EAST, true);
+                f.setFace(org.bukkit.block.BlockFace.WEST, true);
+            }
+        }
+        bd(x, y, z, d);
+    }
+
+    private void fio(int x, int y, int z, org.bukkit.Axis eixo) {
+        org.bukkit.block.data.BlockData d = Bukkit.createBlockData(Material.IRON_CHAIN);
+        if (d instanceof org.bukkit.block.data.Orientable o) o.setAxis(eixo);
+        bd(x, y, z, d);
+    }
+
+    private void folha(int x, int y, int z) {
+        org.bukkit.block.data.BlockData d = Bukkit.createBlockData(Material.JUNGLE_LEAVES);
+        if (d instanceof org.bukkit.block.data.type.Leaves l) l.setPersistent(true);
+        if (mundo.getBlockAt(x, y, z).getType().isAir()) bd(x, y, z, d);
+    }
+
+    private void palmeira(int x, int y, int z, Random r) {
+        int h = 6 + r.nextInt(4), dx = 0, dz = 0;
+        for (int k = 0; k < h; k++) {
+            if (k == h / 2) {
+                dx = r.nextInt(3) - 1;
+                dz = r.nextInt(3) - 1;
+            }
+            b(x + (k >= h / 2 ? dx : 0), y + k, z + (k >= h / 2 ? dz : 0), Material.JUNGLE_LOG);
+        }
+        int tx = x + dx, ty = y + h, tz = z + dz;
+        folha(tx, ty, tz);
+        for (int[] d : new int[][] {{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
+            folha(tx + d[0], ty, tz + d[1]);
+            folha(tx + 2 * d[0], ty, tz + 2 * d[1]);
+            folha(tx + 3 * d[0], ty - 1, tz + 3 * d[1]);
+        }
+        for (int[] d : new int[][] {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}}) {
+            folha(tx + d[0], ty, tz + d[1]);
+            folha(tx + 2 * d[0], ty - 1, tz + 2 * d[1]);
+        }
+    }
+
+    /**
+     * Casa de favela: paredes de tijolo ou reboco, uma faixa de concreto em cada laje, janelas escuras, laje no alto
+     * (as vezes com caixa d'agua azul, ferro de obra aparecendo ou telhado de zinco). oca = so a casca.
+     */
+    private void casa(int x1, int z1, int x2, int z2, int base, int andares, Random r, boolean oca) {
+        Material par = PAREDES[r.nextInt(PAREDES.length)];
+        boolean obra = par == Material.BRICKS && r.nextBoolean();
+        int topo = base + andares * 4;
+        int ax = Math.min(x1, x2), bx = Math.max(x1, x2), az = Math.min(z1, z2), bz = Math.max(z1, z2);
+        for (int x = ax; x <= bx; x++)
+            for (int z = az; z <= bz; z++) {
+                boolean borda = x == ax || x == bx || z == az || z == bz;
+                if (!borda && oca) continue;
+                for (int y = base + 1; y <= topo; y++) {
+                    int dy = (y - base - 1) % 4;
+                    Material m = par;
+                    if (dy == 3) m = Material.SMOOTH_STONE;                              // viga/laje
+                    else if (obra && borda && ((x - ax) % 4 == 0 || (z - az) % 4 == 0)) m = Material.LIGHT_GRAY_CONCRETE;   // pilar
+                    else if (borda && dy == 1 && (x + z) % 3 == 0 && !(x == ax && z == az) && !(x == bx && z == bz)) m = r.nextInt(5) == 0 ? Material.GLASS : Material.BLACK_STAINED_GLASS;
+                    b(x, y, z, m);
+                }
+            }
+        // laje
+        for (int x = ax; x <= bx; x++) for (int z = az; z <= bz; z++) b(x, topo + 1, z, x == ax || x == bx || z == az || z == bz ? Material.SMOOTH_STONE_SLAB : Material.AIR);
+        int enfeite = r.nextInt(4);
+        if (enfeite == 0 && bx - ax >= 3 && bz - az >= 3) caixa(ax + 1, topo + 1, az + 1, ax + 2, topo + 2, az + 2, r.nextBoolean() ? Material.LIGHT_BLUE_CONCRETE : Material.BLUE_CONCRETE);
+        else if (enfeite == 1) for (int[] c : new int[][] {{ax, az}, {bx, bz}}) caixa(c[0], topo + 1, c[1], c[0], topo + 2, c[1], Material.IRON_BARS);
+        else if (enfeite == 2) caixa(ax, topo + 1, az, bx, topo + 1, bz, r.nextBoolean() ? Material.WAXED_EXPOSED_CUT_COPPER_SLAB : Material.WAXED_WEATHERED_CUT_COPPER_SLAB);
+        if (r.nextInt(6) == 0) caixa(bx, topo + 1, bz, bx, topo + 3, bz, Material.LIGHTNING_ROD);   // antena
+    }
+
+    /** Morro do fundo: so a "pele" (3 camadas) de grama, terra e pedra, com mato e palmeira de vez em quando. */
+    private void morro(int x, int z, int altura, Random r) {
+        for (int y = altura - 3; y <= altura; y++) b(x, y, z, y == altura ? (r.nextInt(7) == 0 ? Material.STONE : Material.GRASS_BLOCK) : y >= altura - 1 ? Material.DIRT : Material.STONE);
+        int k = r.nextInt(40);
+        if (k == 0) palmeira(x, altura + 1, z, r);
+        else if (k < 3) folha(x, altura + 1, z);
+        else if (k < 12) b(x, altura + 1, z, Material.SHORT_GRASS);
+    }
+
+    private void carro(int x, int z, boolean deLado, Material cor, boolean queimado) {
+        int lx = deLado ? 3 : 1, lz = deLado ? 1 : 3;
+        caixa(x, Y + 1, z, x + lx, Y + 1, z + lz, queimado ? Material.BLACKSTONE : cor);
+        int cx = x + (deLado ? 1 : 0), cz = z + (deLado ? 0 : 1);
+        caixa(cx, Y + 2, cz, cx + (deLado ? 1 : 1), Y + 2, cz + (deLado ? 1 : 1), queimado ? Material.COAL_BLOCK : Material.GRAY_STAINED_GLASS);
+        if (queimado) b(cx, Y + 3, cz, Material.CAMPFIRE);
+    }
+
+    private void poste(int x, int z, int h) {
+        caixa(x, Y + 1, z, x, Y + h, z, Material.STRIPPED_DARK_OAK_LOG);
+        b(x, Y + h + 1, z, Material.LIGHTNING_ROD);
+    }
+
+    private void varal(int x1, int x2, int y, int z, Random r) {
+        Material[] roupa = {Material.WHITE_WOOL, Material.LIGHT_BLUE_WOOL, Material.PINK_WOOL, Material.YELLOW_WOOL, Material.RED_WOOL};
+        for (int x = Math.min(x1, x2); x <= Math.max(x1, x2); x++) {
+            fio(x, y, z, org.bukkit.Axis.X);
+            if (r.nextInt(3) == 0 && mundo.getBlockAt(x, y - 1, z).getType().isAir()) b(x, y - 1, z, roupa[r.nextInt(roupa.length)]);
+        }
+    }
+
+    private void sacos(int x, int z, boolean deLado) {
+        if (deLado) {
+            caixa(x, Y + 1, z - 1, x, Y + 1, z + 1, Material.MUD_BRICKS);
+            b(x, Y + 2, z, Material.MUD_BRICK_SLAB);
+        } else {
+            caixa(x - 1, Y + 1, z, x + 1, Y + 1, z, Material.MUD_BRICKS);
+            b(x, Y + 2, z, Material.MUD_BRICK_SLAB);
+        }
+    }
+
     private void construir() {
-        Random r = new Random(15);
-        // sala de espera
+        Random r = new Random(16);
+        // sala de espera (briefing)
         caixa(-6, Y - 1, -36, 6, Y + 8, -24, Material.AIR);
         caixa(-6, Y, -36, 6, Y, -24, Material.POLISHED_DEEPSLATE);
         for (int x = -6; x <= 6; x++) for (int z = -36; z <= -24; z++) if (Math.abs(x) == 6 || z == -36 || z == -24) caixa(x, Y + 1, z, x, Y + 5, z, Material.DEEPSLATE_BRICKS);
         caixa(-6, Y + 6, -36, 6, Y + 6, -24, Material.DEEPSLATE_TILES);
         for (int[] c : new int[][] {{-4, -34}, {4, -34}, {-4, -26}, {4, -26}, {0, -30}}) b(c[0], Y + 6, c[1], Material.SEA_LANTERN);
-        // corredor inteiro: chao, muros e os portoes
         int fim = SETORES * COMP + 4;
+        // limpa o mapa antigo inteiro (o corredor e os muros iam ate x=+-19)
+        for (int z = -14; z <= fim + 1; z++) for (int x = -21; x <= 21; x++) for (int y = Y + 1; y <= Y + 16; y++) b(x, y, z, Material.AIR);
+        // chao de cada setor
         for (int z = -14; z <= fim; z++) {
             int s = Math.max(0, Math.min(SETORES - 1, Math.floorDiv(z, COMP))), L = z < 0 ? 6 : larg(s);
             for (int x = -L - 1; x <= L + 1; x++) {
-                for (int y = Y + 1; y <= Y + 14; y++) b(x, y, z, Material.AIR);
                 b(x, Y - 1, z, Material.DEEPSLATE);
-                boolean muro = Math.abs(x) == L + 1 || z == -14 || z == fim;
+                int ax = Math.abs(x);
                 Material chao = switch (s) {
-                    case 0 -> r.nextInt(7) == 0 ? Material.GRAVEL : Material.GRAY_CONCRETE;
-                    case 1 -> (x + z) % 4 == 0 ? Material.POLISHED_ANDESITE : Material.SMOOTH_STONE;
-                    case 2 -> r.nextInt(9) == 0 ? Material.COARSE_DIRT : Material.GRAY_CONCRETE_POWDER;
-                    case 3 -> (x % 3 == 0 || z % 3 == 0) ? Material.LIGHT_GRAY_CONCRETE : Material.WHITE_CONCRETE;
-                    default -> Math.hypot(x, z - (z0(s) + 20)) < 7 ? (Math.hypot(x, z - (z0(s) + 20)) > 5.6 ? Material.YELLOW_CONCRETE : Material.BLACK_CONCRETE) : Material.GRAY_CONCRETE;
+                    case 0 -> ax <= 4 ? (ax == 0 && Math.floorMod(z, 4) < 2 ? Material.YELLOW_CONCRETE : r.nextInt(6) == 0 ? Material.GRAY_CONCRETE : Material.BLACK_CONCRETE)
+                            : ax == 5 ? Material.STONE_BRICKS : r.nextInt(5) == 0 ? Material.CRACKED_STONE_BRICKS : Material.SMOOTH_STONE;
+                    case 1 -> r.nextInt(4) == 0 ? Material.MUD : r.nextInt(3) == 0 ? Material.COARSE_DIRT : Material.PACKED_MUD;
+                    case 2 -> ax == L - 1 && z > z0(s) + 2 && z < z1(s) - 2 ? Material.WHITE_CONCRETE
+                            : r.nextInt(5) == 0 ? Material.GRASS_BLOCK : r.nextInt(3) == 0 ? Material.COARSE_DIRT : Material.DIRT_PATH;
+                    case 3 -> (x % 4 == 0 || z % 4 == 0) ? Material.SPRUCE_PLANKS : Material.STRIPPED_SPRUCE_WOOD;
+                    default -> Math.hypot(x, z - (z0(s) + 20)) < 7 ? (Math.hypot(x, z - (z0(s) + 20)) > 5.6 ? Material.YELLOW_CONCRETE : Material.GRAY_CONCRETE)
+                            : Math.abs(x) <= 9 && Math.abs(z - (z0(s) + 20)) <= 9 ? Material.LIGHT_GRAY_CONCRETE
+                            : r.nextInt(4) == 0 ? Material.GRASS_BLOCK : r.nextInt(3) == 0 ? Material.ROOTED_DIRT : Material.COARSE_DIRT;
                 };
+                if (z < 0) chao = r.nextInt(5) == 0 ? Material.GRAVEL : Material.BLACK_CONCRETE;
                 b(x, Y, z, chao);
-                if (muro) for (int y = 1; y <= 9; y++) b(x, Y + y, z, y == 9 ? Material.IRON_BARS : (y + z + x) % 7 == 0 ? Material.CRACKED_DEEPSLATE_BRICKS : Material.DEEPSLATE_BRICKS);
             }
-            // parede com portao no comeco de cada setor
-            if (z >= 0 && Math.floorMod(z, COMP) <= 1 && z < SETORES * COMP) {
-                for (int x = -L; x <= L; x++) for (int y = 1; y <= 8; y++) b(x, Y + y, z, y == 5 && Math.abs(x) <= 3 ? Material.RED_CONCRETE : Material.POLISHED_DEEPSLATE);
-            }
+            // poca d'agua na rua de terra (como na foto)
+            if (s == 1 && z > z0(1) + 6 && z < z1(1) - 6 && Math.floorMod(z, 11) < 3) b(r.nextInt(3) - 1, Y, z, Material.WATER);
         }
-        for (int s = 0; s < SETORES; s++) portao(s, false);
-        // cobertura e cara de cada setor
+        // letreiro "H" no heliponto
+        int hz = z0(SETORES - 1) + 20;
+        caixa(-2, Y, hz - 3, -2, Y, hz + 3, Material.WHITE_CONCRETE);
+        caixa(2, Y, hz - 3, 2, Y, hz + 3, Material.WHITE_CONCRETE);
+        caixa(-2, Y, hz, 2, Y, hz, Material.WHITE_CONCRETE);
+        // ---- casas da frente (o "muro" de cada lado e uma fileira de casas de 2 a 3 andares) e a favela subindo o morro
+        for (int lado = -1; lado <= 1; lado += 2) {
+            int z = -14;
+            while (z <= fim) {
+                int s = Math.max(0, Math.min(SETORES - 1, Math.floorDiv(z, COMP))), L = z < 0 ? 6 : larg(s);
+                int w = 4 + r.nextInt(4), ate = Math.min(fim, z + w);
+                int sNo = Math.max(0, Math.min(SETORES - 1, Math.floorDiv(ate, COMP)));
+                if (sNo != s) ate = Math.max(z, sNo * COMP - 1);   // nao atravessa a largura de outro setor
+                if (z < 0) ate = Math.min(ate, -1);
+                int x1 = lado * (L + 1), x2 = lado * (L + 6);
+                casa(x1, z, x2, ate, Y, s == SETORES - 1 ? 1 + r.nextInt(2) : 2 + r.nextInt(2), r, false);
+                // varanda virada para a rua
+                if (r.nextInt(3) == 0 && ate - z >= 3) {
+                    for (int zz = z + 1; zz <= ate - 1; zz++) {
+                        b(lado * L, Y + 4, zz, Material.SMOOTH_STONE_SLAB);
+                        ligado(lado * L, Y + 5, zz, Material.IRON_BARS, true, false);
+                    }
+                }
+                // barreira invisivel por cima: ninguem sobe nos telhados para sair do mapa
+                for (int zz = z; zz <= ate; zz++) for (int y = Y + 1; y <= Y + 24; y++)
+                    if (mundo.getBlockAt(lado * (L + 1), y, zz).getType().isAir()) b(lado * (L + 1), y, zz, Material.BARRIER);
+                z = ate + 1;
+            }
+            // morro com casinhas em degraus e as serras la atras
+            for (int z2 = -20; z2 <= fim + 6; z2 += 5 + r.nextInt(3)) {
+                int s = Math.max(0, Math.min(SETORES - 1, Math.floorDiv(Math.max(0, z2), COMP))), L = larg(s);
+                for (int faixa = 0; faixa < 5; faixa++) {
+                    int xa = lado * (L + 8 + faixa * 5), base = Y + 6 + faixa * 4 + r.nextInt(2);
+                    for (int x = xa; x != xa + lado * 5; x += lado) for (int zz = z2; zz < z2 + 7; zz++) morro(x, zz, base, r);
+                    if (r.nextInt(5) > 0) casa(xa + lado, z2, xa + lado * (2 + r.nextInt(2)), z2 + 3 + r.nextInt(2), base, 1 + r.nextInt(2), r, true);
+                }
+            }
+            for (int zz = -24; zz <= fim + 12; zz++)
+                for (int k = 0; k < 9; k++) {
+                    int x = lado * (37 + k);
+                    int alt = Y + 30 + (int) (7 * Math.sin(zz / 17.0 + lado) + 5 * Math.sin(zz / 7.3) + k * 1.5);
+                    morro(x, zz, alt, r);
+                }
+        }
+        // serra no fim do mapa (fecha a vista do heliponto) e um morro alto "pao de acucar" ao fundo
+        for (int x = -45; x <= 45; x++)
+            for (int k = 0; k < 8; k++) {
+                int zz = fim + 3 + k;
+                int alt = Y + 22 + (int) (9 * Math.sin(x / 9.0) + k * 2) + (int) Math.max(0, 22 - Math.abs(x - 12) * 1.6);
+                morro(x, zz, alt, r);
+            }
+        // portoes entre setores: muro de tijolo grafitado
+        Material[] grafite = {Material.LIME_CONCRETE, Material.MAGENTA_CONCRETE, Material.ORANGE_CONCRETE, Material.CYAN_CONCRETE, Material.YELLOW_CONCRETE};
         for (int s = 0; s < SETORES; s++) {
-            int L = larg(s), za = z0(s) + 5, zb = z1(s) - 4;
-            if (s == 1 || s == 3) {                                              // setores cobertos, com luz no teto
-                caixa(-L, Y + 9, z0(s), L, Y + 9, z1(s), s == 1 ? Material.SPRUCE_PLANKS : Material.SMOOTH_QUARTZ);
-                for (int z = za; z <= zb; z += 7) for (int x = -L + 3; x <= L - 3; x += 6) b(x, Y + 9, z, Material.SEA_LANTERN);
-            } else {
-                for (int z = za; z <= zb; z += 9) for (int sx = -1; sx <= 1; sx += 2) {
-                    caixa(sx * L, Y + 1, z, sx * L, Y + 6, z, Material.POLISHED_DEEPSLATE_WALL);
-                    b(sx * (L - 1), Y + 6, z, Material.SEA_LANTERN);
-                }
-            }
-            for (int k = 0; k < (s == SETORES - 1 ? 16 : 13); k++) {
-                int x = r.nextInt(2 * L - 3) - L + 2, z = za + r.nextInt(Math.max(1, zb - za));
-                switch (r.nextInt(5)) {
-                    case 0 -> {                                                  // caixotes
-                        caixa(x, Y + 1, z, x + 1, Y + 1, z + 1, Material.BARREL);
-                        b(x, Y + 2, z, r.nextBoolean() ? Material.BARREL : Material.SPRUCE_PLANKS);
+            int L = larg(s);
+            for (int z = s * COMP; z <= s * COMP + 1; z++)
+                for (int x = -L; x <= L; x++) {
+                    for (int y = 1; y <= 8; y++) {
+                        Material m = y == 5 && Math.abs(x) <= 3 ? Material.RED_CONCRETE : r.nextInt(9) == 0 ? Material.CRACKED_STONE_BRICKS : Material.BRICKS;
+                        if (z == s * COMP && y >= 2 && y <= 4 && Math.abs(x) >= 3 && (x * 7 + y * 3) % 5 == 0) m = grafite[Math.floorMod(x + y + s, grafite.length)];
+                        b(x, Y + y, z, m);
                     }
-                    case 1 -> {                                                  // mureta
+                    for (int y = 9; y <= 24; y++) b(x, Y + y, z, Material.BARRIER);
+                }
+        }
+        // fundo do corredor e comeco
+        for (int x = -6; x <= 6; x++) for (int y = 1; y <= 8; y++) b(x, Y + y, -14, Material.BRICKS);
+        for (int x = -18; x <= 18; x++) for (int y = 1; y <= 24; y++) b(x, Y + y, fim, y <= 8 ? Material.BRICKS : Material.BARRIER);
+        for (int s = 0; s < SETORES; s++) portao(s, false);
+        // ---- cada setor
+        for (int s = 0; s < SETORES; s++) {
+            int L = larg(s), za = z0(s) + 3, zb = z1(s) - 3;
+            switch (s) {
+                case 0 -> {   // entrada da favela: rua com carros, postes, fios e barricadas
+                    carro(-3, za + 6, false, Material.YELLOW_CONCRETE, false);
+                    carro(2, za + 17, false, Material.WHITE_CONCRETE, true);
+                    carro(-9, za + 26, true, Material.RED_CONCRETE, false);
+                    for (int z = za + 2; z <= zb; z += 9) {
+                        poste(-L + 1, z, 7);
+                        poste(L - 1, z + 4, 7);
+                        for (int x = -L + 1; x <= L - 1; x++) fio(x, Y + 7, z + (x > 0 ? 4 : 0) + 0, org.bukkit.Axis.X);
+                    }
+                    for (int z = za + 3; z <= zb; z += 8) sacos(r.nextBoolean() ? -7 : 7, z, false);
+                    caixa(6, Y + 1, za + 12, 8, Y + 2, za + 13, Material.GREEN_CONCRETE);   // cacamba de lixo
+                    caixa(-8, Y + 1, za + 20, -7, Y + 1, za + 21, Material.BARREL);
+                    palmeira(-L + 2, Y + 1, za + 15, r);
+                    palmeira(L - 2, Y + 1, za + 30, r);
+                }
+                case 1 -> {   // becos: casas no meio, beco central (a torreta olha por ele) e becos dos lados
+                    for (int[] seg : new int[][] {{za + 1, za + 9}, {za + 21, za + 29}}) {
+                        casa(-10, seg[0], -5, seg[1], Y, 1, r, false);
+                        casa(5, seg[0] + 2, 10, seg[1] - 1, Y, 1 + r.nextInt(2), r, false);
+                    }
+                    for (int z = za + 2; z <= zb; z += 6) varal(-L, -6, Y + 7, z, r);
+                    for (int z = za + 4; z <= zb; z += 7) varal(6, L, Y + 7, z, r);
+                    for (int z = za; z <= zb; z += 3) {   // telhadinho de zinco por cima do beco da esquerda
+                        b(-L, Y + 5, z, Material.WAXED_EXPOSED_CUT_COPPER_SLAB);
+                        b(-L + 1, Y + 5, z, Material.WAXED_EXPOSED_CUT_COPPER_SLAB);
+                    }
+                    for (int z = za + 6; z <= zb; z += 10) sacos(r.nextBoolean() ? -2 : 2, z, false);
+                    caixa(-3, Y + 1, za + 15, -2, Y + 1, za + 15, Material.BARREL);
+                    palmeira(L - 1, Y + 1, za + 12, r);
+                }
+                case 2 -> {   // campo de futebol de terra: traves, alambrado e casas em volta
+                    for (int zg : new int[] {za + 1, zb - 1}) {
+                        caixa(-3, Y + 1, zg, -3, Y + 3, zg, Material.WHITE_CONCRETE);
+                        caixa(3, Y + 1, zg, 3, Y + 3, zg, Material.WHITE_CONCRETE);
+                        caixa(-3, Y + 3, zg, 3, Y + 3, zg, Material.WHITE_CONCRETE);
+                    }
+                    for (int z = za; z <= zb; z++)
+                        if (Math.floorMod(z - za, 12) < 8)
+                            for (int y = 1; y <= 3; y++) {
+                                ligado(-L + 3, Y + y, z, Material.IRON_BARS, true, false);
+                                ligado(L - 3, Y + y, z, Material.IRON_BARS, true, false);
+                            }
+                    carro(-L + 1, za + 4, false, Material.LIGHT_BLUE_CONCRETE, true);
+                    palmeira(L - 1, Y + 1, za + 18, r);
+                    palmeira(-L + 1, Y + 1, za + 22, r);
+                    for (int z = za + 8; z <= zb - 4; z += 9) sacos(r.nextInt(7) - 3, z, false);
+                    caixa(5, Y + 1, za + 14, 6, Y + 2, za + 15, Material.BARREL);
+                    caixa(-6, Y + 1, za + 24, -5, Y + 1, za + 26, Material.SPRUCE_PLANKS);
+                }
+                case 3 -> {   // galpao da milicia: coberto, caixotes de armas, mesas e lampioes
+                    caixa(-L, Y + 9, z0(s), L, Y + 9, z1(s), Material.WAXED_WEATHERED_CUT_COPPER);
+                    for (int z = za; z <= zb; z += 7)
+                        for (int x = -L + 3; x <= L - 3; x += 6) {
+                            b(x, Y + 8, z, Material.IRON_CHAIN);
+                            b(x, Y + 7, z, Material.LANTERN);
+                        }
+                    for (int k = 0; k < 12; k++) {
+                        int x = r.nextInt(2 * L - 3) - L + 2, z = za + 2 + r.nextInt(Math.max(1, zb - za - 4));
                         if (Math.abs(x) < 2) x += 3;
-                        caixa(x - 2, Y + 1, z, x + 2, Y + 1, z, Material.STONE_BRICKS);
-                        b(x - 2, Y + 2, z, Material.STONE_BRICK_SLAB);
-                        b(x + 1, Y + 2, z, Material.STONE_BRICK_SLAB);
+                        switch (r.nextInt(3)) {
+                            case 0 -> caixa(x, Y + 1, z, x + 1, Y + 2, z + 1, Material.GREEN_TERRACOTTA);   // caixote de armas
+                            case 1 -> {
+                                caixa(x, Y + 1, z, x + 2, Y + 1, z, Material.SPRUCE_FENCE);
+                                caixa(x, Y + 2, z, x + 2, Y + 2, z, Material.SPRUCE_SLAB);
+                            }
+                            default -> caixa(x, Y + 1, z, x, Y + 2, z, Material.BARREL);
+                        }
                     }
-                    case 2 -> {                                                  // conteiner
-                        if (Math.abs(x) < 4) x = x < 0 ? -L + 2 : L - 4;
-                        Material c = new Material[] {Material.RED_TERRACOTTA, Material.BLUE_TERRACOTTA, Material.GREEN_TERRACOTTA, Material.ORANGE_TERRACOTTA}[r.nextInt(4)];
-                        caixa(x, Y + 1, z, x + 2, Y + 3, Math.min(zb, z + 5), c);
+                }
+                default -> {   // topo do morro: heliponto, helicoptero caido, bunkers de sacos e tambores
+                    int bz = za + 6, bx = -L + 3;
+                    caixa(bx, Y + 1, bz, bx + 2, Y + 3, bz + 8, Material.GRAY_CONCRETE);          // fuselagem
+                    caixa(bx + 1, Y + 1, bz + 9, bx + 1, Y + 2, bz + 14, Material.GRAY_CONCRETE);  // cauda
+                    caixa(bx, Y + 2, bz, bx + 2, Y + 2, bz, Material.BLACK_STAINED_GLASS);
+                    caixa(bx - 3, Y + 4, bz + 2, bx + 5, Y + 4, bz + 2, Material.SMOOTH_STONE_SLAB);   // helice
+                    caixa(bx + 1, Y + 4, bz - 2, bx + 1, Y + 4, bz + 6, Material.SMOOTH_STONE_SLAB);
+                    b(bx + 1, Y + 4, bz + 4, Material.CAMPFIRE);
+                    for (int[] c : new int[][] {{L - 4, za + 4}, {L - 6, za + 4}, {L - 4, za + 6}}) caixa(c[0], Y + 1, c[1], c[0], Y + 2, c[1], Material.RED_CONCRETE);
+                    for (int z = za + 10; z <= zb - 8; z += 8) {
+                        sacos(-8, z, false);
+                        sacos(8, z + 4, false);
                     }
-                    case 3 -> {                                                  // sacos de areia
-                        caixa(x - 1, Y + 1, z, x + 1, Y + 1, z, Material.MUD_BRICKS);
-                        b(x, Y + 2, z, Material.MUD_BRICK_SLAB);
-                    }
-                    default -> caixa(x, Y + 1, z, x, Y + 2, z, s == 3 ? Material.IRON_BLOCK : Material.HAY_BLOCK);
+                    for (int z = za; z <= zb; z++)
+                        if (Math.floorMod(z, 7) < 5) {
+                            ligado(-L + 1, Y + 1, z, Material.IRON_BARS, true, false);
+                            ligado(L - 1, Y + 1, z, Material.IRON_BARS, true, false);
+                        }
+                    palmeira(-L + 2, Y + 1, zb - 2, r);
+                    palmeira(L - 2, Y + 1, za + 16, r);
                 }
             }
-            // corredor do meio livre junto do portao e duas torres de vigia no fundo (para os atiradores de elite)
+            // corredor do meio livre junto do portao e as "lajes" de vigia no fundo (atiradores de elite)
             caixa(-1, Y + 1, z0(s), 1, Y + 3, z0(s) + 3, Material.AIR);
             if (s >= 2) for (int sx = -1; sx <= 1; sx += 2) {
                 int tx = sx * (L - 2), tz = z1(s) - 5;
                 caixa(tx - 1, Y + 1, tz - 1, tx + 1, Y + 4, tz + 1, Material.AIR);
-                caixa(tx - 1, Y + 4, tz - 1, tx + 1, Y + 4, tz + 1, Material.SPRUCE_PLANKS);
-                for (int[] c : new int[][] {{-1, -1}, {1, -1}, {-1, 1}, {1, 1}}) caixa(tx + c[0], Y + 1, tz + c[1], tx + c[0], Y + 3, tz + c[1], Material.SPRUCE_FENCE);
+                caixa(tx - 1, Y + 4, tz - 1, tx + 1, Y + 4, tz + 1, Material.SMOOTH_STONE);
+                for (int[] c : new int[][] {{-1, -1}, {1, -1}, {-1, 1}, {1, 1}}) caixa(tx + c[0], Y + 1, tz + c[1], tx + c[0], Y + 3, tz + c[1], Material.LIGHT_GRAY_CONCRETE);
                 caixa(tx - 1, Y + 5, tz - 1, tx + 1, Y + 5, tz - 1, Material.MUD_BRICK_SLAB);
             }
         }
-        // luz invisivel pela base inteira (15/11: no teste estava escuro demais para ver os soldados)
+        // luz invisivel onde e coberto ou fechado (o resto e de dia)
         org.bukkit.block.data.type.Light luz = (org.bukkit.block.data.type.Light) Bukkit.createBlockData(Material.LIGHT);
         luz.setLevel(14);
         for (int z = -12; z <= fim - 2; z += 4) {
@@ -600,7 +862,7 @@ final class Missao implements Listener {
                 }
         }
         for (int x = -4; x <= 4; x += 4) for (int z = -34; z <= -26; z += 4) mundo.getBlockAt(x, Y + 3, z).setBlockData(luz, false);
-        pl.getLogger().info("Missao: base inimiga construida (" + SETORES + " setores).");
+        pl.getLogger().info("Missao: mapa Favela construido (" + SETORES + " setores).");
     }
 
     // ================================================================== entrar e sair

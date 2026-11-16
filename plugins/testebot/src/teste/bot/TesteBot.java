@@ -517,6 +517,51 @@ public final class TesteBot extends JavaPlugin implements org.bukkit.event.Liste
                 }
                 log(sb.toString());
             }
+            case "foto" -> {
+                // fake foto <x> <mundo> <x> <y> <z> <yaw> <pitch> <largura> <altura> <arquivo> : "foto" sem textura, por raios
+                org.bukkit.World w = Bukkit.getWorld(a[2]);
+                double ox = Double.parseDouble(a[3]), oy = Double.parseDouble(a[4]), oz = Double.parseDouble(a[5]);
+                float yaw = Float.parseFloat(a[6]), pitch = Float.parseFloat(a[7]);
+                int W = Integer.parseInt(a[8]), H = Integer.parseInt(a[9]);
+                org.bukkit.util.Vector frente = new org.bukkit.Location(w, 0, 0, 0, yaw, pitch).getDirection();
+                org.bukkit.util.Vector dir0 = frente.clone();
+                org.bukkit.util.Vector direita = dir0.clone().crossProduct(new org.bukkit.util.Vector(0, 1, 0)).normalize();
+                org.bukkit.util.Vector cima = direita.clone().crossProduct(dir0).normalize();
+                double tan = Math.tan(Math.toRadians(35));
+                org.bukkit.Location olho = new org.bukkit.Location(w, ox, oy, oz);
+                StringBuilder sb = new StringBuilder("P3\n" + W + " " + H + "\n255\n");
+                for (int py = 0; py < H; py++)
+                    for (int px = 0; px < W; px++) {
+                        double u = (2.0 * (px + 0.5) / W - 1) * tan, v = (1 - 2.0 * (py + 0.5) / H) * tan * H / W;
+                        org.bukkit.util.Vector d = dir0.clone().add(direita.clone().multiply(u)).add(cima.clone().multiply(v)).normalize();
+                        org.bukkit.Location ini = olho.clone();
+                        var hit = w.rayTraceBlocks(ini, d, 220, org.bukkit.FluidCollisionMode.ALWAYS, false);
+                        for (int pula = 0; pula < 20 && hit != null && hit.getHitBlock() != null && (hit.getHitBlock().getType() == org.bukkit.Material.BARRIER
+                                || hit.getHitBlock().getType() == org.bukkit.Material.IRON_BARS && ((px + py) & 1) == 0); pula++) {
+                            ini = hit.getHitPosition().toLocation(w).add(d.clone().multiply(0.02));
+                            hit = w.rayTraceBlocks(ini, d, 220, org.bukkit.FluidCollisionMode.ALWAYS, false);
+                        }
+                        int r, g, bl;
+                        if (hit == null || hit.getHitBlock() == null) {
+                            double t = Math.max(0, d.getY());
+                            r = (int) (170 - 60 * t); g = (int) (200 - 50 * t); bl = (int) (235 - 10 * t);
+                        } else {
+                            org.bukkit.Color c = hit.getHitBlock().getBlockData().getMapColor();
+                            if (hit.getHitBlock().getType() == org.bukkit.Material.BARRIER) c = org.bukkit.Color.fromRGB(255, 0, 255);
+                            double sh = hit.getHitBlockFace() == org.bukkit.block.BlockFace.UP ? 1.0 : hit.getHitBlockFace() == org.bukkit.block.BlockFace.DOWN ? 0.5
+                                    : (hit.getHitBlockFace() == org.bukkit.block.BlockFace.EAST || hit.getHitBlockFace() == org.bukkit.block.BlockFace.WEST) ? 0.8 : 0.68;
+                            double dist = hit.getHitPosition().distance(olho.toVector()), f = Math.min(0.7, dist / 260);
+                            r = (int) (c.getRed() * sh * (1 - f) + 175 * f); g = (int) (c.getGreen() * sh * (1 - f) + 200 * f); bl = (int) (c.getBlue() * sh * (1 - f) + 230 * f);
+                        }
+                        sb.append(r).append(' ').append(g).append(' ').append(bl).append('\n');
+                    }
+                try {
+                    java.nio.file.Files.writeString(java.nio.file.Path.of(a[10]), sb.toString());
+                } catch (java.io.IOException e) {
+                    log("FOTO erro " + e);
+                }
+                log("FOTO ok " + a[10]);
+            }
             case "vazio" -> {
                 p.getInventory().clear();
                 log("INVENTARIO limpo");
