@@ -17,6 +17,9 @@ commands:
   petpoder:
     description: Escolhe o poder do seu pet (admin - /petpoder supremo [jogador])
     aliases: [petpoderes, poderpet]
+  petestrelas:
+    description: Estrelas (1 a 5) dos seus pets e fusao de pets repetidos
+    aliases: [estrelaspet, fundirpet, fusaopet, petfundir, petestrela]
   voar:
     description: Liga/desliga o voo dentro do seu terreno
     aliases: [cfly, claimfly]

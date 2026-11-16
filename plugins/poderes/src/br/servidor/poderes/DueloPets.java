@@ -46,7 +46,7 @@ final class DueloPets implements Listener {
         Lado(Player dono, PetsPonte.PetInfo pet) {
             this.dono = dono;
             this.pet = pet;
-            this.vidaMax = (20.0 + pet.nivel * 4.0) * pet.multiplicador();
+            this.vidaMax = (20.0 + pet.nivel * 4.0) * pet.multiplicador() * (plugin.qualidade == null ? 1.0 : plugin.qualidade.fatorDano(pet.id));
             this.vida = vidaMax;
             this.barra = BossBar.bossBar(Poderes.txt(titulo()), 1f, BossBar.Color.GREEN, BossBar.Overlay.PROGRESS);
         }
@@ -250,7 +250,8 @@ final class DueloPets implements Listener {
             Poderes.barra(def.dono, "§a" + def.pet.nome + " desviou!");
             return;
         }
-        double dano = (2.0 + atk.pet.nivel * 0.8) * atk.pet.multiplicador() * (0.8 + rnd.nextDouble() * 0.4);
+        double dano = (2.0 + atk.pet.nivel * 0.8) * atk.pet.multiplicador() * (plugin.qualidade == null ? 1.0 : plugin.qualidade.fatorDano(atk.pet.id))
+                * (0.8 + rnd.nextDouble() * 0.4);
         boolean critico = rnd.nextDouble() < 0.15;
         if (critico) dano *= 1.7;
         def.vida -= dano;

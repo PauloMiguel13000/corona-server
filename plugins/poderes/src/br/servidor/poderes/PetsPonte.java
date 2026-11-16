@@ -1,9 +1,15 @@
 package br.servidor.poderes;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -176,6 +182,136 @@ final class PetsPonte {
             }
         }
         return null;
+    }
+
+    // ------------------------------------------------------------------ colecao (estrelas e fusao, 16/11)
+
+    /** Um pet da colecao do jogador (do BabyPets). inst = o PetInstance dele. */
+    record PetDado(Object inst, int id, String tipo, String nome, int nivel, long obtido, boolean selecionado, Material icone, String raridade) {}
+
+    private static Plugin bp() {
+        Plugin bp = Bukkit.getPluginManager().getPlugin("BabyPets");
+        return bp != null && bp.isEnabled() ? bp : null;
+    }
+
+    private static Object gerente(Plugin bp) throws Exception {
+        return bp.getClass().getMethod("getPetManager").invoke(bp);
+    }
+
+    /** Todos os pets do jogador (vazia se o BabyPets nao responder). */
+    List<PetDado> colecao(Player p) {
+        List<PetDado> l = new ArrayList<>();
+        Plugin bp = bp();
+        if (bp == null) return l;
+        try {
+            Object g = gerente(bp);
+            Object lista = g.getClass().getMethod("getPlayerPets", UUID.class).invoke(g, p.getUniqueId());
+            Object tipos = bp.getClass().getMethod("getPetTypes").invoke(bp);
+            if (!(lista instanceof List<?> ls)) return l;
+            for (Object inst : new ArrayList<>(ls)) {
+                if (inst == null) continue;
+                Class<?> ic = inst.getClass();
+                int id = ((Number) ic.getMethod("getDatabaseId").invoke(inst)).intValue();
+                if (id <= 0) continue;
+                String tipoId = (String) ic.getMethod("getPetTypeId").invoke(inst);
+                int nivel = ((Number) ic.getMethod("getLevel").invoke(inst)).intValue();
+                long obtido = ((Number) ic.getMethod("getObtainedAt").invoke(inst)).longValue();
+                boolean sel = (Boolean) ic.getMethod("isSelected").invoke(inst);
+                Material icone = Material.EGG;
+                String rar = "COMMON";
+                String nome = null;
+                Object tipo = tipos instanceof Map<?, ?> m ? m.get(tipoId) : null;
+                if (tipo != null) {
+                    Object i2 = tipo.getClass().getMethod("getIcon").invoke(tipo);
+                    if (i2 instanceof Material mm && mm.isItem()) icone = mm;
+                    Object r = tipo.getClass().getMethod("getRarity").invoke(tipo);
+                    if (r instanceof Enum<?> en) rar = en.name();
+                    Object n = ic.getMethod("getDisplayName", tipo.getClass()).invoke(inst, tipo);
+                    if (n != null) nome = cores(n.toString());
+                }
+                if (nome == null || nome.isBlank()) nome = tipoId == null ? "Pet" : tipoId;
+                l.add(new PetDado(inst, id, tipoId == null ? "" : tipoId, nome, nivel, obtido, sel, icone, rar));
+            }
+        } catch (Throwable ignored) {
+        }
+        return l;
+    }
+
+    /** Id do pet ativo (chamado) do jogador, mesmo sem achar a entidade; -1 = nenhum. */
+    int idAtivo(Player p) {
+        Plugin bp = bp();
+        if (bp == null) return -1;
+        try {
+            Object g = gerente(bp);
+            Object inst = g.getClass().getMethod("getActivePet", UUID.class).invoke(g, p.getUniqueId());
+            if (inst == null) return -1;
+            return ((Number) inst.getClass().getMethod("getDatabaseId").invoke(inst)).intValue();
+        } catch (Throwable t) {
+            return -1;
+        }
+    }
+
+    /** Apaga um pet da colecao (o mesmo que o "Apagar pet" do BabyPets). */
+    boolean apagar(Player p, Object inst) {
+        Plugin bp = bp();
+        if (bp == null) return false;
+        try {
+            Object g = gerente(bp);
+            g.getClass().getMethod("deletePet", UUID.class, inst.getClass()).invoke(g, p.getUniqueId(), inst);
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** Muda o nivel de um pet (o BabyPets salva, atualiza o bonus e o tamanho). */
+    boolean mudarNivel(Player p, Object inst, int nivel) {
+        Plugin bp = bp();
+        if (bp == null) return false;
+        try {
+            Object g = gerente(bp);
+            g.getClass().getMethod("setLevel", Player.class, inst.getClass(), int.class).invoke(g, p, inst, nivel);
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** Chave do bonus de atributo que o BabyPets coloca no jogador (ex.: vida extra do pet). */
+    org.bukkit.NamespacedKey chaveAtributo() {
+        Plugin bp = bp();
+        if (bp == null) return null;
+        try {
+            Object g = gerente(bp);
+            return (org.bukkit.NamespacedKey) g.getClass().getMethod("getPetAttributeKey").invoke(g);
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    private Set<Attribute> atributos;
+
+    /** Atributos que algum pet da (vida, velocidade...). */
+    Set<Attribute> atributosDosPets() {
+        if (atributos != null && !atributos.isEmpty()) return atributos;
+        Set<Attribute> s = new HashSet<>();
+        Plugin bp = bp();
+        if (bp == null) return s;
+        try {
+            Object tipos = bp.getClass().getMethod("getPetTypes").invoke(bp);
+            if (tipos instanceof Map<?, ?> m)
+                for (Object tipo : m.values()) {
+                    Object l = tipo.getClass().getMethod("getAttributeBonuses").invoke(tipo);
+                    if (l instanceof List<?> bs)
+                        for (Object b : bs) {
+                            Object a = b.getClass().getMethod("getAttribute").invoke(b);
+                            if (a instanceof Attribute at) s.add(at);
+                        }
+                }
+        } catch (Throwable ignored) {
+        }
+        atributos = s;
+        return s;
     }
 
     static String cores(String s) {

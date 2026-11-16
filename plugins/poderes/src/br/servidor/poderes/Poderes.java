@@ -84,6 +84,7 @@ public final class Poderes extends JavaPlugin implements Listener {
     Cenas cena;
     Props3D props;
     PetPoderes petPoderes;
+    Qualidade qualidade;
     private NamespacedKey chaveClasse;
     private NamespacedKey chaveTrocaClasse;
     private NamespacedKey chaveMenuClasse;
@@ -181,6 +182,9 @@ public final class Poderes extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(this, this);
         Bukkit.getPluginManager().registerEvents(petPoderes, this);
         petPoderes.iniciar();
+        qualidade = new Qualidade(this);
+        Bukkit.getPluginManager().registerEvents(qualidade, this);
+        qualidade.iniciar();
         Bukkit.getPluginManager().registerEvents(duelos, this);
         Bukkit.getPluginManager().registerEvents(guardioes, this);
         Bukkit.getPluginManager().registerEvents(torretas, this);
@@ -202,6 +206,7 @@ public final class Poderes extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         Fx.desligar();
+        if (qualidade != null) qualidade.desligar();
         for (UUID id : new ArrayList<>(voando.keySet())) {
             Player p = Bukkit.getPlayer(id);
             if (p != null) terminarVoo(p, false);
@@ -1745,6 +1750,11 @@ public final class Poderes extends JavaPlugin implements Listener {
         String nome = cmd.getName().toLowerCase(Locale.ROOT);
         if (nome.equals("duelopet")) return duelos.comando(s, args);
         if (nome.equals("petpoder")) return petPoderes.comando(s, args);
+        if (nome.equals("petestrelas")) {
+            if (s instanceof Player p && qualidade != null) qualidade.abrir(p);
+            else s.sendMessage("Somente jogadores.");
+            return true;
+        }
         if (nome.equals("classe")) return comandoClasse(s, args);
         if (nome.equals("voar")) {
             if (!(s instanceof Player p)) {
@@ -1879,6 +1889,7 @@ public final class Poderes extends JavaPlugin implements Listener {
                 s.sendMessage("§fSlots 1 a 5 §7= as 5 habilidades da classe: segure o item e clique para usar.");
                 s.sendMessage("§f/poderes menu §7= detalhes das habilidades (dano, recarga, nivel).");
                 s.sendMessage("§f/duelopet <jogador> §7= duelo de pets.");
+                s.sendMessage("§f/petpoder estrelas §7= estrelas dos pets e fusão de pets repetidos.");
                 s.sendMessage("§f/voar §7= liga/desliga o voo dentro do seu terreno.");
                 return true;
             }

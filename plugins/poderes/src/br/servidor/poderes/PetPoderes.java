@@ -100,6 +100,7 @@ final class PetPoderes implements Listener {
 
     double dano(PetsPonte.PetInfo pet, Player dono) {
         double d = (supremo(pet) ? danoSupremo(pet.nivel) : pet.dano()) * pl.getConfig().getDouble("pets.dano-multiplicador", 0.75);
+        if (pl.qualidade != null) d *= pl.qualidade.fatorDano(pet.id);
         return furioso(dono) ? d * 1.5 : d;
     }
 
@@ -171,6 +172,7 @@ final class PetPoderes implements Listener {
         boolean sup = supremo(pet);
         if (pet.lendario() && !sup) furiaLendaria(dono, pet, alvo, agora);
         long cd = sup ? 6000L : pet.lendario() ? pl.getConfig().getLong("pets.poder-recarga-lendario-ms", 5000L) : pl.getConfig().getLong("pets.poder-recarga-ms", 8000L);
+        if (pl.qualidade != null) cd = Math.round(cd * pl.qualidade.fatorRecarga(pet.id));
         Long u = recarga.get(dono.getUniqueId());
         if (u != null && agora - u < cd) return;
         int i = escolhido(dono);
@@ -425,8 +427,13 @@ final class PetPoderes implements Listener {
             if (virou && alvo != s) alvo.sendMessage(Poderes.txt("§6§l✦ Seu pet " + pet.nome + " virou um PET SUPREMO!"));
             return true;
         }
+        if (args.length >= 1 && args[0].equalsIgnoreCase("estrela") && pl.qualidade != null) return pl.qualidade.comandoAdmin(s, args);
         if (!(s instanceof Player p)) {
-            s.sendMessage(Poderes.txt("§cSó jogador. Admin: petpoder supremo <jogador>"));
+            s.sendMessage(Poderes.txt("§cSó jogador. Admin: petpoder supremo <jogador> | petpoder estrela <jogador> <1-5>"));
+            return true;
+        }
+        if (args.length >= 1 && pl.qualidade != null && List.of("estrelas", "pets", "fundir", "fusao", "fusão", "qualidade", "iv").contains(args[0].toLowerCase(java.util.Locale.ROOT))) {
+            pl.qualidade.abrir(p);
             return true;
         }
         abrir(p);
@@ -444,7 +451,9 @@ final class PetPoderes implements Listener {
             inv.setItem(13, item(Material.BARRIER, "§cChame um pet primeiro", List.of("§7Use §e/pets §7e chame o seu pet.", "§7Depois volte aqui: §e/petpoder")));
         } else {
             boolean sup = supremo(pet);
+            int q = pl.qualidade == null ? 0 : pl.qualidade.de(pet.id);
             List<String> info = new ArrayList<>(List.of("§7Nível: §f" + pet.nivel + "  §7Raridade: §f" + pet.raridade,
+                    "§7Qualidade: " + Qualidade.estrelas(q) + " §7(" + q + "/5)",
                     "§7Dano por golpe: §c" + String.format(java.util.Locale.ROOT, "%.1f", dano(pet, p)),
                     "§7Ele ataca sozinho os monstros perto de você.", "§7Masmorras dão XP para o pet!"));
             if (pet.lendario()) {
@@ -473,6 +482,7 @@ final class PetPoderes implements Listener {
                 }
                 inv.setItem(11 + i, it);
             }
+            inv.setItem(18, item(Material.NETHER_STAR, "§e§lEstrelas e fusão", List.of("§7Veja as estrelas (1 a 5) dos seus pets", "§7e funda pets repetidos para ganhar", "§6+1 estrela§7.", "", "§eClique para abrir. §7(§e/petpoder estrelas§7)")));
             inv.setItem(22, item(Material.BOOK, "§eComo funciona", List.of("§7Cada bicho tem os seus poderes", "§7(este é: §f" + fam.nome() + "§7).", "§7O pet usa o poder escolhido sozinho,", "§7a cada " + (sup ? 6 : pl.getConfig().getLong("pets.poder-recarga-ms", 8000L) / 1000) + " segundos de luta.")));
         }
         p.openInventory(inv);
@@ -495,6 +505,11 @@ final class PetPoderes implements Listener {
         if (!(e.getView().getTopInventory().getHolder() instanceof Menu)) return;
         e.setCancelled(true);
         if (!(e.getWhoClicked() instanceof Player p) || e.getClickedInventory() != e.getView().getTopInventory()) return;
+        if (e.getRawSlot() == 18 && pl.qualidade != null) {
+            p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, 0.7f, 1.2f);
+            Bukkit.getScheduler().runTask(pl, () -> pl.qualidade.abrir(p));
+            return;
+        }
         int i = e.getRawSlot() - 11;
         if (i < 0 || i > 4) return;
         PetsPonte.PetInfo pet = pl.pets.petAtivo(p);
