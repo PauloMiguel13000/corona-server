@@ -367,6 +367,16 @@ public final class Poderes extends JavaPlugin implements Listener {
         return nivel >= nivelNecessario(poder);
     }
 
+    static boolean ehTorre(Poder po) {
+        return po == Poder.TORRETA || po == Poder.TORRE_GELO || po == Poder.TORRE_FOGO || po == Poder.TORRE_TESLA || po == Poder.TORRE_CANHAO;
+    }
+
+    /** Recarga em segundos (as torres do Engenheiro recarregam ate 30% mais rapido no nivel de poder 60). */
+    int recargaSeg(Player p, Poder po) {
+        if (!ehTorre(po)) return po.recargaSeg;
+        return Math.max(1, (int) Math.round(po.recargaSeg * Torretas.fatorRecarga(nivelDePoder(p))));
+    }
+
     /** Forca dos poderes cresce com o nivel: de 1x (nivel 0) ate 2x (nivel 200). */
     double fator(Player p) {
         int n = nivelDePoder(p);
@@ -577,7 +587,7 @@ public final class Poderes extends JavaPlugin implements Listener {
             case SELVA_VIVA -> cipo.selva(p);
         };
         if (ok) {
-            recargas.put(chave, agora + poder.recargaSeg * 1000L);
+            recargas.put(chave, agora + recargaSeg(p, poder) * 1000L);
             if (barraItens != null) barraItens.recarga(p, poder);
         }
     }
@@ -1414,9 +1424,22 @@ public final class Poderes extends JavaPlugin implements Listener {
             lore.add(txt("§7" + po.desc2));
             lore.add(txt(""));
             lore.add(txt("§fLibera no nivel de poder: §e" + nivelNecessario(po)));
-            String dano = danoTexto(po, fator(p));
-            if (dano != null) lore.add(txt("§fDano: §c" + dano));
-            lore.add(txt("§fRecarga: §e" + po.recargaSeg + "s"));
+            String dano = danoTexto(po, fator(p) * (ehTorre(po) ? Torretas.escala(nivel) : 1.0));
+            if (dano != null) lore.add(txt("§fDano: §c" + dano + (ehTorre(po) ? " §7(monstros)" : "")));
+            int rs = recargaSeg(p, po);
+            lore.add(txt("§fRecarga: §e" + rs + "s" + (rs < po.recargaSeg ? " §7(era " + po.recargaSeg + "s)" : "")));
+            if (ehTorre(po)) {
+                Torretas.Tipo tt = switch (po) {
+                    case TORRE_GELO -> Torretas.Tipo.GELO;
+                    case TORRE_FOGO -> Torretas.Tipo.FOGO;
+                    case TORRE_TESLA -> Torretas.Tipo.TESLA;
+                    case TORRE_CANHAO -> Torretas.Tipo.CANHAO;
+                    default -> Torretas.Tipo.ARQUEIRA;
+                };
+                lore.add(txt("§fDuração: §e" + Torretas.segundos(tt, nivel) + "s"));
+                lore.add(txt("§7Torres crescem com o nível até o §f" + Torretas.NIVEL_TETO + "§7:"));
+                lore.add(txt("§7dano até §f2,5x§7, duração até §f35s§7, recarga §f-30%§7."));
+            }
             lore.add(txt(""));
             if (!lib) lore.add(txt("§cBloqueado: suba suas skills (/skills)"));
             else if (barraItens != null && barraItens.ligado()) lore.add(txt("§eNa barra: slot " + (i + 1)));

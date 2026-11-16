@@ -80,6 +80,37 @@ final class Torretas implements Listener {
     static final double DANO_TESLA_PULO = 2.0;
     static final double DANO_CANHAO = 5.0;
 
+    /**
+     * 16/11 (Sui no Discord: "subir nivel de engenheiro hoje e frustrante, o dano nao acompanha"): as torres crescem com o
+     * nivel de poder ate o nivel 60 (teto): dano contra monstros ate 2,5x (por cima da forca normal do nivel), duracao
+     * de 20s ate 35s e recarga ate 30% menor. Contra jogador (PvP) o dano continua o de antes.
+     */
+    static final int NIVEL_TETO = 60;
+
+    static double nivel01(int nivel) {
+        return Math.max(0, Math.min(NIVEL_TETO, nivel)) / (double) NIVEL_TETO;
+    }
+
+    static double escala(int nivel) {
+        return 1.0 + 1.5 * nivel01(nivel);
+    }
+
+    static int segundos(Tipo tipo, int nivel) {
+        return tipo.segundos + (int) Math.round(15 * nivel01(nivel));
+    }
+
+    static double fatorRecarga(int nivel) {
+        return 1.0 - 0.3 * nivel01(nivel);
+    }
+
+    /** escala de cada torre (armor stand -> multiplicador contra monstros) */
+    private final Map<UUID, Double> escalas = new HashMap<>();
+
+    /** Dano final no alvo: contra jogador tira o bonus das torres (PvP fica como era). */
+    private double fa(ArmorStand t, LivingEntity le, double dano) {
+        return le instanceof Player ? dano / escalas.getOrDefault(t.getUniqueId(), 1.0) : dano;
+    }
+
     private final Poderes plugin;
     private final NamespacedKey chaveTorreta;
     private final NamespacedKey chaveTipo;
@@ -128,9 +159,15 @@ final class Torretas implements Listener {
         plugin.cena.torreChega(l, cor, vidro);
         plugin.fx.anel(l.clone().add(0, 0.1, 0), vidro, 2.0, 6, 10, 0.28f, cor);
         plugin.fx.estilhacos(l.clone().add(0, 0.4, 0), new org.bukkit.block.data.BlockData[] {Efeitos.b(Material.IRON_BLOCK), Efeitos.b(Material.COPPER_BLOCK), Efeitos.b(Material.SMOOTH_STONE)}, 8, 1.8, 12, 0.28f);
-        Poderes.barra(p, tipo.cor + tipo.nome + " §fcolocada por §e" + tipo.segundos + "s");
+        int nivel = plugin.nivelDePoder(p);
+        double esc = escala(nivel);
+        fator *= esc;
+        escalas.put(t.getUniqueId(), esc);
+        int seg = segundos(tipo, nivel);
+        Poderes.barra(p, tipo.cor + tipo.nome + " §fcolocada por §e" + seg + "s" + (esc > 1.001 ? " §7(dano x" + Poderes.num(esc) + " pelo nível)" : ""));
+        final double fat = fator;
 
-        final int[] ticks = {tipo.segundos * 20};
+        final int[] ticks = {seg * 20};
         final int[] carga = {tipo.intervalo};
         BukkitTask tarefa = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             if (!t.isValid() || !p.isOnline()) {
@@ -149,7 +186,7 @@ final class Torretas implements Listener {
             if (alvo != null) {
                 carga[0] = 0;
                 virarPara(t, alvo.getEyeLocation());
-                atacar(p, t, tipo, alvo, fator);
+                atacar(p, t, tipo, alvo, fat);
                 t.customName(Poderes.txt(tipo.cor + tipo.nome + " §7(" + tempo + ") §4atacando"));
             } else if (ticks[0] % 10 == 0) {
                 t.customName(Poderes.txt(tipo.cor + tipo.nome + " §7(" + tempo + ")"));
@@ -359,7 +396,7 @@ final class Torretas implements Listener {
         flecha.setGravity(false);
         flecha.setCritical(false);
         // dano da flecha = velocidade (2.8) x base, arredondado pra cima: fica ~DANO_ARQUEIRA x forca
-        flecha.setDamage(DANO_ARQUEIRA * f / 2.8);
+        flecha.setDamage(fa(t, alvo, DANO_ARQUEIRA * f) / 2.8);
         flecha.setPickupStatus(AbstractArrow.PickupStatus.DISALLOWED);
         flecha.getPersistentDataContainer().set(chaveBala, PersistentDataType.STRING, dono.getUniqueId().toString());
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -383,7 +420,7 @@ final class Torretas implements Listener {
         plugin.fx.corte(a, b, Efeitos.b(Material.LIGHT_BLUE_STAINED_GLASS), 0.16, 6, Color.fromRGB(150, 220, 255));
         plugin.cena.raioDeGelo(a, b);
         plugin.fx.estilhacos(b, new org.bukkit.block.data.BlockData[] {Efeitos.b(Material.ICE), Efeitos.b(Material.PACKED_ICE)}, 4, 1.2, 9, 0.2f);
-        if (plugin.causarDano(alvo, DANO_GELO * f, dono)) {
+        if (plugin.causarDano(alvo, fa(t, alvo, DANO_GELO * f), dono)) {
             alvo.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 50, 2));
             alvo.setFreezeTicks(Math.max(alvo.getFreezeTicks(), 100));
         }
@@ -401,7 +438,7 @@ final class Torretas implements Listener {
         plugin.fx.pulso(b, Efeitos.b(Material.ORANGE_STAINED_GLASS), Efeitos.b(Material.SHROOMLIGHT), 0.2f, 1.1f, 4, Color.fromRGB(255, 140, 30));
         for (Entity e : w.getNearbyEntities(b, 1.6, 1.6, 1.6)) {
             if (!(e instanceof LivingEntity le) || !(e.equals(alvo) || plugin.inimigoArea(e, dono))) continue;
-            if (plugin.causarDano(le, DANO_FOGO * f, dono)) le.setFireTicks(Math.max(le.getFireTicks(), 60));
+            if (plugin.causarDano(le, fa(t, le, DANO_FOGO * f), dono)) le.setFireTicks(Math.max(le.getFireTicks(), 60));
         }
     }
 
@@ -417,7 +454,7 @@ final class Torretas implements Listener {
             plugin.fx.raio(de, ate, Efeitos.b(Material.WHITE_STAINED_GLASS), Math.max(3, (int) (de.distance(ate) / 1.3)), 0.35, 0.1, 4, Color.fromRGB(255, 240, 120));
             plugin.cena.tesla(de, ate);
             atingidos.add(atual.getUniqueId());
-            if (plugin.causarDano(atual, dano, dono)) {
+            if (plugin.causarDano(atual, fa(t, atual, dano), dono)) {
                 atual.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 15, 4));
             }
             Fx.p(w, Particle.ELECTRIC_SPARK, ate, 12, 0.3, 0.4, 0.3, 0.1);
@@ -499,7 +536,7 @@ final class Torretas implements Listener {
             if (!dono.isOnline()) return;
             for (Entity e : w.getNearbyEntities(pt, 3.5, 3.0, 3.5)) {
                 if (!(e instanceof LivingEntity le) || !(e.equals(alvo) || plugin.inimigoArea(e, dono))) continue;
-                if (plugin.causarDano(le, DANO_CANHAO * f, dono)) {
+                if (plugin.causarDano(le, fa(t, le, DANO_CANHAO * f), dono)) {
                     Vector v = le.getLocation().toVector().subtract(pt.toVector()).setY(0);
                     if (v.lengthSquared() > 0.01) v.normalize().multiply(0.6);
                     v.setY(0.45);
@@ -555,6 +592,7 @@ final class Torretas implements Listener {
         if (id == null) return;
         BukkitTask t = tarefas.remove(id);
         if (t != null) t.cancel();
+        escalas.remove(id);
         Entity e = Bukkit.getEntity(id);
         if (e != null && e.isValid()) {
             Fx.p(e.getWorld(), Particle.CLOUD, e.getLocation().add(0, 1, 0), 20, 0.3, 0.5, 0.3, 0.03);

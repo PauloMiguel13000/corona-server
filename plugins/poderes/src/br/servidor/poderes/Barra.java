@@ -300,9 +300,9 @@ final class Barra implements Listener {
         lore.add(Poderes.txt("§7" + po.desc2));
         lore.add(Poderes.txt(""));
         if (lib) {
-            String dano = pl.danoTexto(po, pl.fator(p));
-            if (dano != null) lore.add(Poderes.txt("§fDano: §c" + dano));
-            lore.add(Poderes.txt("§fRecarga: §e" + po.recargaSeg + "s"));
+            String dano = pl.danoTexto(po, pl.fator(p) * (Poderes.ehTorre(po) ? Torretas.escala(nivel) : 1.0));
+            if (dano != null) lore.add(Poderes.txt("§fDano: §c" + dano + (Poderes.ehTorre(po) ? " §7(monstros)" : "")));
+            lore.add(Poderes.txt("§fRecarga: §e" + pl.recargaSeg(p, po) + "s"));
             lore.add(Poderes.txt("§eClique para usar §8(no ar, bloco ou monstro)"));
         } else {
             lore.add(Poderes.txt("§cLibera no nivel de poder §f" + pl.nivelNecessario(po)));
@@ -322,7 +322,7 @@ final class Barra implements Listener {
     /** Chamado pelo lancar(): mostra a recarga no item (funciona no PC e no celular). */
     void recarga(Player p, Poder po) {
         if (!ligada(p)) return;
-        p.setCooldown(po.icone, Math.max(1, po.recargaSeg * 20));
+        p.setCooldown(po.icone, Math.max(1, pl.recargaSeg(p, po) * 20));
     }
 
     /** Trocou de classe: refaz os itens; se a barra estava desligada, liga (ou marca para ligar nas masmorras). */
