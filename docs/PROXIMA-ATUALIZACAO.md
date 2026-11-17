@@ -79,3 +79,8 @@ Ordem: primeiro o bug, depois os chefes. Um de cada vez, testado no servidor de 
 - **Instalar jars:** `python3 ferramentas/instalar/mkpasso.py NUM saida.sh jar:Nome.jar:Plugin ...` gera o instalador. Com gente online, troque o final pelo de `final_reinicio_seguro.sh` (avisa na tela e reinicia) ou corte em `for i in $(seq 1 36)` para instalar só quando o servidor ficar vazio. Última instalação: **350** (17/11 14:27). Dá para compilar no próprio servidor: lá tem javac 25, e o classpath sai de `libraries`, `versions`, `cache` e `plugins/*.jar` (o Extras precisa do jar do Paper por causa das classes internas).
 - **Testar:** monte um servidor de teste local (Paper 26.3 com os plugins do repositório) e use o plugin `ferramentas/testebot` (`fake entrar/ir/bater/socar/agachar/olhar/vida/info`, com registro de dano dos bots). Para forçar as mecânicas novas dos chefes: `/masmorras admin mecanica <nome>`; para a descida do gelo: `/masmorras admin descida <id>`.
 - O código das mecânicas dos chefes está em `plugins/masmorras/src/br/servidor/masmorras/MecanicasChefes.java`, e a descida do gelo em `DescidaGelo.java`.
+
+## 17/11 18:55 — Vaca cogumelo (BabyPets) e Discord
+- Bug: pet mooshroom somava gravidade -0.03 por nível (ADD_NUMBER sobre a base 0.08), então a partir do nível 3 a gravidade ficava negativa e o jogador grudava no teto.
+- Correção no servidor: `plugins/BabyPets/pets.yml`, GRAVITY `value_per_level: -0.0050` (nível 10 = -0.05 → gravidade 0.03, sempre positiva). Backup `pets.yml.bak-vaca-*`. Servidor reiniciado com 0 jogadores, BabyPets carregou 22 pets, 0 ERROR.
+- Discord: cargo 🧪 Tester agora aparece separado na lista de membros e fica acima de 🎮 Jogador.
