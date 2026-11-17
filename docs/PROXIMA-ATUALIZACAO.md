@@ -19,3 +19,9 @@ Ordem: primeiro o bug, depois os chefes. Um de cada vez, testado no servidor de 
 6. Senhor dos Ventos: o chão some e todos ficam em ilhas flutuantes, pulando entre elas com rajadas de vento.
 7. Ceifador de Almas: quem morre vira alma e pode atrapalhar o chefe; se os amigos pegarem a alma, ele revive.
 8. Relojoeiro: para o tempo e só um jogador se mexe; ele tem 5 s para quebrar a engrenagem que solta os outros.
+
+## Missão (Warface) — pedidos do Paulo (17/11)
+- Melhorar mais o mapa e deixar os jogadores entrarem nas casas para se esconder e atirar nos inimigos.
+- Juggernaut: aumentar a área da luta para os jogadores terem onde se esconder (hoje fica muito difícil).
+- Cara do escudo: hoje nenhum tiro dá dano (nem na cabeça, nem pelas costas). Deixar pequenas brechas para derrubar ele (costas, cabeça por cima do escudo, pernas...).
+- Começo da partida de helicóptero: os jogadores descem/pulam do helicóptero para começar a jogatina.
