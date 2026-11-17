@@ -238,9 +238,10 @@ final class Missoes implements Listener {
 
     // ------------------------------------------------------------------ Trilha das Masmorras (11/11, pedido do Paulo)
     // Cada masmorra da ao jogador, uma unica vez, o conjunto dela: o chefe da o peitoral, e uma quantidade de monstros
-    // normais da o resto (elmo, calca e botas). Sem repetir. /trilha mostra o caminho, do nivel 1 ao 5.
+    // normais da o resto (calca e botas; ate 17/11 vinha o elmo tambem). Sem repetir. /trilha mostra o caminho, do nivel 1 ao 5.
 
-    private static final String[] PECAS_RESTO = {"HELMET", "LEGGINGS", "BOOTS"};
+    // 17/11 (Paulo): os monstros da trilha dao so calca e botas (sem o elmo), no mesmo nivel de antes
+    private static final String[] PECAS_RESTO = {"LEGGINGS", "BOOTS"};
 
     private static String materialDoNivel(int nivel) {
         return switch (Math.max(1, Math.min(5, nivel))) {
@@ -349,7 +350,7 @@ final class Missoes implements Listener {
         entregar(p, itens);
         p.sendMessage(Masmorras.txt("§6§lTrilha §8» §7" + meta + " monstros derrotados na §f" + t.nome + " §7(§eNível " + t.nivel + "§7). Você ganhou: §e" + nomes(itens) + "§7."));
         if (!trilhaChefeFeito(p, t)) p.sendMessage(Masmorras.txt("§7» Falta o peitoral: derrote o chefe §c" + t.chefeNome + "§7."));
-        festa(p, t, "Elmo, calça e botas");
+        festa(p, t, "Calça e botas");
     }
 
     /** Linha curta para o Guia do lobby: onde o jogador esta na trilha e qual e a proxima masmorra. */
@@ -362,7 +363,7 @@ final class Missoes implements Listener {
         }
         String falta = (trilhaChefeFeito(p, prox) ? "" : "§cchefe " + prox.chefeNome + " §7(peitoral)")
                 + (trilhaChefeFeito(p, prox) || trilhaRestoFeito(p, prox) ? "" : " §7e ")
-                + (trilhaRestoFeito(p, prox) ? "" : "§f" + Math.max(0, metaMonstros(prox.nivel) - trilhaMonstros(p, prox)) + " monstros §7(elmo, calça e botas)");
+                + (trilhaRestoFeito(p, prox) ? "" : "§f" + Math.max(0, metaMonstros(prox.nivel) - trilhaMonstros(p, prox)) + " monstros §7(calça e botas)");
         p.sendMessage(Masmorras.txt("§6§l⚔ Trilha das Masmorras §7(" + feitas(p) + "/" + total + ") §8» §7próxima: §e" + prox.nome + " §7— §e§lNÍVEL " + prox.nivel));
         p.sendMessage(Masmorras.txt("§7   Falta: " + falta + "§7. Tudo em §f/trilha§7."));
     }
@@ -406,7 +407,7 @@ final class Missoes implements Listener {
             }
         }
         p.sendMessage(Masmorras.txt("§6§l⚔ TRILHA DAS MASMORRAS §7— feitas: §f" + feitas(p) + "§7/" + todas.size()));
-        p.sendMessage(Masmorras.txt("§7Em cada masmorra: o §cchefe §7dá o §epeitoral§7, e os §fmonstros §7dão §eelmo, calça e botas§7. Só uma vez cada."));
+        p.sendMessage(Masmorras.txt("§7Em cada masmorra: o §cchefe §7dá o §epeitoral§7, e os §fmonstros §7dão §ecalça e botas§7. Só uma vez cada."));
         StringBuilder resumo = new StringBuilder("§7Níveis: ");
         for (int nv = 1; nv <= 5; nv++) {
             int tot = 0, ok = 0;

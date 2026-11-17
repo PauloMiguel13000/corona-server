@@ -10,6 +10,19 @@ Ordem: primeiro o bug, depois os chefes. Um de cada vez, testado no servidor de 
 - Novo: **vasos decorados da masmorra** não guardam mais itens (o do Sui "sugou" a espada). Clicar com a mão vazia, ou tentar quebrar, devolve o que estiver dentro.
 - Novo: **portais nunca levam à secreta (???)** nem a menos de 128 blocos dela (Paulo: "deixe que achem").
 
+## Instalação 349 (17/11 14:21, 0 erros)
+- Prêmio do chefe no nível 3: só a calça vinha com Proteção III + Inquebrável II. Agora as 4 peças são iguais (ferro, P3 e Inq II) e a peça sai sorteada (`Premios.java`).
+- Trilha: os monstros dão só **calça e botas**, sem elmo, no mesmo nível de antes (`Missoes.PECAS_RESTO`).
+
+## Instalação 350 (17/11 14:27, 0 erros)
+- **Engenheiro com metade da vida máxima** (modificador `poderes:engenheiro_vida` de -0.5, `Poderes.vidaEngenheiro`), fora dos mundos sem poderes. Conferido no ViboXact: vida máxima de 24 para 12.
+
+## Testes feitos jogando (conta coronadooscar, Minecraft Java no PC ponte)
+- Limite de 3 torres: OK. A 4ª é recusada e entra depois que uma some.
+- Login automático: o serviço `corona-login-pc` no servidor faz `authme forcelogin coronadooscar` quando a conta entra pelo IP do PC ponte (177.8.228.129). Se o IP do PC mudar, rode de novo o script de instalação dele (o mesmo da passagem 12, que pega o IP do `SSH_CLIENT`).
+- Vaso: o teste dentro da masmorra ficou para o Sui (ViboXact) fazer, clicando no vaso dele com a mão vazia.
+- `depois.ps1` no PC: a cada RODAR, apaga do `.minecraft\command_history.txt` as linhas de `/login`, `/register` e `/changepassword`, a pedido do Paulo, para a senha não ficar no histórico.
+
 ## Ideias do Paulo
 - Rainha Aranha: sobe no teto, joga 2 ovos que viram aranhas pequenas, desce e luta junto com elas; repete a cada ~20 s (entra no lugar da prisão de teia, que vai para a Viúva Negra).
 - Gosma (slime): engole o jogador, que fica preso dentro dela e tem que bater para sair.
@@ -37,6 +50,6 @@ Ordem: primeiro o bug, depois os chefes. Um de cada vez, testado no servidor de 
 ## Como trabalhar (estado de 17/11, 07:20)
 - Leia antes `ferramentas/COMECAR-AQUI-CORONA-SERVER.md` (regras do Paulo e proibições). Ele está desatualizado em alguns pontos: hoje o servidor roda no Linux 143.14.79.58 (corona-server.duckdns.org), e o PC "server1" (DESKTOP-JLG1NKU) só faz backup e serve de ponte.
 - **Mandar comandos ao servidor:** grave o script em `C:\Users\server1\Documents\CoronaServer\passo.sh` (device_commit_files), dê duplo clique no atalho RODAR da área de trabalho e leia `saida.txt` na mesma pasta. Se existir `depois.ps1` ali, ele roda no PC no fim e se apaga sozinho. No fim, volte o `passo.sh` ao `ferramentas/instalar/passo-padrao.sh`.
-- **Instalar jars:** `python3 ferramentas/instalar/mkpasso.py NUM saida.sh jar:Nome.jar:Plugin ...` gera o instalador. Com gente online, troque o final pelo de `final_reinicio_seguro.sh` (avisa na tela e reinicia) ou corte em `for i in $(seq 1 36)` para instalar só quando o servidor ficar vazio. Última instalação: **348** (17/11 13:33). Dá para compilar no próprio servidor: lá tem javac 25, e o classpath sai de `libraries`, `versions`, `cache` e `plugins/*.jar` (o Extras precisa do jar do Paper por causa das classes internas).
+- **Instalar jars:** `python3 ferramentas/instalar/mkpasso.py NUM saida.sh jar:Nome.jar:Plugin ...` gera o instalador. Com gente online, troque o final pelo de `final_reinicio_seguro.sh` (avisa na tela e reinicia) ou corte em `for i in $(seq 1 36)` para instalar só quando o servidor ficar vazio. Última instalação: **350** (17/11 14:27). Dá para compilar no próprio servidor: lá tem javac 25, e o classpath sai de `libraries`, `versions`, `cache` e `plugins/*.jar` (o Extras precisa do jar do Paper por causa das classes internas).
 - **Testar:** monte um servidor de teste local (Paper 26.3 com os plugins do repositório) e use o plugin `ferramentas/testebot` (`fake entrar/ir/bater/socar/agachar/olhar/vida/info`, com registro de dano dos bots). Para forçar as mecânicas novas dos chefes: `/masmorras admin mecanica <nome>`; para a descida do gelo: `/masmorras admin descida <id>`.
 - O código das mecânicas dos chefes está em `plugins/masmorras/src/br/servidor/masmorras/MecanicasChefes.java`, e a descida do gelo em `DescidaGelo.java`.

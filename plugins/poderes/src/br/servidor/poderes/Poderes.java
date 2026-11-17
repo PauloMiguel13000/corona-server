@@ -191,6 +191,7 @@ public final class Poderes extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(hab, this);
         Bukkit.getPluginManager().registerEvents(lut, this);
         Bukkit.getScheduler().runTaskTimer(this, this::verificarVooTerreno, 40L, 10L);
+        Bukkit.getScheduler().runTaskTimer(this, () -> { for (Player p : Bukkit.getOnlinePlayers()) vidaEngenheiro(p); }, 40L, 40L);
         for (Player p : Bukkit.getOnlinePlayers()) atualizarTab(p);
         // O antigo MaoDeFogo faz a mesma coisa que o poder Fogo: desliga para nao sair bola em dobro.
         org.bukkit.plugin.Plugin antigo = Bukkit.getPluginManager().getPlugin("MaoDeFogo");
@@ -205,6 +206,7 @@ public final class Poderes extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        for (Player p : Bukkit.getOnlinePlayers()) tirarVidaEngenheiro(p);
         Fx.desligar();
         if (qualidade != null) qualidade.desligar();
         for (UUID id : new ArrayList<>(voando.keySet())) {
@@ -475,6 +477,31 @@ public final class Poderes extends JavaPlugin implements Listener {
         java.util.List<String> l = getConfig().getStringList("mundos-pvp-livre");
         if (l.isEmpty()) l = java.util.List.of("arena");
         return w != null && l.contains(w.getName());
+    }
+
+    // 17/11 (Paulo: "o hp do engenheiro fica pela metade"): Engenheiro tem metade da vida maxima (fora dos minigames)
+    static final double ENGENHEIRO_VIDA = -0.5;
+    private NamespacedKey chaveVidaEng;
+
+    void vidaEngenheiro(Player p) {
+        AttributeInstance a = p.getAttribute(Attribute.MAX_HEALTH);
+        if (a == null) return;
+        if (chaveVidaEng == null) chaveVidaEng = new NamespacedKey(this, "engenheiro_vida");
+        boolean deve = classe(p) == Classe.ENGENHEIRO && !semPoderes(p.getWorld());
+        org.bukkit.attribute.AttributeModifier tem = null;
+        for (org.bukkit.attribute.AttributeModifier m : a.getModifiers()) if (chaveVidaEng.equals(m.getKey())) tem = m;
+        if (deve && tem == null) {
+            a.addModifier(new org.bukkit.attribute.AttributeModifier(chaveVidaEng, ENGENHEIRO_VIDA,
+                    org.bukkit.attribute.AttributeModifier.Operation.MULTIPLY_SCALAR_1, org.bukkit.inventory.EquipmentSlotGroup.ANY));
+            if (p.getHealth() > a.getValue()) p.setHealth(Math.max(1, a.getValue()));
+        } else if (!deve && tem != null) a.removeModifier(tem);
+    }
+
+    void tirarVidaEngenheiro(Player p) {
+        AttributeInstance a = p.getAttribute(Attribute.MAX_HEALTH);
+        if (a == null) return;
+        if (chaveVidaEng == null) chaveVidaEng = new NamespacedKey(this, "engenheiro_vida");
+        for (org.bukkit.attribute.AttributeModifier m : new ArrayList<>(a.getModifiers())) if (chaveVidaEng.equals(m.getKey())) a.removeModifier(m);
     }
 
     boolean semPoderes(org.bukkit.World w) {
