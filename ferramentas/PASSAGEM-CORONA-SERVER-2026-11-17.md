@@ -80,6 +80,21 @@ Este arquivo é para o Claude que vai trabalhar no Corona Server esta semana. Le
   - `Extras/boss-mundial.txt` — próximo boss mundial
   - `SetHome/homes.yml` — casas dos jogadores
 
+## 3.1 Como conectar no servidor Linux
+
+Não existe acesso direto da nuvem do Claude ao servidor: a rede da sessão bloqueia SSH e a chave **não pode sair do PC**. Tudo passa pelo PC DESKTOP-JLG1NKU.
+
+1. No PC DESKTOP-JLG1NKU (usuário `server1`), o app Claude para desktop precisa estar aberto e logado, com **Uso do computador** ligado em Configurações → Este computador.
+2. A conversa precisa estar **ligada a esse PC**: abrir a conversa pelo app nesse PC e escolher "Vincular a este computador", ou escolher o PC em Dispositivos. Libere as pastas `C:\Users\server1\Documents\CoronaServer` e `C:\Users\server1\Desktop`.
+3. Para rodar algo no servidor:
+   - grave os comandos em `Documents\CoronaServer\passo.sh` (device_commit_files)
+   - peça acesso ao "Explorador de Arquivos" (computer_resolve_access e depois computer_request_access)
+   - dê duplo clique em **RODAR-SERVIDOR** na área de trabalho
+   - leia o `saida.txt` (device_stage_files)
+4. O RODAR chama `Documents\CoronaServer\rodar.ps1`, que faz SSH em `root@143.14.79.58` com a chave do próprio PC (`%USERPROFILE%\.ssh\corona_pc`). Nunca leia, copie ou mostre essa chave.
+5. Se o SSH falhar por chave, existe o `1-CONFIGURAR-SSH.bat` na área de trabalho. Se ele pedir senha, quem digita é o Paulo.
+6. O RODAR fica no meio da área de trabalho. Se o Minecraft ou outra janela estiver cobrindo, clique em "Mostrar área de trabalho", o cantinho direito da barra de tarefas.
+
 ## 4. O que já foi feito e instalado (até a instalação 347, em 17/11 às 02:09, sem erros)
 
 - **Nível de Masmorra próprio**, separado do XP:
