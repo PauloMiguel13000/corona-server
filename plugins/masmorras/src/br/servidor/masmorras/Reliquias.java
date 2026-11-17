@@ -553,6 +553,8 @@ final class Reliquias implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void acertou(EntityDamageByEntityEvent e) {
         if (emGolpe || !(e.getEntity() instanceof LivingEntity alvo)) return;
+        // dano de poder (torres do Engenheiro, magias, explosoes...) nao ativa efeito de arma
+        if (danoDePoder()) return;
         Player p;
         String id;
         double chance;
@@ -579,6 +581,26 @@ final class Reliquias implements Listener {
         int n = Math.max(1, nivelDoTema(id));
         p.sendActionBar(Masmorras.txt(tm.cor() + "§l✦ " + tm.golpeNome() + "!"));
         golpe(tm, p, alvo, n, boneco);
+    }
+
+    private java.lang.reflect.Field campoDanoPoder;
+    private org.bukkit.plugin.Plugin pluginPoderes;
+
+    /** true enquanto o plugin Poderes esta causando dano (campo emDanoPoder dele). */
+    private boolean danoDePoder() {
+        try {
+            org.bukkit.plugin.Plugin po = org.bukkit.Bukkit.getPluginManager().getPlugin("Poderes");
+            if (po == null || !po.isEnabled()) return false;
+            if (po != pluginPoderes || campoDanoPoder == null) {
+                java.lang.reflect.Field f = po.getClass().getDeclaredField("emDanoPoder");
+                f.setAccessible(true);
+                campoDanoPoder = f;
+                pluginPoderes = po;
+            }
+            return campoDanoPoder.getBoolean(po);
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     private static int nivelDoTema(String id) {

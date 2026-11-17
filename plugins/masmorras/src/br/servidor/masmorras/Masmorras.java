@@ -1835,7 +1835,36 @@ public final class Masmorras extends JavaPlugin implements Listener {
     public void quebrar(BlockBreakEvent e) {
         if (admin(e.getPlayer()) || tocha(e.getBlock().getType()) || !protegido(e.getBlock())) return;
         e.setCancelled(true);
+        if (e.getBlock().getType() == Material.DECORATED_POT && devolverDoVaso(e.getBlock(), e.getPlayer())) return;
         e.getPlayer().sendActionBar(txt("§7As paredes da masmorra não quebram."));
+    }
+
+    /** Vasos decorados da masmorra nao guardam itens (antes "sugavam" a arma de quem clicava com o botao direito). */
+    @EventHandler(priority = EventPriority.LOW)
+    public void vaso(org.bukkit.event.player.PlayerInteractEvent e) {
+        if (e.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) return;
+        Block b = e.getClickedBlock();
+        if (b == null || b.getType() != Material.DECORATED_POT) return;
+        Player p = e.getPlayer();
+        if (admin(p) || !protegido(b)) return;
+        e.setCancelled(true);
+        e.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
+        e.setUseItemInHand(org.bukkit.event.Event.Result.DENY);
+        if (e.getHand() != org.bukkit.inventory.EquipmentSlot.HAND) return;
+        if (!devolverDoVaso(b, p)) p.sendActionBar(txt("§7Os vasos da masmorra não guardam itens."));
+    }
+
+    /** Se o vaso tem algum item dentro, devolve para o jogador. Retorna true se devolveu. */
+    private boolean devolverDoVaso(Block b, Player p) {
+        if (!(b.getState() instanceof org.bukkit.block.DecoratedPot pot)) return false;
+        ItemStack it = pot.getInventory().getItem();
+        if (it == null || it.getType().isAir() || it.getAmount() <= 0) return false;
+        pot.getInventory().setItem(null);
+        for (ItemStack sobra : p.getInventory().addItem(it).values()) p.getWorld().dropItemNaturally(p.getLocation(), sobra);
+        p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_ITEM_PICKUP, 1f, 1f);
+        p.sendActionBar(txt("§aVocê pegou de volta o que estava no vaso."));
+        getLogger().info("Vaso: devolvido " + it.getType() + " x" + it.getAmount() + " para " + p.getName() + " em " + b.getWorld().getName() + " " + b.getX() + " " + b.getY() + " " + b.getZ());
+        return true;
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)

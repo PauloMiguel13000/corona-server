@@ -2,14 +2,13 @@
 
 Ordem: primeiro o bug, depois os chefes. Um de cada vez, testado no servidor de teste, instalado com o servidor vazio.
 
-## Bugs
-- Pet vaca cogumelo (antigravidade): no nível 9 o jogador fica flutuando, não consegue pular e às vezes fica preso (relato do Sui no Discord).
-
-## Relato do Sui (17/11, 12:26)
-- Bug: os tiros das torretas (Engenheiro) ativam os efeitos da arma, por exemplo o "Eco" da relíquia Cidade Ancestral (dano alto + escuridão com chance a cada golpe). Torreta não pode ativar efeito de arma; o Paulo já disse que as habilidades não ficam fortes conforme a arma.
-- Boss mundial (Colosso da Coroa Partida): está fácil para jogador forte (Sui matava com 3 torres, antes do buff de dano). Paulo decidiu (12:27): aumentar um pouco o dano dele e aumentar bastante a vida (HP), porque um jogador sozinho está matando muito fácil.
-
-- Classe Engenheiro (torres): está fazendo qualquer boss com facilidade. Paulo decidiu (12:28) enfraquecer um pouco, SEM mexer na quantidade de torres, no tempo de recarga nem no dano. Sugestão dele: diminuir a vida (HP) do Engenheiro; ou outra fraqueza parecida (ex.: torres com vida e os monstros/chefe mirando nelas, chefe resistindo um pouco ao dano de torre). Paulo (12:30): se precisar, pode aumentar um pouco o tempo para invocar as torretas, mas pouco. Apresentar a escolha a ele antes de instalar.
+## Feito na instalação 348 (17/11 13:33, com aviso na tela, 0 erros)
+- ~~Pet vaca cogumelo (antigravidade)~~: BabyPets `pets.yml`, gravidade de -0.09 para **-0.03 por nível** (nível 10 = 30% menos gravidade). Backup em `/root/backups-claude/` no servidor.
+- ~~Torretas ativando efeitos da arma~~: `Reliquias.acertou` ignora dano causado pelo plugin Poderes (campo `emDanoPoder`, lido por reflexão). Vale para torres, magias e explosões.
+- ~~Boss mundial~~: vida ×2 e dano ×1,2 sobre a config (`MULT_VIDA` e `MULT_DANO` em `BossMundial.java`; a config de produção não foi lida).
+- ~~Engenheiro~~: Paulo decidiu (13:21) no máximo **3 torres ativas ao mesmo tempo**; quando uma some, pode colocar outra (`Torretas.MAX_ATIVAS`). Vida do Engenheiro e recarga sem mudança.
+- Novo: **vasos decorados da masmorra** não guardam mais itens (o do Sui "sugou" a espada). Clicar com a mão vazia, ou tentar quebrar, devolve o que estiver dentro.
+- Novo: **portais nunca levam à secreta (???)** nem a menos de 128 blocos dela (Paulo: "deixe que achem").
 
 ## Ideias do Paulo
 - Rainha Aranha: sobe no teto, joga 2 ovos que viram aranhas pequenas, desce e luta junto com elas; repete a cada ~20 s (entra no lugar da prisão de teia, que vai para a Viúva Negra).
@@ -38,6 +37,6 @@ Ordem: primeiro o bug, depois os chefes. Um de cada vez, testado no servidor de 
 ## Como trabalhar (estado de 17/11, 07:20)
 - Leia antes `ferramentas/COMECAR-AQUI-CORONA-SERVER.md` (regras do Paulo e proibições). Ele está desatualizado em alguns pontos: hoje o servidor roda no Linux 143.14.79.58 (corona-server.duckdns.org), e o PC "server1" (DESKTOP-JLG1NKU) só faz backup e serve de ponte.
 - **Mandar comandos ao servidor:** grave o script em `C:\Users\server1\Documents\CoronaServer\passo.sh` (device_commit_files), dê duplo clique no atalho RODAR da área de trabalho e leia `saida.txt` na mesma pasta. Se existir `depois.ps1` ali, ele roda no PC no fim e se apaga sozinho. No fim, volte o `passo.sh` ao `ferramentas/instalar/passo-padrao.sh`.
-- **Instalar jars:** `python3 ferramentas/instalar/mkpasso.py NUM saida.sh jar:Nome.jar:Plugin ...` gera o instalador. Com gente online, troque o final pelo de `final_reinicio_seguro.sh` (avisa na tela e reinicia) ou corte em `for i in $(seq 1 36)` para instalar só quando o servidor ficar vazio. Última instalação: **347** (17/11 02:09).
+- **Instalar jars:** `python3 ferramentas/instalar/mkpasso.py NUM saida.sh jar:Nome.jar:Plugin ...` gera o instalador. Com gente online, troque o final pelo de `final_reinicio_seguro.sh` (avisa na tela e reinicia) ou corte em `for i in $(seq 1 36)` para instalar só quando o servidor ficar vazio. Última instalação: **348** (17/11 13:33). Dá para compilar no próprio servidor: lá tem javac 25, e o classpath sai de `libraries`, `versions`, `cache` e `plugins/*.jar` (o Extras precisa do jar do Paper por causa das classes internas).
 - **Testar:** monte um servidor de teste local (Paper 26.3 com os plugins do repositório) e use o plugin `ferramentas/testebot` (`fake entrar/ir/bater/socar/agachar/olhar/vida/info`, com registro de dano dos bots). Para forçar as mecânicas novas dos chefes: `/masmorras admin mecanica <nome>`; para a descida do gelo: `/masmorras admin descida <id>`.
 - O código das mecânicas dos chefes está em `plugins/masmorras/src/br/servidor/masmorras/MecanicasChefes.java`, e a descida do gelo em `DescidaGelo.java`.

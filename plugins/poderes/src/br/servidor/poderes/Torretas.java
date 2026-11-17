@@ -46,7 +46,7 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
-/** Torres do Engenheiro: cada tipo tem um visual e um ataque diferente. Uma de cada tipo por vez. */
+/** Torres do Engenheiro: cada tipo tem um visual e um ataque diferente. Uma de cada tipo por vez e no maximo 3 ativas ao mesmo tempo. */
 final class Torretas implements Listener {
 
     /** Tipos de torre: alcance (blocos), intervalo entre ataques (ticks), duracao (s). */
@@ -86,6 +86,8 @@ final class Torretas implements Listener {
      * de 20s ate 35s e recarga ate 30% menor. Contra jogador (PvP) o dano continua o de antes.
      */
     static final int NIVEL_TETO = 60;
+    /** Quantas torres o Engenheiro pode ter ao mesmo tempo (quando uma some, pode colocar outra). */
+    static final int MAX_ATIVAS = 3;
 
     static double nivel01(int nivel) {
         return Math.max(0, Math.min(NIVEL_TETO, nivel)) / (double) NIVEL_TETO;
@@ -135,6 +137,11 @@ final class Torretas implements Listener {
     boolean colocar(Player p, Tipo tipo, double fator) {
         if (torreta(p, tipo) != null) {
             Poderes.barra(p, "§eSua " + tipo.nome + " ja esta ativa!");
+            return false;
+        }
+        EnumMap<Tipo, UUID> ativas = torres.get(p.getUniqueId());
+        if (ativas != null && ativas.size() >= MAX_ATIVAS) {
+            Poderes.barra(p, "§cNo maximo " + MAX_ATIVAS + " torres ao mesmo tempo! §7Espere uma sumir.");
             return false;
         }
         Location l = local(p);

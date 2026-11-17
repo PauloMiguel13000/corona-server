@@ -170,6 +170,7 @@ final class PortaisNivel implements Listener {
             List<Masmorra> l = new ArrayList<>();
             for (Masmorra m : pl.todas)
                 if (m.mundo.equals(w.getName()) && m.tipo.nivel == nivel && !m.demolindo && !m.tipo.secreta
+                        && !pertoDaSecreta(w, m.saidaX, m.saidaZ)
                         && w.getWorldBorder().isInside(new Location(w, m.saidaX, m.saidaY, m.saidaZ))) l.add(m);
             if (l.isEmpty()) continue;
             Masmorra m = l.get(ThreadLocalRandom.current().nextInt(l.size()));
@@ -177,6 +178,16 @@ final class PortaisNivel implements Listener {
             return d != null ? d : new Location(w, m.saidaX + 0.5, m.saidaY + 1, m.saidaZ + 0.5);
         }
         return noAnel(nivel);
+    }
+
+    /** 17/11 (Paulo: "em hipotese alguma o portal leva ao ???, deixe que achem"): nunca deixa ninguem perto da secreta. */
+    private boolean pertoDaSecreta(World w, double x, double z) {
+        for (Masmorra s : pl.todas) {
+            if (s.tipo == null || !s.tipo.secreta || !s.mundo.equals(w.getName())) continue;
+            double dx = s.saidaX - x, dz = s.saidaZ - z;
+            if (dx * dx + dz * dz < 128 * 128) return true;
+        }
+        return false;
     }
 
     /** Um lugar seguro no anel daquele nivel (quando ainda nao ha masmorra construida la). */
@@ -195,7 +206,7 @@ final class PortaisNivel implements Listener {
             double a = ThreadLocalRandom.current().nextDouble() * Math.PI * 2;
             int x = (int) (Math.cos(a) * r), zz = (int) (Math.sin(a) * r);
             Location d = Loja.lugarPerto(w, x, w.getHighestBlockYAt(x, zz) + 1, zz);
-            if (d != null) return d;
+            if (d != null && !pertoDaSecreta(w, d.getX(), d.getZ())) return d;
         }
         double a = ThreadLocalRandom.current().nextDouble() * Math.PI * 2;
         int x = (int) (Math.cos(a) * r), zz = (int) (Math.sin(a) * r);
@@ -239,7 +250,8 @@ final class PortaisNivel implements Listener {
             java.util.List<Tipo> falta = pl.progresso.faltam(p, nivel);
             java.util.List<Masmorra> opcoes = new java.util.ArrayList<>();
             for (Masmorra m : pl.todas)
-                if (falta.contains(m.tipo) && !m.demolindo && m.mundo.equals(w.getName())) opcoes.add(m);
+                if (falta.contains(m.tipo) && !m.demolindo && !m.tipo.secreta && m.mundo.equals(w.getName())
+                        && !pertoDaSecreta(w, m.saidaX, m.saidaZ)) opcoes.add(m);
             if (!opcoes.isEmpty()) {
                 Masmorra alvo = opcoes.get(new java.util.Random().nextInt(opcoes.size()));
                 Location porta = new Location(w, alvo.saidaX + 0.5, alvo.saidaY, alvo.saidaZ + 0.5, to.getYaw(), 0f);

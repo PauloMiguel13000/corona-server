@@ -68,6 +68,9 @@ final class BossMundial implements Listener {
     private ColossoCorpo corpo3d;
     private BossBar barra;
     private BukkitTask tarefa;
+    /** 17/11 (Paulo: um jogador sozinho matava facil): bastante mais vida e um pouco mais de dano que a config. */
+    static final double MULT_VIDA = 2.0;
+    static final double MULT_DANO = 1.2;
     private double vida, vidaMax;
     private int ticks, proximoGolpe;
     private long nasceu;
@@ -226,7 +229,7 @@ final class BossMundial implements Listener {
             c.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, PotionEffect.INFINITE_DURATION, 0, false, false, false));
             set(c, Attribute.SCALE, ESCALA);
             set(c, Attribute.MAX_HEALTH, 1000);
-            set(c, Attribute.ATTACK_DAMAGE, pl.getConfig().getDouble("boss-mundial.dano", 9));
+            set(c, Attribute.ATTACK_DAMAGE, pl.getConfig().getDouble("boss-mundial.dano", 9) * MULT_DANO);
             set(c, Attribute.KNOCKBACK_RESISTANCE, 1.0);
             set(c, Attribute.MOVEMENT_SPEED, 0.27);
             set(c, Attribute.FOLLOW_RANGE, 48);
@@ -249,7 +252,7 @@ final class BossMundial implements Listener {
         });
         corpo3d = new ColossoCorpo(pl, ESC_MODELO);
         corpo3d.nascer(l);
-        vidaMax = vida = pl.getConfig().getDouble("boss-mundial.vida-base", 600);
+        vidaMax = vida = pl.getConfig().getDouble("boss-mundial.vida-base", 600) * MULT_VIDA;
         dano.clear();
         nomes.clear();
         ticks = 0;
@@ -349,7 +352,7 @@ final class BossMundial implements Listener {
                     w.playSound(c, Sound.ENTITY_GENERIC_EXPLODE, 1.6f, 0.6f);
                     w.spawnParticle(Particle.EXPLOSION, c.clone().add(0, 0.5, 0), 4, 2.5, 0.2, 2.5, 0);
                     for (Player p : perto(raio)) {
-                        p.damage(pl.getConfig().getDouble("boss-mundial.dano-do-esmagar", 10), corpo);
+                        p.damage(pl.getConfig().getDouble("boss-mundial.dano-do-esmagar", 10) * MULT_DANO, corpo);
                         Vector v = p.getLocation().toVector().subtract(c.toVector()).setY(0);
                         if (v.lengthSquared() > 0.01) p.setVelocity(v.normalize().multiply(1.1).setY(0.55));
                     }
@@ -407,7 +410,7 @@ final class BossMundial implements Listener {
                         double dist = d.length();
                         if (dist < 0.1 || dist > alc) continue;
                         if (frente.dot(d.clone().multiply(1 / dist)) < 0.2) continue;     // so quem esta na frente
-                        p.damage(pl.getConfig().getDouble("boss-mundial.dano-da-espada", 12), corpo);
+                        p.damage(pl.getConfig().getDouble("boss-mundial.dano-da-espada", 12) * MULT_DANO, corpo);
                         p.setVelocity(d.multiply(1 / dist).multiply(1.0).setY(0.5));
                     }
                 }, 16L);
@@ -426,7 +429,7 @@ final class BossMundial implements Listener {
                         w.spawnParticle(Particle.EXPLOSION, c.clone().add(0, 0.5, 0), 1, 0, 0, 0, 0);
                         w.playSound(c, Sound.ENTITY_GENERIC_EXPLODE, 1f, 1.2f);
                         for (Player q : c.getWorld().getPlayers())
-                            if (q.getLocation().distanceSquared(c) <= 2.5 * 2.5) q.damage(pl.getConfig().getDouble("boss-mundial.dano-do-magma", 7), corpo);
+                            if (q.getLocation().distanceSquared(c) <= 2.5 * 2.5) q.damage(pl.getConfig().getDouble("boss-mundial.dano-do-magma", 7) * MULT_DANO, corpo);
                     }, 30L);
                 }
             }
@@ -569,7 +572,7 @@ final class BossMundial implements Listener {
         d = Math.min(d, pl.getConfig().getDouble("boss-mundial.dano-maximo-por-golpe", 60));
         if (dano.merge(p.getUniqueId(), d, Double::sum) == d) {
             // jogador novo na luta: o boss ganha vida
-            double mais = pl.getConfig().getDouble("boss-mundial.vida-por-jogador", 350);
+            double mais = pl.getConfig().getDouble("boss-mundial.vida-por-jogador", 350) * MULT_VIDA;
             if (dano.size() > 1) {
                 vidaMax += mais;
                 vida += mais;
