@@ -71,6 +71,8 @@ final class Chefe {
     boolean tempestadeFeita;
     /** Teste do admin (/masmorras admin tempestade): usa a segunda fase do Trovao com outro chefe. */
     boolean forcarTempestade;
+    /** Rei do Gelo: ja fugiu pela encosta e todo mundo desceu de barco (DescidaGelo). forcar = teste do admin. */
+    boolean descidaFeita, forcarDescida;
 
     Chefe(Masmorras pl, Masmorra m, LivingEntity e, double vidaMax) {
         this.pl = pl;
@@ -112,6 +114,7 @@ final class Chefe {
             return true;   // a fase tem o tique dela (InfernoHerobrine)
         }
         if (pl.tempestade != null && pl.tempestade.ocupado(this)) return true;   // cena do chao quebrando
+        if (pl.descida != null && pl.descida.ocupado(this)) return true;   // descida de barco (a fase tem o tique dela)
         long agora = System.currentTimeMillis();
         List<Player> ps = naArena();
         // barra de vida
@@ -135,6 +138,7 @@ final class Chefe {
         semJogadorDesde = -1;
         if ((t.secreta || forcarInferno) && pl.inferno != null && pl.inferno.conferir(this, ps)) return true;
         if (pl.tempestade != null && pl.tempestade.conferir(this, ps)) return true;
+        if (pl.descida != null && pl.descida.conferir(this, ps)) return true;
         // preso na arena
         Caixa a = m.arenaLuta();
         if (!a.crescer(1).contem(e.getX(), e.getY(), e.getZ())) e.teleport(centro());
@@ -1228,6 +1232,7 @@ final class Chefe {
         vendo.clear();
         tirarTeias(true);
         if (pl.tempestade != null) pl.tempestade.terminar(this, false);
+        if (pl.descida != null) pl.descida.terminar(this, false);
         if (e != null && e.isValid()) e.remove();
     }
 
@@ -1239,6 +1244,7 @@ final class Chefe {
         vendo.clear();
         tirarTeias(true);
         if (pl.tempestade != null) pl.tempestade.terminar(this, true);
+        if (pl.descida != null) pl.descida.terminar(this, true);
     }
 
     static void atributo(LivingEntity e, Attribute a, double v) {
