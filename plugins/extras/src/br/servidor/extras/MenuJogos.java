@@ -179,10 +179,12 @@ final class MenuJogos implements Listener {
     }
 
     private Location lugar(World w) {
-        // quem nasce fica em (6.5, 123, -8.5) olhando para o sul: o NPC fica no caminho, logo depois do farol
-        Location l = new Location(w, SpawnPrincipal.CX + 0.5 + pl.getConfig().getDouble("jogar.dx", 0), SpawnPrincipal.PISO + 1,
-                SpawnPrincipal.CZ + 0.5 + pl.getConfig().getDouble("jogar.dz", 2.5));
-        l.setYaw(180);
+        // quem nasce fica em (6.5, 123, -8.5) olhando para o sul. 17/11: o NPC saiu de tras do feixe do farol (sumia
+        // atras dele) e foi para o caminho do leste, ao lado do farol, virado para quem nasce
+        Location l = new Location(w, SpawnPrincipal.CX + 0.5 + pl.getConfig().getDouble("jogar.dx", 4.0), SpawnPrincipal.PISO + 1,
+                SpawnPrincipal.CZ + 0.5 + pl.getConfig().getDouble("jogar.dz", 0));
+        double vx = 6.5 - l.getX(), vz = -8.5 - l.getZ();
+        l.setYaw((float) Math.toDegrees(Math.atan2(-vx, vz)));
         return l;
     }
 
