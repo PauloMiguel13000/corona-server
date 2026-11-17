@@ -130,6 +130,8 @@ public final class Masmorras extends JavaPlugin implements Listener {
     InfernoHerobrine inferno;
     TempestadeTrovao tempestade;
     DescidaGelo descida;
+    /** 17/11: mecanicas proprias de cada chefe (MecanicasChefes). */
+    MecanicasChefes mecanicas;
     Ranking ranking;
     Missoes missoes;
     VendaClasses vendaClasses;
@@ -238,6 +240,9 @@ public final class Masmorras extends JavaPlugin implements Listener {
         // 16/11: segunda fase do Rei do Gelo (descida de barco no gelo, fase 2 numa arena escorregadia)
         descida = new DescidaGelo(this);
         getServer().getPluginManager().registerEvents(descida, this);
+        // 17/11 (Paulo: "faca coisas diferentes em todos os bosses"): mecanica propria de cada chefe
+        mecanicas = new MecanicasChefes(this);
+        getServer().getPluginManager().registerEvents(mecanicas, this);
         getServer().getPluginManager().registerEvents(new PacoteMusicaJava(this), this);
         Bukkit.getScheduler().runTaskLater(this, () -> { try { inferno.mundo(); } catch (Throwable ex) { getLogger().warning("Mundo de Herobrine: " + ex); } }, 200L);
         getServer().getPluginManager().registerEvents(new Vidas(this), this);
@@ -329,6 +334,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         if (inferno != null) inferno.desligar();
         if (tempestade != null) tempestade.desligar();
         if (descida != null) descida.desligar();
+        if (mecanicas != null) mecanicas.desligar();
         if (ranking != null) ranking.salvar();
         if (statusEntrada != null) statusEntrada.limpar();
         if (missoes != null) missoes.salvarAgora();
@@ -1592,6 +1598,8 @@ public final class Masmorras extends JavaPlugin implements Listener {
                     pp.sendActionBar(txt("§b§lEscudo! §7Mate os guardas brilhando primeiro."));
                 return;
             }
+            // 17/11: escudo dos alvos, chefe tonto (+50%) e achou o verdadeiro entre as sombras
+            if (mecanicas != null && mecanicas.danoNoChefe(c, e)) return;
             // 15/11 (Paulo: "era pra quebrar o chao e levar pra outro lugar, e nao funcionou"): o golpe que passaria dos 60%
             // nao pode pular a fase (chefe com pouca vida morria antes do tique de meio segundo ver). Segura a vida e chama ja.
             if (tempestade != null && c.t.id.equals("TROVAO") && !c.tempestadeFeita && getConfig().getBoolean("tempestade.ativa", true)
@@ -2495,6 +2503,21 @@ public final class Masmorras extends JavaPlugin implements Listener {
                 tm.chefe.e.setHealth(Math.min(tm.chefe.e.getHealth(), tm.chefe.vidaMax * 0.58));
                 s.sendMessage(PREFIXO + "Chefe da masmorra #" + tm.id + " em 58% da vida: a tempestade vai comecar.");
             }
+            case "mecanica" -> {
+                // teste: /masmorras admin mecanica <nome> [masmorra]  (sem nome: mostra as mecanicas do chefe vivo)
+                Masmorra tm = a.length > 3 ? porTexto(a[3]) : null;
+                if (tm == null && s instanceof Player sp)
+                    for (Masmorra m : todas) if (m.chefe != null && m.chefe.vivo() && m.mundo != null && m.mundo.equals(sp.getWorld().getName())
+                            && m.arenaLuta().crescer(12).contem(sp.getX(), sp.getY(), sp.getZ())) { tm = m; break; }
+                if (tm == null) for (Masmorra m : todas) if (m.chefe != null && m.chefe.vivo()) { tm = m; break; }
+                if (tm == null || tm.chefe == null || !tm.chefe.vivo()) { s.sendMessage(PREFIXO + "Nenhum chefe vivo (entre na arena primeiro)."); return true; }
+                if (a.length < 3) {
+                    s.sendMessage(PREFIXO + "Chefe #" + tm.id + " (" + tm.tipo.id + "): " + mecanicas.descrever(tm.chefe));
+                    s.sendMessage(PREFIXO + "Uso: /masmorras admin mecanica <" + MecanicasChefes.nomes() + "> [masmorra]");
+                    return true;
+                }
+                s.sendMessage(PREFIXO + mecanicas.forcar(tm.chefe, a[2]));
+            }
             case "descida" -> {
                 // teste: /masmorras admin descida [id]  (descida de barco do Rei do Gelo; com outra masmorra forca a fase nela)
                 Masmorra tm = null;
@@ -2626,7 +2649,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
             for (Masmorra m : porId.values()) nomes.add(m.tipo.secreta ? "???" : m.tipo.id.toLowerCase(Locale.ROOT));
             l.addAll(nomes);
         } else if (a.length == 2 && a[0].equalsIgnoreCase("admin") && s.hasPermission("masmorras.admin"))
-            l.addAll(List.of("lista", "status", "construir", "reset", "tp", "bordas", "editar", "reliquia", "tempestade", "descida"));
+            l.addAll(List.of("lista", "status", "construir", "reset", "tp", "bordas", "editar", "reliquia", "tempestade", "descida", "mecanica"));
         else if (a.length == 3 && a[0].equalsIgnoreCase("admin") && (a[1].equalsIgnoreCase("reset") || a[1].equalsIgnoreCase("tp")) && s.hasPermission("masmorras.admin")) {
             java.util.Set<String> nomes = new java.util.TreeSet<>();
             for (Masmorra m : porId.values()) nomes.add(m.tipo.secreta ? "???" : m.tipo.id.toLowerCase(Locale.ROOT));

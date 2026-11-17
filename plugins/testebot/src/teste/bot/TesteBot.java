@@ -54,6 +54,14 @@ public final class TesteBot extends JavaPlugin implements org.bukkit.event.Liste
                 + " vida=" + String.format("%.1f", z.getHealth()) + " invul=" + z.getNoDamageTicks());
     }
 
+    @org.bukkit.event.EventHandler(priority = org.bukkit.event.EventPriority.MONITOR)
+    public void verDanoBot(org.bukkit.event.entity.EntityDamageEvent e) {
+        if (!(e.getEntity() instanceof Player p) || !falsos.containsKey(p.getName().toLowerCase())) return;
+        String quem = e instanceof org.bukkit.event.entity.EntityDamageByEntityEvent b ? b.getDamager().getType().name() : "-";
+        log("DANOBOT " + p.getName() + " causa=" + e.getCause() + " por=" + quem + " dano=" + String.format("%.2f", e.getDamage())
+                + " cancelado=" + e.isCancelled() + " vida=" + String.format("%.1f", p.getHealth()));
+    }
+
     @org.bukkit.event.EventHandler(priority = org.bukkit.event.EventPriority.LOWEST)
     public void verInteracao(PlayerInteractEvent e) {
         log("INTERACT acao=" + e.getAction() + " mao=" + e.getHand() + " bloco=" + (e.getClickedBlock() == null ? "-" : e.getClickedBlock().getType() + "@" + e.getClickedBlock().getY()));
@@ -282,6 +290,18 @@ public final class TesteBot extends JavaPlugin implements org.bukkit.event.Liste
                 String antes = bl.getType().name();
                 boolean ok = p.breakBlock(bl);
                 log("QUEBRAR " + antes + " -> " + bl.getType().name() + " ok=" + ok);
+            }
+            case "vida" -> {
+                p.setHealth(Math.min(Double.parseDouble(a[2]), p.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue()));
+                log("VIDA " + p.getName() + " = " + p.getHealth());
+            }
+            case "socar" -> {
+                // socar <nome> x y z: clique esquerdo num bloco (PlayerInteractEvent LEFT_CLICK_BLOCK)
+                org.bukkit.block.Block bl = p.getWorld().getBlockAt(Integer.parseInt(a[2]), Integer.parseInt(a[3]), Integer.parseInt(a[4]));
+                String antes = bl.getType().name();
+                PlayerInteractEvent ev = new PlayerInteractEvent(p, Action.LEFT_CLICK_BLOCK, null, bl, BlockFace.UP, EquipmentSlot.HAND);
+                Bukkit.getPluginManager().callEvent(ev);
+                log("SOCAR " + antes + " -> " + bl.getType().name() + " cancelado=" + ev.isCancelled());
             }
             case "olhar" -> {
                 Location alvo = new Location(p.getWorld(), Double.parseDouble(a[2]), Double.parseDouble(a[3]), Double.parseDouble(a[4]));
