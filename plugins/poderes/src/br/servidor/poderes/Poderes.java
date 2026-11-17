@@ -327,11 +327,15 @@ public final class Poderes extends JavaPlugin implements Listener {
     private static final String[] TAGS_VIP = {"", "§a§lVIP ", "§b§lVIP+ ", "§6§lMVP ", "§d§lLENDA "};
 
     /** Tag do VIP (plugin Extras) para o TAB. */
+    private static final NamespacedKey CARGO = new NamespacedKey("extras", "cargo");
+
     static String tagVip(Player p) {
+        String cargo = p.getPersistentDataContainer().get(CARGO, PersistentDataType.STRING);
+        String c = cargo == null || cargo.isEmpty() ? "" : cargo + " §r";
         Integer n = p.getPersistentDataContainer().get(VIP_NIVEL, PersistentDataType.INTEGER);
         Long ate = p.getPersistentDataContainer().get(VIP_ATE, PersistentDataType.LONG);
-        if (n == null || n < 1 || n > 4 || ate == null || ate < System.currentTimeMillis()) return "";
-        return TAGS_VIP[n] + "§r";
+        if (n == null || n < 1 || n > 4 || ate == null || ate < System.currentTimeMillis()) return c;
+        return c + TAGS_VIP[n] + "§r";
     }
 
     public void atualizarTab(Player p) {

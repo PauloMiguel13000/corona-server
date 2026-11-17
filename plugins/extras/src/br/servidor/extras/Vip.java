@@ -59,6 +59,37 @@ final class Vip implements Listener {
     /** Traje do Rei (MVP e LENDA). */
     TrajeRei traje;
 
+    // ------------------------------------------------------------------ 17/11: tag de cargo (Dono, Tester...) no chat
+    /** nome (minusculo) -> tag com cores &. Arquivo plugins/Extras/cargos.yml (separado da config). */
+    private final java.util.Map<String, String> cargos = new java.util.HashMap<>();
+    private NamespacedKey kCargo;
+
+    void carregarCargos() {
+        File f = new File(pl.getDataFolder(), "cargos.yml");
+        YamlConfiguration y = YamlConfiguration.loadConfiguration(f);
+        if (!f.exists()) {
+            y.options().setHeader(java.util.List.of("Tag de cargo no chat (e no TAB). Nome do jogador: tag com cores &."));
+            y.set("coronadooscar", "&6&lDONO");
+            y.set("ViboXact", "&b&lTESTER");
+            try {
+                y.save(f);
+            } catch (Exception ignorado) {
+            }
+        }
+        cargos.clear();
+        for (String k : y.getKeys(false)) cargos.put(k.toLowerCase(Locale.ROOT), y.getString(k, "").replace('&', '§'));
+        if (kCargo == null) kCargo = new NamespacedKey(pl, "cargo");
+        for (Player p : Bukkit.getOnlinePlayers()) marcarCargo(p);
+    }
+
+    /** Guarda a tag no jogador (o plugin Poderes usa no TAB). */
+    void marcarCargo(Player p) {
+        if (kCargo == null) return;
+        String t = cargos.get(p.getName().toLowerCase(Locale.ROOT));
+        if (t == null || t.isEmpty()) p.getPersistentDataContainer().remove(kCargo);
+        else p.getPersistentDataContainer().set(kCargo, PersistentDataType.STRING, t);
+    }
+
     Vip(Extras pl) {
         this.pl = pl;
         this.arquivo = new File(pl.getDataFolder(), "vips.yml");
@@ -69,6 +100,7 @@ final class Vip implements Listener {
     }
 
     void iniciar() {
+        carregarCargos();
         Bukkit.getScheduler().runTaskTimer(pl, this::conferirTodos, 200L, 20L * 60);
         Bukkit.getScheduler().runTaskTimer(pl, this::efeitos, 40L, 10L);
         for (Player p : Bukkit.getOnlinePlayers()) sincronizar(p);
@@ -218,6 +250,7 @@ final class Vip implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void entrou(PlayerJoinEvent e) {
         Player p = e.getPlayer();
+        marcarCargo(p);
         Bukkit.getScheduler().runTaskLater(pl, () -> {
             if (!p.isOnline()) return;
             ConfigurationSection c = secao(p.getName(), false);
@@ -275,8 +308,11 @@ final class Vip implements Listener {
     public void chat(io.papermc.paper.event.player.AsyncChatEvent e) {
         Integer n = e.getPlayer().getPersistentDataContainer().get(kNivel, PersistentDataType.INTEGER);
         Long ate = e.getPlayer().getPersistentDataContainer().get(kAte, PersistentDataType.LONG);
-        if (n == null || n < 1 || n > 4 || ate == null || ate < System.currentTimeMillis()) return;
-        net.kyori.adventure.text.Component tag = Extras.txt("§8[" + NIVEIS[n].tag() + "§8] ");
+        boolean vip = !(n == null || n < 1 || n > 4 || ate == null || ate < System.currentTimeMillis());
+        String cargo = cargos.get(e.getPlayer().getName().toLowerCase(Locale.ROOT));
+        boolean temCargo = cargo != null && !cargo.isEmpty();
+        if (!vip && !temCargo) return;
+        net.kyori.adventure.text.Component tag = Extras.txt((temCargo ? "§8[" + cargo + "§8] " : "") + (vip ? "§8[" + NIVEIS[n].tag() + "§8] " : ""));
         io.papermc.paper.chat.ChatRenderer antes = e.renderer();
         e.renderer((src, nome, msg, quem) -> tag.append(antes.render(src, nome, msg, quem)));
     }
