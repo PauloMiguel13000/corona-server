@@ -94,3 +94,16 @@ Ordem: primeiro o bug, depois os chefes. Um de cada vez, testado no servidor de 
 - TikTok: capa nova no "A NOITE CHEGOU" (o speedrun já tinha capa).
 - Story com o depoimento do Sui publicado no Facebook e no Instagram (link do Discord só aparece no Facebook).
 - Lembretes nesta conversa: 20h20 hoje (reel do speedrun + bump) e todo dia às 19h20 até 26/11 para as capas do TikTok, mais 27/11 às 12h20.
+
+## 17/11 19:31–19:44 — Instalações 360 a 363
+- **Boss mundial (ideia do Sui):** arena-templo no céu do masmorras_mundo, em 900 262 903, com 79×79 por dentro, 24 de altura e 12 colunas. Fica salva em plugins/Extras/arena-boss.txt (versão 2).
+  - /boss e o clique com a bússola levam até a arena. Quando a luta acaba, cada um volta para onde estava.
+  - Com 2/3 da vida o Colosso chama um chefe de masmorra aleatório de nível 3. Com 1/3, um de nível 4. Enquanto esse chefe vive, o Colosso não sente dano.
+  - Dano no chefe chamado conta 50% para o prêmio do Colosso. Ficam fora do sorteio o Enderman, o Shulker e a Breeze.
+  - O chefe chamado é o Chefe da masmorra de verdade (habilidades e particularidade), rodando com `avulso = true`, sem tempestade, descida, inferno ou mecânicas da sala.
+  - API: Masmorras.chefeAvulso(...) e tirarChefeAvulso(...), chamadas por reflexão.
+  - Teste pelo console (boss invocar, boss fase ×2, boss remover): Viúva Negra (nível 3, 416 de vida) e Gigante de Gelo (nível 4, 672). O status mostrou o Colosso protegido. Ainda não testei com jogador dentro.
+  - Admin: `/boss arena` (refaz e vai até lá), `/boss fase` (pula fase), `/boss status`.
+- **Portais de nível:** levam para o anel do nível, num ponto a pelo menos 400 blocos de qualquer masmorra (`portais.distancia-das-masmorras`). A bússola aponta para uma masmorra que falta na trilha. `portais.levar-ao-que-falta` agora é false por padrão.
+- **Engenheiro:** testei 2 torres, intervalo de 6 s e 60% de dano em chefe, e o Paulo não quis nenhum dos três. Ficou como antes (3 torres). A 4ª torre vira prêmio das relíquias.
+- **Próximo projeto (Paulo):** renascimento. Quem renasce volta do zero e libera as relíquias: vagas tipo runas do LoL, +0,1% de dano cada, e cada fileira cheia dá um bônus (queimadura, torre extra a cada X s).
