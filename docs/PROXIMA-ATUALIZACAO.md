@@ -84,3 +84,13 @@ Ordem: primeiro o bug, depois os chefes. Um de cada vez, testado no servidor de 
 - Bug: pet mooshroom somava gravidade -0.03 por nível (ADD_NUMBER sobre a base 0.08), então a partir do nível 3 a gravidade ficava negativa e o jogador grudava no teto.
 - Correção no servidor: `plugins/BabyPets/pets.yml`, GRAVITY `value_per_level: -0.0050` (nível 10 = -0.05 → gravidade 0.03, sempre positiva). Backup `pets.yml.bak-vaca-*`. Servidor reiniciado com 0 jogadores, BabyPets carregou 22 pets, 0 ERROR.
 - Discord: cargo 🧪 Tester agora aparece separado na lista de membros e fica acima de 🎮 Jogador.
+
+## 17/11 19:02 — Instalação 357 (o que era a "355")
+- Poderes + Masmorras compilados das fontes atuais e instalados com 0 jogadores: chefes imunes a lento/congelamento das torres (Gelo e Tesla), endermen das masmorras sem teleporte, tag de cargo no TAB.
+- Log: "ligou ok", 0 ERROR. O instalador avisou "linha da mochila nao bateu (nao mexi)": não mexeu em nada, só não aplicou aquele ajuste opcional.
+
+## 17/11 19:10 — Redes
+- Facebook: links sociais (Instagram, TikTok, YouTube) e Discord como segundo site.
+- TikTok: capa nova no "A NOITE CHEGOU" (o speedrun já tinha capa).
+- Story com o depoimento do Sui publicado no Facebook e no Instagram (link do Discord só aparece no Facebook).
+- Lembretes nesta conversa: 20h20 hoje (reel do speedrun + bump) e todo dia às 19h20 até 26/11 para as capas do TikTok, mais 27/11 às 12h20.
