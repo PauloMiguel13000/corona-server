@@ -25,3 +25,10 @@ Ordem: primeiro o bug, depois os chefes. Um de cada vez, testado no servidor de 
 - Juggernaut: aumentar a área da luta para os jogadores terem onde se esconder (hoje fica muito difícil).
 - Cara do escudo: hoje nenhum tiro dá dano (nem na cabeça, nem pelas costas). Deixar pequenas brechas para derrubar ele (costas, cabeça por cima do escudo, pernas...).
 - Começo da partida de helicóptero: os jogadores descem/pulam do helicóptero para começar a jogatina.
+
+## Como trabalhar (estado de 17/11, 07:20)
+- Leia antes `ferramentas/COMECAR-AQUI-CORONA-SERVER.md` (regras do Paulo e proibições). Ele está desatualizado em alguns pontos: hoje o servidor roda no Linux 143.14.79.58 (corona-server.duckdns.org), e o PC "server1" (DESKTOP-JLG1NKU) só faz backup e serve de ponte.
+- **Mandar comandos ao servidor:** grave o script em `C:\Users\server1\Documents\CoronaServer\passo.sh` (device_commit_files), dê duplo clique no atalho RODAR da área de trabalho e leia `saida.txt` na mesma pasta. Se existir `depois.ps1` ali, ele roda no PC no fim e se apaga sozinho. No fim, volte o `passo.sh` ao `ferramentas/instalar/passo-padrao.sh`.
+- **Instalar jars:** `python3 ferramentas/instalar/mkpasso.py NUM saida.sh jar:Nome.jar:Plugin ...` gera o instalador. Com gente online, troque o final pelo de `final_reinicio_seguro.sh` (avisa na tela e reinicia) ou corte em `for i in $(seq 1 36)` para instalar só quando o servidor ficar vazio. Última instalação: **347** (17/11 02:09).
+- **Testar:** monte um servidor de teste local (Paper 26.3 com os plugins do repositório) e use o plugin `ferramentas/testebot` (`fake entrar/ir/bater/socar/agachar/olhar/vida/info`, com registro de dano dos bots). Para forçar as mecânicas novas dos chefes: `/masmorras admin mecanica <nome>`; para a descida do gelo: `/masmorras admin descida <id>`.
+- O código das mecânicas dos chefes está em `plugins/masmorras/src/br/servidor/masmorras/MecanicasChefes.java`, e a descida do gelo em `DescidaGelo.java`.
