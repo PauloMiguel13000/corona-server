@@ -100,18 +100,61 @@ final class BossMundial implements Listener {
         return pl.getConfig().getString("boss-mundial.nome", "Colosso da Coroa Partida");
     }
 
+    /**
+     * 16/11 (Paulo: "o boss mundial nunca spawna"): a contagem de 120 min recomecava a cada reinicio do servidor (foram
+     * 27 reinicios no dia) e nunca chegava ao fim. Agora a hora do proximo fica salva em boss-mundial.txt: depois de um
+     * reinicio ele nasce no maximo em 10 min se ja tinha passado da hora. Sem jogador online ou sem lugar, tenta de novo
+     * no minuto seguinte (antes perdia a vez e esperava mais 2 horas). Aviso 5 min antes.
+     */
+    private boolean avisou5;
+
+    private java.io.File arqProximo() {
+        return new java.io.File(pl.getDataFolder(), "boss-mundial.txt");
+    }
+
+    private void salvarProximo() {
+        try {
+            java.nio.file.Files.writeString(arqProximo().toPath(), String.valueOf(proximoNascimento));
+        } catch (Exception ex) {
+            pl.getLogger().warning("Boss mundial: nao salvei a hora do proximo: " + ex.getMessage());
+        }
+    }
+
     void iniciar() {
         Bukkit.getPluginManager().registerEvents(this, pl);
         if (!ativo()) return;
         long min = Math.max(10, pl.getConfig().getLong("boss-mundial.a-cada-minutos", 120));
-        proximoNascimento = System.currentTimeMillis() + min * 60_000L;
+        long agora = System.currentTimeMillis(), salvo = 0;
+        try {
+            salvo = Long.parseLong(java.nio.file.Files.readString(arqProximo().toPath()).trim());
+        } catch (Exception ignored) {
+        }
+        if (salvo <= 0) proximoNascimento = agora + 30 * 60_000L;
+        else proximoNascimento = Math.max(salvo, agora + 10 * 60_000L);
+        if (salvo > 0 && salvo > agora + min * 60_000L) proximoNascimento = agora + min * 60_000L;   // hora absurda no arquivo
+        salvarProximo();
+        pl.getLogger().info("Boss mundial: proximo em " + (proximoNascimento - agora) / 60_000L + " min");
         Bukkit.getScheduler().runTaskTimer(pl, () -> {
-            if (vivo() || System.currentTimeMillis() < proximoNascimento) return;
-            proximoNascimento = System.currentTimeMillis() + min * 60_000L;
+            if (vivo()) return;
+            long t = System.currentTimeMillis();
             World w = mundoDoBoss();
-            if (w == null || Bukkit.getOnlinePlayers().size() < pl.getConfig().getInt("boss-mundial.minimo-de-jogadores", 1)) return;
+            boolean gente = Bukkit.getOnlinePlayers().size() >= pl.getConfig().getInt("boss-mundial.minimo-de-jogadores", 1);
+            long falta = proximoNascimento - t;
+            if (!avisou5 && gente && falta > 0 && falta <= 5 * 60_000L) {
+                avisou5 = true;
+                Bukkit.broadcast(Extras.txt("§6§l⚔ BOSS MUNDIAL §8» §eO §6" + nome() + " §edesperta em §f" + Math.max(1, (falta + 59_999) / 60_000L)
+                        + " min §eno Mundo das Masmorras! §7(/boss)"));
+            }
+            if (falta > 0) return;
+            if (w == null || !gente) return;   // tenta de novo no proximo minuto
             Location l = lugar(w);
-            if (l != null) nascer(l);
+            if (l == null) return;
+            nascer(l);
+            if (vivo()) {
+                proximoNascimento = System.currentTimeMillis() + min * 60_000L;
+                avisou5 = false;
+                salvarProximo();
+            }
         }, 20L * 60, 20L * 60);
     }
 
