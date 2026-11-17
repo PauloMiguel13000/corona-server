@@ -2734,7 +2734,8 @@ final class MecanicasChefes implements Listener {
                     boolean naIlha = false;
                     for (Location il : ilhas) if (Math.abs(il.getBlockX() - x) <= 1 && Math.abs(il.getBlockZ() - z) <= 1) naIlha = true;
                     if (naIlha) continue;
-                    for (int y = yChao; y >= yChao - 2; y--) {
+                    // so 2 camadas: quem cai fica dentro da area vigiada (arena + 2) e volta para uma ilha
+                    for (int y = yChao; y >= yChao - 1; y--) {
                         Block b = w.getBlockAt(x, y, z);
                         if (b.getType().isAir() || l.blocos.containsKey(b) || b.getState() instanceof org.bukkit.block.TileState) continue;
                         l.blocos.put(b, b.getBlockData());
@@ -2791,7 +2792,19 @@ final class MecanicasChefes implements Listener {
         @Override
         void fim() {
             c.e.setGravity(true);
-            for (Player p : c.naArena()) p.removePotionEffect(PotionEffectType.JUMP_BOOST);
+            Caixa a = arena();
+            int y1 = a.y1();
+            for (Player p : w.getPlayers()) {
+                if (p.getX() < a.x1() - 1 || p.getX() > a.x2() + 2 || p.getZ() < a.z1() - 1 || p.getZ() > a.z2() + 2) continue;
+                p.removePotionEffect(PotionEffectType.JUMP_BOOST);
+                // o chao volta no proximo instante: quem estiver no buraco sobe para cima do chao (nao fica preso dentro)
+                if (p.getY() < y1 - 0.2 && p.getY() > y1 - 6) {
+                    Location l2 = p.getLocation().clone();
+                    l2.setY(y1);
+                    p.teleport(l2);
+                    p.setFallDistance(0);
+                }
+            }
         }
     }
 
