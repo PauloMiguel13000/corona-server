@@ -2,8 +2,12 @@
 
 Ordem: primeiro o bug, depois os chefes. Um de cada vez, testado no servidor de teste, instalado com o servidor vazio.
 
-## Bug
+## Bugs
 - Pet vaca cogumelo (antigravidade): no nível 9 o jogador fica flutuando, não consegue pular e às vezes fica preso (relato do Sui no Discord).
+
+## Relato do Sui (17/11, 12:26)
+- Bug: os tiros das torretas (Engenheiro) ativam os efeitos da arma, por exemplo o "Eco" da relíquia Cidade Ancestral (dano alto + escuridão com chance a cada golpe). Torreta não pode ativar efeito de arma; o Paulo já disse que as habilidades não ficam fortes conforme a arma.
+- Boss mundial (Colosso da Coroa Partida): está fácil para jogador forte (Sui matava com 3 torres, antes do buff de dano). Rebalancear, dando mais vida/resistência para grupos fortes, sem ficar impossível para quem está começando.
 
 ## Ideias do Paulo
 - Rainha Aranha: sobe no teto, joga 2 ovos que viram aranhas pequenas, desce e luta junto com elas; repete a cada ~20 s (entra no lugar da prisão de teia, que vai para a Viúva Negra).
