@@ -161,6 +161,49 @@ final class PortaisNivel implements Listener {
 
     // ------------------------------------------------------------------ atravessar
 
+    /**
+     * 17/11 (Paulo: "os portais teleportam para os portais de lvl diretamente, faca o teleporte ser na area do seu lvl, mas
+     * distante ... 400 blocos de distancia das dungeons"): o portal leva para um ponto do anel do nivel que fique a pelo
+     * menos portais.distancia-das-masmorras (400) de qualquer masmorra. Sorteia varios pontos e fica com o mais longe.
+     */
+    private Location longeDasMasmorras(int nivel) {
+        World w = mm.normal;
+        int[] z = mm.zonas();
+        int borda = Math.max(z[2] + 200, pl.borda(Tipo.Onde.NORMAL) / 2 - 150);
+        double r1, r2;
+        switch (nivel) {
+            case 2 -> { r1 = z[0]; r2 = z[1]; }
+            case 3 -> { r1 = z[1]; r2 = z[2]; }
+            case 4 -> { r1 = z[2]; r2 = z[2] + (borda - z[2]) * 0.5; }
+            default -> { r1 = z[2] + (borda - z[2]) * 0.5; r2 = borda; }
+        }
+        r1 += 40;
+        r2 = Math.max(r1 + 10, r2 - 40);
+        double quer = pl.getConfig().getDouble("portais.distancia-das-masmorras", 400);
+        List<double[]> portas = new ArrayList<>();
+        for (Masmorra m : pl.todas) if (m.mundo.equals(w.getName()) && !m.demolindo) portas.add(new double[] {m.saidaX, m.saidaZ});
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+        int bx = 0, bz = 0;
+        double melhor = -1;
+        for (int t = 0; t < 80; t++) {
+            double a = rnd.nextDouble() * Math.PI * 2, r = r1 + rnd.nextDouble() * (r2 - r1);
+            int x = (int) (Math.cos(a) * r), zz = (int) (Math.sin(a) * r);
+            if (!w.getWorldBorder().isInside(new Location(w, x, 64, zz)) || pertoDaSecreta(w, x, zz)) continue;
+            double perto = Double.MAX_VALUE;
+            for (double[] d : portas) perto = Math.min(perto, (d[0] - x) * (d[0] - x) + (d[1] - zz) * (d[1] - zz));
+            perto = Math.sqrt(perto);
+            if (perto > melhor) {
+                melhor = perto;
+                bx = x;
+                bz = zz;
+            }
+            if (perto >= quer) break;
+        }
+        if (melhor < 0) return noAnel(nivel);
+        Location d = Loja.lugarPerto(w, bx, w.getHighestBlockYAt(bx, bz) + 1, bz);
+        return d != null ? d : new Location(w, bx + 0.5, w.getHighestBlockYAt(bx, bz) + 1, bz + 0.5);
+    }
+
     /** Para onde o portal leva: perto de uma masmorra daquele nivel; se nao houver, no anel daquele nivel. */
     private Location destino(int nivel) {
         // 15/11: as de nivel 5 ficam no End (e algumas de nivel 4 no Nether): procura nos tres mundos das masmorras,
@@ -246,7 +289,7 @@ final class PortaisNivel implements Listener {
         }
         // 17/11 (Sui: "os portais sao aleatorios... recomendo teleportar pras masmorras que faltam"): se ainda falta
         // vencer alguma masmorra deste nivel, o portal leva direto para a porta de uma delas (sorteada); senao, aleatorio
-        if (pl.progresso != null && pl.progresso.ativo() && pl.getConfig().getBoolean("portais.levar-ao-que-falta", true)) {
+        if (pl.progresso != null && pl.progresso.ativo() && pl.getConfig().getBoolean("portais.levar-ao-que-falta", false)) {
             java.util.List<Tipo> falta = pl.progresso.faltam(p, nivel);
             java.util.List<Masmorra> opcoes = new java.util.ArrayList<>();
             for (Masmorra m : pl.todas)
@@ -268,17 +311,21 @@ final class PortaisNivel implements Listener {
                 return;
             }
         }
-        Location d = destino(nivel);
+        // 17/11: longe das masmorras (pedido do Paulo); portais.longe-das-masmorras: false volta ao jeito antigo
+        Location d = pl.getConfig().getBoolean("portais.longe-das-masmorras", true) ? longeDasMasmorras(nivel) : destino(nivel);
+        java.util.List<Tipo> faltam = pl.progresso != null && pl.progresso.ativo() ? pl.progresso.faltam(p, nivel) : java.util.List.of();
         p.setFallDistance(0);
         p.teleportAsync(d, PlayerTeleportEvent.TeleportCause.PLUGIN).thenAccept(ok -> {
             if (!ok) return;
             p.showTitle(net.kyori.adventure.title.Title.title(Masmorras.txt(visual(nivel)[3] + "§lÁREA DE NÍVEL " + nivel),
-                    Masmorras.txt("§7Use §f/masmorras menu §7para a bússola de uma masmorra daqui")));
+                    Masmorras.txt("§7As masmorras ficam longe daqui: siga a bússola")));
             p.playSound(p.getLocation(), "minecraft:block.portal.travel", 0.5f, 1.1f - nivel * 0.1f);
             Masmorra perto = null;
             double md = Double.MAX_VALUE;
             for (Masmorra m : pl.todas) {
                 if (!m.mundo.equals(p.getWorld().getName()) || m.tipo.nivel != nivel || m.demolindo || m.tipo.secreta) continue;
+                if (!faltam.isEmpty() && !faltam.contains(m.tipo)) continue;   // a bussola aponta para uma que falta na trilha
+                if (pertoDaSecreta(p.getWorld(), m.saidaX, m.saidaZ)) continue;
                 double dd = pl.dist2(m, p.getLocation());
                 if (dd < md) {
                     md = dd;

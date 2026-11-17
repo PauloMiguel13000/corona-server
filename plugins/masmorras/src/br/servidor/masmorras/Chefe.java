@@ -73,6 +73,11 @@ final class Chefe {
     boolean forcarTempestade;
     /** Rei do Gelo: ja fugiu pela encosta e todo mundo desceu de barco (DescidaGelo). forcar = teste do admin. */
     boolean descidaFeita, forcarDescida;
+    /**
+     * 17/11 (sugestao do Sui): chefe chamado pelo boss mundial na arena do Colosso (ChefesAvulsos). Usa as habilidades e a
+     * particularidade dele, mas nao as cenas que dependem da masmorra (tempestade, descida, inferno, mecanicas da sala).
+     */
+    boolean avulso;
 
     Chefe(Masmorras pl, Masmorra m, LivingEntity e, double vidaMax) {
         this.pl = pl;
@@ -104,18 +109,18 @@ final class Chefe {
                     Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(3), Duration.ofSeconds(1))));
             p.playSound(e.getLocation(), "minecraft:entity.wither.spawn", 0.6f, 0.8f);
             if (t.esp != Tipo.Esp.NENHUMA) p.sendMessage(Masmorras.txt("§c§l⚠ " + t.chefeNome + ": §7" + t.esp.desc));
-            if (pl.mecanicas != null) pl.mecanicas.anunciar(this, p);
+            if (!avulso && pl.mecanicas != null) pl.mecanicas.anunciar(this, p);
         }
     }
 
     /** A cada meio segundo. Devolve false quando o chefe deve ser tirado (ninguem por perto ha muito tempo). */
     boolean tick() {
         if (!vivo()) return false;
-        if ((t.secreta || forcarInferno) && pl.inferno != null && pl.inferno.ativo(this)) {   // no mundo de Herobrine quem manda e o InfernoHerobrine
+        if (!avulso && (t.secreta || forcarInferno) && pl.inferno != null && pl.inferno.ativo(this)) {   // no mundo de Herobrine quem manda e o InfernoHerobrine
             return true;   // a fase tem o tique dela (InfernoHerobrine)
         }
-        if (pl.tempestade != null && pl.tempestade.ocupado(this)) return true;   // cena do chao quebrando
-        if (pl.descida != null && pl.descida.ocupado(this)) return true;   // descida de barco (a fase tem o tique dela)
+        if (!avulso && pl.tempestade != null && pl.tempestade.ocupado(this)) return true;   // cena do chao quebrando
+        if (!avulso && pl.descida != null && pl.descida.ocupado(this)) return true;   // descida de barco (a fase tem o tique dela)
         long agora = System.currentTimeMillis();
         List<Player> ps = naArena();
         // barra de vida
@@ -137,9 +142,9 @@ final class Chefe {
             return agora - semJogadorDesde < 60_000;
         }
         semJogadorDesde = -1;
-        if ((t.secreta || forcarInferno) && pl.inferno != null && pl.inferno.conferir(this, ps)) return true;
-        if (pl.tempestade != null && pl.tempestade.conferir(this, ps)) return true;
-        if (pl.descida != null && pl.descida.conferir(this, ps)) return true;
+        if (!avulso && (t.secreta || forcarInferno) && pl.inferno != null && pl.inferno.conferir(this, ps)) return true;
+        if (!avulso && pl.tempestade != null && pl.tempestade.conferir(this, ps)) return true;
+        if (!avulso && pl.descida != null && pl.descida.conferir(this, ps)) return true;
         // preso na arena
         Caixa a = m.arenaLuta();
         if (!a.crescer(1).contem(e.getX(), e.getY(), e.getZ())) e.teleport(centro());
@@ -162,7 +167,7 @@ final class Chefe {
         }
         especial(ps, agora);
         // 17/11: mecanica propria do chefe (sombras, chao marcado, investida...): durante a cena nao usa as habilidades
-        if (pl.mecanicas != null && pl.mecanicas.tick(this, ps, agora)) return true;
+        if (!avulso && pl.mecanicas != null && pl.mecanicas.tick(this, ps, agora)) return true;
         if (agora >= proximaHab) {
             usarHabilidade(ps, alvo);
             long base = furioso ? 5000 : 8000;
@@ -464,7 +469,7 @@ final class Chefe {
     /** Particulas em volta do chefe (cada tipo a sua) e um anel no chao; furioso: chamas e raiva. */
     void efeitos() {
         if (visual != null && System.currentTimeMillis() < sumidoAte) return;
-        if (pl.mecanicas != null && pl.mecanicas.escondendo(this)) return;   // escondido entre as sombras
+        if (!avulso && pl.mecanicas != null && pl.mecanicas.escondendo(this)) return;   // escondido entre as sombras
         World w = e.getWorld();
         Location l = e.getLocation();
         String nome = switch (t.id) {
@@ -1235,9 +1240,9 @@ final class Chefe {
         for (Player p : vendo) p.hideBossBar(barra);
         vendo.clear();
         tirarTeias(true);
-        if (pl.tempestade != null) pl.tempestade.terminar(this, false);
-        if (pl.descida != null) pl.descida.terminar(this, false);
-        if (pl.mecanicas != null) pl.mecanicas.fim(this);
+        if (!avulso && pl.tempestade != null) pl.tempestade.terminar(this, false);
+        if (!avulso && pl.descida != null) pl.descida.terminar(this, false);
+        if (!avulso && pl.mecanicas != null) pl.mecanicas.fim(this);
         if (e != null && e.isValid()) e.remove();
     }
 
@@ -1248,9 +1253,9 @@ final class Chefe {
         for (Player p : vendo) p.hideBossBar(barra);
         vendo.clear();
         tirarTeias(true);
-        if (pl.tempestade != null) pl.tempestade.terminar(this, true);
-        if (pl.descida != null) pl.descida.terminar(this, true);
-        if (pl.mecanicas != null) pl.mecanicas.fim(this);
+        if (!avulso && pl.tempestade != null) pl.tempestade.terminar(this, true);
+        if (!avulso && pl.descida != null) pl.descida.terminar(this, true);
+        if (!avulso && pl.mecanicas != null) pl.mecanicas.fim(this);
     }
 
     static void atributo(LivingEntity e, Attribute a, double v) {

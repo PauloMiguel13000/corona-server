@@ -80,6 +80,21 @@ final class BossMundial implements Listener {
     private final java.util.Set<UUID> naBarra = new java.util.HashSet<>();
     private long proximoNascimento;
 
+    // ---- 17/11 (sugestao do Sui, Paulo: "criar uma arena pra ele em que a galera pudesse entrar pelo comando ou a bussola")
+    /** Arena no ceu do mundo das masmorras: paredes em +-RAIO do centro, pes em ay, teto de barreira em ay+18. */
+    /** 17/11 (Sui: "tem que ser espacosa ... tipo os templos das masmorras, em escala bem maior"): versao 2, templo grande. */
+    static final int RAIO = 40, ALTURA = 24, VERSAO_ARENA = 2;
+    private int ax, ay, az;
+    private boolean arenaPronta;
+    /** De onde cada um veio quando entrou na arena (volta para la quando a luta acaba). */
+    private final Map<UUID, Location> volta = new HashMap<>();
+    private final Map<UUID, Long> esperaBussola = new HashMap<>();
+    /** Chefe de masmorra chamado pelo Colosso (2/3 da vida: nivel 3; 1/3: nivel 4). Enquanto ele vive o Colosso nao sente dano. */
+    private LivingEntity invocado;
+    private String nomeInvocado = "";
+    private int fase;
+    private final List<long[]> tickets = new ArrayList<>();
+
     BossMundial(Extras pl) {
         this.pl = pl;
         this.kBoss = new NamespacedKey(pl, "boss_mundial");
@@ -126,6 +141,7 @@ final class BossMundial implements Listener {
     void iniciar() {
         Bukkit.getPluginManager().registerEvents(this, pl);
         if (!ativo()) return;
+        Bukkit.getScheduler().runTaskLater(pl, this::prepararArena, 200L);
         long min = Math.max(10, pl.getConfig().getLong("boss-mundial.a-cada-minutos", 120));
         long agora = System.currentTimeMillis(), salvo = 0;
         try {
@@ -150,7 +166,7 @@ final class BossMundial implements Listener {
             }
             if (falta > 0) return;
             if (w == null || !gente) return;   // tenta de novo no proximo minuto
-            Location l = lugar(w);
+            Location l = arenaPronta ? centroArena(w) : lugar(w);
             if (l == null) return;
             nascer(l);
             if (vivo()) {
@@ -253,6 +269,9 @@ final class BossMundial implements Listener {
         corpo3d = new ColossoCorpo(pl, ESC_MODELO);
         corpo3d.nascer(l);
         vidaMax = vida = pl.getConfig().getDouble("boss-mundial.vida-base", 600) * MULT_VIDA;
+        fase = 0;
+        invocado = null;
+        if (naArena(l)) segurarChunks(l.getWorld());
         dano.clear();
         nomes.clear();
         ticks = 0;
@@ -261,8 +280,14 @@ final class BossMundial implements Listener {
         barra = BossBar.bossBar(Extras.txt("§6§l" + nome()), 1f, BossBar.Color.YELLOW, BossBar.Overlay.NOTCHED_10);
         tarefa = Bukkit.getScheduler().runTaskTimer(pl, this::tick, 1L, 1L);
         l.getWorld().strikeLightningEffect(l);
-        Bukkit.broadcast(Extras.txt("§6§l⚔ BOSS MUNDIAL §8» §eO §6" + nome() + " §edespertou em §f" + l.getBlockX() + ", " + l.getBlockZ() + "§e! Quem bater ganha coronas."));
-        Bukkit.broadcast(Extras.txt("§a§l[IR ATÉ O BOSS]").clickEvent(ClickEvent.runCommand("/boss")).append(Extras.txt(" §7ou digite §f/boss")));
+        if (naArena(l)) {
+            Bukkit.broadcast(Extras.txt("§6§l⚔ BOSS MUNDIAL §8» §eO §6" + nome() + " §edespertou na §6Arena do Colosso§e! Quem bater ganha coronas."));
+            Bukkit.broadcast(Extras.txt("§7Com 2/3 e 1/3 da vida ele chama um §cchefe de masmorra§7: enquanto o chefe viver, o Colosso não sente dano. Dividam a equipe!"));
+            Bukkit.broadcast(Extras.txt("§a§l[ENTRAR NA ARENA]").clickEvent(ClickEvent.runCommand("/boss")).append(Extras.txt(" §7ou digite §f/boss §7ou clique com a §6Bússola do Colosso")));
+        } else {
+            Bukkit.broadcast(Extras.txt("§6§l⚔ BOSS MUNDIAL §8» §eO §6" + nome() + " §edespertou em §f" + l.getBlockX() + ", " + l.getBlockZ() + "§e! Quem bater ganha coronas."));
+            Bukkit.broadcast(Extras.txt("§a§l[IR ATÉ O BOSS]").clickEvent(ClickEvent.runCommand("/boss")).append(Extras.txt(" §7ou digite §f/boss")));
+        }
         for (Player p : Bukkit.getOnlinePlayers()) p.playSound(p.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.5f, 0.7f);
         pl.getLogger().info("Boss mundial nasceu em " + l.getWorld().getName() + " " + l.getBlockX() + " " + l.getBlockY() + " " + l.getBlockZ());
     }
@@ -295,7 +320,10 @@ final class BossMundial implements Listener {
             if (corpo.getFireTicks() > 0) corpo.setFireTicks(0);
             // caiu na agua/lava/vazio ou ficou preso: volta para o chao firme mais perto
             Block pe = l.getBlock();
-            if (pe.isLiquid() || l.getY() < corpo.getWorld().getMinHeight() + 2) {
+            if (arenaPronta && corpo.getWorld().equals(mundoDoBoss()) && Math.abs(ax - l.getBlockX()) < 200 && Math.abs(az - l.getBlockZ()) < 200) {
+                // na arena: nao sai dela (escada de bloco, empurrao, teleporte)
+                if (!naArena(l)) corpo.teleport(centroArena(corpo.getWorld()));
+            } else if (pe.isLiquid() || l.getY() < corpo.getWorld().getMinHeight() + 2) {
                 Block b = corpo.getWorld().getHighestBlockAt(l);
                 corpo.teleport(new Location(corpo.getWorld(), l.getX(), b.getY() + 1, l.getZ(), l.getYaw(), 0));
             }
@@ -318,9 +346,29 @@ final class BossMundial implements Listener {
             }
             bussolas();
             barra.progress((float) Math.max(0, Math.min(1, vida / vidaMax)));
-            barra.name(Extras.txt("§6§l" + nome() + " §7— §c" + (int) Math.ceil(vida) + " §7/ " + (int) vidaMax));
-            // 20 minutos sem morrer: vai embora
-            if (System.currentTimeMillis() - nasceu > pl.getConfig().getLong("boss-mundial.some-em-minutos", 20) * 60_000L) {
+            if (invocado != null && (!invocado.isValid() || invocado.isDead())) {
+                invocado = null;
+                for (Player p : perto(60)) {
+                    p.showTitle(net.kyori.adventure.title.Title.title(Extras.txt("§a§lO COLOSSO ESTÁ VULNERÁVEL"), Extras.txt("§7Voltem a bater nele!")));
+                    p.playSound(p.getLocation(), Sound.BLOCK_BEACON_DEACTIVATE, 1f, 0.8f);
+                }
+            }
+            if (invocado != null) {
+                barra.color(BossBar.Color.PURPLE);
+                barra.name(Extras.txt("§5§lPROTEGIDO §7— derrote §c" + nomeInvocado + " §7primeiro"));
+                double r = 2.4;
+                for (int i = 0; i < 12; i++) {
+                    double a = i * Math.PI / 6 + ticks * 0.05;
+                    corpo.getWorld().spawnParticle(Particle.END_ROD, l.getX() + Math.cos(a) * r, l.getY() + 1 + (i % 4) * 1.6, l.getZ() + Math.sin(a) * r, 1, 0, 0, 0, 0);
+                }
+            } else {
+                barra.color(BossBar.Color.YELLOW);
+                barra.name(Extras.txt("§6§l" + nome() + " §7— §c" + (int) Math.ceil(vida) + " §7/ " + (int) vidaMax));
+            }
+            // 20 minutos sem morrer (30 na arena, que tem as fases): vai embora
+            long limite = pl.getConfig().getLong("boss-mundial.some-em-minutos", 20);
+            if (arenaPronta) limite = Math.max(30, limite);
+            if (System.currentTimeMillis() - nasceu > limite * 60_000L) {
                 Bukkit.broadcast(Extras.txt("§6§l⚔ BOSS MUNDIAL §8» §7O " + nome() + " voltou a dormir. Ninguém o derrotou desta vez."));
                 acabar(false);
                 return;
@@ -498,7 +546,10 @@ final class BossMundial implements Listener {
             }
             int d = (int) p.getLocation().distance(alvo);
             cm.displayName(Extras.txt("§6§lBússola do Colosso"));
-            cm.lore(List.of(Extras.txt("§7Aponta para o §6" + nome() + "§7."),
+            cm.lore(arenaPronta ? List.of(Extras.txt("§7O §6" + nome() + " §7está na arena."),
+                    Extras.txt("§eClique com ela na mão para entrar."),
+                    Extras.txt("§8Some quando o boss morrer ou ir embora."))
+                    : List.of(Extras.txt("§7Aponta para o §6" + nome() + "§7."),
                     Extras.txt("§7Distância: §f" + d + " blocos"),
                     Extras.txt("§8Some quando o boss morrer ou ir embora.")));
             cm.getPersistentDataContainer().set(kBussola, PersistentDataType.BYTE, (byte) 1);
@@ -517,6 +568,18 @@ final class BossMundial implements Listener {
         }
         Location alvo = corpo.getLocation();
         Player p = e.getPlayer();
+        if (arenaPronta && naArena(alvo)) {
+            e.setCancelled(true);
+            if (naArena(p.getLocation())) {
+                p.sendActionBar(Extras.txt("§7Você já está na arena."));
+                return;
+            }
+            long agora = System.currentTimeMillis();
+            if (esperaBussola.getOrDefault(p.getUniqueId(), 0L) > agora) return;
+            esperaBussola.put(p.getUniqueId(), agora + 3000);
+            entrarNaArena(p);
+            return;
+        }
         if (!p.getWorld().equals(alvo.getWorld())) return;
         p.sendActionBar(Extras.txt("§6" + nome() + " §8| §e" + (int) p.getLocation().distance(alvo) + " blocos"));
         p.playSound(p.getLocation(), "minecraft:ui.button.click", 0.4f, 1.6f);
@@ -562,6 +625,14 @@ final class BossMundial implements Listener {
             if (ee.getDamager() instanceof Player x) p = x;
             else if (ee.getDamager() instanceof Projectile pr && pr.getShooter() instanceof Player x) p = x;
         }
+        if (invocado != null && invocado.isValid() && !invocado.isDead()) {
+            e.setCancelled(true);
+            if (p != null) {
+                p.sendActionBar(Extras.txt("§5§lPROTEGIDO! §7Derrote §c" + nomeInvocado + " §7primeiro."));
+                p.playSound(corpo.getLocation(), Sound.ITEM_SHIELD_BLOCK, 0.8f, 0.6f);
+            }
+            return;
+        }
         double d = e.getFinalDamage();
         e.setDamage(0);                       // a vida de verdade e a nossa (o corpo fica sempre cheio)
         if (p == null) {
@@ -581,7 +652,78 @@ final class BossMundial implements Listener {
         nomes.put(p.getUniqueId(), p.getName());
         vida -= d;
         corpo.getWorld().playSound(corpo.getLocation(), Sound.ENTITY_IRON_GOLEM_HURT, 1f, 0.6f);
+        if (arenaPronta && naArena(corpo.getLocation())) {
+            if (fase == 0 && vida <= vidaMax * 2 / 3.0) {
+                fase = 1;
+                vida = Math.max(vida, 1);
+                chamarReforco(3);
+                return;
+            }
+            if (fase == 1 && vida <= vidaMax / 3.0) {
+                fase = 2;
+                vida = Math.max(vida, 1);
+                chamarReforco(4);
+                return;
+            }
+        }
         if (vida <= 0) morrer();
+    }
+
+    /** Quem bate no chefe chamado tambem esta lutando: conta metade do dano para o premio do Colosso. */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void danoNoInvocado(EntityDamageByEntityEvent e) {
+        if (invocado == null || e.getEntity() != invocado || !vivo()) return;
+        Player p = e.getDamager() instanceof Player x ? x : e.getDamager() instanceof Projectile pr && pr.getShooter() instanceof Player x ? x : null;
+        if (p == null) return;
+        double d = Math.min(e.getFinalDamage(), pl.getConfig().getDouble("boss-mundial.dano-maximo-por-golpe", 60)) * 0.5;
+        if (dano.merge(p.getUniqueId(), d, Double::sum) == d && dano.size() > 1) {
+            double mais = pl.getConfig().getDouble("boss-mundial.vida-por-jogador", 350) * MULT_VIDA;
+            vidaMax += mais;
+            vida += mais;
+        }
+        nomes.put(p.getUniqueId(), p.getName());
+    }
+
+    /** Chama um chefe de masmorra (nivel 3 ou 4) na arena pelo plugin das masmorras (reflexao: sem dependencia). */
+    private void chamarReforco(int nivel) {
+        World w = corpo.getWorld();
+        for (Player p : perto(60)) {
+            p.showTitle(net.kyori.adventure.title.Title.title(Extras.txt("§5§lO COLOSSO CHAMOU REFORÇO"), Extras.txt("§7Um chefe de masmorra nível " + nivel + " entrou na arena!")));
+            p.playSound(p.getLocation(), Sound.ENTITY_EVOKER_PREPARE_SUMMON, 1f, 0.6f);
+        }
+        w.strikeLightningEffect(corpo.getLocation());
+        try {
+            org.bukkit.plugin.Plugin m = Bukkit.getPluginManager().getPlugin("Masmorras");
+            if (m == null || !m.isEnabled()) return;
+            java.lang.reflect.Method mt = m.getClass().getMethod("chefeAvulso", Location.class, int.class, int.class, int.class, int.class, int.class, int.class, int.class);
+            // longe do Colosso: do outro lado da arena
+            Location c = corpo.getLocation();
+            double dx = ax + 0.5 - c.getX(), dz = az + 0.5 - c.getZ(), len = Math.max(1, Math.sqrt(dx * dx + dz * dz));
+            Location onde = new Location(w, ax + 0.5 + dx / len * 12, ay, az + 0.5 + dz / len * 12);
+            if (!naArena(onde)) onde = new Location(w, ax + 0.5, ay, az + 12.5);
+            Object r = mt.invoke(m, onde, ax, ay, az, RAIO - 1, ALTURA, nivel, Math.max(1, perto(60).size()));
+            if (r instanceof LivingEntity le) {
+                invocado = le;
+                net.kyori.adventure.text.Component nm = le.customName();
+                nomeInvocado = nm == null ? "o chefe" : net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(nm).replaceAll("\\s*\\[N[ií]vel \\d\\]", "");
+                Bukkit.broadcast(Extras.txt("§6§l⚔ BOSS MUNDIAL §8» §7O " + nome() + " chamou §c" + nomeInvocado + "§7! Ele fica protegido até o chefe cair."));
+            } else pl.getLogger().warning("Boss mundial: as masmorras nao devolveram o chefe de nivel " + nivel);
+        } catch (Throwable ex) {
+            pl.getLogger().warning("Boss mundial: nao chamei o chefe de nivel " + nivel + ": " + ex);
+        }
+    }
+
+    private void tirarInvocado() {
+        LivingEntity i = invocado;
+        invocado = null;
+        if (i == null) return;
+        try {
+            org.bukkit.plugin.Plugin m = Bukkit.getPluginManager().getPlugin("Masmorras");
+            if (m != null && m.isEnabled()) m.getClass().getMethod("tirarChefeAvulso", LivingEntity.class).invoke(m, i);
+            else if (i.isValid()) i.remove();
+        } catch (Throwable ex) {
+            if (i.isValid()) i.remove();
+        }
     }
 
     @EventHandler
@@ -594,7 +736,7 @@ final class BossMundial implements Listener {
         if (eBoss(e.getEntity()) || e.getEntity().getPersistentDataContainer().has(kAjudante, PersistentDataType.BYTE)) {
             e.getDrops().clear();
             e.setDroppedExp(0);
-        }
+        } else if (!(e.getEntity() instanceof Player) && naArena(e.getEntity().getLocation())) e.getDrops().clear();   // suditos do chefe chamado
     }
 
     private void morrer() {
@@ -634,6 +776,10 @@ final class BossMundial implements Listener {
     }
 
     private void acabar(boolean morto) {
+        tirarInvocado();
+        fase = 0;
+        soltarChunks();
+        if (arenaPronta && (corpo != null || morto)) devolverDaArena(morto ? 200L : 60L);
         for (Player p : Bukkit.getOnlinePlayers()) tirarBussola(p);
         if (tarefa != null) tarefa.cancel();
         tarefa = null;
@@ -749,12 +895,226 @@ final class BossMundial implements Listener {
         return false;
     }
 
+    // ------------------------------------------------------------------ arena (17/11)
+
+    private java.io.File arqArena() {
+        return new java.io.File(pl.getDataFolder(), "arena-boss.txt");
+    }
+
+    /** Le a arena salva; se ainda nao tem, escolhe o lugar e constroi (uma vez so). */
+    private void prepararArena() {
+        if (!pl.getConfig().getBoolean("boss-mundial.arena.ativa", true)) return;
+        World w = mundoDoBoss();
+        if (w == null) return;
+        try {
+            String[] v = java.nio.file.Files.readString(arqArena().toPath()).trim().split(" ");
+            ax = Integer.parseInt(v[0]);
+            ay = Integer.parseInt(v[1]);
+            az = Integer.parseInt(v[2]);
+            int ver = v.length > 3 ? Integer.parseInt(v[3]) : 1;
+            if (ver >= VERSAO_ARENA) {
+                arenaPronta = true;
+                pl.getLogger().info("Arena do Colosso em " + ax + " " + ay + " " + az);
+            } else construirArena(w);   // arena antiga (menor): refaz no mesmo lugar
+            return;
+        } catch (Exception ignored) {
+            // ainda nao foi construida
+        }
+        escolherLugarArena(w);
+        construirArena(w);
+    }
+
+    private void escolherLugarArena(World w) {
+        Location s = w.getSpawnLocation();
+        ax = pl.getConfig().getInt("boss-mundial.arena.x", s.getBlockX() + 900);
+        az = pl.getConfig().getInt("boss-mundial.arena.z", s.getBlockZ() + 900);
+        ay = Math.min(w.getMaxHeight() - 24, pl.getConfig().getInt("boss-mundial.arena.y", 262));
+    }
+
+    /**
+     * Templo no ceu (versao 2): chao de mosaico com aneis dourados, 12 colunas em volta do centro, paredes de pedra negra
+     * com luz e cornija, e barreira por cima (ninguem cai nem sai voando). Constroi aos poucos (6 fileiras por tique)
+     * para nao travar o servidor; a arena so vale (arenaPronta) quando termina.
+     */
+    void construirArena(World w) {
+        long t0 = System.currentTimeMillis();
+        arenaPronta = false;
+        for (int x = ax - RAIO - 16; x <= ax + RAIO + 16; x += 16)
+            for (int z = az - RAIO - 16; z <= az + RAIO + 16; z += 16) w.getChunkAt(x >> 4, z >> 4).load(true);
+        java.util.Set<Long> colunas = new java.util.HashSet<>();
+        for (int i = 0; i < 12; i++) {
+            double a = Math.toRadians(i * 30 + 15);
+            int px = (int) Math.round(Math.cos(a) * 30), pz = (int) Math.round(Math.sin(a) * 30);
+            for (int ox = -1; ox <= 1; ox++) for (int oz = -1; oz <= 1; oz++) colunas.add(((long) (px + ox) << 32) ^ ((pz + oz) & 0xffffffffL));
+        }
+        int[] fila = {-RAIO};
+        BukkitTask[] tarefaArena = new BukkitTask[1];
+        tarefaArena[0] = Bukkit.getScheduler().runTaskTimer(pl, () -> {
+            for (int k = 0; k < 6 && fila[0] <= RAIO; k++, fila[0]++) {
+                int dx = fila[0];
+                for (int dz = -RAIO; dz <= RAIO; dz++) colunaDaArena(w, dx, dz, colunas.contains(((long) dx << 32) ^ (dz & 0xffffffffL)));
+            }
+            if (fila[0] <= RAIO) return;
+            tarefaArena[0].cancel();
+            arenaPronta = true;
+            try {
+                java.nio.file.Files.writeString(arqArena().toPath(), ax + " " + ay + " " + az + " " + VERSAO_ARENA);
+            } catch (Exception ex) {
+                pl.getLogger().warning("Arena do Colosso: nao salvei o lugar: " + ex.getMessage());
+            }
+            pl.getLogger().info("Arena do Colosso (templo v" + VERSAO_ARENA + ") construida em " + ax + " " + ay + " " + az + " em " + (System.currentTimeMillis() - t0) + " ms");
+        }, 1L, 1L);
+    }
+
+    private void colunaDaArena(World w, int dx, int dz, boolean coluna) {
+        int x = ax + dx, z = az + dz;
+        boolean borda = Math.abs(dx) == RAIO || Math.abs(dz) == RAIO;
+        w.getBlockAt(x, ay - 3, z).setType(Material.DEEPSLATE_TILES, false);
+        w.getBlockAt(x, ay - 2, z).setType(Material.POLISHED_BLACKSTONE, false);
+        double dist = Math.sqrt(dx * dx + dz * dz);
+        Material chao;
+        if (borda) chao = Material.POLISHED_BLACKSTONE_BRICKS;
+        else if (Math.abs(dx) <= 2 && Math.abs(dz) <= 2) chao = (Math.abs(dx) == 2 || Math.abs(dz) == 2) ? Material.GILDED_BLACKSTONE : Material.CHISELED_POLISHED_BLACKSTONE;
+        else if (dx % 8 == 0 && dz % 8 == 0) chao = Material.SHROOMLIGHT;
+        else if (Math.abs(dist - 10) < 0.5 || Math.abs(dist - 22) < 0.5 || Math.abs(dist - 36) < 0.5) chao = Material.GILDED_BLACKSTONE;
+        else if (dist > 22 && dist < 36 && (Math.abs(dx) == Math.abs(dz) || dx == 0 || dz == 0)) chao = Material.POLISHED_BLACKSTONE;   // raios do mosaico
+        else if (Math.abs(dx) >= RAIO - 2 || Math.abs(dz) >= RAIO - 2) chao = Material.POLISHED_DEEPSLATE;
+        else chao = ((dx + dz) & 1) == 0 ? Material.POLISHED_BLACKSTONE_BRICKS : Material.POLISHED_DEEPSLATE;
+        w.getBlockAt(x, ay - 1, z).setType(chao, false);
+        int ao = Math.abs(dx) == RAIO ? dz : dx;   // posicao ao longo da parede
+        for (int h = 0; h <= ALTURA + 1; h++) {
+            Block b = w.getBlockAt(x, ay + h, z);
+            Material m;
+            if (borda) {
+                if (h == 0) m = Material.POLISHED_BLACKSTONE_BRICKS;
+                else if (h <= 11) m = (Math.floorMod(ao, 8) == 0) ? (h == 5 ? Material.SHROOMLIGHT : Material.POLISHED_BLACKSTONE)   // pilastras com luz
+                        : (h >= 3 && h <= 8 && Math.floorMod(ao, 8) >= 3 && Math.floorMod(ao, 8) <= 5) ? Material.CRACKED_POLISHED_BLACKSTONE_BRICKS : Material.BLACKSTONE;
+                else if (h == 12) m = Material.CHISELED_POLISHED_BLACKSTONE;
+                else if (h == 13) m = Material.GILDED_BLACKSTONE;
+                else m = Material.BARRIER;
+            } else if (coluna) {
+                if (h == 0 || h == 15) m = Material.CHISELED_POLISHED_BLACKSTONE;
+                else if (h == 16) m = Material.SHROOMLIGHT;
+                else if (h < 16) m = (h % 5 == 0) ? Material.GILDED_BLACKSTONE : Material.POLISHED_BLACKSTONE_BRICKS;
+                else m = Material.AIR;
+            } else m = Material.AIR;
+            if (b.getType() != m) b.setType(m, false);
+        }
+        Block teto = w.getBlockAt(x, ay + ALTURA + 2, z);
+        if (teto.getType() != Material.BARRIER) teto.setType(Material.BARRIER, false);
+    }
+
+    private Location centroArena(World w) {
+        return new Location(w, ax + 0.5, ay, az + 0.5);
+    }
+
+    /** Dentro da arena (por dentro das paredes, do chao ate o teto). */
+    private boolean naArena(Location l) {
+        if (!arenaPronta || l == null || l.getWorld() == null || !l.getWorld().equals(mundoDoBoss())) return false;
+        return Math.abs(l.getX() - (ax + 0.5)) < RAIO && Math.abs(l.getZ() - (az + 0.5)) < RAIO && l.getY() >= ay - 1 && l.getY() <= ay + ALTURA + 2;
+    }
+
+    /** A arena com as paredes, o chao e o teto (para proteger os blocos). */
+    private boolean blocoDaArena(Block b) {
+        if (!arenaPronta || !b.getWorld().equals(mundoDoBoss())) return false;
+        return Math.abs(b.getX() - ax) <= RAIO && Math.abs(b.getZ() - az) <= RAIO && b.getY() >= ay - 3 && b.getY() <= ay + ALTURA + 2;
+    }
+
+    private void entrarNaArena(Player p) {
+        World w = mundoDoBoss();
+        if (w == null) return;
+        if (!naArena(p.getLocation())) volta.put(p.getUniqueId(), p.getLocation());
+        Location d = new Location(w, ax + 0.5, ay, az - RAIO + 4.5);
+        d.setDirection(new Vector(0, 0, 1));
+        p.teleport(d);
+        p.sendMessage(Extras.txt("§6§l⚔ §eVocê entrou na §6Arena do Colosso§e. Boa luta! §7(no fim da luta você volta para onde estava)"));
+        p.playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 0.8f);
+    }
+
+    /** No fim da luta todo mundo que esta na arena volta para onde estava (ou para o spawn das masmorras). */
+    private void devolverDaArena(long espera) {
+        if (!pl.isEnabled()) return;   // desligando: quem ficou la volta pelo entrou() quando entrar de novo
+        Bukkit.getScheduler().runTaskLater(pl, () -> {
+            if (vivo()) return;
+            World w = mundoDoBoss();
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                if (!naArena(p.getLocation())) continue;
+                Location v = volta.remove(p.getUniqueId());
+                if (v == null || v.getWorld() == null) v = w != null ? w.getSpawnLocation() : Bukkit.getWorlds().get(0).getSpawnLocation();
+                p.teleport(v);
+                p.sendMessage(Extras.txt("§7A luta acabou: você voltou para onde estava."));
+            }
+            volta.clear();
+        }, espera);
+    }
+
+    private void segurarChunks(World w) {
+        soltarChunks();
+        for (int x = (ax - RAIO) >> 4; x <= (ax + RAIO) >> 4; x++)
+            for (int z = (az - RAIO) >> 4; z <= (az + RAIO) >> 4; z++) {
+                w.addPluginChunkTicket(x, z, pl);
+                tickets.add(new long[] {x, z});
+            }
+    }
+
+    private void soltarChunks() {
+        World w = mundoDoBoss();
+        if (w != null) for (long[] c : tickets) w.removePluginChunkTicket((int) c[0], (int) c[1], pl);
+        tickets.clear();
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void quebrar(org.bukkit.event.block.BlockBreakEvent e) {
+        if (blocoDaArena(e.getBlock()) && e.getPlayer().getGameMode() != org.bukkit.GameMode.CREATIVE) e.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void colocar(org.bukkit.event.block.BlockPlaceEvent e) {
+        if (blocoDaArena(e.getBlock()) && e.getPlayer().getGameMode() != org.bukkit.GameMode.CREATIVE) e.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void balde(org.bukkit.event.player.PlayerBucketEmptyEvent e) {
+        if (blocoDaArena(e.getBlock()) && e.getPlayer().getGameMode() != org.bukkit.GameMode.CREATIVE) e.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void explodiu(org.bukkit.event.entity.EntityExplodeEvent e) {
+        e.blockList().removeIf(this::blocoDaArena);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void explodiuBloco(org.bukkit.event.block.BlockExplodeEvent e) {
+        e.blockList().removeIf(this::blocoDaArena);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void fogoNaArena(org.bukkit.event.block.BlockIgniteEvent e) {
+        if (blocoDaArena(e.getBlock())) e.setCancelled(true);
+    }
+
+    /** Quem saiu do jogo dentro da arena e voltou depois da luta nao fica preso no ceu. */
+    @EventHandler
+    public void entrou(org.bukkit.event.player.PlayerJoinEvent e) {
+        Player p = e.getPlayer();
+        Bukkit.getScheduler().runTaskLater(pl, () -> {
+            if (!p.isOnline() || vivo() || !naArena(p.getLocation())) return;
+            World w = mundoDoBoss();
+            if (w != null) p.teleport(w.getSpawnLocation());
+        }, 40L);
+    }
+
     // ------------------------------------------------------------------ comando
 
     boolean comando(CommandSender s, String[] a) {
         if (a.length >= 1 && s.hasPermission("extras.admin")) {
             switch (a[0].toLowerCase()) {
                 case "invocar", "nascer", "spawn" -> {
+                    if (arenaPronta && mundoDoBoss() != null) {
+                        nascer(centroArena(mundoDoBoss()));
+                        s.sendMessage(Extras.txt("§7O Colosso nasceu na arena. §f/boss §7leva até lá."));
+                        return true;
+                    }
                     if (!(s instanceof Player p)) {
                         World w = mundoDoBoss();
                         Location l = w == null ? null : lugar(w);
@@ -799,9 +1159,36 @@ final class BossMundial implements Listener {
                     s.sendMessage(Extras.txt("§7" + n + " item(ns) do Colosso dado(s) a §f" + alvo.getName() + "§7."));
                     return true;
                 }
+                case "arena" -> {
+                    // dono: refaz a arena e vai ate ela
+                    World w = mundoDoBoss();
+                    if (w == null) {
+                        s.sendMessage("Mundo das masmorras nao carregado.");
+                        return true;
+                    }
+                    if (!arenaPronta) escolherLugarArena(w);
+                    construirArena(w);
+                    s.sendMessage(Extras.txt("§7Arena do Colosso em §f" + ax + " " + ay + " " + az + "§7."));
+                    if (s instanceof Player p) entrarNaArena(p);
+                    return true;
+                }
+                case "fase" -> {
+                    // dono testando: pula para a proxima fase (chama o chefe de nivel 3, depois o de nivel 4)
+                    if (!vivo() || fase >= 2) {
+                        s.sendMessage("sem boss vivo ou ja na ultima fase");
+                        return true;
+                    }
+                    fase++;
+                    vida = Math.min(vida, vidaMax * (fase == 1 ? 2 / 3.0 : 1 / 3.0));
+                    chamarReforco(fase == 1 ? 3 : 4);
+                    s.sendMessage("fase " + fase + ": " + (invocado != null ? nomeInvocado + " vida " + (int) invocado.getHealth() : "nao chamou"));
+                    return true;
+                }
                 case "status" -> {
                     s.sendMessage(vivo() ? "vivo em " + corpo.getWorld().getName() + " " + corpo.getLocation().getBlockX() + " " + corpo.getLocation().getBlockY() + " "
-                            + corpo.getLocation().getBlockZ() + " vida " + (int) vida + "/" + (int) vidaMax + " lutando " + dano.size() : "dormindo");
+                            + corpo.getLocation().getBlockZ() + " vida " + (int) vida + "/" + (int) vidaMax + " lutando " + dano.size() + " fase " + fase
+                            + (invocado != null && invocado.isValid() ? " invocado " + nomeInvocado + " " + (int) invocado.getHealth() + " em " + invocado.getLocation().getBlockX() + " " + invocado.getLocation().getBlockY() + " " + invocado.getLocation().getBlockZ() : "")
+                            + " arena " + (arenaPronta ? ax + " " + ay + " " + az : "nao") : "dormindo; arena " + (arenaPronta ? ax + " " + ay + " " + az : "nao"));
                     return true;
                 }
                 default -> { }
@@ -815,6 +1202,11 @@ final class BossMundial implements Listener {
             long falta = Math.max(0, (proximoNascimento - System.currentTimeMillis()) / 60_000L);
             p.sendMessage(Extras.txt(ativo() ? "§7O boss mundial está dormindo. Ele desperta em cerca de §f" + (falta + 1) + " min§7; o servidor avisa no chat."
                     : "§7O boss mundial está desligado."));
+            return true;
+        }
+        if (arenaPronta && naArena(corpo.getLocation())) {
+            if (naArena(p.getLocation())) p.sendMessage(Extras.txt("§7Você já está na arena."));
+            else entrarNaArena(p);
             return true;
         }
         // chega a uns 20 blocos dele, em chao firme

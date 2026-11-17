@@ -137,6 +137,8 @@ public final class Masmorras extends JavaPlugin implements Listener {
     VendaClasses vendaClasses;
     Campos campos;
     Coroas coroas;
+    /** 17/11: chefes chamados pelo boss mundial (Extras) na arena dele. */
+    ChefesAvulsos avulsos;
     Portoes portoes;
     PortaisNivel portaisNivel;
     Progresso progresso;
@@ -280,6 +282,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         vendaClasses = new VendaClasses(this);
         getServer().getPluginManager().registerEvents(vendaClasses, this);
         coroas = new Coroas(this);
+        avulsos = new ChefesAvulsos(this);
         campos = new Campos(this, mundoNovo);
         getServer().getPluginManager().registerEvents(campos, this);
         campos.iniciar();
@@ -331,6 +334,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if (avulsos != null) avulsos.desligar();
         if (inferno != null) inferno.desligar();
         if (tempestade != null) tempestade.desligar();
         if (descida != null) descida.desligar();
@@ -959,21 +963,40 @@ public final class Masmorras extends JavaPlugin implements Listener {
         if (feitos > 0) for (Player p : ps) p.playSound(p.getLocation(), "minecraft:entity.zombie.ambient", 0.6f, 0.6f);
     }
 
-    /** Solta o chefe na arena. */
-    private void chamarChefe(Masmorra m, List<Player> ps) {
+    /**
+     * 17/11 (API para o boss mundial do Extras, chamada por reflexao): chama um chefe aleatorio de masmorra do nivel na
+     * arena do boss (centro cx/cz, chao y = onde os pes ficam, meia-largura raio, altura). Devolve o corpo ou null.
+     */
+    public LivingEntity chefeAvulso(Location onde, int cx, int y, int cz, int raio, int altura, int nivel, int jogadores) {
+        try {
+            return avulsos == null ? null : avulsos.chamar(onde, cx, y, cz, raio, altura, nivel, jogadores);
+        } catch (Throwable ex) {
+            getLogger().warning("Chefe avulso (boss mundial): " + ex);
+            return null;
+        }
+    }
+
+    /** 17/11 (API para o boss mundial): tira o chefe chamado, a barra e os suditos dele. */
+    public void tirarChefeAvulso(LivingEntity e) {
+        if (avulsos != null) avulsos.tirar(e);
+    }
+
+    /**
+     * O corpo do chefe (tipo, nome, vida, dano, armadura, equipamento), sem a luta. daMasmorra = marca como chefe desta
+     * masmorra (premio e fim da masmorra quando morre); false = chefe avulso do boss mundial (ChefesAvulsos).
+     */
+    LivingEntity corpoDoChefe(Masmorra m, Location l, int jogadores, boolean daMasmorra) {
         Tipo t = m.tipo;
-        World w = ps.get(0).getWorld();
-        Caixa a = m.arena();
-        Location l = new Location(w, a.cx() + 0.5, a.y1(), a.cz() + 0.5);
+        World w = l.getWorld();
         EntityType et;
         try {
             et = EntityType.valueOf(semBruto(t.chefe));
         } catch (IllegalArgumentException ex) {
-            return;
+            return null;
         }
         Entity x = w.spawn(l, et.getEntityClass(), CreatureSpawnEvent.SpawnReason.CUSTOM, y -> {
             marcarBase(y, m);
-            y.getPersistentDataContainer().set(kChefe, PersistentDataType.INTEGER, m.id);
+            if (daMasmorra) y.getPersistentDataContainer().set(kChefe, PersistentDataType.INTEGER, m.id);
             if (kSemNomeLm != null) y.getPersistentDataContainer().set(kSemNomeLm, PersistentDataType.STRING, "masmorras");
             y.customName(Chefe.nome(t));
             y.setCustomNameVisible(true);
@@ -984,11 +1007,11 @@ public final class Masmorras extends JavaPlugin implements Listener {
         });
         if (!(x instanceof LivingEntity e)) {
             x.remove();
-            return;
+            return null;
         }
         List<Double> fv = getConfig().getDoubleList("dificuldade.vida-chefe"), fd = getConfig().getDoubleList("dificuldade.dano-chefe");
         double multVida = fv.size() >= t.nivel ? fv.get(t.nivel - 1) : 1.0, multDano = fd.size() >= t.nivel ? fd.get(t.nivel - 1) : 1.0;
-        double vida = Math.min(1024, t.vida * multVida * (1 + 0.4 * (ps.size() - 1)));
+        double vida = Math.min(1024, t.vida * multVida * (1 + 0.4 * (Math.max(1, jogadores) - 1)));
         Chefe.atributo(e, Attribute.MAX_HEALTH, vida);
         e.setHealth(vida);
         if (t.escala != 1) Chefe.atributo(e, Attribute.SCALE, t.escala);
@@ -1011,11 +1034,23 @@ public final class Masmorras extends JavaPlugin implements Listener {
                 eq.setItem(slot, it);
                 eq.setDropChance(slot, 0f);
             }
-        if (e instanceof Warden wd) for (Player p : ps) wd.increaseAnger(p, 90);
         // chefe nao queima nem no magma do chao, nem no sol da entrada
         e.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, PotionEffect.INFINITE_DURATION, 0, false, false));
         if (e instanceof org.bukkit.entity.Zombie zb) zb.setShouldBurnInDay(false);
         if (e instanceof org.bukkit.entity.AbstractSkeleton sk) sk.setShouldBurnInDay(false);
+        return e;
+    }
+
+    /** Solta o chefe na arena. */
+    private void chamarChefe(Masmorra m, List<Player> ps) {
+        Tipo t = m.tipo;
+        World w = ps.get(0).getWorld();
+        Caixa a = m.arena();
+        Location l = new Location(w, a.cx() + 0.5, a.y1(), a.cz() + 0.5);
+        LivingEntity e = corpoDoChefe(m, l, ps.size(), true);
+        if (e == null) return;
+        double vida = e.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
+        if (e instanceof Warden wd) for (Player p : ps) wd.increaseAnger(p, 90);
         m.chefe = new Chefe(this, m, e, vida);
         if (coroas != null && !t.secreta) coroas.vestir(e, t);
         // chegada do chefe: raio (so efeito) e explosao de particulas
@@ -1595,7 +1630,9 @@ public final class Masmorras extends JavaPlugin implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
     public void especiais(EntityDamageEvent e) {
         Integer id = e.getEntity().getPersistentDataContainer().get(kChefe, PersistentDataType.INTEGER);
-        Masmorra m = id == null ? null : porId.get(id);
+        Masmorra m0 = id == null ? null : porId.get(id);
+        if (m0 == null && avulsos != null) m0 = avulsos.masmorraDe(e.getEntity());   // 17/11: chefe chamado pelo boss mundial
+        final Masmorra m = m0;
         if (m != null && m.chefe != null && m.chefe.e.equals(e.getEntity())) {
             Chefe c = m.chefe;
             if (c.imune()) {
@@ -1605,10 +1642,10 @@ public final class Masmorras extends JavaPlugin implements Listener {
                 return;
             }
             // 17/11: escudo dos alvos, chefe tonto (+50%) e achou o verdadeiro entre as sombras
-            if (mecanicas != null && mecanicas.danoNoChefe(c, e)) return;
+            if (!c.avulso && mecanicas != null && mecanicas.danoNoChefe(c, e)) return;
             // 15/11 (Paulo: "era pra quebrar o chao e levar pra outro lugar, e nao funcionou"): o golpe que passaria dos 60%
             // nao pode pular a fase (chefe com pouca vida morria antes do tique de meio segundo ver). Segura a vida e chama ja.
-            if (tempestade != null && c.t.id.equals("TROVAO") && !c.tempestadeFeita && getConfig().getBoolean("tempestade.ativa", true)
+            if (!c.avulso && tempestade != null && c.t.id.equals("TROVAO") && !c.tempestadeFeita && getConfig().getBoolean("tempestade.ativa", true)
                     && c.e.getHealth() - e.getFinalDamage() <= c.vidaMax * getConfig().getDouble("tempestade.vida", 0.6)) {
                 e.setDamage(0);
                 c.e.setHealth(Math.max(1, Math.min(c.e.getHealth(), c.vidaMax * 0.58)));
@@ -1619,7 +1656,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
                 return;
             }
             // 16/11: Rei do Gelo nao pula a descida de barco com um golpe grande
-            if (descida != null && descida.seguraVida(c, e.getFinalDamage())) {
+            if (!c.avulso && descida != null && descida.seguraVida(c, e.getFinalDamage())) {
                 e.setDamage(0);
                 c.e.setHealth(Math.max(1, Math.min(c.e.getHealth(), c.vidaMax * 0.58)));
                 Bukkit.getScheduler().runTask(this, () -> {
