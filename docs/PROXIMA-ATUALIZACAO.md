@@ -20,6 +20,9 @@ Ordem: primeiro o bug, depois os chefes. Um de cada vez, testado no servidor de 
 7. Ceifador de Almas: quem morre vira alma e pode atrapalhar o chefe; se os amigos pegarem a alma, ele revive.
 8. Relojoeiro: para o tempo e só um jogador se mexe; ele tem 5 s para quebrar a engrenagem que solta os outros.
 
+## Ideia do Paulo (17/11, vídeo "um dos melhores boses do demon souls" — estilo Ídolo do Tolo)
+- Bispo (Catedral): o chefe da arena é falso. Uma sacerdotisa escondida em outra sala da masmorra reza por ele: enquanto ela vive, o Bispo "morre" e volta com a vida cheia, e cria cópias dele. O grupo tem que achar e matar a sacerdotisa (ela tem guardas e um rastro de partículas/sino que leva até ela); depois disso o Bispo de verdade fica vulnerável e não revive mais.
+
 ## Missão (Warface) — pedidos do Paulo (17/11)
 - Melhorar mais o mapa e deixar os jogadores entrarem nas casas para se esconder e atirar nos inimigos.
 - Juggernaut: aumentar a área da luta para os jogadores terem onde se esconder (hoje fica muito difícil).
