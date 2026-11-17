@@ -453,6 +453,15 @@ final class Torretas implements Listener {
         Fx.p(w, Particle.SMOKE, origem, 4, 0.1, 0.1, 0.1, 0.01);
     }
 
+    private static final NamespacedKey K_CHEFE_MASMORRA = NamespacedKey.fromString("masmorras:chefe");
+    private static final NamespacedKey K_BOSS_MUNDIAL = NamespacedKey.fromString("extras:boss_mundial");
+
+    /** 17/11 (Paulo: "ta fazendo muito facil com o engenheiro em todos os bosses"): chefe nao fica lento nem congelado pelas torres. */
+    static boolean chefe(LivingEntity e) {
+        var pdc = e.getPersistentDataContainer();
+        return (K_CHEFE_MASMORRA != null && pdc.has(K_CHEFE_MASMORRA)) || (K_BOSS_MUNDIAL != null && pdc.has(K_BOSS_MUNDIAL));
+    }
+
     /** Bichos que o Minecraft deixa sem dano de flecha (desviam ou rebatem). */
     static boolean imuneAFlecha(LivingEntity e) {
         if (e instanceof org.bukkit.entity.Enderman || e instanceof org.bukkit.entity.Breeze || e instanceof org.bukkit.entity.EnderDragon) return true;
@@ -477,7 +486,7 @@ final class Torretas implements Listener {
         plugin.fx.corte(a, b, Efeitos.b(Material.LIGHT_BLUE_STAINED_GLASS), 0.16, 6, Color.fromRGB(150, 220, 255));
         plugin.cena.raioDeGelo(a, b);
         plugin.fx.estilhacos(b, new org.bukkit.block.data.BlockData[] {Efeitos.b(Material.ICE), Efeitos.b(Material.PACKED_ICE)}, 4, 1.2, 9, 0.2f);
-        if (plugin.causarDano(alvo, fa(t, alvo, DANO_GELO * f), dono)) {
+        if (plugin.causarDano(alvo, fa(t, alvo, DANO_GELO * f), dono) && !chefe(alvo)) {
             alvo.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 50, 2));
             alvo.setFreezeTicks(Math.max(alvo.getFreezeTicks(), 100));
         }
@@ -512,7 +521,7 @@ final class Torretas implements Listener {
             plugin.cena.tesla(de, ate);
             atingidos.add(atual.getUniqueId());
             if (plugin.causarDano(atual, fa(t, atual, dano), dono)) {
-                atual.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 15, 4));
+                if (!chefe(atual)) atual.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 15, 4));
             }
             Fx.p(w, Particle.ELECTRIC_SPARK, ate, 12, 0.3, 0.4, 0.3, 0.1);
             de = ate;

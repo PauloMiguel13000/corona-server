@@ -842,6 +842,12 @@ public final class Masmorras extends JavaPlugin implements Listener {
 
     // ================================================================== monstros
 
+    /** 17/11 (Sui: "ta triste fazer masmorra com enderman, eles ficam se teletransportando pra fora"). */
+    @EventHandler(ignoreCancelled = true)
+    public void endermanNaoFoge(org.bukkit.event.entity.EntityTeleportEvent e) {
+        if (e.getEntity() instanceof org.bukkit.entity.Enderman && e.getEntity().getPersistentDataContainer().has(kDe)) e.setCancelled(true);
+    }
+
     private void marcarBase(Entity x, Masmorra m) {
         PersistentDataContainer pdc = x.getPersistentDataContainer();
         pdc.set(kDe, PersistentDataType.INTEGER, m.id);

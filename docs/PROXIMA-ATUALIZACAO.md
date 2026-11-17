@@ -37,10 +37,16 @@ Ordem: primeiro o bug, depois os chefes. Um de cada vez, testado no servidor de 
   - ~~Ceifador de Almas~~ (passiva de ALMAS): quem morreria vira alma por 30 s; um amigo passa no corpo para trazer de volta, e a alma deixa o chefe lento e fraco.
   - ~~Relojoeiro~~ `tempo`: só um jogador se mexe e tem 5 s para quebrar a engrenagem.
 
+## PRONTO NO CÓDIGO, AINDA NÃO INSTALADO (Paulo: "corrigimos mais tarde")
+- Torres do Gelo e da Tesla não deixam mais os chefes (das masmorras e o mundial) lentos nem congelados (`Torretas.chefe`). O dano das torres continua igual. Motivo: com Tesla + Gelo + Arqueira, o chefe nem se mexia.
+- Endermen das masmorras não se teleportam (`Masmorras.endermanNaoFoge`): eles fugiam para fora da masmorra.
+- O instalador pronto é o `passo-25` (Poderes + Masmorras, número 355). É só gerar de novo e rodar.
+
 ## Testes feitos jogando (conta coronadooscar, Minecraft Java no PC ponte)
 - Limite de 3 torres: OK. A 4ª é recusada e entra depois que uma some.
 - Login automático: o serviço `corona-login-pc` no servidor faz `authme forcelogin coronadooscar` quando a conta entra pelo IP do PC ponte (177.8.228.129). Se o IP do PC mudar, rode de novo o script de instalação dele (o mesmo da passagem 12, que pega o IP do `SSH_CLIENT`).
 - Vaso: o teste dentro da masmorra ficou para o Sui (ViboXact) fazer, clicando no vaso dele com a mão vazia.
+- Chefes (17/11, 15h): **Ilhas** tinha bug (quem caía ficava preso dentro do chão quando ele voltava); corrigido e instalado na 354. **Muralhas** e **Livro** começaram certos, o Livro levou o jogador para as páginas e quem caiu ganhou Fraqueza e Lentidão. Os outros 9 ainda não foram testados jogando.
 - `depois.ps1` no PC: a cada RODAR, apaga do `.minecraft\command_history.txt` as linhas de `/login`, `/register` e `/changepassword`, a pedido do Paulo, para a senha não ficar no histórico.
 
 ## Ideias do Paulo
