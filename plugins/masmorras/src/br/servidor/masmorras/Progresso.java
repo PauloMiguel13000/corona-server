@@ -20,8 +20,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.persistence.PersistentDataType;
 
 /**
@@ -51,6 +54,7 @@ final class Progresso implements Listener {
 
     void iniciar() {
         Bukkit.getScheduler().runTaskTimer(pl, this::atualizarPlacas, 100L, 200L);
+        Bukkit.getScheduler().runTaskTimer(pl, this::aCadaDoisSegundos, 60L, 40L);
     }
 
     boolean ativo() {
@@ -143,11 +147,12 @@ final class Progresso implements Listener {
         p.playSound(p.getLocation(), Sound.BLOCK_CHEST_LOCKED, 1f, 0.8f);
     }
 
-    /** Entrou numa masmorra acima do seu nivel: volta para a entrada dela. */
+    /** Entrou numa masmorra acima do seu nivel: volta para a entrada dela (ou para a borda da sua area). */
     void barrar(Player p, Masmorra m) {
         World w = Bukkit.getWorld(m.mundo);
         if (w == null) return;
         Location fora = new Location(w, m.saidaX + 0.5, m.saidaY, m.saidaZ + 0.5, p.getLocation().getYaw() + 180f, 0f);
+        if (anel(fora) > nivel(p)) fora = lugarSeguro(p, fora);
         p.setFallDistance(0);
         p.teleportAsync(fora, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.PLUGIN);
         avisarTrancado(p, "A " + m.tipo.nome + " (nível " + m.tipo.nivel + ")", m.tipo.nivel);
@@ -180,6 +185,146 @@ final class Progresso implements Listener {
         p.sendMessage(Masmorras.txt("§8+--------------------------------+"));
     }
 
+    // ------------------------------------------------------------------ areas (aneis do mapa) trancadas
+
+    /** Nivel do anel do mapa nesse lugar (so no mundo normal das masmorras; 0 = fora/sem anel). */
+    int anel(Location l) {
+        if (l == null || pl.mundoNovo == null || pl.mundoNovo.normal == null || pl.mundoNovo.gerador == null || !pl.mundoNovo.normal.equals(l.getWorld())) return 0;
+        double r = Math.sqrt(l.getX() * l.getX() + l.getZ() * l.getZ());
+        if (r < 250) return 0;   // lobby e planalto em volta
+        return pl.mundoNovo.gerador.nivel(r);
+    }
+
+    private boolean areaLiberada(Player p, Location l) {
+        int a = anel(l);
+        return a <= 1 || pode(p, a);
+    }
+
+    /** Um lugar dentro da area mais alta liberada, na mesma direcao em que o jogador estava. */
+    Location lugarSeguro(Player p, Location de) {
+        World w = pl.mundoNovo.normal;
+        int n = Math.max(1, Math.min(4, nivel(p)));
+        int[] z = pl.mundoNovo.zonas();
+        double raio = (n >= 4 ? z[2] + 200 : z[n - 1]) - 40;
+        double x = de.getX(), zz = de.getZ(), r = Math.sqrt(x * x + zz * zz);
+        if (r < 1) r = 1;
+        int bx = (int) Math.floor(x / r * raio), bz = (int) Math.floor(zz / r * raio);
+        Location l = Loja.lugarPerto(w, bx, w.getHighestBlockYAt(bx, bz) + 1, bz);
+        if (l == null) l = new Location(w, bx + 0.5, w.getHighestBlockYAt(bx, bz) + 1, bz + 0.5);
+        l.setYaw((float) Math.toDegrees(Math.atan2(x, -zz)));   // virado para o centro
+        return l;
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    public void andar(PlayerMoveEvent e) {
+        Location to = e.getTo(), de = e.getFrom();
+        if (to.getBlockX() == de.getBlockX() && to.getBlockZ() == de.getBlockZ()) return;
+        if (!ativo() || anel(to) <= 1) return;
+        Player p = e.getPlayer();
+        if (p.hasPermission("masmorras.admin") || areaLiberada(p, to)) return;
+        int a = anel(to);
+        if (areaLiberada(p, de)) {
+            Location volta = de.clone();
+            volta.setYaw(to.getYaw());
+            volta.setPitch(to.getPitch());
+            e.setTo(volta);
+            double r = Math.max(1, Math.sqrt(de.getX() * de.getX() + de.getZ() * de.getZ()));
+            p.setVelocity(new org.bukkit.util.Vector(-de.getX() / r * 0.6, 0.25, -de.getZ() / r * 0.6));
+        } else {
+            p.teleportAsync(lugarSeguro(p, to), PlayerTeleportEvent.TeleportCause.PLUGIN);
+        }
+        avisarTrancado(p, "A área de nível " + a, a);
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    public void teleportar(PlayerTeleportEvent e) {
+        if (!ativo()) return;
+        Player p = e.getPlayer();
+        Location to = e.getTo();
+        int a = anel(to);
+        if (a <= 1 || p.hasPermission("masmorras.admin") || areaLiberada(p, to)) return;
+        // morreu e renasce na entrada da masmorra em que estava: deixa
+        if (e.getCause() == PlayerTeleportEvent.TeleportCause.UNKNOWN) return;
+        e.setCancelled(true);
+        avisarTrancado(p, "A área de nível " + a, a);
+    }
+
+    // ------------------------------------------------------------------ placar lateral (o que falta)
+
+    private final Map<UUID, org.bukkit.scoreboard.Scoreboard> placares = new HashMap<>();
+
+    private boolean mundoDasMasmorras(World w) {
+        MundoMasmorras mm = pl.mundoNovo;
+        return mm != null && w != null && (w.equals(mm.normal) || w.equals(mm.nether) || w.equals(mm.end));
+    }
+
+    private void aCadaDoisSegundos() {
+        if (!ativo()) return;
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (!mundoDasMasmorras(p.getWorld())) {
+                tirarPlacar(p);
+                continue;
+            }
+            // de barco, cavalo ou elytra o andar() nao pega: confere aqui
+            if (!p.hasPermission("masmorras.admin") && anel(p.getLocation()) > 1 && !areaLiberada(p, p.getLocation())) {
+                int a = anel(p.getLocation());
+                if (p.isInsideVehicle()) p.leaveVehicle();
+                p.teleportAsync(lugarSeguro(p, p.getLocation()), PlayerTeleportEvent.TeleportCause.PLUGIN);
+                avisarTrancado(p, "A área de nível " + a, a);
+            }
+            if (pl.getConfig().getBoolean("progresso.placar", true)) placar(p);
+        }
+    }
+
+    void placar(Player p) {
+        org.bukkit.scoreboard.Scoreboard sb = placares.get(p.getUniqueId());
+        if (sb == null || p.getScoreboard() != sb) {
+            if (p.getScoreboard() != Bukkit.getScoreboardManager().getMainScoreboard()) return;   // outro plugin usando: nao mexe
+            sb = Bukkit.getScoreboardManager().getNewScoreboard();
+            org.bukkit.scoreboard.Objective o = sb.registerNewObjective("masmorras", org.bukkit.scoreboard.Criteria.DUMMY, Masmorras.txt("§6§l⚔ MASMORRAS ⚔"));
+            o.setDisplaySlot(org.bukkit.scoreboard.DisplaySlot.SIDEBAR);
+            try {
+                o.numberFormat(io.papermc.paper.scoreboard.numbers.NumberFormat.blank());
+            } catch (Throwable ignored) {
+            }
+            placares.put(p.getUniqueId(), sb);
+            p.setScoreboard(sb);
+        }
+        org.bukkit.scoreboard.Objective o = sb.getObjective("masmorras");
+        if (o == null) return;
+        int n = nivel(p);
+        List<Tipo> f = faltam(p, n);
+        List<String> l = new ArrayList<>();
+        l.add("§7Seu nível: §6§l" + n + " §7de " + MAX);
+        l.add("§8 ");
+        if (f.isEmpty()) l.add(n >= MAX ? "§6§l★ Todas vencidas!" : "§aNível " + n + " completo!");
+        else {
+            l.add("§fFaltam §c§l" + f.size() + " §fdo nível " + n + ":");
+            int max = f.size() > 7 ? 6 : 7;
+            for (int i = 0; i < f.size() && i < max; i++) {
+                Tipo t = f.get(i);
+                l.add("§c✘ §f" + t.nome + (t.onde == Tipo.Onde.NETHER ? " §c(Nether)" : t.onde == Tipo.Onde.END ? " §d(End)" : ""));
+            }
+            if (f.size() > max) l.add("§7+ " + (f.size() - max) + " outras §8(/nivel)");
+        }
+        l.add("§1 ");
+        if (n < MAX) l.add("§7Vença todas: libera o §e" + (n + 1) + (n + 1 == NETHER ? " §7+ §cNether" : n + 1 == END ? " §7+ §dEnd" : ""));
+        l.add("§e/nivel §8• §e/masmorras menu");
+        java.util.Set<String> agora = new java.util.HashSet<>();
+        for (int i = 0; i < l.size(); i++) {
+            String e = l.get(i);
+            while (agora.contains(e)) e += "§r";
+            agora.add(e);
+            o.getScore(e).setScore(l.size() - i);
+        }
+        for (String e : new ArrayList<>(sb.getEntries())) if (!agora.contains(e)) sb.resetScores(e);
+    }
+
+    void tirarPlacar(Player p) {
+        org.bukkit.scoreboard.Scoreboard sb = placares.remove(p.getUniqueId());
+        if (sb != null && p.getScoreboard() == sb) p.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+    }
+
     // ------------------------------------------------------------------ avisos e placas
 
     @EventHandler
@@ -200,6 +345,7 @@ final class Progresso implements Listener {
     @EventHandler
     public void saiu(PlayerQuitEvent e) {
         ultimoAviso.remove(e.getPlayer().getUniqueId());
+        tirarPlacar(e.getPlayer());
     }
 
     /** Troca o texto antigo das placas dos portais ("equipamento"/"nivel de poder") pelo Nivel de Masmorra. */

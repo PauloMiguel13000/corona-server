@@ -193,7 +193,15 @@ final class Portoes implements Listener {
         if (w == null) return;
         Masmorra alvo = null;
         java.util.List<Masmorra> l = new java.util.ArrayList<>();
-        for (Masmorra m : pl.todas) if (m.mundo.equals(w.getName()) && !m.demolindo && !m.tipo.secreta) l.add(m);
+        for (Masmorra m : pl.todas)
+            if (m.mundo.equals(w.getName()) && !m.demolindo && !m.tipo.secreta && (pl.progresso == null || pl.progresso.pode(p, m.tipo.nivel))) l.add(m);
+        // 16/11: primeiro as que o jogador ainda precisa vencer para subir de Nivel de Masmorra
+        if (pl.progresso != null) {
+            java.util.List<Tipo> falta = pl.progresso.faltam(p, pl.progresso.nivel(p));
+            java.util.List<Masmorra> preciso = new java.util.ArrayList<>();
+            for (Masmorra m : l) if (falta.contains(m.tipo)) preciso.add(m);
+            if (!preciso.isEmpty()) l = preciso;
+        }
         if (l.isEmpty()) {
             p.sendMessage(Masmorras.txt(Masmorras.PREFIXO + "As masmorras daqui ainda estão sendo construídas. Volte daqui a pouco."));
             return;

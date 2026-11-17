@@ -378,6 +378,10 @@ final class Hub implements Listener {
             p.sendMessage(Masmorras.txt(Masmorras.PREFIXO + "Nível de 1 a 4."));
             return;
         }
+        if (pl.progresso != null && !pl.progresso.pode(p, nivel)) {
+            pl.progresso.avisarTrancado(p, "As masmorras de nível " + nivel, nivel);
+            return;
+        }
         long agora = System.currentTimeMillis();
         Long ate = esperaPortal.get(p.getUniqueId());
         if (ate != null && agora < ate) return;
