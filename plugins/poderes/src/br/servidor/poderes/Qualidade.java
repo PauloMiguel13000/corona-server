@@ -394,6 +394,85 @@ final class Qualidade implements Listener {
         }
     }
 
+    // ------------------------------------------------------------------ estrelas dentro do /pets (BabyPets)
+
+    /**
+     * 17/11 (Sui: "no /pets nao aparece essa informacao, tem que ficar trocando de hub"): a lista de pets e a tela de
+     * detalhes do BabyPets ganham a linha "Qualidade: ★★★" em cada pet. Le os campos da tela do BabyPets por reflexao
+     * (PET_SLOTS, visiblePets, page na colecao; pet na tela de detalhes, item do slot 22).
+     */
+    @EventHandler(priority = org.bukkit.event.EventPriority.MONITOR)
+    public void abriuPets(org.bukkit.event.inventory.InventoryOpenEvent e) {
+        decorarDepois(e.getInventory());
+    }
+
+    @EventHandler(priority = org.bukkit.event.EventPriority.MONITOR)
+    public void cliquePets(InventoryClickEvent e) {
+        decorarDepois(e.getView().getTopInventory());
+    }
+
+    private void decorarDepois(Inventory inv) {
+        InventoryHolder h = inv.getHolder(false);
+        if (h == null || !h.getClass().getName().startsWith("com.petsplugin.gui.")) return;
+        Bukkit.getScheduler().runTask(pl, () -> {
+            try {
+                decorar(inv, h);
+            } catch (Throwable ignored) {
+            }
+        });
+        Bukkit.getScheduler().runTaskLater(pl, () -> {
+            try {
+                decorar(inv, h);
+            } catch (Throwable ignored) {
+            }
+        }, 3L);
+    }
+
+    private static Object campo(Object o, Class<?> c, String nome) throws Exception {
+        java.lang.reflect.Field f = c.getDeclaredField(nome);
+        f.setAccessible(true);
+        return f.get(o);
+    }
+
+    private void decorar(Inventory inv, InventoryHolder h) throws Exception {
+        Class<?> c = h.getClass();
+        String n = c.getSimpleName();
+        if (n.equals("PetCollectionGUI")) {
+            int[] slots = (int[]) campo(null, c, "PET_SLOTS");
+            Object vis = campo(h, c, "visiblePets");
+            int page = (Integer) campo(h, c, "page");
+            int porPagina = (Integer) campo(null, c, "PETS_PER_PAGE");
+            if (!(vis instanceof List<?> l)) return;
+            for (int i = 0; i < slots.length && i < porPagina; i++) {
+                int idx = page * porPagina + i;
+                if (idx < 0 || idx >= l.size()) break;
+                Object inst = l.get(idx);
+                int id = ((Number) inst.getClass().getMethod("getDatabaseId").invoke(inst)).intValue();
+                estrelaNoItem(inv, slots[i], de(id));
+            }
+        } else if (n.equals("PetDetailGUI")) {
+            Object inst = campo(h, c, "pet");
+            if (inst == null) return;
+            int id = ((Number) inst.getClass().getMethod("getDatabaseId").invoke(inst)).intValue();
+            estrelaNoItem(inv, 22, de(id));
+        }
+    }
+
+    private void estrelaNoItem(Inventory inv, int slot, int q) {
+        if (slot < 0 || slot >= inv.getSize()) return;
+        ItemStack it = inv.getItem(slot);
+        if (it == null || it.getType().isAir() || !it.hasItemMeta()) return;
+        ItemMeta meta = it.getItemMeta();
+        List<net.kyori.adventure.text.Component> lore = meta.lore() == null ? new ArrayList<>() : new ArrayList<>(meta.lore());
+        for (net.kyori.adventure.text.Component x : lore)
+            if (net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(x).contains("Qualidade:")) return;
+        lore.add(0, Poderes.txt(q > 0 ? "§7Qualidade: " + estrelas(q) + " §8(" + q + "/5)" : "§7Qualidade: §8sorteando...")
+                .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
+        meta.lore(lore);
+        it.setItemMeta(meta);
+        inv.setItem(slot, it);
+    }
+
     @EventHandler
     public void arrastar(InventoryDragEvent e) {
         InventoryHolder hd = e.getView().getTopInventory().getHolder();

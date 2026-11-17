@@ -40,6 +40,9 @@ final class Masmorra {
     /** Abertura do Herobrine (musica, vultos, apagao) antes de ele aparecer. */
     org.bukkit.scheduler.BukkitTask intro;
     final Set<UUID> lacaios = new HashSet<>();
+    /** 17/11: de que sala veio cada monstro (para trancar a proxima sala enquanto a anterior tiver monstro vivo). */
+    final java.util.Map<UUID, Integer> daSala = new java.util.HashMap<>();
+    long[] armadaEm;
     long semNinguemDesde = -1;
 
     Masmorra(int id, Tipo tipo, String mundo, long semente) {
@@ -79,6 +82,7 @@ final class Masmorra {
         tudo = t;
         armada = new boolean[salas.size()];
         java.util.Arrays.fill(armada, true);
+        armadaEm = new long[salas.size()];
     }
 
     /** O bloco faz parte da masmorra (nao pode quebrar nem colocar)? */

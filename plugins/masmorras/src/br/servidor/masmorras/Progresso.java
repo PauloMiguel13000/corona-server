@@ -200,28 +200,40 @@ final class Progresso implements Listener {
         return a <= 1 || pode(p, a);
     }
 
-    /** Um lugar dentro da area mais alta liberada, na mesma direcao em que o jogador estava. */
+    /** Ultimo lugar em area liberada por onde o jogador passou (no mundo das masmorras). */
+    private final Map<UUID, Location> ultimoLivre = new HashMap<>();
+
+    /**
+     * Para onde mandar quem esta numa area trancada: o ultimo lugar liberado por onde passou; sem isso, o lobby.
+     * 17/11: antes procurava o chao na borda da area (getHighestBlockYAt longe), o que carregava/gerava chunk na hora e
+     * travou o servidor (VigiaLag apontou Progresso.lugarSeguro).
+     */
     Location lugarSeguro(Player p, Location de) {
         World w = pl.mundoNovo.normal;
-        int n = Math.max(1, Math.min(4, nivel(p)));
-        int[] z = pl.mundoNovo.zonas();
-        double raio = (n >= 4 ? z[2] + 200 : z[n - 1]) - 40;
-        double x = de.getX(), zz = de.getZ(), r = Math.sqrt(x * x + zz * zz);
-        if (r < 1) r = 1;
-        int bx = (int) Math.floor(x / r * raio), bz = (int) Math.floor(zz / r * raio);
-        Location l = Loja.lugarPerto(w, bx, w.getHighestBlockYAt(bx, bz) + 1, bz);
-        if (l == null) l = new Location(w, bx + 0.5, w.getHighestBlockYAt(bx, bz) + 1, bz + 0.5);
-        l.setYaw((float) Math.toDegrees(Math.atan2(x, -zz)));   // virado para o centro
-        return l;
+        Location u = ultimoLivre.get(p.getUniqueId());
+        if (u != null && w.equals(u.getWorld()) && areaLiberada(p, u)) {
+            Location l = u.clone();
+            l.setYaw(de.getYaw());
+            l.setPitch(de.getPitch());
+            return l;
+        }
+        return w.getSpawnLocation();
+    }
+
+    private void lembrarLivre(Player p, Location l) {
+        if (l.getWorld() != null && l.getWorld().equals(pl.mundoNovo.normal) && p.isOnGround()) ultimoLivre.put(p.getUniqueId(), l.clone());
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
     public void andar(PlayerMoveEvent e) {
         Location to = e.getTo(), de = e.getFrom();
         if (to.getBlockX() == de.getBlockX() && to.getBlockZ() == de.getBlockZ()) return;
-        if (!ativo() || anel(to) <= 1) return;
+        if (!ativo() || pl.mundoNovo == null || pl.mundoNovo.normal == null || !pl.mundoNovo.normal.equals(to.getWorld())) return;
         Player p = e.getPlayer();
-        if (p.hasPermission("masmorras.admin") || areaLiberada(p, to)) return;
+        if (anel(to) <= 1 || p.hasPermission("masmorras.admin") || areaLiberada(p, to)) {
+            if (to.getBlockX() % 4 == 0 || to.getBlockZ() % 4 == 0) lembrarLivre(p, to);
+            return;
+        }
         int a = anel(to);
         if (areaLiberada(p, de)) {
             Location volta = de.clone();
@@ -266,6 +278,7 @@ final class Progresso implements Listener {
                 continue;
             }
             // de barco, cavalo ou elytra o andar() nao pega: confere aqui
+            if (anel(p.getLocation()) <= 1 || areaLiberada(p, p.getLocation())) lembrarLivre(p, p.getLocation());
             if (!p.hasPermission("masmorras.admin") && anel(p.getLocation()) > 1 && !areaLiberada(p, p.getLocation())) {
                 int a = anel(p.getLocation());
                 if (p.isInsideVehicle()) p.leaveVehicle();
@@ -345,6 +358,7 @@ final class Progresso implements Listener {
     @EventHandler
     public void saiu(PlayerQuitEvent e) {
         ultimoAviso.remove(e.getPlayer().getUniqueId());
+        ultimoLivre.remove(e.getPlayer().getUniqueId());
         tirarPlacar(e.getPlayer());
     }
 

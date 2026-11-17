@@ -249,6 +249,12 @@ public final class TesteBot extends JavaPlugin implements org.bukkit.event.Liste
             return true;
         }
         switch (sub) {
+            case "chat" -> {
+                // como se o jogador digitasse (passa pelo PlayerCommandPreprocessEvent)
+                String c = String.join(" ", java.util.Arrays.copyOfRange(a, 2, a.length));
+                p.chat(c);
+                log("CHAT " + c);
+            }
             case "cmd" -> {
                 String c = String.join(" ", Arrays.copyOfRange(a, 2, a.length));
                 boolean ok = p.performCommand(c);
@@ -287,7 +293,9 @@ public final class TesteBot extends JavaPlugin implements org.bukkit.event.Liste
             case "clicar" -> {
                 InventoryView v = p.getOpenInventory();
                 int slot = Integer.parseInt(a[2]);
-                InventoryClickEvent ev = new InventoryClickEvent(v, InventoryType.SlotType.CONTAINER, slot, ClickType.LEFT, InventoryAction.PICKUP_ALL);
+                boolean dir = a.length > 3 && a[3].equals("direito");
+                InventoryClickEvent ev = new InventoryClickEvent(v, InventoryType.SlotType.CONTAINER, slot, dir ? ClickType.RIGHT : ClickType.LEFT,
+                        dir ? InventoryAction.PICKUP_HALF : InventoryAction.PICKUP_ALL);
                 Bukkit.getPluginManager().callEvent(ev);
                 log("CLIQUE slot " + slot + " em '" + titulo(v) + "' cancelado=" + ev.isCancelled());
             }
@@ -305,6 +313,26 @@ public final class TesteBot extends JavaPlugin implements org.bukkit.event.Liste
                         if (is != null && !is.getType().name().contains("GLASS_PANE")) it.append(i).append('=').append(is.getType().name()).append(' ');
                     }
                     log("ITENS " + it);
+                }
+            }
+            case "pisar" -> {
+                // fake pisar <nome> x y z: anda ate o lugar (dispara o PlayerMoveEvent, como um passo de verdade)
+                org.bukkit.Location de = p.getLocation(), para = new org.bukkit.Location(p.getWorld(), Double.parseDouble(a[2]), Double.parseDouble(a[3]), Double.parseDouble(a[4]), de.getYaw(), de.getPitch());
+                org.bukkit.event.player.PlayerMoveEvent ev = new org.bukkit.event.player.PlayerMoveEvent(p, de, para);
+                Bukkit.getPluginManager().callEvent(ev);
+                if (!ev.isCancelled() && ev.getTo().equals(para)) p.teleport(para);
+                log("PISAR " + fmt(para) + " cancelado=" + ev.isCancelled());
+            }
+            case "lore" -> {
+                // fake lore <nome> <slot>: mostra nome e lore de um item da janela aberta
+                ItemStack is = p.getOpenInventory().getTopInventory().getItem(Integer.parseInt(a[2]));
+                if (is == null) log("LORE vazio");
+                else {
+                    StringBuilder sb = new StringBuilder(is.getType().name());
+                    if (is.hasItemMeta() && is.getItemMeta().lore() != null)
+                        for (net.kyori.adventure.text.Component c : is.getItemMeta().lore())
+                            sb.append(" | ").append(net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(c));
+                    log("LORE " + sb);
                 }
             }
             case "ver" -> {

@@ -65,6 +65,7 @@ public final class Extras extends JavaPlugin implements Listener {
         chaveMenu = new org.bukkit.NamespacedKey(this, "item_menu");
         chaveRecebeu = new org.bukkit.NamespacedKey(this, "itens_recebidos");
         Bukkit.getPluginManager().registerEvents(this, this);
+        Bukkit.getPluginManager().registerEvents(new ComandosVisiveis(this), this);
         for (Player p : Bukkit.getOnlinePlayers()) darItensNaPrimeiraVez(p);
         placas = new Placas(this);
         vazio = new Vazio(this);

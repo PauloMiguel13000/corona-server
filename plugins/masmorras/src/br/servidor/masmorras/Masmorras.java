@@ -138,6 +138,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
     Portoes portoes;
     PortaisNivel portaisNivel;
     Progresso progresso;
+    OrdemSalas ordem;
     Trilha trilha;
 
     /** A masmorra que tem esse bloco dentro (ou null). */
@@ -301,6 +302,9 @@ public final class Masmorras extends JavaPlugin implements Listener {
         } catch (Throwable ex) {
             getLogger().warning("Portais dos niveis nao iniciaram: " + ex);
         }
+        ordem = new OrdemSalas(this);
+        getServer().getPluginManager().registerEvents(ordem, this);
+        getServer().getPluginManager().registerEvents(new CasasMasmorra(this), this);
         progresso = new Progresso(this);
         getServer().getPluginManager().registerEvents(progresso, this);
         progresso.iniciar();
@@ -922,6 +926,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
 
     /** Enche a sala de monstros quando alguem entra. */
     private void povoar(Masmorra m, int s, List<Player> ps) {
+        if (m.armadaEm != null && s < m.armadaEm.length) m.armadaEm[s] = System.currentTimeMillis();
         Caixa c = m.salas.get(s);
         World w = ps.get(0).getWorld();
         int area = (c.x2() - c.x1() + 1) * (c.z2() - c.z1() + 1);
@@ -935,6 +940,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
             for (Player p : ps) if (p.getLocation().distanceSquared(b.getLocation()) < 9) longe = false;
             if (!longe) continue;
             LivingEntity le = lacaio(m, m.tipo.lacaios[rnd.nextInt(m.tipo.lacaios.length)], b.getLocation().add(0.5, 0, 0.5), false);
+            if (le != null) m.daSala.put(le.getUniqueId(), s);
             if (le instanceof Mob mob) mob.setTarget(ps.get(rnd.nextInt(ps.size())));
             feitos++;
         }
@@ -1323,12 +1329,15 @@ public final class Masmorras extends JavaPlugin implements Listener {
         }
         for (Entity x : lacaiosVivos(m)) x.remove();
         m.lacaios.clear();
+        m.daSala.clear();
         m.semNinguemDesde = -1;
     }
 
     /** Volta tudo: salas com monstros, baus cheios e chefe esperando. */
     void resetar(Masmorra m) {
         java.util.Arrays.fill(m.armada, true);
+        if (m.armadaEm != null) java.util.Arrays.fill(m.armadaEm, 0L);
+        m.daSala.keySet().removeIf(u -> !m.lacaios.contains(u));
         World w = Bukkit.getWorld(m.mundo);
         if (w != null) {
             for (int[] b : m.baus) {
@@ -1374,11 +1383,19 @@ public final class Masmorras extends JavaPlugin implements Listener {
             }
             List<Player> dentro = new ArrayList<>();
             for (Player p : ps) if (p.getGameMode() != GameMode.CREATIVE && m.dentro(p.getX(), p.getY(), p.getZ())) dentro.add(p);
+            java.util.Set<Player> barrados = new java.util.HashSet<>();
             for (Player p : dentro) {
                 int s = m.sala(p.getX(), p.getY(), p.getZ());
                 // 16/11: masmorra acima do Nivel de Masmorra do jogador: volta para a entrada
                 if (s >= 0 && progresso != null && !progresso.pode(p, m.tipo.nivel)) {
                     progresso.barrar(p, m);
+                    barrados.add(p);
+                    continue;
+                }
+                // 17/11 (Paulo: "estao correndo reto para o boss sem limpar os monstros"): a sala seguinte (e a do
+                // chefe) so abre quando nao sobra monstro vivo das salas anteriores
+                if (ordem != null && !ordem.conferir(p, m, s, agora)) {
+                    barrados.add(p);
                     continue;
                 }
                 if (s >= 0 && s < m.salas.size() - 1 && m.armada[s]) {
@@ -1393,7 +1410,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
                 }
             } else if (m.bossVolta == 0) {
                 List<Player> naArena = new ArrayList<>();
-                for (Player p : dentro) if (m.arena().contem(p.getX(), p.getY(), p.getZ())) naArena.add(p);
+                for (Player p : dentro) if (!barrados.contains(p) && m.arena().contem(p.getX(), p.getY(), p.getZ())) naArena.add(p);
                 if (!naArena.isEmpty()) {
                     if (m.tipo.secreta) introHerobrine(m);
                     else chamarChefe(m, naArena);
@@ -2595,6 +2612,8 @@ public final class Masmorras extends JavaPlugin implements Listener {
             return s.hasPermission("masmorras.admin") ? darItens().completar(a, cmd.getName().equalsIgnoreCase("darespada")) : new ArrayList<>();
         List<String> l = new ArrayList<>();
         if (a.length == 1) {
+            // 17/11 (Sui: "/masmorras spawn ajuda muito mas nao aparece na hora de digitar")
+            l.add("spawn");
             l.add("todas");
             l.add("mapa");
             l.add("menu");

@@ -233,6 +233,29 @@ final class PortaisNivel implements Listener {
             p.teleport(fora);
             return;
         }
+        // 17/11 (Sui: "os portais sao aleatorios... recomendo teleportar pras masmorras que faltam"): se ainda falta
+        // vencer alguma masmorra deste nivel, o portal leva direto para a porta de uma delas (sorteada); senao, aleatorio
+        if (pl.progresso != null && pl.progresso.ativo() && pl.getConfig().getBoolean("portais.levar-ao-que-falta", true)) {
+            java.util.List<Tipo> falta = pl.progresso.faltam(p, nivel);
+            java.util.List<Masmorra> opcoes = new java.util.ArrayList<>();
+            for (Masmorra m : pl.todas)
+                if (falta.contains(m.tipo) && !m.demolindo && m.mundo.equals(w.getName())) opcoes.add(m);
+            if (!opcoes.isEmpty()) {
+                Masmorra alvo = opcoes.get(new java.util.Random().nextInt(opcoes.size()));
+                Location porta = new Location(w, alvo.saidaX + 0.5, alvo.saidaY, alvo.saidaZ + 0.5, to.getYaw(), 0f);
+                p.setFallDistance(0);
+                p.teleportAsync(porta, PlayerTeleportEvent.TeleportCause.PLUGIN).thenAccept(ok -> {
+                    if (!ok) return;
+                    p.showTitle(net.kyori.adventure.title.Title.title(Masmorras.txt(visual(nivel)[3] + "§l" + alvo.tipo.nome.toUpperCase(java.util.Locale.ROOT)),
+                            Masmorras.txt("§7Falta na sua trilha §8(" + falta.size() + " do nível " + nivel + ")")));
+                    p.playSound(p.getLocation(), "minecraft:block.portal.travel", 0.5f, 1.1f - nivel * 0.1f);
+                    p.sendMessage(Masmorras.txt(Masmorras.PREFIXO + "§7O portal te trouxe para a porta da §f" + alvo.tipo.nome
+                            + "§7, que falta para o seu Nível de Masmorra. §8(Quando terminar todas do nível, o portal volta a ser aleatório.)"));
+                    pl.darBussola(p, alvo);
+                });
+                return;
+            }
+        }
         Location d = destino(nivel);
         p.setFallDistance(0);
         p.teleportAsync(d, PlayerTeleportEvent.TeleportCause.PLUGIN).thenAccept(ok -> {
