@@ -9,6 +9,8 @@ Ordem: primeiro o bug, depois os chefes. Um de cada vez, testado no servidor de 
 - Bug: os tiros das torretas (Engenheiro) ativam os efeitos da arma, por exemplo o "Eco" da relíquia Cidade Ancestral (dano alto + escuridão com chance a cada golpe). Torreta não pode ativar efeito de arma; o Paulo já disse que as habilidades não ficam fortes conforme a arma.
 - Boss mundial (Colosso da Coroa Partida): está fácil para jogador forte (Sui matava com 3 torres, antes do buff de dano). Paulo decidiu (12:27): aumentar um pouco o dano dele e aumentar bastante a vida (HP), porque um jogador sozinho está matando muito fácil.
 
+- Classe Engenheiro (torres): está fazendo qualquer boss com facilidade. Paulo decidiu (12:28) enfraquecer um pouco, SEM mexer na quantidade de torres, no tempo de recarga nem no dano. Sugestão dele: diminuir a vida (HP) do Engenheiro; ou outra fraqueza parecida (ex.: torres com vida e os monstros/chefe mirando nelas, chefe resistindo um pouco ao dano de torre). Apresentar a escolha a ele antes de instalar.
+
 ## Ideias do Paulo
 - Rainha Aranha: sobe no teto, joga 2 ovos que viram aranhas pequenas, desce e luta junto com elas; repete a cada ~20 s (entra no lugar da prisão de teia, que vai para a Viúva Negra).
 - Gosma (slime): engole o jogador, que fica preso dentro dela e tem que bater para sair.
