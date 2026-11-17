@@ -86,8 +86,17 @@ final class Torretas implements Listener {
      * de 20s ate 35s e recarga ate 30% menor. Contra jogador (PvP) o dano continua o de antes.
      */
     static final int NIVEL_TETO = 60;
-    /** Quantas torres o Engenheiro pode ter ao mesmo tempo (quando uma some, pode colocar outra). */
+    /**
+     * Quantas torres o Engenheiro pode ter ao mesmo tempo (quando uma some, pode colocar outra). 17/11 (Paulo: "vai
+     * estar rapando o boss" / "no maximo 3 torres, a 4 como premio"): continua 3; a quarta vaga vira premio das reliquias
+     * (depois do renascimento), mais para frente.
+     */
     static final int MAX_ATIVAS = 3;
+    /** Intervalo minimo entre duas torres quaisquer (17/11: o Paulo disse que nao precisa; 0 = desligado). */
+    static final long ENTRE_TORRES_MS = 0;
+    /** Fator de dano da torre em chefe (17/11: o Paulo nao quis reduzir; 1.0 = dano normal). */
+    static final double DANO_EM_CHEFE = 1.0;
+    private final Map<UUID, Long> ultimaTorre = new HashMap<>();
 
     static double nivel01(int nivel) {
         return Math.max(0, Math.min(NIVEL_TETO, nivel)) / (double) NIVEL_TETO;
@@ -110,7 +119,8 @@ final class Torretas implements Listener {
 
     /** Dano final no alvo: contra jogador tira o bonus das torres (PvP fica como era). */
     private double fa(ArmorStand t, LivingEntity le, double dano) {
-        return le instanceof Player ? dano / escalas.getOrDefault(t.getUniqueId(), 1.0) : dano;
+        if (le instanceof Player) return dano / escalas.getOrDefault(t.getUniqueId(), 1.0);
+        return chefe(le) ? dano * DANO_EM_CHEFE : dano;
     }
 
     private final Poderes plugin;
@@ -142,6 +152,12 @@ final class Torretas implements Listener {
         Location l = local(p);
         if (l == null) {
             Poderes.barra(p, "§7Sem lugar para colocar a torre (olhe para o chao perto de voce).");
+            return false;
+        }
+        long agora0 = System.currentTimeMillis();
+        long falta0 = ultimaTorre.getOrDefault(p.getUniqueId(), 0L) + ENTRE_TORRES_MS - agora0;
+        if (ENTRE_TORRES_MS > 0 && falta0 > 0) {
+            Poderes.barra(p, "§7As engrenagens ainda estão girando: outra torre em §e" + ((falta0 + 999) / 1000) + "s");
             return false;
         }
         // 17/11 (Sui e Paulo): torre igual = REPOSICIONA (a nova herda o tempo que faltava na antiga, nao renova);
@@ -177,6 +193,7 @@ final class Torretas implements Listener {
             return false;
         }
         UUID dono = p.getUniqueId();
+        ultimaTorre.put(dono, System.currentTimeMillis());
         torres.computeIfAbsent(dono, k -> new EnumMap<>(Tipo.class)).put(tipo, t.getUniqueId());
         w.playSound(l, Sound.BLOCK_ANVIL_PLACE, 0.8f, 1.3f);
         Fx.p(w, Particle.CLOUD, l.clone().add(0, 1, 0), 25, 0.4, 0.6, 0.4, 0.03);

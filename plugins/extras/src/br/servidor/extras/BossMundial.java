@@ -700,7 +700,7 @@ final class BossMundial implements Listener {
             Location c = corpo.getLocation();
             double dx = ax + 0.5 - c.getX(), dz = az + 0.5 - c.getZ(), len = Math.max(1, Math.sqrt(dx * dx + dz * dz));
             Location onde = new Location(w, ax + 0.5 + dx / len * 12, ay, az + 0.5 + dz / len * 12);
-            if (!naArena(onde)) onde = new Location(w, ax + 0.5, ay, az + 12.5);
+            if (!naArena(onde) || len < 4) onde = new Location(w, ax + 0.5, ay, az + 12.5);   // Colosso no meio: nasce ao sul dele
             Object r = mt.invoke(m, onde, ax, ay, az, RAIO - 1, ALTURA, nivel, Math.max(1, perto(60).size()));
             if (r instanceof LivingEntity le) {
                 invocado = le;
@@ -1179,6 +1179,7 @@ final class BossMundial implements Listener {
                         return true;
                     }
                     fase++;
+                    tirarInvocado();
                     vida = Math.min(vida, vidaMax * (fase == 1 ? 2 / 3.0 : 1 / 3.0));
                     chamarReforco(fase == 1 ? 3 : 4);
                     s.sendMessage("fase " + fase + ": " + (invocado != null ? nomeInvocado + " vida " + (int) invocado.getHealth() : "nao chamou"));
