@@ -73,7 +73,18 @@ final class MecanicasChefes implements Listener {
         BOMBA("Bomba", "Transforma alguém em bomba: leve a bomba até o chefe e longe dos amigos."),
         REDEMOINHO("Redemoinho", "Puxa todo mundo para o meio da arena: corra para fora."),
         ELO("Elo", "Prende todos num elo: fique a mais de 7 blocos dele quando o elo fechar."),
-        RASTRO("Rastro", "Corre deixando um rastro que machuca: não pise nele.");
+        RASTRO("Rastro", "Corre deixando um rastro que machuca: não pise nele."),
+        // 17/11 (ideias do Paulo e as aprovadas "amei suas ideias")
+        NINHADA("Ninhada", "Sobe no teto e joga ovos que viram aranhas; depois desce e luta junto com elas."),
+        ENGOLIR("Engolir", "Engole alguém: quem foi engolido tem que bater nela sem parar para sair."),
+        BURACO("Buraco negro", "Abre um buraco negro que puxa todo mundo: corra para longe! Quem cair dentro faz ele explodir."),
+        MARE("Naufrágio", "O navio afunda e a água sobe: suba nos mastros (escadas) para não se afogar."),
+        LIVRO("Livro", "Puxa todos para dentro de um livro: pule pelas páginas. Quem chega ao fim ganha força; quem cai volta fraco."),
+        VITRAIS("Luz do sol", "Fora do sol ele quase não se machuca: quebre os vitrais (clique neles) para a luz entrar."),
+        MURALHAS("Labirinto", "A arena vira um labirinto que muda a cada 10 s: ele só fica vulnerável quando bate numa parede."),
+        GRAVIDADE("Gravidade invertida", "A gravidade inverte: todo mundo flutua e a luta continua lá no teto."),
+        ILHAS("Ilhas", "O chão some: fique nas ilhas e pule entre elas. As rajadas de vento empurram você."),
+        TEMPO("Tempo parado", "Para o tempo: só um jogador se mexe e tem 5 s para quebrar a engrenagem que solta os outros.");
 
         final String nome, desc;
 
@@ -98,9 +109,9 @@ final class MecanicasChefes implements Listener {
     static {
         // ---------------- nivel 1
         t("CRIPTA", "SOUL_FIRE_FLAME", Material.BONE_BLOCK, 0x4FD8FF, "ossos", 0, Mec.CHAO);
-        t("NINHO", "CRIT", Material.COBWEB, 0xDDDDDD, "teias", 0, Mec.CASULO);
+        t("NINHO", "CRIT", Material.COBWEB, 0xDDDDDD, "teias", 0, Mec.NINHADA);   // 17/11: a prisao de teia foi para a Viuva Negra
         t("CEMITERIO", "SOUL", Material.ROOTED_DIRT, 0x7A5A3A, "covas", 0, Mec.MINAS);
-        t("ESGOTO", "ITEM_SLIME", Material.SLIME_BLOCK, 0x7CCB5B, "gosmas", 0, Mec.RASTRO);
+        t("ESGOTO", "ITEM_SLIME", Material.SLIME_BLOCK, 0x7CCB5B, "gosmas", 0, Mec.ENGOLIR);
         t("ACAMPAMENTO", "FLAME", Material.TNT, 0xFF5522, "barris", 0, Mec.BOMBA);
         t("MOINHO", "WHITE_ASH", Material.HAY_BLOCK, 0xE0A030, "palhas", 0, Mec.OLHAR);
         t("FUNGOS", "CRIMSON_SPORE", Material.RED_MUSHROOM_BLOCK, 0xD03030, "cogumelos", 0, Mec.MINAS);
@@ -119,7 +130,7 @@ final class MecanicasChefes implements Listener {
         t("CRATERA", "FLAME", Material.MAGMA_BLOCK, 0xFF6020, "meteoros", 0, Mec.CHUVA);
         t("JARDIM", "SWEEP_ATTACK", Material.CHERRY_LEAVES, 0xFF9BC8, "pétalas", 0, Mec.LAMINA);
         // ---------------- nivel 3 (duas mecanicas)
-        t("TORRE", "ENCHANT", Material.AMETHYST_BLOCK, 0xA060FF, "runas", 0, Mec.CHAO, Mec.ELO);
+        t("TORRE", "ENCHANT", Material.AMETHYST_BLOCK, 0xA060FF, "runas", 0, Mec.GRAVIDADE, Mec.ELO);
         t("FORJA", "FLAME", Material.MAGMA_BLOCK, 0xFF7A00, "brasas", 0, Mec.ANEIS, Mec.RASTRO);
         t("QUARTEL", "CRIT", Material.TNT, 0xB04030, "barris", 0, Mec.INVESTIDA, Mec.BOMBA);
         t("SELVA", "SPORE_BLOSSOM_AIR", Material.MOSSY_COBBLESTONE, 0x40B040, "totens", 0, Mec.MINAS, Mec.ELO);
@@ -128,22 +139,22 @@ final class MecanicasChefes implements Listener {
         t("COLISEU", "CRIT", Material.CHISELED_STONE_BRICKS, 0xD04040, "ondas", 0, Mec.ANEIS, Mec.INVESTIDA);
         t("OBSERVATORIO", "FIREWORK", Material.GLOWSTONE, 0x7090FF, "estrelas", 2, Mec.CHUVA, Mec.LAMINA);
         t("VIUVA", "CRIT", Material.COBWEB, 0x303030, "teias", 0, Mec.CASULO, Mec.SOMBRAS);
-        t("NAUFRAGIO", "SPLASH", Material.COAL_BLOCK, 0x2050A0, "balas de canhão", 0, Mec.CHUVA, Mec.REDEMOINHO);
+        t("NAUFRAGIO", "SPLASH", Material.COAL_BLOCK, 0x2050A0, "balas de canhão", 0, Mec.MARE, Mec.CHUVA);
         t("MAUSOLEU", "WHITE_ASH", Material.CHISELED_SANDSTONE, 0xE8C878, "maldições", 2, Mec.OLHAR, Mec.CHAO);
-        t("BIBLIOTECA", "ENCHANT", Material.CHISELED_BOOKSHELF, 0xC09060, "livros", 0, Mec.SILENCIO, Mec.ALVOS);
+        t("BIBLIOTECA", "ENCHANT", Material.CHISELED_BOOKSHELF, 0xC09060, "livros", 0, Mec.LIVRO, Mec.SILENCIO);
         t("DELTA", "LARGE_SMOKE", Material.BASALT, 0x505060, "pedras", 0, Mec.INVESTIDA, Mec.CHAO);
         // ---------------- nivel 4
         t("BASTIAO", "CRIMSON_SPORE", Material.GOLD_BLOCK, 0xFFB000, "ouros", 0, Mec.BOMBA, Mec.ALVOS);
         t("WITHER", "SOUL_FIRE_FLAME", Material.SOUL_SAND, 0x303030, "almas", 0, Mec.ELO, Mec.CHAO);
-        t("VENTOS", "CLOUD", Material.WHITE_WOOL, 0xE0F0FF, "ventos", 0, Mec.REDEMOINHO, Mec.ANEIS);
+        t("VENTOS", "CLOUD", Material.WHITE_WOOL, 0xE0F0FF, "ventos", 0, Mec.ILHAS, Mec.REDEMOINHO);
         t("CASTELO", "SMOKE", Material.IRON_BARS, 0x902020, "machados", 0, Mec.LAMINA, Mec.CHAO);
         t("COVIL", "CRIMSON_SPORE", Material.NETHERRACK, 0xC03030, "pegadas", 0, Mec.INVESTIDA, Mec.RASTRO);
         t("VULCAO", "LAVA", Material.MAGMA_BLOCK, 0xFF4000, "rochas", 0, Mec.CHUVA, Mec.ANEIS);
         t("CIDADE_ANTIGA", "SCULK_SOUL", Material.SCULK_SHRIEKER, 0x0A8090, "ecos", 0, Mec.SILENCIO, Mec.ELO);
         t("GELEIRA", "SNOWFLAKE", Material.PACKED_ICE, 0xA0E0FF, "blocos de gelo", 0, Mec.CHUVA, Mec.INVESTIDA);
-        t("SANGUE", "DAMAGE_INDICATOR", Material.REDSTONE_BLOCK, 0xA00010, "morcegos", 0, Mec.ELO, Mec.SOMBRAS);
-        t("RELOGIO", "WAX_OFF", Material.GOLD_BLOCK, 0xFFD040, "ponteiros", 2, Mec.LAMINA, Mec.SILENCIO);
-        t("LABIRINTO", "CRIT", Material.MOSSY_STONE_BRICKS, 0x806040, "chifradas", 0, Mec.INVESTIDA, Mec.CHAO);
+        t("SANGUE", "DAMAGE_INDICATOR", Material.RED_STAINED_GLASS, 0xA00010, "vitrais", 0, Mec.VITRAIS, Mec.ELO);
+        t("RELOGIO", "WAX_OFF", Material.GOLD_BLOCK, 0xFFD040, "ponteiros", 2, Mec.TEMPO, Mec.LAMINA);
+        t("LABIRINTO", "CRIT", Material.MOSSY_STONE_BRICKS, 0x806040, "chifradas", 0, Mec.MURALHAS, Mec.CHAO);
         t("CRIPTA_REAL", "SOUL", Material.SOUL_LANTERN, 0x60E0FF, "almas", 0, Mec.CHAO, Mec.SOMBRAS);
         t("CARMESIM", "CRIMSON_SPORE", Material.NETHER_WART_BLOCK, 0xB02020, "fungos", 0, Mec.INVESTIDA, Mec.MINAS);
         t("DISTORCIDO", "WARPED_SPORE", Material.WARPED_WART_BLOCK, 0x20B0A0, "esporos", 0, Mec.RASTRO, Mec.MINAS);
@@ -152,7 +163,7 @@ final class MecanicasChefes implements Listener {
         t("CORO", "PORTAL", Material.MAGENTA_GLAZED_TERRACOTTA, 0xB080D0, "sementes do coro", 0, Mec.MINAS, Mec.REDEMOINHO);
         t("ABISMO", "REVERSE_PORTAL", Material.OBSIDIAN, 0x6020A0, "flechas", 0, Mec.LAMINA, Mec.SOMBRAS);
         // ---------------- nivel 5
-        t("CIDADELA", "PORTAL", Material.PURPUR_BLOCK, 0x9040D0, "ondas", 0, Mec.SOMBRAS, Mec.ANEIS);
+        t("CIDADELA", "PORTAL", Material.PURPUR_BLOCK, 0x9040D0, "ondas", 0, Mec.BURACO, Mec.ANEIS);
         t("PRISAO", "SCULK_SOUL", Material.IRON_BARS, 0x404050, "celas", 0, Mec.CASULO, Mec.SILENCIO);
         t("ILHAS", "END_ROD", Material.END_STONE, 0xE0E0A0, "pedras do fim", 0, Mec.CHUVA, Mec.ANEIS);
         t("NAVE", "END_ROD", Material.PURPUR_PILLAR, 0xC080E0, "cascos", 0, Mec.ALVOS, Mec.BOMBA);
@@ -190,6 +201,13 @@ final class MecanicasChefes implements Listener {
         final Set<Block> clicaveis = new HashSet<>();
         /** Entidades da cena (sombras, pedras caindo). */
         final List<Entity> coisas = new ArrayList<>();
+        // ---- passivas (a luta toda): Bispo (sacerdotisa e copias), Lorde Vampiro (sol), Ceifador (almas)
+        LivingEntity sacerdotisa;
+        boolean sacerdotisaFeita, sacerdotisaMorta;
+        long proximoSino;
+        final List<LivingEntity> copias = new ArrayList<>();
+        long solAte;
+        final Map<UUID, Alma> almas = new HashMap<>();
 
         Luta(Chefe c, Tema tema) {
             this.c = c;
@@ -256,6 +274,11 @@ final class MecanicasChefes implements Listener {
             l.proxima = agora + pl.getConfig().getLong("mecanicas.primeira-s", 14) * 1000L;
             lutas.put(c, l);
         }
+        try {
+            passivas(l, ps, agora);
+        } catch (Throwable ex) {
+            pl.getLogger().warning("Passiva do chefe (masmorra #" + c.m.id + "): " + ex);
+        }
         if (l.cena != null) return true;
         if (l.tema.mecs().length == 0 || agora < l.proxima || ps.isEmpty()) return false;
         if (c.escudoAte > 0) {   // escudo dos guardas de pe: espera ele cair
@@ -296,19 +319,52 @@ final class MecanicasChefes implements Listener {
             }
             return true;
         }
+        // Ceifador: a alma nao machuca, atrapalha (deixa o chefe lento e fraco)
+        if (p != null && l.almas.containsKey(p.getUniqueId())) {
+            e.setCancelled(true);
+            c.e.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 2, false, false));
+            c.e.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, 1, false, false));
+            fx(c.e.getWorld(), Particle.SOUL, c.e.getLocation().add(0, c.e.getHeight() / 2, 0), 8, 0.4, 0.5, 0.4, 0.02);
+            p.sendActionBar(Masmorras.txt("§b☠ Sua alma atrapalha o chefe §7(ele fica lento e fraco)"));
+            return true;
+        }
+        // Minotauro: no labirinto so leva dano quando esta tonto (bateu numa parede)
+        if (l.cena instanceof Muralhas && l.tontoAte <= agora && causa != EntityDamageEvent.DamageCause.KILL) {
+            e.setCancelled(true);
+            if (p != null) p.sendActionBar(Masmorras.txt("§6§lNão adianta! §7Faça ele bater numa parede (desvie da investida)."));
+            return true;
+        }
         if (l.tontoAte > agora) e.setDamage(e.getDamage() * 1.5);
+        // Lorde Vampiro: fora do sol leva so metade
+        if (c.t.id.equals("SANGUE") && l.solAte <= agora) {
+            e.setDamage(e.getDamage() * 0.5);
+            if (p != null && rnd.nextInt(4) == 0) p.sendActionBar(Masmorras.txt("§4Fora do sol ele quase não sente! §7Espere a luz dos vitrais."));
+        }
         if (p != null && l.cena instanceof Sombras s) s.achou(p);
+        if (p != null && l.cena instanceof Engolir g) g.bateu(p);
+        // Bispo: enquanto a sacerdotisa reza, ele "morre" e volta com a vida cheia (e cria copias)
+        if (l.sacerdotisa != null && l.sacerdotisa.isValid() && !l.sacerdotisa.isDead() && e.getFinalDamage() >= c.e.getHealth()) {
+            e.setCancelled(true);
+            bispoVolta(l);
+            return true;
+        }
         return false;
     }
 
     /** Chefe morreu ou foi tirado. */
     void fim(Chefe c) {
         Luta l = lutas.remove(c);
-        if (l != null) parar(l, false);
+        if (l != null) {
+            parar(l, false);
+            fimPassivas(l, c.vivo() ? false : true);
+        }
     }
 
     void desligar() {
-        for (Luta l : new ArrayList<>(lutas.values())) parar(l, false);
+        for (Luta l : new ArrayList<>(lutas.values())) {
+            parar(l, false);
+            fimPassivas(l, true);
+        }
         lutas.clear();
     }
 
@@ -392,6 +448,16 @@ final class MecanicasChefes implements Listener {
                 case REDEMOINHO -> new Redemoinho(l);
                 case ELO -> new Elo(l);
                 case RASTRO -> new Rastro(l);
+                case NINHADA -> new Ninhada(l, ps);
+                case ENGOLIR -> new Engolir(l, ps);
+                case BURACO -> new Buraco(l);
+                case MARE -> new Mare(l);
+                case LIVRO -> new Livro(l, ps);
+                case VITRAIS -> new Vitrais(l, ps);
+                case MURALHAS -> new Muralhas(l);
+                case GRAVIDADE -> new Gravidade(l);
+                case ILHAS -> new Ilhas(l);
+                case TEMPO -> new Tempo(l, ps);
             };
         } catch (Throwable ex) {
             pl.getLogger().warning("Mecanica " + mec + " (masmorra #" + l.c.m.id + ") nao comecou: " + ex);
@@ -1794,6 +1860,1008 @@ final class MecanicasChefes implements Listener {
                 }
             }
             return t < DUR || !pontos.isEmpty();
+        }
+    }
+
+    // ================================================================== 17/11 (Paulo): quem entrou na sala do chefe nao foge
+
+    private static boolean naSala(Caixa a, Location x) {
+        return x.getX() >= a.x1() - 0.3 && x.getX() <= a.x2() + 1.3 && x.getZ() >= a.z1() - 0.3 && x.getZ() <= a.z2() + 1.3
+                && x.getY() >= a.y1() - 6 && x.getY() <= a.y2() + 4;
+    }
+
+    private Masmorra salaTrancada(Player p, Location de, Location para) {
+        if (p.getGameMode() == org.bukkit.GameMode.CREATIVE || p.getGameMode() == org.bukkit.GameMode.SPECTATOR) return null;
+        if (!pl.getConfig().getBoolean("chefe.sala-trancada", true)) return null;
+        for (Masmorra m : pl.todas) {
+            Chefe c = m.chefe;
+            if (c == null || !c.vivo() || !m.mundo.equals(de.getWorld().getName())) continue;
+            Caixa a = m.arenaLuta();
+            if (naSala(a, de) && (!para.getWorld().equals(de.getWorld()) || !naSala(a, para))) return m;
+        }
+        return null;
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    public void fugir(org.bukkit.event.player.PlayerMoveEvent e) {
+        Location de = e.getFrom(), para = e.getTo();
+        if (para == null || (de.getBlockX() == para.getBlockX() && de.getBlockZ() == para.getBlockZ() && de.getBlockY() == para.getBlockY())) return;
+        if (salaTrancada(e.getPlayer(), de, para) == null) return;
+        Location volta = de.clone();
+        volta.setYaw(para.getYaw());
+        volta.setPitch(para.getPitch());
+        e.setTo(volta);
+        e.getPlayer().sendActionBar(Masmorras.txt("§c§l🔒 A sala está trancada! §7Só dá para sair quando o chefe morrer."));
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    public void fugirTeleporte(org.bukkit.event.player.PlayerTeleportEvent e) {
+        org.bukkit.event.player.PlayerTeleportEvent.TeleportCause cz = e.getCause();
+        if (cz != org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.ENDER_PEARL
+                && cz != org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.CONSUMABLE_EFFECT) return;
+        if (e.getTo() == null || salaTrancada(e.getPlayer(), e.getFrom(), e.getTo()) == null) return;
+        e.setCancelled(true);
+        e.getPlayer().sendActionBar(Masmorras.txt("§c§l🔒 A sala está trancada! §7Só dá para sair quando o chefe morrer."));
+    }
+
+    // ================================================================== PASSIVAS (17/11): Bispo, Lorde Vampiro, Ceifador
+
+    private void passivas(Luta l, List<Player> ps, long agora) {
+        Chefe c = l.c;
+        World w = c.e.getWorld();
+        // ---- Bispo Corrompido: a sacerdotisa escondida numa sala reza por ele
+        if (c.t.id.equals("CATEDRAL") && !ps.isEmpty()) {
+            if (!l.sacerdotisaFeita) {
+                l.sacerdotisaFeita = true;
+                criarSacerdotisa(l);
+            }
+            LivingEntity s = l.sacerdotisa;
+            if (s != null && (!s.isValid() || s.isDead())) {
+                l.sacerdotisa = null;
+                l.sacerdotisaMorta = true;
+                som(w, c.e.getLocation(), "minecraft:block.bell.resonate", 2f, 0.5f);
+                for (LivingEntity x : l.copias) if (x.isValid()) {
+                    fx(w, Particle.LARGE_SMOKE, x.getLocation().add(0, 1, 0), 20, 0.4, 0.6, 0.4, 0.02);
+                    x.remove();
+                }
+                l.copias.clear();
+                for (Player p : c.naArena()) titulo(p, "§e§lA SACERDOTISA CAIU!", "§7Agora o Bispo morre de verdade", 2500);
+            } else if (s != null && agora >= l.proximoSino) {
+                l.proximoSino = agora + 3500;
+                // o sino toca onde ela esta (da para seguir o som) e um rastro dourado sai de cada jogador na direcao dela
+                w.playSound(s.getLocation(), "minecraft:block.bell.use", 3f, 0.8f);
+                fx(w, Particle.END_ROD, s.getLocation().add(0, 2.3, 0), 6, 0.2, 0.3, 0.2, 0.01);
+                for (Player p : w.getPlayers()) {
+                    if (p.getLocation().distanceSquared(s.getLocation()) > 120 * 120) continue;
+                    Vector d = s.getLocation().toVector().subtract(p.getLocation().toVector());
+                    if (d.lengthSquared() < 4) continue;
+                    d.normalize();
+                    Location q = p.getLocation().add(0, 0.3, 0);
+                    for (int i = 1; i <= 6; i++) po(w, q.clone().add(d.clone().multiply(i * 0.8)), Color.fromRGB(255, 215, 80), 1.1f, 1, 0.02);
+                }
+            }
+        }
+        // ---- Lorde Vampiro: no sol pega fogo e brilha
+        if (l.solAte > agora) {
+            c.e.setFireTicks(Math.max(c.e.getFireTicks(), 30));
+            Location lc = c.e.getLocation();
+            for (int i = 0; i < 10; i++) fx(w, Particle.END_ROD, lc.clone().add(0, i * 0.8, 0), 1, 0.15, 0.1, 0.15, 0);
+        }
+        // ---- Ceifador de Almas: almas esperando um amigo
+        if (!l.almas.isEmpty()) {
+            List<Player> vivos = new ArrayList<>();
+            for (Player p : ps) if (!l.almas.containsKey(p.getUniqueId())) vivos.add(p);
+            for (Iterator<Map.Entry<UUID, Alma>> it = l.almas.entrySet().iterator(); it.hasNext(); ) {
+                Map.Entry<UUID, Alma> en = it.next();
+                Alma a = en.getValue();
+                Player dono = Bukkit.getPlayer(en.getKey());
+                if (dono == null || !dono.isOnline()) {
+                    a.limpar();
+                    it.remove();
+                    continue;
+                }
+                if (c.e instanceof Mob mob && dono.equals(mob.getTarget())) mob.setTarget(null);
+                fx(w, Particle.SOUL, a.corpo.clone().add(0, 0.6, 0), 3, 0.25, 0.3, 0.25, 0.01);
+                Player salvador = null;
+                for (Player v : vivos) if (v.getLocation().distanceSquared(a.corpo) < 1.8 * 1.8) salvador = v;
+                if (salvador != null) {
+                    a.reviver(dono, 0.5);
+                    it.remove();
+                    for (Player x : c.naArena()) x.sendActionBar(Masmorras.txt("§b§l" + salvador.getName() + " pegou a alma de " + dono.getName() + "! §7Voltou à vida."));
+                    som(w, a.corpo, "minecraft:item.totem.use", 1f, 1.4f);
+                    continue;
+                }
+                long falta = a.ate - agora;
+                if (falta <= 0 || vivos.isEmpty()) {
+                    a.limpar();
+                    it.remove();
+                    dono.removePotionEffect(PotionEffectType.INVISIBILITY);
+                    dono.sendMessage(Masmorras.txt("§8☠ Ninguém pegou a sua alma a tempo."));
+                    dono.setHealth(0);
+                    continue;
+                }
+                dono.sendActionBar(Masmorras.txt("§b☠ Você é uma alma! §7Um amigo precisa passar no seu corpo §8(" + (falta / 1000 + 1) + "s) §7— bata no chefe para atrapalhar"));
+            }
+        }
+    }
+
+    private void criarSacerdotisa(Luta l) {
+        Chefe c = l.c;
+        Masmorra m = c.m;
+        World w = c.e.getWorld();
+        List<Caixa> salas = new ArrayList<>(m.salas);
+        if (salas.size() > 1) salas.remove(salas.size() - 1);   // a ultima e a arena
+        Caixa arena = m.arenaLuta();
+        java.util.Collections.shuffle(salas, rnd);
+        for (Caixa s : salas) {
+            if (s.equals(arena)) continue;
+            for (int tent = 0; tent < 25; tent++) {
+                int x = s.x1() + 1 + rnd.nextInt(Math.max(1, s.x2() - s.x1() - 1));
+                int z = s.z1() + 1 + rnd.nextInt(Math.max(1, s.z2() - s.z1() - 1));
+                Block b = w.getBlockAt(x, s.y1(), z);
+                if (!b.isPassable() || !b.getRelative(BlockFace.UP).isPassable() || !b.getRelative(BlockFace.DOWN).getType().isSolid()) continue;
+                LivingEntity e = pl.lacaio(m, "WITCH", b.getLocation().add(0.5, 0, 0.5), true);
+                if (e == null) return;
+                e.customName(Masmorras.txt("§d§l✝ Sacerdotisa do Bispo"));
+                e.setCustomNameVisible(true);
+                e.setRemoveWhenFarAway(false);
+                AttributeInstance v = e.getAttribute(Attribute.MAX_HEALTH);
+                if (v != null) {
+                    v.setBaseValue(30 + 10 * c.t.nivel);
+                    e.setHealth(v.getValue());
+                }
+                l.sacerdotisa = e;
+                l.proximoSino = System.currentTimeMillis() + 4000;
+                for (Player p : c.naArena()) {
+                    p.sendMessage(Masmorras.txt("§d§l✝ " + c.t.chefeNome + ": §7\"Enquanto ela rezar por mim, eu não morro.\""));
+                    p.sendMessage(Masmorras.txt("§7» Uma §dsacerdotisa §7está escondida em outra sala. §eSiga o sino e o rastro dourado §7e mate-a."));
+                }
+                return;
+            }
+        }
+    }
+
+    private void bispoVolta(Luta l) {
+        Chefe c = l.c;
+        World w = c.e.getWorld();
+        AttributeInstance v = c.e.getAttribute(Attribute.MAX_HEALTH);
+        c.e.setHealth(Math.min(v != null ? v.getValue() : c.vidaMax, c.vidaMax));
+        c.e.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 40, 4, false, false));
+        w.spawnParticle(Particle.TOTEM_OF_UNDYING, c.e.getLocation().add(0, c.e.getHeight() / 2, 0), 80, 0.6, 1, 0.6, 0.4);
+        som(w, c.e.getLocation(), "minecraft:block.bell.use", 2f, 0.6f);
+        l.copias.removeIf(x -> !x.isValid() || x.isDead());
+        int q = Math.min(2, 6 - l.copias.size());
+        for (int i = 0; i < q; i++) {
+            Location ok = c.lugarLivre(c.e.getLocation().clone().add(rnd.nextInt(9) - 4, 0, rnd.nextInt(9) - 4));
+            if (ok == null) continue;
+            LivingEntity x = pl.lacaio(c.m, c.t.chefe, ok, true);
+            if (x == null) continue;
+            x.customName(c.e.customName());
+            x.setCustomNameVisible(c.e.isCustomNameVisible());
+            for (Attribute at : new Attribute[] {Attribute.SCALE, Attribute.MOVEMENT_SPEED}) {
+                AttributeInstance de = c.e.getAttribute(at), para = x.getAttribute(at);
+                if (de != null && para != null) para.setBaseValue(de.getBaseValue());
+            }
+            AttributeInstance vida = x.getAttribute(Attribute.MAX_HEALTH);
+            if (vida != null) {
+                vida.setBaseValue(Math.max(20, c.vidaMax * 0.12));
+                x.setHealth(vida.getValue());
+            }
+            EntityEquipment de = c.e.getEquipment(), para = x.getEquipment();
+            if (de != null && para != null) {
+                para.setItemInMainHand(de.getItemInMainHand());
+                para.setHelmet(de.getHelmet());
+                para.setChestplate(de.getChestplate());
+                para.setItemInMainHandDropChance(0f);
+                para.setHelmetDropChance(0f);
+                para.setChestplateDropChance(0f);
+            }
+            fx(w, Particle.LARGE_SMOKE, ok.clone().add(0, 1, 0), 20, 0.4, 0.6, 0.4, 0.02);
+            l.copias.add(x);
+        }
+        for (Player p : c.naArena()) titulo(p, "§d§lELE VOLTOU!", "§7A sacerdotisa ainda reza por ele — §eache e mate ela", 2500);
+    }
+
+    private void fimPassivas(Luta l, boolean ignorado) {
+        if (l.sacerdotisa != null && l.sacerdotisa.isValid()) l.sacerdotisa.remove();
+        l.sacerdotisa = null;
+        for (LivingEntity x : l.copias) if (x.isValid()) x.remove();
+        l.copias.clear();
+        l.solAte = 0;
+        for (Map.Entry<UUID, Alma> en : l.almas.entrySet()) {
+            Player p = Bukkit.getPlayer(en.getKey());
+            if (p != null && p.isOnline()) en.getValue().reviver(p, 0.3);
+            else en.getValue().limpar();
+        }
+        l.almas.clear();
+    }
+
+    /** Ceifador: o jogador virou alma (o corpo fica no chao esperando um amigo). */
+    private final class Alma {
+        final Location corpo;
+        final long ate;
+        final org.bukkit.entity.ArmorStand marca;
+
+        Alma(Player p) {
+            corpo = p.getLocation().clone();
+            ate = System.currentTimeMillis() + 30_000;
+            marca = corpo.getWorld().spawn(corpo.clone().add(0, -0.4, 0), org.bukkit.entity.ArmorStand.class, a -> {
+                a.setInvisible(true);
+                a.setMarker(true);
+                a.setGravity(false);
+                a.setSmall(true);
+                a.setPersistent(false);
+                a.customName(Masmorras.txt("§b☠ Alma de " + p.getName() + " §7— passe aqui!"));
+                a.setCustomNameVisible(true);
+            });
+        }
+
+        void limpar() {
+            if (marca != null && marca.isValid()) marca.remove();
+        }
+
+        void reviver(Player p, double vida) {
+            limpar();
+            p.removePotionEffect(PotionEffectType.INVISIBILITY);
+            p.removePotionEffect(PotionEffectType.WEAKNESS);
+            AttributeInstance v = p.getAttribute(Attribute.MAX_HEALTH);
+            double max = v != null ? v.getValue() : 20;
+            p.setHealth(Math.max(1, Math.min(max, max * vida)));
+            p.setFireTicks(0);
+            titulo(p, "§a§lVOCÊ VOLTOU!", "", 1500);
+        }
+    }
+
+    /** Ceifador de Almas: quem morreria na arena vira alma. A alma nao leva dano. */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void quaseMorreu(EntityDamageEvent e) {
+        if (!(e.getEntity() instanceof Player p)) return;
+        for (Luta l : lutas.values()) {
+            if (!l.c.t.id.equals("ALMAS") || !l.c.vivo()) continue;
+            if (l.almas.containsKey(p.getUniqueId())) {
+                e.setCancelled(true);
+                return;
+            }
+            if (!l.c.m.arenaLuta().crescer(2).contem(p.getX(), p.getY(), p.getZ())) continue;
+            if (e.getFinalDamage() < p.getHealth() + p.getAbsorptionAmount()) return;
+            if (e.getCause() == EntityDamageEvent.DamageCause.VOID || e.getCause() == EntityDamageEvent.DamageCause.KILL) return;
+            if (p.getInventory().getItemInMainHand().getType() == Material.TOTEM_OF_UNDYING
+                    || p.getInventory().getItemInOffHand().getType() == Material.TOTEM_OF_UNDYING) return;
+            e.setCancelled(true);
+            p.setHealth(1);
+            p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 20 * 31, 0, false, false));
+            p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 20 * 31, 4, false, false));
+            Alma a = new Alma(p);
+            l.almas.put(p.getUniqueId(), a);
+            World w = p.getWorld();
+            fx(w, Particle.SOUL, p.getLocation().add(0, 1, 0), 30, 0.4, 0.8, 0.4, 0.05);
+            som(w, p.getLocation(), "minecraft:particle.soul_escape", 2f, 0.6f);
+            titulo(p, "§b§l☠ VOCÊ VIROU ALMA", "§7Um amigo tem 30 s para passar no seu corpo", 2500);
+            for (Player x : l.c.naArena()) if (!x.equals(p)) x.sendMessage(Masmorras.txt("§b☠ " + p.getName() + " virou alma! §7Passe no corpo dele (nome azul no chão) para trazer de volta."));
+            return;
+        }
+    }
+
+    // ================================================================== NINHADA (Rainha Aranha): sobe no teto e joga ovos
+
+    private final class Ninhada extends Cena {
+        Location teto;
+        final List<org.bukkit.entity.Item> ovos = new ArrayList<>();
+        final Map<org.bukkit.entity.Item, Integer> nasceu = new HashMap<>();
+        int jogados;
+
+        Ninhada(Luta l, List<Player> ps) {
+            super(l);
+            Caixa a = arena();
+            double alto = Math.max(a.y1() + 3, a.y2() - c.e.getHeight() - 0.6);
+            if (alto - a.y1() < 2.5) throw new IllegalStateException("arena baixa demais para o teto");
+            Location base = c.e.getLocation();
+            teto = new Location(w, base.getX(), alto, base.getZ(), base.getYaw(), 0);
+            congelar(l);
+            c.e.setGravity(false);
+            l.imuneAte = System.currentTimeMillis() + 6000;
+            som(w, base, "minecraft:entity.spider.ambient", 2f, 0.5f);
+            for (Player p : ps) titulo(p, "§2§lNINHADA!", "§7Ela subiu no teto — mate as aranhas que nascerem", 2000);
+        }
+
+        @Override
+        boolean passo(List<Player> ps) {
+            Location ag = c.e.getLocation();
+            if (t < 8) {
+                Location q = ag.clone().add(0, (teto.getY() - ag.getY()) * 0.35, 0);
+                c.e.teleport(q);
+                po(w, ag.clone().add(0, 0.3, 0), Color.WHITE, 1f, 4, 0.2);
+                for (double y = ag.getY(); y < teto.getY() + 1; y += 0.6) po(w, new Location(w, ag.getX(), y, ag.getZ()), Color.fromRGB(230, 230, 230), 0.7f, 1, 0);
+                return true;
+            }
+            if (t < 40) c.e.teleport(teto);
+            c.e.setVelocity(new Vector());
+            if ((t == 14 || t == 24) && !ps.isEmpty()) {
+                Player alvo = ps.get(rnd.nextInt(ps.size()));
+                Location de = c.e.getLocation().add(0, 0.2, 0);
+                org.bukkit.entity.Item ovo = w.dropItem(de, new org.bukkit.inventory.ItemStack(Material.TURTLE_EGG));
+                ovo.setPickupDelay(Integer.MAX_VALUE);
+                ovo.setCanMobPickup(false);
+                Vector v = alvo.getLocation().toVector().subtract(de.toVector()).setY(0).multiply(0.08);
+                if (v.length() > 0.7) v.normalize().multiply(0.7);
+                ovo.setVelocity(v.setY(0.1));
+                ovos.add(ovo);
+                l.coisas.add(ovo);
+                som(w, de, "minecraft:entity.turtle.lay_egg", 1.5f, 1.2f);
+                jogados++;
+            }
+            for (org.bukkit.entity.Item ovo : new ArrayList<>(ovos)) {
+                if (!ovo.isValid()) {
+                    ovos.remove(ovo);
+                    continue;
+                }
+                if (ovo.isOnGround() || ovo.getTicksLived() > 40) {
+                    nasceu.merge(ovo, 1, Integer::sum);
+                    if (nasceu.get(ovo) == 1) som(w, ovo.getLocation(), "minecraft:block.sniffer_egg.crack", 1.5f, 1.2f);
+                    if (nasceu.get(ovo) >= 6) {
+                        Location ok = c.lugarLivre(ovo.getLocation());
+                        if (ok == null) ok = ovo.getLocation();
+                        LivingEntity ar = pl.lacaio(c.m, "CAVE_SPIDER", ok, true);
+                        if (ar != null) {
+                            ar.customName(Masmorras.txt("§2Filhote da Rainha"));
+                            fx(w, Particle.ITEM_SLIME, ok.clone().add(0, 0.3, 0), 15, 0.3, 0.2, 0.3, 0.05);
+                        }
+                        ovos.remove(ovo);
+                        ovo.remove();
+                    }
+                }
+            }
+            if (t == 40) {
+                Location chao = c.lugarLivre(c.e.getLocation());
+                if (chao == null) chao = new Location(w, c.e.getX(), piso(), c.e.getZ());
+                c.e.teleport(chao);
+                c.e.setGravity(true);
+                l.imuneAte = 0;
+                fx(w, Particle.CLOUD, chao.clone().add(0, 0.2, 0), 20, 0.6, 0.1, 0.6, 0.05);
+                som(w, chao, "minecraft:entity.spider.step", 2f, 0.6f);
+            }
+            return t < 46 || !ovos.isEmpty();
+        }
+
+        @Override
+        void fim() {
+            c.e.setGravity(true);
+            if (c.e.getLocation().getY() > piso() + 1.5) {
+                Location chao = c.lugarLivre(c.e.getLocation());
+                if (chao != null) c.e.teleport(chao);
+            }
+        }
+    }
+
+    // ================================================================== ENGOLIR (Gosma): quem foi engolido bate para sair
+
+    private final class Engolir extends Cena {
+        final Player preso;
+        final int precisa;
+        int bateu;
+        boolean saiu;
+
+        Engolir(Luta l, List<Player> ps) {
+            super(l);
+            preso = ps.get(rnd.nextInt(ps.size()));
+            precisa = 3 + n;
+            som(w, c.e.getLocation(), "minecraft:entity.slime.squish", 2f, 0.4f);
+            titulo(preso, "§a§lVOCÊ FOI ENGOLIDO!", "§7Bata nela §f" + precisa + "x §7para sair", 2000);
+            for (Player p : ps) if (!p.equals(preso)) p.sendActionBar(Masmorras.txt("§a" + preso.getName() + " foi engolido! §7Bata na gosma para ajudar."));
+        }
+
+        void bateu(Player p) {
+            if (saiu) return;
+            if (p.equals(preso)) bateu += 1;
+            else bateu += 0;   // so quem esta dentro conta (os outros so dao dano)
+            fx(w, Particle.ITEM_SLIME, c.e.getLocation().add(0, c.e.getHeight() / 2, 0), 10, 0.4, 0.4, 0.4, 0.05);
+            if (bateu >= precisa) cuspir(false);
+            else preso.sendActionBar(Masmorras.txt("§a§lBata! §f" + bateu + "§7/" + precisa));
+        }
+
+        void cuspir(boolean tarde) {
+            if (saiu) return;
+            saiu = true;
+            preso.removePotionEffect(PotionEffectType.SLOWNESS);
+            Location s = c.e.getLocation().add(0, 0.5, 0);
+            Vector v = preso.getLocation().getDirection().setY(0);
+            if (v.lengthSquared() < 0.01) v = new Vector(1, 0, 0);
+            Location fora = c.lugarLivre(s.clone().add(v.normalize().multiply(Math.max(2, c.e.getWidth()))));
+            if (fora != null) preso.teleport(fora);
+            preso.setVelocity(v.normalize().multiply(0.6).setY(0.45));
+            fx(w, Particle.ITEM_SLIME, s, 40, 0.6, 0.6, 0.6, 0.15);
+            som(w, s, "minecraft:entity.slime.jump", 2f, 0.6f);
+            if (tarde) {
+                preso.damage(dano(2), c.e);
+                titulo(preso, "§c§lCUSPIDO!", "§7Demorou demais lá dentro", 1500);
+            } else titulo(preso, "§a§lVOCÊ SAIU!", "", 1200);
+        }
+
+        @Override
+        boolean passo(List<Player> ps) {
+            if (saiu) return false;
+            if (!preso.isOnline() || preso.isDead()) return false;
+            Location dentro = c.e.getLocation().add(0, Math.max(0.1, c.e.getHeight() / 2 - 0.9), 0);
+            dentro.setYaw(preso.getLocation().getYaw());
+            dentro.setPitch(preso.getLocation().getPitch());
+            if (preso.getLocation().distanceSquared(dentro) > 0.25) preso.teleport(dentro);
+            preso.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 15, 3, false, false));
+            if (t % 4 == 0) fx(w, Particle.ITEM_SLIME, dentro.clone().add(0, 1, 0), 6, 0.4, 0.5, 0.4, 0.02);
+            if (t % 10 == 9) preso.damage(1 + n * 0.5, c.e);
+            if (t >= 80) {
+                cuspir(true);
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        void fim() {
+            if (!saiu && preso.isOnline()) cuspir(false);
+        }
+    }
+
+    // ================================================================== BURACO (Senhor do Vazio): buraco negro que puxa
+
+    private final class Buraco extends Cena {
+        static final int AVISO = 15, DUR = 90;
+        final Location centro;
+        boolean explodiu;
+
+        Buraco(Luta l) {
+            super(l);
+            Block b = chaoLivre(l, null, 0, 5);
+            if (b == null) throw new IllegalStateException("sem lugar para o buraco");
+            centro = b.getLocation().add(0.5, 0.6, 0.5);
+            for (Player p : c.naArena()) titulo(p, "§5§lBURACO NEGRO!", "§7Corra para longe — não deixe ele te puxar", 1800);
+            som(w, centro, "minecraft:block.portal.trigger", 1.6f, 0.5f);
+        }
+
+        @Override
+        boolean passo(List<Player> ps) {
+            double r = t < AVISO ? 0.4 + t * 0.04 : 1.1 + Math.sin(t * 0.3) * 0.15;
+            for (int i = 0; i < 14; i++) {
+                double a = i * Math.PI / 7 + t * 0.35;
+                po(w, centro.clone().add(Math.cos(a) * r, Math.sin(a * 2) * 0.3, Math.sin(a) * r), Color.fromRGB(20, 0, 30), 1.6f, 1, 0);
+            }
+            fx(w, Particle.REVERSE_PORTAL, centro, 8, 0.2, 0.2, 0.2, 0.6);
+            fx(w, Particle.SQUID_INK, centro, 2, 0.1, 0.1, 0.1, 0.01);
+            if (t < AVISO) return true;
+            if (t % 8 == 0) som(w, centro, "minecraft:block.beacon.ambient", 1.6f, 0.5f);
+            for (Player p : ps) {
+                Vector v = centro.toVector().subtract(p.getLocation().toVector());
+                double d = v.length();
+                if (d < 1.4) {
+                    explodir(ps);
+                    return false;
+                }
+                if (d > 16 || t % 2 != 0) continue;
+                Vector puxa = v.normalize().multiply(Math.min(0.2, 0.06 + 0.9 / (d + 2)));
+                Vector atual = p.getVelocity();
+                p.setVelocity(new Vector(atual.getX() * 0.6 + puxa.getX(), atual.getY(), atual.getZ() * 0.6 + puxa.getZ()));
+            }
+            if (t >= AVISO + DUR) {
+                fx(w, Particle.REVERSE_PORTAL, centro, 80, 0.3, 0.3, 0.3, 1.2);
+                som(w, centro, "minecraft:block.beacon.deactivate", 1.6f, 0.6f);
+                return false;
+            }
+            return true;
+        }
+
+        void explodir(List<Player> ps) {
+            if (explodiu) return;
+            explodiu = true;
+            w.spawnParticle(Particle.EXPLOSION_EMITTER, centro, 1);
+            fx(w, Particle.REVERSE_PORTAL, centro, 120, 1, 1, 1, 1.5);
+            som(w, centro, "minecraft:entity.generic.explode", 2f, 0.6f);
+            for (Player p : ps) {
+                double d = p.getLocation().distance(centro);
+                if (d > 5) continue;
+                p.damage(dano(6) * (d < 2 ? 1 : 0.5), c.e);
+                Vector fora = p.getLocation().toVector().subtract(centro.toVector()).setY(0);
+                if (fora.lengthSquared() < 0.01) fora = new Vector(1, 0, 0);
+                p.setVelocity(fora.normalize().multiply(1.3).setY(0.6));
+            }
+        }
+    }
+
+    // ================================================================== MARE (Capitao Caveira): o navio afunda
+
+    private final class Mare extends Cena {
+        final List<Block> mastros = new ArrayList<>();
+        int nivelAgua = -1;
+
+        Mare(Luta l) {
+            super(l);
+            Caixa a = arena();
+            if (a.y2() - a.y1() < 5) throw new IllegalStateException("arena baixa para os mastros");
+            int q = Math.max(3, Math.min(5, c.naArena().size() + 2));
+            Material tronco = Material.SPRUCE_LOG;
+            for (int i = 0; i < q * 3 && mastros.size() < q; i++) {
+                Block b = chaoLivre(l, null, 0, 3);
+                if (b == null) continue;
+                boolean ok = true;
+                for (Block m : mastros) if (m.getLocation().distanceSquared(b.getLocation()) < 16) ok = false;
+                for (int y = 0; y < 4 && ok; y++) if (!vazio(b.getRelative(0, y, 0))) ok = false;
+                if (!ok) continue;
+                BlockFace lado = null;
+                for (BlockFace f : new BlockFace[] {BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST}) {
+                    boolean livre = true;
+                    for (int y = 0; y < 4; y++) if (!vazio(b.getRelative(f).getRelative(0, y, 0))) livre = false;
+                    if (livre) {
+                        lado = f;
+                        break;
+                    }
+                }
+                if (lado == null) continue;
+                for (int y = 0; y < 4; y++) colocar(l, b.getRelative(0, y, 0), tronco, false);
+                org.bukkit.block.data.type.Ladder esc = (org.bukkit.block.data.type.Ladder) Material.LADDER.createBlockData();
+                esc.setFacing(lado);
+                for (int y = 0; y < 4; y++) {
+                    Block e = b.getRelative(lado).getRelative(0, y, 0);
+                    if (!l.blocos.containsKey(e)) l.blocos.put(e, e.getBlockData());
+                    e.setBlockData(esc, false);
+                }
+                mastros.add(b);
+            }
+            if (mastros.isEmpty()) throw new IllegalStateException("sem lugar para os mastros");
+            for (Player p : c.naArena()) titulo(p, "§9§lO NAVIO ESTÁ AFUNDANDO!", "§7Suba nos mastros pelas escadas", 2200);
+            som(w, c.e.getLocation(), "minecraft:block.wood.break", 2f, 0.5f);
+            som(w, c.e.getLocation(), "minecraft:ambient.underwater.enter", 2f, 0.6f);
+        }
+
+        void subir(int nivel) {
+            Caixa a = arena();
+            int y = a.y1() + nivel;
+            for (int x = a.x1(); x <= a.x2(); x++)
+                for (int z = a.z1(); z <= a.z2(); z++) {
+                    Block b = w.getBlockAt(x, y, z);
+                    if (!vazio(b) || l.blocos.containsKey(b)) continue;
+                    l.blocos.put(b, b.getBlockData());
+                    b.setType(Material.WATER, false);
+                }
+            som(w, c.e.getLocation(), "minecraft:block.water.ambient", 2f, 0.6f);
+        }
+
+        @Override
+        boolean passo(List<Player> ps) {
+            if (t == 20 || t == 60 || t == 100) subir(++nivelAgua);
+            if (t % 10 == 0) {
+                for (Player p : ps) {
+                    Block cab = p.getEyeLocation().getBlock(), pe = p.getLocation().getBlock();
+                    if (cab.getType() == Material.WATER) {
+                        p.damage(dano(0), c.e);
+                        p.sendActionBar(Masmorras.txt("§9§lAfogando! §7Suba num mastro"));
+                    } else if (pe.getType() == Material.WATER) {
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 15, 1, false, false));
+                    }
+                }
+                for (Block m : mastros) fx(w, Particle.SPLASH, m.getLocation().add(0.5, 4.2, 0.5), 3, 0.3, 0.1, 0.3, 0);
+            }
+            if (t == 190) for (Player p : ps) p.sendActionBar(Masmorras.txt("§7A água está baixando..."));
+            return t < 200;
+        }
+
+        @Override
+        void fim() {
+            // agua que tenha escorrido para fora do que a cena guardou some tambem
+            Caixa a = arena().crescer(3);
+            Bukkit.getScheduler().runTask(pl, () -> {
+                for (int x = a.x1(); x <= a.x2(); x++)
+                    for (int y = a.y1(); y <= Math.min(a.y2(), a.y1() + 6); y++)
+                        for (int z = a.z1(); z <= a.z2(); z++) {
+                            Block b = w.getBlockAt(x, y, z);
+                            if (b.getType() == Material.WATER && b.getBlockData() instanceof org.bukkit.block.data.Levelled lv && lv.getLevel() > 0)
+                                b.setType(Material.AIR, false);
+                        }
+            });
+        }
+    }
+
+    // ================================================================== LIVRO (Bibliotecario): parkour pelas paginas
+
+    private final class Livro extends Cena {
+        final List<Player> dentro = new ArrayList<>();
+        final Set<UUID> acabou = new HashSet<>();
+        final Set<Block> fim = new HashSet<>();
+        Location inicio;
+        int yPagina;
+
+        Livro(Luta l, List<Player> ps) {
+            super(l);
+            Caixa a = arena();
+            if (a.y2() - a.y1() < 7 || a.x2() - a.x1() < 8 || a.z2() - a.z1() < 8) throw new IllegalStateException("arena pequena para o livro");
+            yPagina = a.y1() + 3;
+            double x0 = a.x1() + 2, z0 = a.z1() + 2, x1 = a.x2() - 2, z1 = a.z2() - 2;
+            double dx = x1 - x0, dz = z1 - z0, len = Math.sqrt(dx * dx + dz * dz);
+            int passos = (int) (len / 3.2);
+            if (passos < 3) throw new IllegalStateException("arena pequena para o livro");
+            for (int i = 0; i <= passos; i++) {
+                double f = i / (double) passos;
+                int cx = (int) Math.round(x0 + dx * f), cz = (int) Math.round(z0 + dz * f);
+                int raio = (i == 0 || i == passos) ? 1 : 0;
+                Material mat = i == passos ? Material.GOLD_BLOCK : (i % 2 == 0 ? Material.WHITE_WOOL : Material.BIRCH_PLANKS);
+                for (int ox = -raio; ox <= raio + (raio == 0 ? 1 : 0); ox++)
+                    for (int oz = -raio; oz <= raio + (raio == 0 ? 1 : 0); oz++) {
+                        Block b = w.getBlockAt(cx + ox, yPagina, cz + oz);
+                        if (!vazio(b)) continue;
+                        colocar(l, b, mat, false);
+                        if (i == passos) fim.add(b);
+                    }
+                if (i == 0) inicio = new Location(w, cx + 0.5, yPagina + 1, cz + 0.5);
+            }
+            if (fim.isEmpty() || inicio == null) throw new IllegalStateException("sem lugar para as paginas");
+            congelar(l);
+            l.imuneAte = System.currentTimeMillis() + 28_000;
+            for (Player p : ps) {
+                dentro.add(p);
+                p.teleport(inicio.clone().add(rnd.nextDouble() - 0.5, 0, rnd.nextDouble() - 0.5));
+                titulo(p, "§6§lDENTRO DO LIVRO!", "§7Pule pelas páginas até o §eouro§7. Quem cair volta fraco.", 2600);
+            }
+            som(w, inicio, "minecraft:item.book.page_turn", 2f, 0.8f);
+            som(w, inicio, "minecraft:block.enchantment_table.use", 2f, 0.6f);
+        }
+
+        @Override
+        boolean passo(List<Player> ps) {
+            if (t % 5 == 0) for (Block b : fim) fx(w, Particle.ENCHANT, b.getLocation().add(0.5, 1.3, 0.5), 4, 0.3, 0.3, 0.3, 0.5);
+            if (t % 15 == 0) som(w, inicio, "minecraft:item.book.page_turn", 1.2f, 1f);
+            for (Player p : dentro) {
+                if (acabou.contains(p.getUniqueId()) || !p.isOnline() || p.isDead()) continue;
+                Block pe = p.getLocation().clone().subtract(0, 0.3, 0).getBlock();
+                if (fim.contains(pe)) {
+                    acabou.add(p.getUniqueId());
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 20 * 20, 0));
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 20 * 5, 1));
+                    titulo(p, "§e§lCHEGOU AO FIM!", "§7Força por 20 s", 1600);
+                    som(w, p.getLocation(), "minecraft:entity.player.levelup", 1f, 1.3f);
+                } else if (p.getY() < yPagina - 1.5) {
+                    acabou.add(p.getUniqueId());
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 20 * 15, 0));
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 20 * 4, 0));
+                    titulo(p, "§c§lCAIU DO LIVRO!", "§7Volta fraco por 15 s", 1600);
+                }
+            }
+            boolean todos = true;
+            for (Player p : dentro) if (!acabou.contains(p.getUniqueId()) && p.isOnline() && !p.isDead()) todos = false;
+            return !todos && t < 260;
+        }
+
+        @Override
+        void fim() {
+            for (Player p : dentro) if (p.isOnline() && p.getY() > yPagina - 0.5) p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 100, 0));
+            l.imuneAte = 0;
+        }
+    }
+
+    // ================================================================== VITRAIS (Lorde Vampiro): quebre os vitrais, o sol entra
+
+    private final class Vitrais extends Cena {
+        final List<Block> vitrais = new ArrayList<>();
+        boolean sol;
+        int solDesde;
+
+        Vitrais(Luta l, List<Player> ps) {
+            super(l);
+            int q = ps.size() >= 3 ? 4 : 3;
+            Material m = l.tema.bloco() != null && l.tema.bloco().isBlock() ? l.tema.bloco() : Material.RED_STAINED_GLASS;
+            for (int i = 0; i < q * 3 && vitrais.size() < q; i++) {
+                Block b = chaoLivre(l, null, 0, 5);
+                if (b == null) continue;
+                if (!vazio(b.getRelative(BlockFace.UP))) continue;
+                colocar(l, b, m, true);
+                colocar(l, b.getRelative(BlockFace.UP), m, true);
+                vitrais.add(b);
+            }
+            if (vitrais.isEmpty()) throw new IllegalStateException("sem lugar para os vitrais");
+            l.imuneAte = System.currentTimeMillis() + 25_000;
+            for (Player p : ps) titulo(p, "§4§lESCURIDÃO!", "§7Quebre os §f" + vitrais.size() + " vitrais §7(clique nos dois blocos) para o sol entrar", 2400);
+            som(w, c.e.getLocation(), "minecraft:entity.bat.takeoff", 2f, 0.5f);
+        }
+
+        int faltam() {
+            int f = 0;
+            for (Block b : vitrais) if (l.clicaveis.contains(b) || l.clicaveis.contains(b.getRelative(BlockFace.UP))) f++;
+            return f;
+        }
+
+        @Override
+        void clicou(Player p, Block b) {
+            if (!l.clicaveis.contains(b)) return;
+            BlockData d = b.getBlockData();
+            tirar(l, b);
+            w.spawnParticle(Particle.BLOCK, b.getLocation().add(0.5, 0.5, 0.5), 20, 0.3, 0.3, 0.3, 0.1, d);
+            som(w, b.getLocation(), "minecraft:block.glass.break", 1.4f, 0.9f);
+            int f = faltam();
+            for (Player x : c.naArena()) x.sendActionBar(Masmorras.txt(f > 0 ? "§c" + p.getName() + " quebrou um vitral! §7Faltam §f" + f : "§e§lO SOL ENTROU!"));
+        }
+
+        @Override
+        boolean passo(List<Player> ps) {
+            if (!sol && faltam() == 0) {
+                sol = true;
+                solDesde = t;
+                l.imuneAte = 0;
+                l.solAte = System.currentTimeMillis() + 10_000;
+                l.tontoAte = l.solAte;
+                som(w, c.e.getLocation(), "minecraft:block.beacon.power_select", 2f, 1.4f);
+                for (Player p : ps) titulo(p, "§e§l☀ SOL!", "§7Agora ele queima — bata com tudo (10 s)", 1800);
+            }
+            if (!sol) {
+                if (t % 4 == 0) for (Block b : vitrais) if (l.clicaveis.contains(b) || l.clicaveis.contains(b.getRelative(BlockFace.UP)))
+                    fx(w, Particle.DAMAGE_INDICATOR, b.getLocation().add(0.5, 2.2, 0.5), 1, 0.2, 0.2, 0.2, 0);
+                if (t >= 250) {
+                    for (Player p : ps) p.sendActionBar(Masmorras.txt("§4A escuridão continua... §7(ele segue quase sem sentir dano fora do sol)"));
+                    return false;
+                }
+                return true;
+            }
+            return t - solDesde < 100;
+        }
+
+        @Override
+        void fim() {
+            l.imuneAte = 0;
+        }
+    }
+
+    // ================================================================== MURALHAS (Minotauro): labirinto que muda
+
+    private final class Muralhas extends Cena {
+        final List<Block> paredes = new ArrayList<>();
+        Investida inv;
+        int pausa;
+
+        Muralhas(Luta l) {
+            super(l);
+            erguer();
+            if (paredes.isEmpty()) throw new IllegalStateException("sem lugar para o labirinto");
+            for (Player p : c.naArena()) titulo(p, "§6§lLABIRINTO!", "§7Ele só se machuca quando bate numa parede", 2400);
+        }
+
+        void erguer() {
+            for (Block b : paredes) tirar(l, b);
+            paredes.clear();
+            Caixa a = arena();
+            Material m = l.tema.bloco() != null && l.tema.bloco().isBlock() ? l.tema.bloco() : Material.MOSSY_STONE_BRICKS;
+            int q = 5 + Math.min(4, n);
+            for (int k = 0; k < q; k++) {
+                boolean emX = rnd.nextBoolean();
+                int len = 4 + rnd.nextInt(4);
+                int x = a.x1() + 2 + rnd.nextInt(Math.max(1, a.x2() - a.x1() - 3));
+                int z = a.z1() + 2 + rnd.nextInt(Math.max(1, a.z2() - a.z1() - 3));
+                for (int i = 0; i < len; i++) {
+                    int bx = emX ? x + i : x, bz = emX ? z : z + i;
+                    if (bx >= a.x2() || bz >= a.z2()) break;
+                    Location meio = new Location(w, bx + 0.5, a.y1(), bz + 0.5);
+                    boolean gente = horiz(meio, c.e.getLocation()) < 2 + c.e.getWidth();
+                    for (Player p : w.getPlayers()) if (horiz(meio, p.getLocation()) < 1.6 && Math.abs(p.getY() - a.y1()) < 3) gente = true;
+                    if (gente) continue;
+                    for (int y = 0; y < 3; y++) {
+                        Block b = w.getBlockAt(bx, a.y1() + y, bz);
+                        if (!vazio(b) || l.blocos.containsKey(b)) continue;
+                        colocar(l, b, m, false);
+                        paredes.add(b);
+                    }
+                }
+            }
+            som(w, c.e.getLocation(), "minecraft:block.piston.extend", 2f, 0.5f);
+            fx(w, Particle.CAMPFIRE_COSY_SMOKE, c.e.getLocation(), 10, 3, 0.2, 3, 0.01);
+        }
+
+        @Override
+        boolean passo(List<Player> ps) {
+            if (t > 0 && t % 100 == 0 && t < 300) {
+                erguer();
+                for (Player p : ps) p.sendActionBar(Masmorras.txt("§6O labirinto mudou!"));
+            }
+            if (inv == null) {
+                if (pausa-- <= 0) inv = new Investida(l);
+            } else {
+                boolean segue = inv.passo(ps);
+                inv.t++;
+                if (!segue) {
+                    inv = null;
+                    pausa = 12;
+                }
+            }
+            return t < 300;
+        }
+    }
+
+    // ================================================================== GRAVIDADE (Arquimago): todo mundo vai para o teto
+
+    private final class Gravidade extends Cena {
+        final double alvo;
+
+        Gravidade(Luta l) {
+            super(l);
+            Caixa a = arena();
+            if (a.y2() - a.y1() < 5) throw new IllegalStateException("arena baixa para inverter");
+            alvo = a.y2() - 2.2;
+            c.e.setGravity(false);
+            for (Player p : c.naArena()) titulo(p, "§d§lGRAVIDADE INVERTIDA!", "§7A luta continua lá em cima", 2000);
+            som(w, c.e.getLocation(), "minecraft:block.beacon.activate", 1.6f, 1.6f);
+        }
+
+        @Override
+        boolean passo(List<Player> ps) {
+            for (Player p : ps) {
+                Vector v = p.getVelocity();
+                if (p.getY() < alvo - 0.3) v.setY(Math.min(0.45, 0.15 + (alvo - p.getY()) * 0.1));
+                else v.setY(Math.max(-0.02, Math.min(0.02, (alvo - p.getY()) * 0.3)));
+                p.setVelocity(v);
+                p.setFallDistance(0);
+                if (t % 4 == 0) fx(w, Particle.REVERSE_PORTAL, p.getLocation(), 3, 0.2, 0.1, 0.2, 0.05);
+            }
+            Location b = c.e.getLocation();
+            double y = Math.min(alvo - Math.max(0, c.e.getHeight() - 2), b.getY() + 0.35);
+            if (Math.abs(b.getY() - y) > 0.05) c.e.teleport(new Location(w, b.getX(), y, b.getZ(), b.getYaw(), b.getPitch()));
+            c.e.setVelocity(c.e.getVelocity().setY(0));
+            return t < 140;
+        }
+
+        @Override
+        void fim() {
+            c.e.setGravity(true);
+            for (Player p : c.naArena()) {
+                p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 100, 0));
+                p.sendActionBar(Masmorras.txt("§7A gravidade voltou."));
+            }
+        }
+    }
+
+    // ================================================================== ILHAS (Senhor dos Ventos): o chao some
+
+    private final class Ilhas extends Cena {
+        final List<Location> ilhas = new ArrayList<>();
+        int yChao;
+
+        Ilhas(Luta l) {
+            super(l);
+            Caixa a = arena();
+            if (a.x2() - a.x1() < 9 || a.z2() - a.z1() < 9) throw new IllegalStateException("arena pequena para ilhas");
+            yChao = a.y1() - 1;
+            ilhas.add(c.e.getLocation().clone());
+            for (Player p : c.naArena()) ilhas.add(p.getLocation().clone());
+            for (int k = 0; k < 6; k++) {
+                Block b = chaoLivre(l, null, 0, 3);
+                if (b != null) ilhas.add(b.getLocation().add(0.5, 0, 0.5));
+            }
+            int tirados = 0;
+            for (int x = a.x1(); x <= a.x2(); x++)
+                for (int z = a.z1(); z <= a.z2(); z++) {
+                    boolean naIlha = false;
+                    for (Location il : ilhas) if (Math.abs(il.getBlockX() - x) <= 1 && Math.abs(il.getBlockZ() - z) <= 1) naIlha = true;
+                    if (naIlha) continue;
+                    for (int y = yChao; y >= yChao - 2; y--) {
+                        Block b = w.getBlockAt(x, y, z);
+                        if (b.getType().isAir() || l.blocos.containsKey(b) || b.getState() instanceof org.bukkit.block.TileState) continue;
+                        l.blocos.put(b, b.getBlockData());
+                        b.setType(Material.AIR, false);
+                        tirados++;
+                    }
+                }
+            if (tirados == 0) throw new IllegalStateException("chao nao saiu");
+            c.e.setGravity(false);
+            for (Player p : c.naArena()) {
+                titulo(p, "§f§lO CHÃO SUMIU!", "§7Fique nas ilhas — os ventos empurram", 2200);
+                p.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 20 * 21, 1, false, false));
+            }
+            som(w, c.e.getLocation(), "minecraft:entity.breeze.wind_burst", 2f, 0.5f);
+        }
+
+        Location ilhaPerto(Location de) {
+            Location melhor = null;
+            double md = Double.MAX_VALUE;
+            for (Location il : ilhas) {
+                double d = horiz(il, de);
+                if (d < md) {
+                    md = d;
+                    melhor = il;
+                }
+            }
+            return melhor;
+        }
+
+        @Override
+        boolean passo(List<Player> ps) {
+            c.e.setVelocity(new Vector());
+            for (Player p : ps) {
+                if (p.getY() < yChao - 0.6) {
+                    if (t % 5 == 0) {
+                        p.damage(dano(1), c.e);
+                        Location il = ilhaPerto(p.getLocation());
+                        if (il != null) p.teleport(new Location(w, il.getBlockX() + 0.5, yChao + 1, il.getBlockZ() + 0.5, p.getLocation().getYaw(), p.getLocation().getPitch()));
+                        p.sendActionBar(Masmorras.txt("§f§lCaiu no vazio! §7Fique nas ilhas"));
+                    }
+                }
+            }
+            if (t > 20 && t % 25 == 0 && !ps.isEmpty()) {
+                Player alvo = ps.get(rnd.nextInt(ps.size()));
+                double ang = rnd.nextDouble() * Math.PI * 2;
+                alvo.setVelocity(new Vector(Math.cos(ang) * 0.9, 0.55, Math.sin(ang) * 0.9));
+                fx(w, Particle.GUST, alvo.getLocation().add(0, 1, 0), 1, 0, 0, 0, 0);
+                som(w, alvo.getLocation(), "minecraft:entity.wind_charge.wind_burst", 1.5f, 1f);
+            }
+            if (t % 6 == 0) for (Location il : ilhas) fx(w, Particle.CLOUD, il.clone().add(0, -0.5, 0), 2, 0.8, 0.1, 0.8, 0.01);
+            return t < 210;
+        }
+
+        @Override
+        void fim() {
+            c.e.setGravity(true);
+            for (Player p : c.naArena()) p.removePotionEffect(PotionEffectType.JUMP_BOOST);
+        }
+    }
+
+    // ================================================================== TEMPO (Relojoeiro): so um se mexe
+
+    private final class Tempo extends Cena {
+        static final int AVISO = 10, PRAZO = 50;
+        final Player livre;
+        final Map<UUID, Location> parados = new HashMap<>();
+        Block engrenagem;
+        boolean quebrou;
+
+        Tempo(Luta l, List<Player> ps) {
+            super(l);
+            livre = ps.get(rnd.nextInt(ps.size()));
+            Block b = chaoLivre(l, null, 0, 4);
+            if (b == null) throw new IllegalStateException("sem lugar para a engrenagem");
+            for (int tent = 0; tent < 8 && b != null && b.getLocation().distance(livre.getLocation()) < 4; tent++) {
+                Block o = chaoLivre(l, null, 0, 4);
+                if (o != null) b = o;
+            }
+            engrenagem = b;
+            colocar(l, engrenagem, l.tema.bloco() != null && l.tema.bloco().isBlock() ? l.tema.bloco() : Material.GOLD_BLOCK, true);
+            for (Player p : ps) if (!p.equals(livre)) parados.put(p.getUniqueId(), p.getLocation().clone());
+            congelar(l);
+            som(w, c.e.getLocation(), "minecraft:block.bell.use", 2f, 0.5f);
+            for (Player p : ps) {
+                if (p.equals(livre)) titulo(p, "§e§lO TEMPO PAROU!", "§7Só você se mexe: quebre a §fengrenagem §7em 5 s", 2000);
+                else titulo(p, "§e§lO TEMPO PAROU!", "§f" + livre.getName() + " §7tem 5 s para quebrar a engrenagem", 2000);
+            }
+        }
+
+        @Override
+        void clicou(Player p, Block b) {
+            if (!b.equals(engrenagem) || quebrou) return;
+            if (!p.equals(livre)) return;
+            quebrou = true;
+            BlockData d = b.getBlockData();
+            tirar(l, b);
+            w.spawnParticle(Particle.BLOCK, b.getLocation().add(0.5, 0.5, 0.5), 30, 0.3, 0.3, 0.3, 0.1, d);
+            som(w, b.getLocation(), "minecraft:block.chain.break", 2f, 0.6f);
+            l.tontoAte = System.currentTimeMillis() + 3500;
+            for (Player x : c.naArena()) titulo(x, "§a§lO TEMPO VOLTOU!", "§7" + p.getName() + " quebrou a engrenagem — ele está tonto!", 1600);
+        }
+
+        @Override
+        boolean passo(List<Player> ps) {
+            if (quebrou) return false;
+            for (Player p : ps) {
+                Location ali = parados.get(p.getUniqueId());
+                if (ali == null) continue;
+                if (p.getLocation().distanceSquared(ali) > 0.04) p.teleport(ali.clone().setDirection(p.getLocation().getDirection()));
+                p.setVelocity(new Vector());
+                if (t % 5 == 0) fx(w, Particle.WAX_OFF, p.getLocation().add(0, 1, 0), 4, 0.3, 0.5, 0.3, 0);
+            }
+            if (t % 3 == 0) {
+                fx(w, Particle.END_ROD, engrenagem.getLocation().add(0.5, 1.2, 0.5), 2, 0.2, 0.2, 0.2, 0.01);
+                if (t % 10 == 0) som(w, livre.getLocation(), "minecraft:block.note_block.hat", 1.5f, 1.5f);
+            }
+            int falta = AVISO + PRAZO - t;
+            if (falta > 0) livre.sendActionBar(Masmorras.txt("§e§lQuebre a engrenagem! §f" + (falta / 10 + 1) + "s"));
+            if (t >= AVISO + PRAZO) {
+                som(w, c.e.getLocation(), "minecraft:block.anvil.land", 2f, 0.5f);
+                for (Player p : ps) {
+                    p.damage(dano(3), c.e);
+                    p.sendActionBar(Masmorras.txt("§c§lO tempo voltou de uma vez! §7Ninguém quebrou a engrenagem."));
+                }
+                return false;
+            }
+            return true;
         }
     }
 }

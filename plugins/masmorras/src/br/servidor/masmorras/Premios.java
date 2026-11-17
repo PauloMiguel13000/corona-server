@@ -66,10 +66,8 @@ final class Premios {
                     enc("IRON_SWORD", "sharpness:2"), enc("IRON_PICKAXE", "efficiency:2"), o("EMERALD", 4, 10), o("NAME_TAG", 1, 1),
                     o("SADDLE", 1, 1), o("GOLDEN_CARROT", 6, 12),
                     livro("sharpness:2", "protection:2", "efficiency:2", "unbreaking:2", "power:2", "feather_falling:2", "looting:1", "fortune:1")};
-            // 17/11 (Sui: "das mais de 30 masmorras, umas 20 vieram calcas"): so a calca vinha com Protecao III + Inquebravel II;
-            // agora as 4 pecas sao iguais e a peca boa sai sorteada entre elas
-            case 3 -> new Opcao[] {enc("IRON_HELMET", "protection:3", "unbreaking:2"), enc("IRON_CHESTPLATE", "protection:3", "unbreaking:2"),
-                    enc("IRON_LEGGINGS", "protection:3", "unbreaking:2"), enc("IRON_BOOTS", "protection:3", "unbreaking:2"),
+            case 3 -> new Opcao[] {enc("DIAMOND_HELMET", "protection:1"), enc("DIAMOND_CHESTPLATE", "protection:1"),
+                    enc("IRON_LEGGINGS", "protection:3", "unbreaking:2"), enc("DIAMOND_BOOTS", "protection:1"),
                     enc("DIAMOND_PICKAXE", "efficiency:3"), enc("DIAMOND_SWORD", "sharpness:2"),
                     o("ENCHANTED_GOLDEN_APPLE", 1, 1, 0.05), o("NETHERITE_SCRAP", 1, 1, 0.15), o("ENDER_PEARL", 4, 8),
                     livro("looting:2", "fortune:2", "protection:3", "sharpness:3", "efficiency:3", "unbreaking:3")};

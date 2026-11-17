@@ -134,20 +134,40 @@ final class Torretas implements Listener {
 
     // ------------------------------------------------------------------ colocar
 
+    /** armor stand -> tempo que falta (ticks) e quando foi colocada (para a fila). */
+    private final Map<UUID, int[]> restante = new HashMap<>();
+    private final Map<UUID, Long> colocadaEm = new HashMap<>();
+
     boolean colocar(Player p, Tipo tipo, double fator) {
-        if (torreta(p, tipo) != null) {
-            Poderes.barra(p, "§eSua " + tipo.nome + " ja esta ativa!");
-            return false;
-        }
-        EnumMap<Tipo, UUID> ativas = torres.get(p.getUniqueId());
-        if (ativas != null && ativas.size() >= MAX_ATIVAS) {
-            Poderes.barra(p, "§cNo maximo " + MAX_ATIVAS + " torres ao mesmo tempo! §7Espere uma sumir.");
-            return false;
-        }
         Location l = local(p);
         if (l == null) {
             Poderes.barra(p, "§7Sem lugar para colocar a torre (olhe para o chao perto de voce).");
             return false;
+        }
+        // 17/11 (Sui e Paulo): torre igual = REPOSICIONA (a nova herda o tempo que faltava na antiga, nao renova);
+        // quarta torre de outro tipo = sai a mais antiga (fila). No maximo MAX_ATIVAS ao mesmo tempo.
+        UUID dono0 = p.getUniqueId();
+        int herdado = -1;
+        EnumMap<Tipo, UUID> ativas = torres.get(dono0);
+        UUID velha = ativas == null ? null : ativas.get(tipo);
+        if (velha != null) {
+            int[] r = restante.get(velha);
+            herdado = r != null ? Math.max(60, r[0]) : -1;
+            removerUma(dono0, tipo, false);
+        } else if (ativas != null && ativas.size() >= MAX_ATIVAS) {
+            Tipo maisVelha = null;
+            long quando = Long.MAX_VALUE;
+            for (Map.Entry<Tipo, UUID> en : ativas.entrySet()) {
+                long q = colocadaEm.getOrDefault(en.getValue(), 0L);
+                if (q < quando) {
+                    quando = q;
+                    maisVelha = en.getKey();
+                }
+            }
+            if (maisVelha != null) {
+                removerUma(dono0, maisVelha, false);
+                Poderes.barra(p, "§7Saiu a §f" + maisVelha.nome + " §7(a mais antiga): no maximo " + MAX_ATIVAS + " torres.");
+            }
         }
         World w = l.getWorld();
         ArmorStand t = w.spawn(l, ArmorStand.class, a -> montar(a, tipo, p));
@@ -170,11 +190,14 @@ final class Torretas implements Listener {
         double esc = escala(nivel);
         fator *= esc;
         escalas.put(t.getUniqueId(), esc);
-        int seg = segundos(tipo, nivel);
-        Poderes.barra(p, tipo.cor + tipo.nome + " §fcolocada por §e" + seg + "s" + (esc > 1.001 ? " §7(dano x" + Poderes.num(esc) + " pelo nível)" : ""));
+        int seg = herdado > 0 ? (herdado + 19) / 20 : segundos(tipo, nivel);
+        Poderes.barra(p, tipo.cor + tipo.nome + (herdado > 0 ? " §freposicionada §7(sobram §e" + seg + "s§7)" : " §fcolocada por §e" + seg + "s")
+                + (esc > 1.001 ? " §7(dano x" + Poderes.num(esc) + " pelo nível)" : ""));
         final double fat = fator;
 
-        final int[] ticks = {seg * 20};
+        final int[] ticks = {herdado > 0 ? herdado : seg * 20};
+        restante.put(t.getUniqueId(), ticks);
+        colocadaEm.put(t.getUniqueId(), System.currentTimeMillis());
         final int[] carga = {tipo.intervalo};
         BukkitTask tarefa = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             if (!t.isValid() || !p.isOnline()) {
@@ -627,6 +650,8 @@ final class Torretas implements Listener {
         BukkitTask t = tarefas.remove(id);
         if (t != null) t.cancel();
         escalas.remove(id);
+        restante.remove(id);
+        colocadaEm.remove(id);
         Entity e = Bukkit.getEntity(id);
         if (e != null && e.isValid()) {
             Fx.p(e.getWorld(), Particle.CLOUD, e.getLocation().add(0, 1, 0), 20, 0.3, 0.5, 0.3, 0.03);

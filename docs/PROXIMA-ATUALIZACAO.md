@@ -11,11 +11,31 @@ Ordem: primeiro o bug, depois os chefes. Um de cada vez, testado no servidor de 
 - Novo: **portais nunca levam à secreta (???)** nem a menos de 128 blocos dela (Paulo: "deixe que achem").
 
 ## Instalação 349 (17/11 14:21, 0 erros)
-- Prêmio do chefe no nível 3: só a calça vinha com Proteção III + Inquebrável II. Agora as 4 peças são iguais (ferro, P3 e Inq II) e a peça sai sorteada (`Premios.java`).
+- ~~Prêmio do chefe no nível 3 com as 4 peças iguais~~: **desfeito na 351**, a pedido do Paulo. O prêmio voltou a ser como era.
 - Trilha: os monstros dão só **calça e botas**, sem elmo, no mesmo nível de antes (`Missoes.PECAS_RESTO`).
 
 ## Instalação 350 (17/11 14:27, 0 erros)
 - **Engenheiro com metade da vida máxima** (modificador `poderes:engenheiro_vida` de -0.5, `Poderes.vidaEngenheiro`), fora dos mundos sem poderes. Conferido no ViboXact: vida máxima de 24 para 12.
+
+## Instalação 352 (17/11 14:42, 0 erros): torres do Engenheiro
+- Torre **igual** = reposiciona: a nova herda o tempo que faltava na antiga, sem renovar (ideia do Sui; a regra do tempo herdado é do Paulo).
+- **4ª torre** de outro tipo = sai a mais antiga (fila). Máximo de 3 ao mesmo tempo.
+
+## Instalação 353 (17/11): chefes novos e sala trancada
+- **Sala do chefe trancada:** quem entrou não sai andando nem por pérola ou chorus enquanto o chefe estiver vivo (`MecanicasChefes.fugir`; config `chefe.sala-trancada`).
+- Mecânicas novas em `MecanicasChefes.java` (teste com `/masmorras admin mecanica <nome>`):
+  - ~~Rainha Aranha~~ `ninhada`: sobe no teto, joga 2 ovos que viram aranhas e desce. A prisão de teia ficou só com a Viúva Negra.
+  - ~~Gosma~~ `engolir`: engole um jogador, que precisa bater 3 + nível vezes para sair (ou é cuspido em 8 s).
+  - ~~Senhor do Vazio~~ `buraco`: buraco negro que puxa; quem cai dentro faz ele explodir.
+  - ~~Bispo~~ (passiva da CATEDRAL): sacerdotisa numa sala anterior, com sino e rastro dourado. Enquanto ela vive, ele "morre", volta com a vida cheia e cria 2 cópias.
+  - ~~Capitão Caveira~~ `mare`: a água sobe 3 blocos e aparecem mastros com escada.
+  - ~~Bibliotecário~~ `livro`: parkour de páginas dentro da arena. Quem chega ganha Força; quem cai, Fraqueza.
+  - ~~Lorde Vampiro~~ `vitrais`: quebre os vitrais e o sol entra (10 s com +50% de dano e fogo). Fora do sol ele leva só 50% de dano.
+  - ~~Minotauro~~ `muralhas`: labirinto que muda a cada 10 s, com investidas; só leva dano tonto (depois de bater na parede).
+  - ~~Arquimago~~ `gravidade`: todos flutuam até o teto por 14 s.
+  - ~~Senhor dos Ventos~~ `ilhas`: o chão some e ficam ilhas, com rajadas de vento e pulo melhor.
+  - ~~Ceifador de Almas~~ (passiva de ALMAS): quem morreria vira alma por 30 s; um amigo passa no corpo para trazer de volta, e a alma deixa o chefe lento e fraco.
+  - ~~Relojoeiro~~ `tempo`: só um jogador se mexe e tem 5 s para quebrar a engrenagem.
 
 ## Testes feitos jogando (conta coronadooscar, Minecraft Java no PC ponte)
 - Limite de 3 torres: OK. A 4ª é recusada e entra depois que uma some.
