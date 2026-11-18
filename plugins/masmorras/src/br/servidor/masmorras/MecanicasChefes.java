@@ -102,8 +102,15 @@ final class MecanicasChefes implements Listener {
 
     static final Map<String, Tema> TEMAS = new HashMap<>();
 
+    /**
+     * 18/11 (Paulo): "o de passar a lamina, do chao gerar uma marca, explodir TNT e ficar parada nao encaixou; quando for
+     * para adicionar isso eu aviso". Ficam desligadas em todos os chefes (o resto continua). O admin ainda testa pelo nome.
+     */
+    static final java.util.Set<Mec> DESLIGADAS = java.util.EnumSet.of(Mec.LAMINA, Mec.CHAO, Mec.BOMBA, Mec.SILENCIO);
+
     private static void t(String id, String part, Material bloco, int cor, String coisa, int estilo, Mec... mecs) {
-        TEMAS.put(id, new Tema(mecs, part, bloco, cor, coisa, estilo));
+        Mec[] ok = java.util.Arrays.stream(mecs).filter(m -> !DESLIGADAS.contains(m)).toArray(Mec[]::new);
+        TEMAS.put(id, new Tema(ok, part, bloco, cor, coisa, estilo));
     }
 
     static {
