@@ -183,7 +183,7 @@ final class Trilha implements Listener {
         Location l = p.getLocation();
         World w = l.getWorld();
         if (w == null) return null;
-        if (w.getName().equals(InfernoHerobrine.MUNDO)) return "herobrine";   // no mundo dele
+        if (w.getName().equals(InfernoHerobrine.MUNDO) || InfernoHerobrine.naIlha(l)) return "herobrine";   // no mundo dele
         if (pl.lobby != null && pl.lobby.noLobby(l)) return "lobby2";
         Masmorra m = pl.masmorraEm(w, l.getBlockX(), l.getBlockY(), l.getBlockZ());
         if (m == null || m.demolindo) return null;

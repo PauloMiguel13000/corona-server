@@ -48,8 +48,42 @@ import org.bukkit.util.Vector;
  * continua sendo dado na arena como antes.
  */
 final class InfernoHerobrine implements Listener {
+    /** Nome do mundo antigo (Nether separado, ate 18/11). Ficou so para nao quebrar quem ainda confere o nome. */
     static final String MUNDO = "herobrine_inferno";
-    static final int Y = 100, R = 16;
+    /**
+     * 18/11 (Paulo: "voce tinha que fazer no mundo das dungeons... com a visao do inferno"): a ilha agora fica NO
+     * MUNDO DAS MASMORRAS, no ceu de um canto longe (sem troca de dimensao: sem tela de carregar, sem o pacote sair e
+     * sem a musica cortar). Visao do inferno: bioma Floresta Carmesim em volta (neblina vermelha e esporos) e noite so
+     * para quem esta la (ceu escuro).
+     */
+    static final int CX = -3800, CZ = -3800, Y = 250, R = 16, AREA = 64;
+
+    /** O lugar esta na ilha de Herobrine (mundo das masmorras, canto -3800/-3800, no ceu)? */
+    static boolean naIlha(Location l) {
+        if (l == null || l.getWorld() == null || l.getWorld().getEnvironment() != World.Environment.NORMAL) return false;
+        if (!l.getWorld().getName().toLowerCase(java.util.Locale.ROOT).startsWith("masmorras")) return false;
+        return Math.abs(l.getX() - CX) <= AREA && Math.abs(l.getZ() - CZ) <= AREA && l.getY() >= Y - 45;
+    }
+
+    private Location em(World mw, double x, double y, double z) {
+        return new Location(mw, CX + x, y, CZ + z);
+    }
+
+    private Location em(World mw, double x, double y, double z, float yaw, float pitch) {
+        return new Location(mw, CX + x, y, CZ + z, yaw, pitch);
+    }
+
+    /** Quem esta na ilha agora. */
+    private List<Player> jogadores() {
+        List<Player> l = new ArrayList<>();
+        if (w != null) for (Player p : w.getPlayers()) if (naIlha(p.getLocation())) l.add(p);
+        return l;
+    }
+
+    private static void noiteLa(Player p, boolean la) {
+        if (la) p.setPlayerTime(18000, false);
+        else p.resetPlayerTime();
+    }
 
     private final Masmorras pl;
     private final Random rnd = new Random();
@@ -94,21 +128,11 @@ final class InfernoHerobrine implements Listener {
         }
     }
 
-    @SuppressWarnings("removal")
     World mundo() {
         if (w != null) return w;
-        w = Bukkit.getWorld(MUNDO);
-        if (w == null) w = new WorldCreator(MUNDO).environment(World.Environment.NETHER).generator(new Gerador()).generateStructures(false).createWorld();
+        w = pl.mundoNovo != null ? pl.mundoNovo.normal : null;
         if (w == null) return null;
-        try {
-            w.setGameRule(GameRule.DO_MOB_SPAWNING, false);
-            w.setGameRule(GameRule.DO_FIRE_TICK, false);
-            w.setGameRule(GameRule.MOB_GRIEFING, false);
-            w.setGameRule(GameRule.KEEP_INVENTORY, true);
-        } catch (Throwable ignored) {
-        }
-        w.setSpawnLocation(0, Y + 1, 0);
-        File flag = new File(pl.getDataFolder(), "inferno-herobrine-v1.txt");
+        File flag = new File(pl.getDataFolder(), "inferno-herobrine-v2-masmorras.txt");
         if (!flag.exists()) {
             construir(w);
             try { flag.createNewFile(); } catch (Exception ignored) { }
@@ -117,11 +141,15 @@ final class InfernoHerobrine implements Listener {
     }
 
     private void bloco(World w, int x, int y, int z, String b) {
-        w.getBlockAt(x, y, z).setBlockData(Bukkit.createBlockData(b), false);
+        w.getBlockAt(CX + x, y, CZ + z).setBlockData(Bukkit.createBlockData(b), false);
     }
 
     private void construir(World w) {
-        for (int cx = -3; cx <= 2; cx++) for (int cz = -3; cz <= 2; cz++) w.getChunkAt(cx, cz).load(true);
+        for (int cx = (CX - AREA) >> 4; cx <= (CX + AREA) >> 4; cx++) for (int cz = (CZ - AREA) >> 4; cz <= (CZ + AREA) >> 4; cz++) w.getChunkAt(cx, cz).load(true);
+        // visao do inferno: bioma carmesim em volta da ilha (neblina vermelha e esporos no ar)
+        for (int x = -AREA; x <= AREA; x += 4)
+            for (int z = -AREA; z <= AREA; z += 4)
+                for (int y = Y - 44; y <= Math.min(w.getMaxHeight() - 1, Y + 60); y += 4) w.setBiome(CX + x, y, CZ + z, Biome.CRIMSON_FOREST);
         Random r = new Random(666);
         String[] piso = {"minecraft:netherrack", "minecraft:netherrack", "minecraft:blackstone", "minecraft:polished_blackstone",
                 "minecraft:crimson_nylium", "minecraft:nether_wart_block", "minecraft:soul_soil", "minecraft:blackstone"};
@@ -156,7 +184,7 @@ final class InfernoHerobrine implements Listener {
             double a = i * Math.PI / 3 + 0.3;
             int x = (int) Math.round(Math.cos(a) * (R + 6)), z = (int) Math.round(Math.sin(a) * (R + 6));
             bloco(w, x, Y + 18, z, "minecraft:obsidian");
-            bloco(w, x, Y + 17, z, "minecraft:lava");
+            for (int k = -14; k <= 17; k++) bloco(w, x, Y + k, z, k % 5 == 0 ? "minecraft:shroomlight" : "minecraft:magma_block");
         }
         // pedacos de pedra flutuando em volta
         for (int i = 0; i < 26; i++) {
@@ -165,7 +193,7 @@ final class InfernoHerobrine implements Listener {
             for (int dx = -t; dx <= t; dx++) for (int dy = -t; dy <= 0; dy++) for (int dz = -t; dz <= t; dz++)
                 if (dx * dx + dy * dy * 2 + dz * dz <= t * t + 1) bloco(w, x + dx, y + dy, z + dz, r.nextInt(5) == 0 ? "minecraft:crying_obsidian" : "minecraft:netherrack");
         }
-        pl.getLogger().info("Mundo de Herobrine construido (" + MUNDO + ").");
+        pl.getLogger().info("Mundo de Herobrine construido no mundo das masmorras (" + CX + ", " + Y + ", " + CZ + ").");
     }
 
     // ------------------------------------------------------------------ a fase
@@ -235,16 +263,17 @@ final class InfernoHerobrine implements Listener {
                 if (!p.isOnline() || p.isDead()) continue;
                 volta.put(p.getUniqueId(), p.getLocation().clone());
                 double a = Math.PI / 2 + n++ * (Math.PI * 2 / Math.max(1, agora.size()));
-                Location dest = new Location(inf, Math.cos(a) * 8 + 0.5, Y + 1, Math.sin(a) * 8 + 0.5);
+                Location dest = em(inf, Math.cos(a) * 8 + 0.5, Y + 1, Math.sin(a) * 8 + 0.5);
                 dest.setDirection(new Vector(-Math.cos(a), 0, -Math.sin(a)));
                 p.teleport(dest);
+                noiteLa(p, true);
                 p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 25, 0, false, false));
                 p.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 20 * 4, 0, false, false));
                 p.showTitle(titulo("§4§lO MUNDO DE HEROBRINE", "§cA luta termina aqui: derrote-o", 3));
                 p.playSound(p, "minecraft:entity.ghast.scream", 1f, 0.5f);
                 p.playSound(p, "minecraft:ambient.crimson_forest.mood", 1f, 0.8f);
             }
-            criarCorpo(c, new Location(inf, 0.5, Y + 1, -R + 4.5, 0, 0));
+            criarCorpo(c, em(inf, 0.5, Y + 1, -R + 4.5, 0f, 0f));
             e.setInvulnerable(false);
             if (e instanceof Mob mob) { mob.setAI(false); mob.setTarget(null); }
             c.sumidoAte = Long.MAX_VALUE;   // o boneco da arena some (ele esta no mundo dele)
@@ -259,7 +288,7 @@ final class InfernoHerobrine implements Listener {
     private void criarCorpo(Chefe c, Location l) {
         World inf = l.getWorld();
         // a ilha inteira fica carregada durante a fase (senao o corpo dele some com o pedaco do mapa)
-        for (int cx = -2; cx <= 1; cx++) for (int cz = -2; cz <= 1; cz++) inf.getChunkAt(cx, cz).addPluginChunkTicket(pl);
+        for (int cx = (CX - 32) >> 4; cx <= (CX + 32) >> 4; cx++) for (int cz = (CZ - 32) >> 4; cz <= (CZ + 32) >> 4; cz++) inf.getChunkAt(cx, cz).addPluginChunkTicket(pl);
         corpo = inf.spawn(l, org.bukkit.entity.Zombie.class, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.CUSTOM, z -> {
             z.setAdult();
             z.setPersistent(false);
@@ -318,7 +347,7 @@ final class InfernoHerobrine implements Listener {
         }
         corpo = null;
         boneco = null;
-        if (w != null) for (int cx = -2; cx <= 1; cx++) for (int cz = -2; cz <= 1; cz++) w.getChunkAt(cx, cz).removePluginChunkTicket(pl);
+        if (w != null) for (int cx = (CX - 32) >> 4; cx <= (CX + 32) >> 4; cx++) for (int cz = (CZ - 32) >> 4; cz <= (CZ + 32) >> 4; cz++) w.removePluginChunkTicket(cx, cz, pl);
     }
 
     /** Tique da fase (a cada meio segundo). */
@@ -333,7 +362,7 @@ final class InfernoHerobrine implements Listener {
         }
         avisouSumico = false;
         if (!c.vivo()) {
-            if (w != null) for (Player p : w.getPlayers()) {
+            if (w != null) for (Player p : jogadores()) {
                 p.showTitle(titulo("§a§lHEROBRINE CAIU", "§7O mundo dele se desfaz...", 3));
                 p.playSound(p, "minecraft:entity.wither.death", 0.8f, 0.7f);
             }
@@ -351,13 +380,13 @@ final class InfernoHerobrine implements Listener {
         }
         long agora = System.currentTimeMillis();
         List<Player> ps = new ArrayList<>();
-        for (Player p : inf.getPlayers()) if (!p.isDead() && p.getGameMode() != GameMode.SPECTATOR && p.getGameMode() != GameMode.CREATIVE) ps.add(p);
+        for (Player p : jogadores()) if (!p.isDead() && p.getGameMode() != GameMode.SPECTATOR && p.getGameMode() != GameMode.CREATIVE) ps.add(p);
         // barra de vida para quem esta la
         c.barra.progress((float) Math.max(0, Math.min(1, c.e.getHealth() / c.vidaMax)));
         for (Player p : ps) if (!c.vendo.contains(p)) { p.showBossBar(c.barra); c.vendo.add(p); }
         // quem morreu e ainda nao renasceu continua contando: ele renasce na ilha e a luta segue (antes a fase acabava na hora)
         boolean alguemMorto = false;
-        for (Player p : inf.getPlayers()) if (p.isDead() && volta.containsKey(p.getUniqueId())) alguemMorto = true;
+        for (Player p : jogadores()) if (p.isDead() && volta.containsKey(p.getUniqueId())) alguemMorto = true;
         if ((ps.isEmpty() && !alguemMorto) || agora >= fim) {
             pl.getLogger().info("Mundo de Herobrine: fim da fase (" + (ps.isEmpty() ? "ninguem la" : "tempo") + ").");
             voltar();
@@ -372,7 +401,7 @@ final class InfernoHerobrine implements Listener {
             if (d < melhor) { melhor = d; alvo = p; }
         }
         if (corpo instanceof Mob mob && (mob.getTarget() == null || !ps.contains(mob.getTarget()))) mob.setTarget(alvo);
-        if (corpo.getLocation().getY() < Y - 3 || corpo.getLocation().toVector().setY(0).length() > R) corpo.teleport(new Location(inf, 0.5, Y + 1, 0.5));
+        if (corpo.getLocation().getY() < Y - 3 || Math.hypot(corpo.getLocation().getX() - CX, corpo.getLocation().getZ() - CZ) > R) corpo.teleport(em(inf, 0.5, Y + 1, 0.5));
         if (corpo.getHealth() < 900) corpo.setHealth(1000);
         // furia: abaixo de metade da vida ele fica ainda mais rapido (como na arena)
         if (c.e.getHealth() <= c.vidaMax / 2 && !corpo.hasPotionEffect(PotionEffectType.SPEED))
@@ -385,7 +414,7 @@ final class InfernoHerobrine implements Listener {
         if (agora >= proxRaio) {
             proxRaio = agora + 1800 + rnd.nextInt(2200);
             double a = rnd.nextDouble() * Math.PI * 2;
-            inf.strikeLightningEffect(new Location(inf, Math.cos(a) * (R + 3), Y + 1, Math.sin(a) * (R + 3)));
+            inf.strikeLightningEffect(em(inf, Math.cos(a) * (R + 3), Y + 1, Math.sin(a) * (R + 3)));
         }
         if (agora >= proxPilar) { proxPilar = agora + 3500 + rnd.nextInt(1500); pilares(ps); }
         if (agora >= proxChuva) { proxChuva = agora + 8000; chuva(ps); }
@@ -441,7 +470,7 @@ final class InfernoHerobrine implements Listener {
             pl.depois(k * 5L, () -> {
                 for (int i = 0; i < 20; i++) {
                     double a = rnd.nextDouble() * Math.PI * 2, d = Math.sqrt(rnd.nextDouble()) * R;
-                    Location l = new Location(inf, Math.cos(a) * d, Y + 9 + rnd.nextInt(5), Math.sin(a) * d);
+                    Location l = em(inf, Math.cos(a) * d, Y + 9 + rnd.nextInt(5), Math.sin(a) * d);
                     inf.spawnParticle(Particle.FALLING_LAVA, l, 1, 0.2, 0.2, 0.2, 0);
                     inf.spawnParticle(Particle.FLAME, l, 1, 0.1, 0.1, 0.1, 0.02);
                 }
@@ -455,7 +484,7 @@ final class InfernoHerobrine implements Listener {
         Masmorra m = chefe.m;
         for (int i = 0; i < 3; i++) {
             double a = rnd.nextDouble() * Math.PI * 2;
-            Location l = new Location(w, Math.cos(a) * (R - 2) + 0.5, Y + 1, Math.sin(a) * (R - 2) + 0.5);
+            Location l = em(w, Math.cos(a) * (R - 2) + 0.5, Y + 1, Math.sin(a) * (R - 2) + 0.5);
             Player olha = ps.get(rnd.nextInt(ps.size()));
             l.setDirection(olha.getLocation().toVector().subtract(l.toVector()));
             try {
@@ -481,7 +510,7 @@ final class InfernoHerobrine implements Listener {
         World aw = Bukkit.getWorld(c.m.mundo);
         Caixa a = c.m.arena();
         Location meio = aw == null ? null : new Location(aw, a.cx() + 0.5, a.y1(), a.cz() + 0.5);
-        List<Player> la = w == null ? List.of() : new ArrayList<>(w.getPlayers());
+        List<Player> la = w == null ? List.of() : new ArrayList<>(jogadores());
         for (Player p : la) {
             p.showTitle(titulo("§c§lVOCÊS ESCAPARAM", "§7...mas ele voltou junto. §4Fúria final!", 3));
             p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 25, 0, false, false));
@@ -497,7 +526,8 @@ final class InfernoHerobrine implements Listener {
         pl.depois(8L, () -> {
           try {
             for (Player p : la) {
-                if (!p.isOnline() || !p.getWorld().equals(w)) continue;
+                if (!p.isOnline() || !naIlha(p.getLocation())) continue;
+                noiteLa(p, false);
                 Location dest = volta.getOrDefault(p.getUniqueId(), meio);
                 if (dest == null || dest.getWorld() == null) { pl.irParaSpawnMasmorras(p); continue; }
                 p.teleport(dest);
@@ -527,7 +557,8 @@ final class InfernoHerobrine implements Listener {
         Chefe c = chefe;
         tirarCorpo();
         if (c != null && c.vivo()) { if (c.e instanceof Mob mob) mob.setAI(true); c.sumidoAte = 0; c.e.setInvulnerable(false); }
-        if (c != null && w != null) for (Player p : w.getPlayers()) {
+        if (c != null && w != null) for (Player p : jogadores()) {
+            noiteLa(p, false);
             Location dest = volta.get(p.getUniqueId());
             if (dest != null && dest.getWorld() != null) p.teleport(dest);
             else pl.irParaSpawnMasmorras(p);
@@ -543,7 +574,8 @@ final class InfernoHerobrine implements Listener {
     /** O servidor vai desligar / plugin recarregar: ninguem fica preso la. */
     void desligar() {
         if (w == null) return;
-        for (Player p : w.getPlayers()) {
+        for (Player p : jogadores()) {
+            noiteLa(p, false);
             Location dest = volta.get(p.getUniqueId());
             if (dest != null && dest.getWorld() != null) p.teleport(dest);
             else pl.irParaSpawnMasmorras(p);
@@ -580,25 +612,46 @@ final class InfernoHerobrine implements Listener {
     @EventHandler
     public void entrou(PlayerJoinEvent ev) {
         Player p = ev.getPlayer();
-        if (!p.getWorld().getName().equals(MUNDO)) return;
-        if (chefe != null && volta.containsKey(p.getUniqueId())) return;
-        Bukkit.getScheduler().runTaskLater(pl, () -> { if (p.isOnline() && p.getWorld().getName().equals(MUNDO)) pl.irParaSpawnMasmorras(p); }, 10L);
+        if (!naIlha(p.getLocation())) {
+            p.resetPlayerTime();
+            return;
+        }
+        if (chefe != null && volta.containsKey(p.getUniqueId())) { noiteLa(p, true); return; }
+        Bukkit.getScheduler().runTaskLater(pl, () -> { if (p.isOnline() && naIlha(p.getLocation())) { p.resetPlayerTime(); pl.irParaSpawnMasmorras(p); } }, 10L);
     }
 
     /** Quem morre la dentro renasce na arena (onde estava antes de ser puxado). */
     @EventHandler(priority = EventPriority.HIGH)
     public void renasceu(PlayerRespawnEvent ev) {
         Player p = ev.getPlayer();
-        if (!p.getWorld().getName().equals(MUNDO) && (ev.getRespawnLocation().getWorld() == null || !ev.getRespawnLocation().getWorld().getName().equals(MUNDO))) return;
+        if (!naIlha(p.getLocation()) && !naIlha(ev.getRespawnLocation())) return;
         // 15/11 (Paulo: voltou sozinho para a arena e nao conseguiu mais lutar): quem morre com a fase ainda rolando
         // renasce NA ILHA, junto da luta; so volta para a arena quando a fase acaba (ou se ela ja acabou).
         if (chefe != null && !saindo && w != null && corpo != null && corpo.isValid() && volta.containsKey(p.getUniqueId())) {
-            ev.setRespawnLocation(new Location(w, 0.5, Y + 1, 8.5, 180, 0));
+            ev.setRespawnLocation(em(w, 0.5, Y + 1, 8.5, 180f, 0f));
+            pl.depois(2L, () -> noiteLa(p, true));
             return;
         }
         Location dest = volta.get(p.getUniqueId());
         if (dest == null) dest = voltaAntiga.get(p.getUniqueId());
+        p.resetPlayerTime();
         if (dest != null && dest.getWorld() != null) ev.setRespawnLocation(dest);
-        else Bukkit.getScheduler().runTaskLater(pl, () -> { if (p.isOnline() && p.getWorld().getName().equals(MUNDO)) pl.irParaSpawnMasmorras(p); }, 5L);
+        else Bukkit.getScheduler().runTaskLater(pl, () -> { if (p.isOnline() && naIlha(p.getLocation())) pl.irParaSpawnMasmorras(p); }, 5L);
+    }
+
+    /** Na ilha ninguem perde os itens (era o keepInventory do mundo antigo). */
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void morreuLa(org.bukkit.event.entity.PlayerDeathEvent ev) {
+        if (!naIlha(ev.getEntity().getLocation())) return;
+        ev.setKeepInventory(true);
+        ev.setKeepLevel(true);
+        ev.getDrops().clear();
+        ev.setDroppedExp(0);
+    }
+
+    /** Na ilha nao nasce monstro sozinho (so o que o plugin poe). */
+    @EventHandler(ignoreCancelled = true)
+    public void nasceu(org.bukkit.event.entity.CreatureSpawnEvent ev) {
+        if (ev.getSpawnReason() != org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.CUSTOM && naIlha(ev.getLocation())) ev.setCancelled(true);
     }
 }

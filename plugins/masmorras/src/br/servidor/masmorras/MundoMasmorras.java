@@ -161,6 +161,7 @@ final class MundoMasmorras implements Listener {
         int x = b.getX(), z = b.getZ();
         if (w.equals(normal)) {
             if (Math.hypot(x + 0.5, z + 0.5) <= GeradorMundo.LOBBY_RAIO + 12) return true;
+            if (InfernoHerobrine.naIlha(b.getLocation())) return true;   // 18/11: a ilha de Herobrine fica neste mundo
             return pertoDeEstrutura(w, x, b.getY(), z);
         }
         return Math.abs(x - Portoes.CHEGADA_X) <= 16 && Math.abs(z - Portoes.CHEGADA_Z) <= 16;
