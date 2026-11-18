@@ -302,7 +302,7 @@ final class MecanicasChefes implements Listener {
         Tema t = TEMAS.get(c.t.id);
         if (t == null || !ativo()) return;
         for (Mec m : t.mecs()) p.sendMessage(Masmorras.txt("§6§l✦ " + m.nome + ": §7" + m.desc));
-        if (c.t.id.equals("CATEDRAL")) p.sendMessage(Masmorras.txt("§6§l✦ Ressurreição: §7na primeira vez que cair, ele volta com a vida cheia."));
+        if (c.t.id.equals("CATEDRAL")) p.sendMessage(Masmorras.txt("§6§l✦ Ressurreição: §7enquanto a sacerdotisa viver, ele volta uma vez com a vida cheia e cópias."));
     }
 
     /** Dano no chefe: escudo (alvos), tonto (+50%), achou o verdadeiro entre as sombras. true = cancelado. */
@@ -344,8 +344,10 @@ final class MecanicasChefes implements Listener {
         }
         if (p != null && l.cena instanceof Sombras s) s.achou(p);
         if (p != null && l.cena instanceof Engolir g) g.bateu(p);
-        // Bispo (18/11, Paulo: "so queria que ele revivesse"): no primeiro golpe que mataria, volta com a vida cheia, uma vez
-        if (c.t.id.equals("CATEDRAL") && !l.bispoVoltou && e.getFinalDamage() >= c.e.getHealth()) {
+        // Bispo (18/11, Paulo): com a sacerdotisa viva, no primeiro golpe que mataria ele volta com a vida cheia e cria
+        // copias, UMA vez so. Sem chao marcado e sem "nao se mexa".
+        if (c.t.id.equals("CATEDRAL") && !l.bispoVoltou && l.sacerdotisa != null && l.sacerdotisa.isValid() && !l.sacerdotisa.isDead()
+                && e.getFinalDamage() >= c.e.getHealth()) {
             e.setCancelled(true);
             l.bispoVoltou = true;
             bispoVolta(l);
@@ -1913,7 +1915,7 @@ final class MecanicasChefes implements Listener {
         Chefe c = l.c;
         World w = c.e.getWorld();
         // ---- Bispo Corrompido: a sacerdotisa escondida numa sala reza por ele
-        if (false && c.t.id.equals("CATEDRAL") && !ps.isEmpty()) {   // 18/11: sem sacerdotisa (o Bispo so revive)
+        if (c.t.id.equals("CATEDRAL") && !ps.isEmpty()) {
             if (!l.sacerdotisaFeita) {
                 l.sacerdotisaFeita = true;
                 criarSacerdotisa(l);
@@ -2032,7 +2034,37 @@ final class MecanicasChefes implements Listener {
         c.e.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 40, 4, false, false));
         w.spawnParticle(Particle.TOTEM_OF_UNDYING, c.e.getLocation().add(0, c.e.getHeight() / 2, 0), 80, 0.6, 1, 0.6, 0.4);
         som(w, c.e.getLocation(), "minecraft:block.bell.use", 2f, 0.6f);
-        for (Player p : c.naArena()) titulo(p, "§d§lO BISPO VOLTOU!", "§7Ele reviveu com a vida cheia. Derrube de novo!", 2500);
+        l.copias.removeIf(x -> !x.isValid() || x.isDead());
+        int q = Math.min(2, 6 - l.copias.size());
+        for (int i = 0; i < q; i++) {
+            Location ok = c.lugarLivre(c.e.getLocation().clone().add(rnd.nextInt(9) - 4, 0, rnd.nextInt(9) - 4));
+            if (ok == null) continue;
+            LivingEntity x = pl.lacaio(c.m, c.t.chefe, ok, true);
+            if (x == null) continue;
+            x.customName(c.e.customName());
+            x.setCustomNameVisible(c.e.isCustomNameVisible());
+            for (Attribute at : new Attribute[] {Attribute.SCALE, Attribute.MOVEMENT_SPEED}) {
+                AttributeInstance de = c.e.getAttribute(at), para = x.getAttribute(at);
+                if (de != null && para != null) para.setBaseValue(de.getBaseValue());
+            }
+            AttributeInstance vida = x.getAttribute(Attribute.MAX_HEALTH);
+            if (vida != null) {
+                vida.setBaseValue(Math.max(20, c.vidaMax * 0.12));
+                x.setHealth(vida.getValue());
+            }
+            EntityEquipment de = c.e.getEquipment(), para = x.getEquipment();
+            if (de != null && para != null) {
+                para.setItemInMainHand(de.getItemInMainHand());
+                para.setHelmet(de.getHelmet());
+                para.setChestplate(de.getChestplate());
+                para.setItemInMainHandDropChance(0f);
+                para.setHelmetDropChance(0f);
+                para.setChestplateDropChance(0f);
+            }
+            fx(w, Particle.LARGE_SMOKE, ok.clone().add(0, 1, 0), 20, 0.4, 0.6, 0.4, 0.02);
+            l.copias.add(x);
+        }
+        for (Player p : c.naArena()) titulo(p, "§d§lO BISPO VOLTOU!", "§7A sacerdotisa rezou por ele (só desta vez). Derrube de novo!", 2500);
     }
 
     private void fimPassivas(Luta l, boolean ignorado) {
