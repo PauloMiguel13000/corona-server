@@ -1469,7 +1469,7 @@ public final class Poderes extends JavaPlugin implements Listener {
                 };
                 lore.add(txt("§fDuração: §e" + Torretas.segundos(tt, nivel) + "s"));
                 lore.add(txt("§7Torres crescem com o nível até o §f" + Torretas.NIVEL_TETO + "§7:"));
-                lore.add(txt("§7dano até §f2,5x§7, duração até §f16s§7, recarga §f-30%§7."));
+                lore.add(txt("§7dano até §f2,5x§7, duração até §f12s§7, recarga §f-30%§7."));
             }
             lore.add(txt(""));
             if (!lib) lore.add(txt("§cBloqueado: suba suas skills (/skills)"));

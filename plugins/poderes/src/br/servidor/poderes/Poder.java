@@ -18,7 +18,7 @@ public enum Poder {
 
     // ---- Engenheiro
     TORRETA("torreta", "Torre Arqueira", "§a", Material.DISPENSER, 30,
-            "Coloca uma torre que atira flechas", "nos seus inimigos por 9s."),
+            "Coloca uma torre que atira flechas", "nos seus inimigos por 5s."),
     TORRE_GELO("torregelo", "Torre de Gelo", "§b", Material.BLUE_ICE, 35,
             "Torre que congela os inimigos", "com um raio de gelo (lentidao)."),
     TORRE_FOGO("torrefogo", "Torre Lanca-Chamas", "§6", Material.MAGMA_BLOCK, 35,
@@ -90,15 +90,15 @@ public enum Poder {
 
     // ---- Arqueiro
     TIRO_CERTEIRO("tirocerteiro", "Tiro Certeiro", "§f", Material.ARROW, 2,
-            "Uma flecha rapida e precisa", "que vai bem longe."),
+            "Flecha rapida que atravessa 3 inimigos;", "na cabeca da 1,5x. 3 acertos marcam o alvo."),
     FLECHA_EXPLOSIVA("flechaexplosiva", "Flecha Explosiva", "§c", Material.FIREWORK_STAR, 10,
-            "Explode onde acerta: dano em", "area (nao quebra blocos)."),
+            "Explode onde acerta e deixa o chao", "em chamas por 3s (nao quebra blocos)."),
     MULTIPLO("multiplo", "Disparo Multiplo", "§e", Material.SPECTRAL_ARROW, 12,
-            "Atira 5 flechas em leque", "de uma vez so."),
+            "7 flechas em leque que atravessam;", "voce pula um pouco para tras."),
     CHUVA_FLECHAS("chuvaflechas", "Chuva de Flechas", "§7", Material.CROSSBOW, 30,
-            "Chove flecha onde voce olha", "por 3 segundos."),
+            "Chove flecha onde voce olha por 3s,", "deixa lento e estoura no final."),
     TEMPESTADE("tempestade", "Tempestade de Flechas", "§6", Material.BOW, 60,
-            "Flechas que perseguem ate 8", "inimigos, em 3 rajadas."),
+            "Flechas que perseguem ate 10", "inimigos, em 4 rajadas."),
 
     // ---- Lutador (passiva: soco de mao vazia mais forte, sobe com o nivel)
     RAJADA_SOCOS("rajada", "Rajada de Socos", "§6", Material.RABBIT_HIDE, 4,

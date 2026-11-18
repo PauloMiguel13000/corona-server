@@ -82,11 +82,17 @@ final class Habilidades implements Listener {
     static final double DANO_REDEMOINHO = 1.8;     // a cada meio segundo, 4 segundos
     static final double DANO_POSEIDON = 8.0;
     // Arqueiro
-    static final double DANO_TIRO = 6.0;
-    static final double DANO_EXPLOSIVA = 6.0;
-    static final double DANO_MULTIPLO = 3.0;       // por flecha (5)
-    static final double DANO_CHUVA = 1.6;          // a cada 1/4 s, 3 segundos
-    static final double DANO_TEMPESTADE = 4.0;     // por flecha (3 rajadas)
+    // 18/11 (Sui e Paulo: "arqueira fraca em animacao e habilidades"): mais dano, flechas que atravessam, tiro na
+    // cabeca, marca do cacador, fogo no chao, chuva com marcacao e golpe final, e a passiva no arco de verdade.
+    static final double DANO_TIRO = 7.0;           // atravessa ate 3; na cabeca 1,5x
+    static final double DANO_EXPLOSIVA = 9.0;      // + chao em chamas 3 s
+    static final double DANO_MULTIPLO = 3.5;       // por flecha (7), cada uma atravessa 1
+    static final double DANO_CHUVA = 2.4;          // a cada 1/4 s, 3 segundos, + estouro final
+    static final double DANO_TEMPESTADE = 5.0;     // por flecha (4 rajadas, ate 10 alvos)
+    static final double MARCA_BONUS = 1.25;        // alvo marcado (3 acertos seguidos) leva +25% das flechas
+    /** Alvo marcado pelo cacador -> ate quando. */
+    private final Map<UUID, Long> marcados = new HashMap<>();
+    private final Map<UUID, int[]> acertosSeguidos = new HashMap<>();
 
     private final Poderes plugin;
     private final NamespacedKey chaveLobo;
@@ -1651,70 +1657,242 @@ final class Habilidades implements Listener {
 
     // ------------------------------------------------------------------ ARQUEIRO
 
+    /** Puxada do arco: espiral de luz fechando na mao e o som da corda, antes de soltar (da peso ao tiro). */
+    private void puxar(Player p, Color cor, int ticks, Runnable soltar) {
+        World w = p.getWorld();
+        w.playSound(p.getLocation(), Sound.ITEM_CROSSBOW_LOADING_START, 0.9f, 1.3f);
+        Particle.DustOptions po = new Particle.DustOptions(cor, 0.9f);
+        final int[] t = {0};
+        Bukkit.getScheduler().runTaskTimer(plugin, tarefa -> {
+            if (!p.isOnline() || p.isDead()) {
+                tarefa.cancel();
+                return;
+            }
+            Location mao = p.getEyeLocation().subtract(0, 0.35, 0).add(p.getEyeLocation().getDirection().multiply(0.7));
+            double r = 1.1 * (1 - (double) t[0] / ticks);
+            for (int i = 0; i < 6; i++) {
+                double a = t[0] * 0.9 + i * Math.PI / 3;
+                Vector lado = p.getEyeLocation().getDirection().crossProduct(new Vector(0, 1, 0));
+                if (lado.lengthSquared() < 0.01) lado = new Vector(1, 0, 0);
+                lado.normalize();
+                Vector cima = lado.clone().crossProduct(p.getEyeLocation().getDirection()).normalize();
+                Location q = mao.clone().add(lado.multiply(Math.cos(a) * r)).add(cima.multiply(Math.sin(a) * r));
+                w.spawnParticle(Particle.DUST, q, 1, 0, 0, 0, 0, po);
+            }
+            if (t[0] == ticks / 2) w.playSound(p.getLocation(), Sound.ITEM_CROSSBOW_LOADING_MIDDLE, 0.8f, 1.4f);
+            if (++t[0] > ticks) {
+                tarefa.cancel();
+                // soltou: clarao e anel de choque na frente do arco
+                Location m = p.getEyeLocation().subtract(0, 0.3, 0).add(p.getEyeLocation().getDirection().multiply(0.9));
+                Fx.p(w, Particle.END_ROD, m, 8, 0.05, 0.05, 0.05, 0.12);
+                Fx.p(w, Particle.SWEEP_ATTACK, m, 1, 0, 0, 0, 0);
+                w.playSound(p.getLocation(), Sound.ITEM_CROSSBOW_SHOOT, 1f, 1.1f);
+                p.swingMainHand();
+                soltar.run();
+            }
+        }, 0L, 1L);
+    }
+
+    /** Dano de flecha da classe: na cabeca 1,5x, alvo marcado +25%, e 3 acertos seguidos marcam o alvo. */
+    private void acertoFlecha(Player p, LivingEntity alvo, Location pos, double dano, boolean podeCabeca) {
+        World w = alvo.getWorld();
+        Long marca = marcados.get(alvo.getUniqueId());
+        boolean marcado = marca != null && marca > System.currentTimeMillis();
+        boolean cabeca = podeCabeca && pos.getY() > alvo.getEyeLocation().getY() - 0.35;
+        double d = dano * (marcado ? MARCA_BONUS : 1.0) * (cabeca ? 1.5 : 1.0);
+        if (!plugin.causarDano(alvo, d, p)) return;
+        if (cabeca) {
+            Poderes.barra(p, "§6§lNA CABEÇA! §7x1,5");
+            p.playSound(p.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 0.9f, 1.6f);
+            Fx.p(w, Particle.CRIT, alvo.getEyeLocation(), 14, 0.2, 0.2, 0.2, 0.4);
+        }
+        int[] seq = acertosSeguidos.computeIfAbsent(p.getUniqueId(), k -> new int[] {0, 0});
+        long agora = System.currentTimeMillis();
+        if (seq[1] != alvo.getEntityId() || agora - marcaUlt(p) > 6000) seq[0] = 0;
+        seq[1] = alvo.getEntityId();
+        acertoUlt.put(p.getUniqueId(), agora);
+        if (++seq[0] >= 3 && !marcado) {
+            seq[0] = 0;
+            marcados.put(alvo.getUniqueId(), agora + 5000);
+            Poderes.barra(p, "§2§lMARCA DO CAÇADOR! §7o alvo leva §f+25%§7 das suas flechas por 5s");
+            w.playSound(alvo.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 1f, 1.6f);
+            final int[] k = {0};
+            Bukkit.getScheduler().runTaskTimer(plugin, tarefa -> {
+                if (!alvo.isValid() || alvo.isDead() || ++k[0] > 25) {
+                    tarefa.cancel();
+                    return;
+                }
+                Location c = alvo.getLocation().add(0, alvo.getHeight() + 0.5, 0);
+                for (int i = 0; i < 6; i++) {
+                    double a = k[0] * 0.4 + i * Math.PI / 3;
+                    w.spawnParticle(Particle.DUST, c.clone().add(Math.cos(a) * 0.5, 0, Math.sin(a) * 0.5), 1, 0, 0, 0, 0,
+                            new Particle.DustOptions(Color.fromRGB(60, 220, 90), 1.0f));
+                }
+            }, 0L, 4L);
+        }
+    }
+
+    private final Map<UUID, Long> acertoUlt = new HashMap<>();
+
+    private long marcaUlt(Player p) {
+        return acertoUlt.getOrDefault(p.getUniqueId(), 0L);
+    }
+
+    /** Flecha da classe. atravessa = quantos inimigos ela fura antes de parar (0 = para no primeiro). */
     private void flecha(Player p, Vector dir, double alcance, double velocidade, double dano, boolean explode) {
+        flecha(p, dir, alcance, velocidade, dano, explode, 0);
+    }
+
+    private void flecha(Player p, Vector dir, double alcance, double velocidade, double dano, boolean explode, int atravessa) {
         World w = p.getWorld();
         Location origem = p.getEyeLocation().subtract(0, 0.15, 0).add(dir.clone().multiply(0.6));
-        // flecha de verdade voando junto (so aparencia): em chamas na explosiva, dourada nas outras
         org.bukkit.entity.Arrow visual = plugin.vis.flecha(origem, dir, velocidade, (int) (alcance / velocidade) + 4, false, explode,
                 explode ? Color.fromRGB(255, 90, 20) : Color.fromRGB(255, 220, 90));
-        projetil(p, origem, dir, alcance, velocidade, 0.6,
-                pos -> {
-                    Fx.p(w, explode ? Particle.SMALL_FLAME : Particle.CRIT, pos, 2, 0.02, 0.02, 0.02, 0);
-                    if (!explode) Fx.p(w, Particle.END_ROD, pos, 1, 0.01, 0.01, 0.01, 0);
-                },
-                (alvo, pos) -> {
-                    plugin.vis.remover(visual);
-                    w.playSound(pos, Sound.ENTITY_ARROW_HIT, 1f, 1.1f);
-                    Fx.p(w, Particle.CRIT, pos, 12, 0.2, 0.2, 0.2, 0.3);
-                    if (explode) explodir(p, pos, dano);
-                    else plugin.causarDano(alvo, dano, p);
-                },
-                pos -> {
+        Location pos = origem.clone();
+        Vector passo = dir.clone().normalize().multiply(0.5);
+        int sub = Math.max(1, (int) Math.round(velocidade / 0.5));
+        Set<Integer> furados = new HashSet<>();
+        final double[] andado = {0};
+        final int[] sobra = {atravessa};
+        Bukkit.getScheduler().runTaskTimer(plugin, tarefa -> {
+            if (!p.isOnline()) {
+                tarefa.cancel();
+                plugin.vis.remover(visual);
+                return;
+            }
+            for (int i = 0; i < sub; i++) {
+                pos.add(passo);
+                andado[0] += 0.5;
+                if (andado[0] > alcance || !pos.getBlock().isPassable()) {
+                    tarefa.cancel();
                     plugin.vis.remover(visual);
                     if (explode) explodir(p, pos, dano);
                     else Fx.p(w, Particle.CRIT, pos, 6, 0.1, 0.1, 0.1, 0.05);
-                });
+                    return;
+                }
+                for (Entity e : w.getNearbyEntities(pos, 0.6, 0.6, 0.6)) {
+                    if (!(e instanceof LivingEntity le) || e instanceof ArmorStand || le.isDead() || furados.contains(e.getEntityId())) continue;
+                    if (plugin.ehAliado(e, p) || plugin.pets.ehPet(e)) continue;
+                    furados.add(e.getEntityId());
+                    w.playSound(pos, Sound.ENTITY_ARROW_HIT, 1f, 1.1f);
+                    Fx.p(w, Particle.CRIT, pos, 12, 0.2, 0.2, 0.2, 0.3);
+                    if (explode) {
+                        tarefa.cancel();
+                        plugin.vis.remover(visual);
+                        explodir(p, pos, dano);
+                        return;
+                    }
+                    acertoFlecha(p, le, pos.clone(), dano, true);
+                    if (sobra[0]-- <= 0) {
+                        tarefa.cancel();
+                        plugin.vis.remover(visual);
+                        return;
+                    }
+                    Fx.p(w, Particle.ENCHANTED_HIT, pos, 8, 0.15, 0.15, 0.15, 0.2);
+                }
+            }
+            Fx.p(w, explode ? Particle.SMALL_FLAME : Particle.CRIT, pos, 2, 0.02, 0.02, 0.02, 0);
+            if (!explode) Fx.p(w, Particle.END_ROD, pos, 1, 0.01, 0.01, 0.01, 0);
+        }, 0L, 1L);
     }
 
     private void explodir(Player p, Location pos, double dano) {
         World w = pos.getWorld();
-        Fx.p(w, Particle.EXPLOSION, pos, 2, 0.3, 0.3, 0.3, 0);
+        Fx.p(w, Particle.EXPLOSION, pos, 3, 0.4, 0.3, 0.4, 0);
         plugin.cena.explosaoFlecha(pos);
-        Fx.p(w, Particle.FLAME, pos, 35, 0.8, 0.5, 0.8, 0.08);
-        Fx.p(w, Particle.LAVA, pos, 8, 0.6, 0.3, 0.6, 0);
-        Fx.p(w, Particle.LARGE_SMOKE, pos, 10, 0.6, 0.4, 0.6, 0.03);
-        w.playSound(pos, Sound.ENTITY_GENERIC_EXPLODE, 0.8f, 1.2f);
-        for (LivingEntity le : inimigosPerto(pos, 3.5, 2.5, p)) {
-            if (!plugin.causarDano(le, dano, p)) continue;
+        Fx.p(w, Particle.FLAME, pos, 50, 1.0, 0.6, 1.0, 0.1);
+        Fx.p(w, Particle.LAVA, pos, 10, 0.8, 0.3, 0.8, 0);
+        Fx.p(w, Particle.LARGE_SMOKE, pos, 14, 0.8, 0.5, 0.8, 0.03);
+        w.playSound(pos, Sound.ENTITY_GENERIC_EXPLODE, 0.9f, 1.15f);
+        for (LivingEntity le : inimigosPerto(pos, 4.5, 3.0, p)) {
+            acertoFlecha(p, le, le.getLocation(), dano, false);
             Vector v = le.getLocation().toVector().subtract(pos.toVector()).setY(0);
-            if (v.lengthSquared() > 0.01) v.normalize().multiply(0.5);
-            le.setVelocity(v.setY(0.4));
+            if (v.lengthSquared() > 0.01) v.normalize().multiply(0.7);
+            le.setVelocity(v.setY(0.5));
+            le.setFireTicks(Math.max(le.getFireTicks(), 60));
         }
+        // chao em chamas por 3 s: queima quem ficar em cima
+        double f = dano / DANO_EXPLOSIVA;
+        final int[] k = {0};
+        Bukkit.getScheduler().runTaskTimer(plugin, tarefa -> {
+            if (++k[0] > 6 || !p.isOnline()) {
+                tarefa.cancel();
+                return;
+            }
+            for (int i = 0; i < 14; i++) {
+                double a = i * Math.PI / 7 + k[0] * 0.3, r = 1.0 + (i % 3) * 0.9;
+                Fx.p(w, Particle.FLAME, pos.clone().add(Math.cos(a) * r, 0.15, Math.sin(a) * r), 1, 0.05, 0.05, 0.05, 0.01);
+            }
+            Fx.p(w, Particle.SMOKE, pos, 4, 1.2, 0.1, 1.2, 0.01);
+            for (LivingEntity le : inimigosPerto(pos, 3.0, 1.6, p)) {
+                plugin.causarDano(le, 1.2 * f * plugin.fator(p), p);
+                le.setFireTicks(Math.max(le.getFireTicks(), 40));
+            }
+        }, 10L, 10L);
     }
 
     boolean tiroCerteiro(Player p) {
-        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ARROW_SHOOT, 1f, 1.4f);
-        p.swingMainHand();
-        flecha(p, p.getEyeLocation().getDirection().normalize(), 45, 3.0, DANO_TIRO * plugin.fator(p), false);
+        puxar(p, Color.fromRGB(255, 230, 120), 4, () -> {
+            p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ARROW_SHOOT, 1f, 1.5f);
+            flecha(p, p.getEyeLocation().getDirection().normalize(), 50, 3.5, DANO_TIRO * plugin.fator(p), false, 2);
+        });
         return true;
     }
 
     boolean flechaExplosiva(Player p) {
-        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ARROW_SHOOT, 1f, 0.8f);
-        p.swingMainHand();
-        flecha(p, p.getEyeLocation().getDirection().normalize(), 35, 2.0, DANO_EXPLOSIVA * plugin.fator(p), true);
-        Poderes.barra(p, "§c§lFLECHA EXPLOSIVA!");
+        puxar(p, Color.fromRGB(255, 110, 30), 6, () -> {
+            p.getWorld().playSound(p.getLocation(), Sound.ENTITY_BLAZE_SHOOT, 0.8f, 1.3f);
+            flecha(p, p.getEyeLocation().getDirection().normalize(), 40, 2.2, DANO_EXPLOSIVA * plugin.fator(p), true);
+            Poderes.barra(p, "§c§lFLECHA EXPLOSIVA!");
+        });
         return true;
     }
 
     boolean multiplo(Player p) {
         double dano = DANO_MULTIPLO * plugin.fator(p);
-        Vector dir = p.getEyeLocation().getDirection().normalize();
-        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ARROW_SHOOT, 1f, 1.0f);
-        p.getWorld().playSound(p.getLocation(), Sound.ITEM_CROSSBOW_SHOOT, 1f, 1.2f);
-        p.swingMainHand();
-        for (double ang : new double[] {-0.3, -0.15, 0.0, 0.15, 0.3}) flecha(p, dir.clone().rotateAroundY(ang), 30, 2.5, dano, false);
+        puxar(p, Color.fromRGB(255, 240, 90), 5, () -> {
+            Vector dir = p.getEyeLocation().getDirection().normalize();
+            p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ARROW_SHOOT, 1f, 1.0f);
+            for (double ang = -0.36; ang <= 0.37; ang += 0.12) flecha(p, dir.clone().rotateAroundY(ang), 32, 2.6, dano, false, 1);
+            // recuo: o arqueiro pula um pouco para tras (ajuda a sair do meio)
+            Vector tras = dir.clone().setY(0);
+            if (tras.lengthSquared() > 0.01) p.setVelocity(p.getVelocity().add(tras.normalize().multiply(-0.45).setY(0.18)));
+        });
         return true;
+    }
+
+    /**
+     * Passiva do Arqueiro (18/11): flecha do arco de verdade bate mais forte (+20% a +60% pelo nivel), na cabeca 1,3x,
+     * alvo marcado +25%, e deixa um rastro de luz.
+     */
+    @EventHandler(priority = org.bukkit.event.EventPriority.LOW, ignoreCancelled = true)
+    public void arcoDoArqueiro(org.bukkit.event.entity.EntityDamageByEntityEvent e) {
+        if (!(e.getDamager() instanceof org.bukkit.entity.AbstractArrow a) || !(a.getShooter() instanceof Player p)) return;
+        if (!(e.getEntity() instanceof LivingEntity alvo) || plugin.classe(p) != Classe.ARQUEIRO || plugin.semPoderes(p.getWorld())) return;
+        if (plugin.ehAliado(alvo, p)) return;
+        double mult = 1.2 + 0.4 * Torretas.nivel01(Math.max(0, plugin.nivelDePoder(p)));
+        Long marca = marcados.get(alvo.getUniqueId());
+        if (marca != null && marca > System.currentTimeMillis()) mult *= MARCA_BONUS;
+        if (a.getLocation().getY() > alvo.getEyeLocation().getY() - 0.35) {
+            mult *= 1.3;
+            Poderes.barra(p, "§6§lNA CABEÇA!");
+            p.playSound(p.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 0.8f, 1.7f);
+        }
+        e.setDamage(e.getDamage() * mult);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void rastroArqueiro(org.bukkit.event.entity.ProjectileLaunchEvent e) {
+        if (!(e.getEntity() instanceof org.bukkit.entity.AbstractArrow a) || !(a.getShooter() instanceof Player p)) return;
+        if (plugin.classe(p) != Classe.ARQUEIRO || plugin.semPoderes(p.getWorld())) return;
+        final int[] k = {0};
+        Bukkit.getScheduler().runTaskTimer(plugin, tarefa -> {
+            if (!a.isValid() || a.isOnGround() || a.isInBlock() || ++k[0] > 60) {
+                tarefa.cancel();
+                return;
+            }
+            a.getWorld().spawnParticle(Particle.END_ROD, a.getLocation(), 1, 0, 0, 0, 0);
+        }, 1L, 1L);
     }
 
     boolean chuvaFlechas(Player p) {
@@ -1725,25 +1903,41 @@ final class Habilidades implements Listener {
         World w = c.getWorld();
         Poderes.barra(p, "§7§lCHUVA DE FLECHAS!");
         w.playSound(p.getLocation(), Sound.ITEM_CROSSBOW_SHOOT, 1f, 0.7f);
-        // flechas sobem do arqueiro antes de cair
-        for (int i = 0; i < 6; i++) plugin.vis.flecha(p.getEyeLocation(), new Vector(rnd().nextDouble(-0.15, 0.15), 1, rnd().nextDouble(-0.15, 0.15)), 2.2, 8, false, false, null);
+        p.swingMainHand();
+        // flechas sobem do arqueiro e um circulo marca onde vai chover
+        for (int i = 0; i < 8; i++) plugin.vis.flecha(p.getEyeLocation(), new Vector(rnd().nextDouble(-0.15, 0.15), 1, rnd().nextDouble(-0.15, 0.15)), 2.2, 8, false, false, null);
+        Particle.DustOptions marca = new Particle.DustOptions(Color.fromRGB(230, 230, 255), 1.3f);
         final int[] t = {0};
         Bukkit.getScheduler().runTaskTimer(plugin, tarefa -> {
             if (t[0] > 60 || !p.isOnline() || p.isDead()) {
                 emSequencia.remove(id);
                 tarefa.cancel();
+                if (p.isOnline()) {
+                    // estouro final: todas as flechas que sobraram caem juntas
+                    Fx.p(w, Particle.EXPLOSION, c, 2, 1.5, 0.2, 1.5, 0);
+                    Fx.p(w, Particle.CRIT, c.clone().add(0, 0.3, 0), 60, 2.5, 0.2, 2.5, 0.4);
+                    w.playSound(c, Sound.ENTITY_GENERIC_EXPLODE, 0.7f, 1.6f);
+                    for (LivingEntity le : inimigosPerto(c, 5.0, 3.0, p)) plugin.causarDano(le, DANO_CHUVA * 3 * f, p);
+                }
                 return;
             }
-            for (int i = 0; i < 5; i++) {
-                double a = rnd().nextDouble(Math.PI * 2), r = rnd().nextDouble(0, 4.0);
+            for (int i = 0; i < 24; i++) {
+                double a = i * Math.PI / 12 + t[0] * 0.05;
+                w.spawnParticle(Particle.DUST, c.clone().add(Math.cos(a) * 5, 0.15, Math.sin(a) * 5), 1, 0, 0, 0, 0, marca);
+            }
+            for (int i = 0; i < 7; i++) {
+                double a = rnd().nextDouble(Math.PI * 2), r = rnd().nextDouble(0, 5.0);
                 Location chao = c.clone().add(Math.cos(a) * r, 0.1, Math.sin(a) * r);
                 plugin.vis.flecha(chao.clone().add(rnd().nextDouble(-1, 1), 11, rnd().nextDouble(-1, 1)), new Vector(0, -1, 0), 1.6, 14, true, false, Color.fromRGB(230, 230, 255));
                 Fx.p(w, Particle.CRIT, chao.clone().add(0, 0.2, 0), 3, 0.1, 0.1, 0.1, 0.1);
             }
-            w.playSound(c, Sound.ENTITY_ARROW_HIT, 0.6f, 1.3f);
-            for (LivingEntity le : inimigosPerto(c, 4.0, 3.0, p)) plugin.causarDano(le, DANO_CHUVA * f, p);
+            w.playSound(c, Sound.ENTITY_ARROW_HIT, 0.7f, 1.3f);
+            for (LivingEntity le : inimigosPerto(c, 5.0, 3.0, p)) {
+                plugin.causarDano(le, DANO_CHUVA * f, p);
+                le.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SLOWNESS, 25, 1, false, true));
+            }
             t[0] += 5;
-        }, 10L, 5L);
+        }, 14L, 5L);
         return true;
     }
 
@@ -1758,14 +1952,16 @@ final class Habilidades implements Listener {
         }
         Location ref = p.getLocation();
         alvos.sort(Comparator.comparingDouble(le -> le.getLocation().distanceSquared(ref)));
-        List<LivingEntity> lista = alvos.size() > 8 ? new ArrayList<>(alvos.subList(0, 8)) : alvos;
+        List<LivingEntity> lista = alvos.size() > 10 ? new ArrayList<>(alvos.subList(0, 10)) : alvos;
         emSequencia.add(id);
         double dano = DANO_TEMPESTADE * plugin.fator(p);
         Poderes.barra(p, "§6§lTEMPESTADE DE FLECHAS! §7" + lista.size() + " alvo(s)");
-        for (int rajada = 0; rajada < 3; rajada++) {
+        for (LivingEntity le : lista) Fx.p(le.getWorld(), Particle.END_ROD, le.getEyeLocation().add(0, 0.6, 0), 6, 0.1, 0.1, 0.1, 0.05);
+        p.getWorld().playSound(p.getLocation(), Sound.ITEM_TRIDENT_RIPTIDE_1, 0.8f, 1.5f);
+        for (int rajada = 0; rajada < 4; rajada++) {
             final int r = rajada;
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (r == 2) emSequencia.remove(id);
+                if (r == 3) emSequencia.remove(id);
                 if (!p.isOnline() || p.isDead()) return;
                 p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ARROW_SHOOT, 1f, 1.2f + r * 0.1f);
                 p.swingMainHand();
@@ -1773,9 +1969,10 @@ final class Habilidades implements Listener {
                     if (!le.isValid() || le.isDead() || !le.getWorld().equals(p.getWorld())) continue;
                     Vector d = le.getEyeLocation().subtract(0, 0.4, 0).toVector().subtract(p.getEyeLocation().toVector());
                     if (d.lengthSquared() < 0.01) continue;
-                    flecha(p, d.normalize(), 24, 3.0, dano, false);
+                    flecha(p, d.normalize(), 26, 3.2, r == 3 ? dano * 1.5 : dano, false);
                 }
-            }, 10L * rajada);
+                Fx.p(p.getWorld(), Particle.END_ROD, p.getEyeLocation(), 10, 0.3, 0.3, 0.3, 0.1);
+            }, 8L + 8L * rajada);
         }
         return true;
     }

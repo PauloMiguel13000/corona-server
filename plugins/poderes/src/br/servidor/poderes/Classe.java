@@ -26,7 +26,7 @@ public enum Classe {
             "Senhor dos mares: tridente,", "ondas, raios e redemoinho.",
             Poder.ARREMESSO, Poder.ONDA, Poder.TRIDENTE_RAIO, Poder.REDEMOINHO, Poder.POSEIDON),
     ARQUEIRO("arqueiro", "Arqueiro", "§2", Material.BOW,
-            "Mestre do arco: tiros certeiros", "e chuva de flechas.",
+            "Mestre do arco: flecha do arco +20% a +60%,", "tiro na cabeca e marca do cacador.",
             Poder.TIRO_CERTEIRO, Poder.FLECHA_EXPLOSIVA, Poder.MULTIPLO, Poder.CHUVA_FLECHAS, Poder.TEMPESTADE),
     LUTADOR("lutador", "Lutador", "§4", Material.LEATHER,
             "Mestre do soco: bate muito mais forte", "de mao vazia (sobe com o nivel).",
