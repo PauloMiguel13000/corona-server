@@ -113,6 +113,7 @@ final class LobbyMundo implements Listener {
         NpcsLobby vida = new NpcsLobby(pl);
         Bukkit.getPluginManager().registerEvents(vida, pl);
         vida.iniciar(mundo, y);
+        if (pl.lojaXp != null) pl.lojaXp.iniciar(mundo, y);
         File v3 = new File(pl.getDataFolder(), "lobby-mundo-v3.txt");
         if (pl.chocadeiras != null) {
             try {

@@ -127,6 +127,9 @@ public final class Masmorras extends JavaPlugin implements Listener {
     AlaMonstros ala;
     MundoMasmorras mundoNovo;
     LobbyMundo lobby;
+    LojaXp lojaXp;
+    Encantos encantos;
+    Aneis aneis;
     InfernoHerobrine inferno;
     TempestadeTrovao tempestade;
     DescidaGelo descida;
@@ -289,6 +292,15 @@ public final class Masmorras extends JavaPlugin implements Listener {
         campos = new Campos(this, mundoNovo);
         getServer().getPluginManager().registerEvents(campos, this);
         campos.iniciar();
+        // 18/11: Banco/Loja de XP e Encantador (ideia do Sui)
+        lojaXp = new LojaXp(this);
+        getServer().getPluginManager().registerEvents(lojaXp, this);
+        encantos = new Encantos(this);
+        getServer().getPluginManager().registerEvents(encantos, this);
+        encantos.iniciar();
+        aneis = new Aneis(this);
+        getServer().getPluginManager().registerEvents(aneis, this);
+        aneis.iniciar();
         lobby = new LobbyMundo(this, mundoNovo);
         getServer().getPluginManager().registerEvents(lobby, this);
         try {
@@ -1063,6 +1075,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         w.spawnParticle(org.bukkit.Particle.EXPLOSION, l.clone().add(0, 1, 0), 6, 1, 0.6, 1);
         if (t.secreta) herobrine(m, e);
         m.chefe.anunciar(ps);
+        if (aneis != null) aneis.avisar(ps, t);
     }
 
     private NamespacedKey kVisual;
@@ -1558,6 +1571,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         salvar();
         Player k = e.getEntity().getKiller();
         String quem = k != null ? k.getName() : "Alguém";
+        if (aneis != null) aneis.premio(k, t);
         Bukkit.broadcast(txt(PREFIXO + "§e" + quem + " §7derrotou §c" + t.chefeNome + " §7(Nível " + t.nivel + ") na §f" + t.nome + "§7!"));
         // XP de habilidade (nivel de poder das classes) para quem lutou: quem esta na arena e quem matou
         Set<Player> lutaram = new HashSet<>();

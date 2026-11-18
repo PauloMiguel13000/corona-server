@@ -192,7 +192,13 @@ final class Vip implements Listener {
 
     /** Da (ou estende) o VIP. Nivel maior troca o nivel; os dias somam com o que ainda faltava. Devolve a mensagem. */
     String dar(String nome, int n, int dias, String quem) {
+        return dar(nome, n, dias, quem, true);
+    }
+
+    /** extra=false (Loja de XP das masmorras, 18/11): so os dias, sem as coronas da hora e sem o presente; nao mexe em VIP maior. */
+    String dar(String nome, int n, int dias, String quem, boolean extra) {
         if (n < 1 || n > 4 || dias < 1 || dias > 3650) return "nivel 1 a 4 e dias 1 a 3650";
+        if (!extra && nivel(nome) > n) return nome + " ja tem VIP maior";
         ConfigurationSection c = secao(nome, true);
         long agora = System.currentTimeMillis();
         int antes = nivel(nome);
@@ -201,12 +207,14 @@ final class Vip implements Listener {
         c.set("nome", nome);
         c.set("nivel", Math.max(antes, n));
         c.set("ate", base + dias * 86_400_000L);
-        long coronas = NIVEIS[n].coronasNaHora();
+        long coronas = extra ? NIVEIS[n].coronasNaHora() : 0;
         Player p = Bukkit.getPlayerExact(nome);
-        if (p != null) darCoronas(p, coronas);
-        else c.set("coronas-pendentes", c.getLong("coronas-pendentes", 0) + coronas);
-        if (p != null) Bukkit.getScheduler().runTaskLater(pl, () -> presenteDoMes(p, nivel(nome)), 40L);
-        else c.set("presente-pendente", c.getInt("presente-pendente", 0) + 1);
+        if (extra) {
+            if (p != null) darCoronas(p, coronas);
+            else c.set("coronas-pendentes", c.getLong("coronas-pendentes", 0) + coronas);
+            if (p != null) Bukkit.getScheduler().runTaskLater(pl, () -> presenteDoMes(p, nivel(nome)), 40L);
+            else c.set("presente-pendente", c.getInt("presente-pendente", 0) + 1);
+        }
         salvar();
         registrar("DAR " + nome + " nivel " + n + " dias " + dias + " (por " + quem + ") -> nivel " + c.getInt("nivel") + " ate " + data(c.getLong("ate")));
         Nivel nv = NIVEIS[c.getInt("nivel")];
@@ -465,7 +473,8 @@ final class Vip implements Listener {
                 } catch (NumberFormatException ex) {
                     dias = -1;
                 }
-                s.sendMessage(Extras.txt("§e" + dar(a[1], n, dias, s.getName())));
+                boolean extra = !(a.length > 4 && a[4].equalsIgnoreCase("semextra"));
+                s.sendMessage(Extras.txt("§e" + dar(a[1], n, dias, s.getName() + (extra ? "" : " (loja de XP)"), extra)));
                 return true;
             }
             case "tirar", "remover" -> {

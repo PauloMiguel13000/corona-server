@@ -221,6 +221,10 @@ final class NpcsLobby implements Listener {
                     return a;
                 }
             return null;
+        } else if (pl.lojaXp != null && d.has(pl.lojaXp.kBanco)) {
+            set(a, LojaXp.BANCO[0], LojaXp.BANCO[1], 0.7, "Banqueiro de XP", "XP guardado comigo não some quando você morre.", "Junta XP e troca por VIP na Loja de XP!", "Guarde, saque, confira o saldo... é só clicar.");
+        } else if (pl.lojaXp != null && d.has(pl.lojaXp.kEncantador)) {
+            set(a, LojaXp.ENCANTADOR[0], LojaXp.ENCANTADOR[1], 0.7, "Encantador", "Veneno, raio, bola de neve... que tal um encanto que ninguém mais tem?", "Compre o livro e clique com ele em cima do item. Fácil!", "Fênix no peitoral: morrer nunca mais... quase.");
         } else if (d.has(kMorador)) {
             Integer i = d.get(kMorador, PersistentDataType.INTEGER);
             if (i == null || i < 0 || i >= MORADORES.length) return null;
