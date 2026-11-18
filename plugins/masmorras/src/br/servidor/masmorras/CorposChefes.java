@@ -125,7 +125,8 @@ final class CorposChefes implements Listener {
     // ------------------------------------------------------------------ pacote so das masmorras
 
     static boolean masmorra(World w) {
-        return w != null && w.getName().toLowerCase(java.util.Locale.ROOT).startsWith("masmorras");
+        // 18/11: o mundo de Herobrine (luta da ???) conta como masmorra: sem isso o pacote saia e voltava (tela de carregar)
+        return w != null && (w.getName().toLowerCase(java.util.Locale.ROOT).startsWith("masmorras") || w.getName().equals(InfernoHerobrine.MUNDO));
     }
 
     static boolean bedrock(Player p) {

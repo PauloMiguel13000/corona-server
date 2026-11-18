@@ -268,6 +268,16 @@ final class Trilha implements Listener {
         // de mundo pesava para quem joga no Bedrock (era o pacote mais mandado logo depois de entrar ou trocar de jogo).
         String a = tocando.get(e.getPlayer().getUniqueId());
         if (a != null) parar(e.getPlayer(), a);
+        // 18/11 (Paulo: "o mundo [de Herobrine] fica sem o som do boss"): a musica que comeca durante o carregamento do
+        // mundo novo se perde no cliente. 3 s depois toca de novo a faixa certa, do comeco.
+        Player p = e.getPlayer();
+        Bukkit.getScheduler().runTask(pl, () -> Bukkit.getScheduler().runTaskLater(pl, () -> {
+            if (!p.isOnline()) return;
+            String f = tocando.get(p.getUniqueId());
+            if (f == null) return;
+            p.stopSound(SOM + f, SoundCategory.MUSIC);
+            tocar(p, f, System.currentTimeMillis());
+        }, 60L));
     }
 
     @EventHandler

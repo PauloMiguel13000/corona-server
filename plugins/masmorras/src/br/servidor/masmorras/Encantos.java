@@ -114,7 +114,7 @@ final class Encantos implements Listener {
     }
 
     boolean vale(World w) {
-        return w != null && w.getName().toLowerCase(Locale.ROOT).startsWith("masmorras");
+        return w != null && (w.getName().toLowerCase(Locale.ROOT).startsWith("masmorras") || w.getName().equals(InfernoHerobrine.MUNDO));
     }
 
     // ------------------------------------------------------------------ dados no item

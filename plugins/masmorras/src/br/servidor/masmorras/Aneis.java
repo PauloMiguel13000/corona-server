@@ -110,7 +110,7 @@ final class Aneis implements Listener {
     }
 
     private boolean vale(org.bukkit.World w) {
-        return w != null && w.getName().toLowerCase(Locale.ROOT).startsWith("masmorras");
+        return w != null && (w.getName().toLowerCase(Locale.ROOT).startsWith("masmorras") || w.getName().equals(InfernoHerobrine.MUNDO));
     }
 
     // ------------------------------------------------------------------ item
