@@ -1677,7 +1677,7 @@ final class Habilidades implements Listener {
                 lado.normalize();
                 Vector cima = lado.clone().crossProduct(p.getEyeLocation().getDirection()).normalize();
                 Location q = mao.clone().add(lado.multiply(Math.cos(a) * r)).add(cima.multiply(Math.sin(a) * r));
-                w.spawnParticle(Particle.DUST, q, 1, 0, 0, 0, 0, po);
+                Fx.p(w, Particle.DUST, q, 1, 0, 0, 0, 0, po);
             }
             if (t[0] == ticks / 2) w.playSound(p.getLocation(), Sound.ITEM_CROSSBOW_LOADING_MIDDLE, 0.8f, 1.4f);
             if (++t[0] > ticks) {
@@ -1725,7 +1725,7 @@ final class Habilidades implements Listener {
                 Location c = alvo.getLocation().add(0, alvo.getHeight() + 0.5, 0);
                 for (int i = 0; i < 6; i++) {
                     double a = k[0] * 0.4 + i * Math.PI / 3;
-                    w.spawnParticle(Particle.DUST, c.clone().add(Math.cos(a) * 0.5, 0, Math.sin(a) * 0.5), 1, 0, 0, 0, 0,
+                    Fx.p(w, Particle.DUST, c.clone().add(Math.cos(a) * 0.5, 0, Math.sin(a) * 0.5), 1, 0, 0, 0, 0,
                             new Particle.DustOptions(Color.fromRGB(60, 220, 90), 1.0f));
                 }
             }, 0L, 4L);
@@ -1891,7 +1891,7 @@ final class Habilidades implements Listener {
                 tarefa.cancel();
                 return;
             }
-            a.getWorld().spawnParticle(Particle.END_ROD, a.getLocation(), 1, 0, 0, 0, 0);
+            if ((k[0] & 1) == 0) Fx.p(a.getWorld(), Particle.END_ROD, a.getLocation(), 1, 0, 0, 0, 0);
         }, 1L, 1L);
     }
 
@@ -1923,7 +1923,7 @@ final class Habilidades implements Listener {
             }
             for (int i = 0; i < 24; i++) {
                 double a = i * Math.PI / 12 + t[0] * 0.05;
-                w.spawnParticle(Particle.DUST, c.clone().add(Math.cos(a) * 5, 0.15, Math.sin(a) * 5), 1, 0, 0, 0, 0, marca);
+                Fx.p(w, Particle.DUST, c.clone().add(Math.cos(a) * 5, 0.15, Math.sin(a) * 5), 1, 0, 0, 0, 0, marca);
             }
             for (int i = 0; i < 7; i++) {
                 double a = rnd().nextDouble(Math.PI * 2), r = rnd().nextDouble(0, 5.0);

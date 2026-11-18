@@ -112,8 +112,13 @@ final class Visuais implements Listener {
             x.setVelocity(dir.clone().normalize().multiply(velocidade));
         });
         marcar(a, vidaTicks);
+        // 18/11 (Paulo: celular travando quando o pessoal do PC solta poder): no Bedrock cada flecha de enfeite e uma
+        // entidade a mais para o celular desenhar; ele ve 1 de cada 3 (a chuva e o leque continuam com cara de chuva)
+        if ((contaFlechas++ % 3) != 0) for (org.bukkit.entity.Player j : w.getPlayers()) if (Cenas.ehBedrock(j)) j.hideEntity(pl, a);
         return a;
     }
+
+    private int contaFlechas;
 
     /** Os projeteis de enfeite nunca acertam nada: somem ao encostar. */
     @EventHandler(priority = EventPriority.LOWEST)
