@@ -275,6 +275,10 @@ final class LobbyMundo implements Listener {
     static final double[] MERCADOR = {20.5, -19.5}, GUIA = {20.5, 20.5}, CLASSES = {-21.5, -18.5};
     static final int ESM_X = -37, ESM_Z = 13;
 
+    static boolean pronto(World w, int x, int z) {
+        return w.isChunkLoaded(x >> 4, z >> 4) && w.getChunkAt(x >> 4, z >> 4).isEntitiesLoaded();
+    }
+
     private static float olharCentro(double x, double z) {
         return (float) Math.toDegrees(Math.atan2(x, -z));
     }
@@ -674,7 +678,8 @@ final class LobbyMundo implements Listener {
     // ------------------------------------------------------------------ npcs
 
     private void garantirNpcs() {
-        if (mundo == null || !mundo.isChunkLoaded(1, -2) || !mundo.isChunkLoaded(1, 1) || !mundo.isChunkLoaded(-2, -2)) return;
+        // 18/11: so cria quando as ENTIDADES do chunk ja carregaram (senao nao acha o NPC que existe e cria outro)
+        if (mundo == null || !pronto(mundo, 20, -20) || !pronto(mundo, 20, 20) || !pronto(mundo, -20, -20) || !pronto(mundo, 26, 10)) return;
         try {
             Location merc = new Location(mundo, MERCADOR[0], y + 2, MERCADOR[1], olharCentro(MERCADOR[0], MERCADOR[1]), 0f);
             if (!existe(merc, pl.loja.kMercador)) pl.loja.npc(merc, "§5§lMercador Lendário", null, Loja.profissao(6), pl.loja.kMercador, 6);

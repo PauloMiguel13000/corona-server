@@ -116,7 +116,7 @@ final class NpcsLobby implements Listener {
         for (int i = 0; i < MORADORES.length; i++) {
             Object[] m = MORADORES[i];
             double x = (double) m[2], z = (double) m[3];
-            if (!mundo.isChunkLoaded((int) Math.floor(x) >> 4, (int) Math.floor(z) >> 4)) continue;
+            if (!LobbyMundo.pronto(mundo, (int) Math.floor(x), (int) Math.floor(z))) continue;
             if (existe(kMorador, i)) continue;
             Location l = new Location(mundo, x, y + 1, z);
             Villager v = pl.loja.npc(l, (String) m[0], null, Loja.profissao(0), kMorador, i);
@@ -127,7 +127,7 @@ final class NpcsLobby implements Listener {
             v.setAgeLock(true);
         }
         // velho escondido atras da torre nordeste
-        if (mundo.isChunkLoaded(VELHO_X >> 4, VELHO_Z >> 4) && !existe(kPista, 1)) {
+        if (LobbyMundo.pronto(mundo, VELHO_X, VELHO_Z) && !existe(kPista, 1)) {
             Location l = Loja.lugarPerto(mundo, VELHO_X, y + 2, VELHO_Z);
             if (l == null) l = new Location(mundo, VELHO_X + 0.5, y + 1, VELHO_Z + 0.5);
             l.setYaw(135f);
@@ -137,13 +137,14 @@ final class NpcsLobby implements Listener {
         }
         if (vigia != null && garantirLonge(vigia, 2, "§6§lVigia das Ruínas", "cartographer", Villager.Type.DESERT)) acampamento(vigia, false);
         if (andarilha != null && garantirLonge(andarilha, 3, "§5§lAndarilha Cega", "cleric", Villager.Type.TAIGA)) acampamento(andarilha, true);
+        tirarRepetidos();
         // registra quem anda
         andantes.keySet().removeIf(u -> {
             Entity e = Bukkit.getEntity(u);
             return e == null || !e.isValid();
         });
         for (Entity e : mundo.getNearbyEntities(new Location(mundo, 0, y, 0), 52, 20, 52)) {
-            if (!(e instanceof Villager) || andantes.containsKey(e.getUniqueId())) continue;
+            if (!(e instanceof Villager || e instanceof org.bukkit.entity.Mannequin) || andantes.containsKey(e.getUniqueId())) continue;
             Andante a = casa(e);
             if (a == null) continue;
             a.tx = a.cx;
@@ -151,6 +152,38 @@ final class NpcsLobby implements Listener {
             a.pausa = ThreadLocalRandom.current().nextInt(20, 80);
             andantes.put(e.getUniqueId(), a);
         }
+    }
+
+    /** NPC repetido no lobby (criado de novo antes das entidades do chunk carregarem): fica so um de cada. */
+    private void tirarRepetidos() {
+        java.util.Set<String> vistos = new java.util.HashSet<>();
+        NamespacedKey kBoneco = new NamespacedKey(pl, "lobby_boneco");
+        int tirados = 0;
+        for (Entity e : mundo.getNearbyEntities(new Location(mundo, 0, y, 0), 60, 30, 60)) {
+            PersistentDataContainer d = e.getPersistentDataContainer();
+            String id = null;
+            if ((e instanceof Villager || e instanceof org.bukkit.entity.Mannequin) && !d.has(kBoneco)) {
+                if (d.has(kMercador)) id = "merc";
+                else if (d.has(kGuia)) id = "guia";
+                else if (d.has(kClasses)) id = "classes";
+                else if (d.has(kVendedor)) id = "vend";
+                else if (d.has(kMissao)) id = "m" + d.get(kMissao, PersistentDataType.STRING);
+                else if (d.has(kMorador)) id = "mor" + d.get(kMorador, PersistentDataType.INTEGER);
+                else if (d.has(kPista)) id = "p" + d.get(kPista, PersistentDataType.INTEGER);
+            } else if (d.has(kBoneco)) {
+                int bx = e.getLocation().getBlockX(), bz = e.getLocation().getBlockZ();
+                boolean certo = false;
+                for (int[] c : LobbyMundo.BONECOS) if (c[0] == bx && c[1] == bz) certo = true;
+                id = certo ? "b" + bx + "," + bz : "fora";
+                if (!certo) vistos.add(id);
+            }
+            if (id == null) continue;
+            if (!vistos.add(id)) {
+                e.remove();
+                tirados++;
+            }
+        }
+        if (tirados > 0) pl.getLogger().info("Lobby: " + tirados + " NPC(s) repetido(s) tirado(s).");
     }
 
     private boolean existe(NamespacedKey k, int valor) {
@@ -212,11 +245,11 @@ final class NpcsLobby implements Listener {
         ThreadLocalRandom r = ThreadLocalRandom.current();
         for (Map.Entry<UUID, Andante> en : andantes.entrySet()) {
             Entity e = Bukkit.getEntity(en.getKey());
-            if (!(e instanceof Villager v) || !v.isValid()) continue;
+            if (!(e instanceof org.bukkit.entity.LivingEntity v) || !v.isValid()) continue;
             Andante a = en.getValue();
             Location l = v.getLocation();
             Player perto = null;
-            double melhor = 3.2 * 3.2;
+            double melhor = 5.5 * 5.5;   // como o Skins.olhar (6): perto de alguem, para e olha
             for (Player p : mundo.getPlayers()) {
                 double d = p.getLocation().distanceSquared(l);
                 if (d < melhor) {
@@ -369,7 +402,7 @@ final class NpcsLobby implements Listener {
 
     /** Cria o NPC longe quando o chunk dele carrega. Devolve true quando acabou de criar (para montar o acampamento). */
     private boolean garantirLonge(Location l, int qual, String nome, String prof, Villager.Type tipo) {
-        if (!mundo.isChunkLoaded(l.getBlockX() >> 4, l.getBlockZ() >> 4)) return false;
+        if (!LobbyMundo.pronto(mundo, l.getBlockX(), l.getBlockZ())) return false;
         if (existe(kPista, qual)) return false;
         if (l.getY() < -900) {
             Location chao = chaoLivre(l.getBlockX(), l.getBlockZ());

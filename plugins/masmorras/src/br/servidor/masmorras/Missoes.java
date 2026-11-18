@@ -432,7 +432,7 @@ final class Missoes implements Listener {
 
     void garantirNpcs(org.bukkit.World mundo, int y) {
         for (Npc n : npcs) {
-            if (!mundo.isChunkLoaded(n.x() >> 4, n.z() >> 4)) continue;
+            if (!LobbyMundo.pronto(mundo, n.x(), n.z())) continue;
             Location l = new Location(mundo, n.x() + 0.5, y + 1, n.z() + 0.5, n.yaw(), 0f);
             boolean tem = false;
             for (Entity e : mundo.getNearbyEntities(l, 2, 3, 2)) if (n.id().equals(e.getPersistentDataContainer().get(kNpc, PersistentDataType.STRING))) tem = true;

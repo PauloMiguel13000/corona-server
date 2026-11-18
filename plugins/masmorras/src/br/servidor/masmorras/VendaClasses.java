@@ -70,7 +70,7 @@ final class VendaClasses implements Listener {
     }
 
     void garantirNpc(org.bukkit.World mundo, int y, int x, int z) {
-        if (!mundo.isChunkLoaded(x >> 4, z >> 4)) return;
+        if (!LobbyMundo.pronto(mundo, x, z)) return;
         // 18/11 (lobby v5): olha para o centro da praca
         Location l = new Location(mundo, x + 0.5, y + 2, z + 0.5, (float) Math.toDegrees(Math.atan2(x, -z)), 0f);
         for (Entity e : mundo.getNearbyEntities(l, 3, 3, 3)) if (e.getPersistentDataContainer().has(kNpc)) return;
