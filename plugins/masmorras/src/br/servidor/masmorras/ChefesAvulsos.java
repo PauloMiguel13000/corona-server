@@ -73,7 +73,8 @@ final class ChefesAvulsos {
         c.avulso = true;
         m.chefe = c;
         porCorpo.put(e.getUniqueId(), m);
-        if (pl.coroas != null) pl.coroas.vestir(e, t);
+        boolean corpo3d = pl.corpos3d != null && pl.corpos3d.vestir(e, t);
+        if (!corpo3d && pl.coroas != null) pl.coroas.vestir(e, t);
         e.getWorld().strikeLightningEffect(onde);
         e.getWorld().spawnParticle(Particle.EXPLOSION, onde.clone().add(0, 1, 0), 6, 1, 0.6, 1);
         List<Player> ps = c.naArena();

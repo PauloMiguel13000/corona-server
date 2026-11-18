@@ -551,6 +551,7 @@ final class Chefe {
     }
 
     private void usarHabilidade(List<Player> ps, Player alvo) {
+        if (pl.corpos3d != null) pl.corpos3d.magia(e);
         if (t.habs == null || t.habs.length == 0 || alvo == null) return;
         Tipo.Hab h = forcada != null ? forcada : t.habs[rnd.nextInt(t.habs.length)];
         if (h == Tipo.Hab.CURA && forcada == null) {

@@ -137,6 +137,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
     VendaClasses vendaClasses;
     Campos campos;
     Coroas coroas;
+    CorposChefes corpos3d;
     /** 17/11: chefes chamados pelo boss mundial (Extras) na arena dele. */
     ChefesAvulsos avulsos;
     Portoes portoes;
@@ -282,6 +283,8 @@ public final class Masmorras extends JavaPlugin implements Listener {
         vendaClasses = new VendaClasses(this);
         getServer().getPluginManager().registerEvents(vendaClasses, this);
         coroas = new Coroas(this);
+        corpos3d = new CorposChefes(this);
+        getServer().getPluginManager().registerEvents(corpos3d, this);
         avulsos = new ChefesAvulsos(this);
         campos = new Campos(this, mundoNovo);
         getServer().getPluginManager().registerEvents(campos, this);
@@ -343,6 +346,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         if (statusEntrada != null) statusEntrada.limpar();
         if (missoes != null) missoes.salvarAgora();
         if (campos != null) campos.parar();
+        if (corpos3d != null) corpos3d.parar();
         if (coroas != null) coroas.parar();
         for (Masmorra m : todas) limpar(m);
         if (atual != null) soltarChunks(atual);
@@ -1052,7 +1056,8 @@ public final class Masmorras extends JavaPlugin implements Listener {
         double vida = e.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
         if (e instanceof Warden wd) for (Player p : ps) wd.increaseAnger(p, 90);
         m.chefe = new Chefe(this, m, e, vida);
-        if (coroas != null && !t.secreta) coroas.vestir(e, t);
+        boolean corpo3d = corpos3d != null && !t.secreta && corpos3d.vestir(e, t);
+        if (!corpo3d && coroas != null && !t.secreta) coroas.vestir(e, t);
         // chegada do chefe: raio (so efeito) e explosao de particulas
         w.strikeLightningEffect(l);
         w.spawnParticle(org.bukkit.Particle.EXPLOSION, l.clone().add(0, 1, 0), 6, 1, 0.6, 1);
@@ -2513,6 +2518,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
                 skins.gerarFaltando();
                 return true;
             }
+            case "corpo", "corpo-anim", "corpo-dump", "corpo-limpar" -> corpos3d.comando(s, a);
             case "coroa" -> {
                 // teste visual: masmorras admin coroa <tema> -> um zumbi com a coroa do chefe daquele tema, na sua frente
                 if (!(s instanceof Player pj)) return true;
