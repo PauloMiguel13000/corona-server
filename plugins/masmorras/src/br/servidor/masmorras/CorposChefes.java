@@ -60,8 +60,8 @@ import org.joml.Vector3f;
  */
 final class CorposChefes implements Listener {
 
-    static final String URL_PADRAO = "https://corona-server.duckdns.org/pacotes/corona_masmorras3d_java-b15f7094ed.zip";
-    static final String SHA1_PADRAO = "b15f7094ed64885bb20788ddfd68221e2317d100";
+    static final String URL_PADRAO = "https://corona-server.duckdns.org/pacotes/corona_masmorras3d_java-dc9b7b9f96.zip";
+    static final String SHA1_PADRAO = "dc9b7b9f96dc14294e035d3ca13671973028c2eb";
     private static final UUID ID = UUID.nameUUIDFromBytes("corona-masmorras-3d".getBytes(StandardCharsets.UTF_8));
     private static final int PASSO = 2;   // ticks entre uma pose e outra (o cliente desliza entre elas)
 
@@ -290,7 +290,8 @@ final class CorposChefes implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void lancou(ProjectileLaunchEvent e) {
-        if (!(e.getEntity().getShooter() instanceof LivingEntity le) || e.getEntity() instanceof org.bukkit.entity.AbstractArrow) return;
+        if (!(e.getEntity().getShooter() instanceof LivingEntity le)) return;
+        if (e.getEntity() instanceof org.bukkit.entity.AbstractArrow && !(e.getEntity() instanceof org.bukkit.entity.Trident)) return;
         Corpo c = corpos.get(le.getUniqueId());
         if (c != null && c.acao == Acao.NADA) c.acao(Acao.LANCA, 16);
     }
@@ -353,7 +354,7 @@ final class CorposChefes implements Listener {
         private final java.util.Random rnd = new java.util.Random();
         private final Quaternionf[] q;
         private final Vector3f[] off;
-        private final float[] sc;
+        private final Vector3f[] sc;
 
         Corpo(LivingEntity mob, CorpoDef d) {
             this.mob = mob;
@@ -361,9 +362,11 @@ final class CorposChefes implements Listener {
             this.pecas = new ItemDisplay[d.pecas().length];
             this.q = new Quaternionf[pecas.length];
             this.off = new Vector3f[pecas.length];
-            this.sc = new float[pecas.length];
+            this.sc = new Vector3f[pecas.length];
             AttributeInstance s = mob.getAttribute(Attribute.SCALE);
             this.esc = d.esc() * (float) (s == null ? 1.0 : s.getValue());
+            // slime (Rainha da Gosma): o tamanho vem da caixa (slime grande), nao do atributo de escala
+            if (mob instanceof org.bukkit.entity.Slime) this.esc = d.esc() * (float) Math.max(1.0, mob.getBoundingBox().getHeight() / 2.2);
         }
 
         Vector3f lugar(PecaDef p) {
@@ -481,12 +484,14 @@ final class CorposChefes implements Listener {
             for (int i = 0; i < pecas.length; i++) {
                 q[i] = new Quaternionf();
                 off[i] = new Vector3f();
-                sc[i] = 1f;
+                sc[i] = new Vector3f(1f, 1f, 1f);
             }
             Quaternionf global = new Quaternionf();
             Vector3f globalOff = new Vector3f();
             switch (d.tipo()) {
                 case "aranha" -> poseAranha(global, globalOff);
+                case "quadrupede" -> poseQuadrupede(global, globalOff);
+                case "gosma" -> poseGosma(global, globalOff);
                 default -> poseHumano(global, globalOff);
             }
             aplicar(global, globalOff);
@@ -507,7 +512,7 @@ final class CorposChefes implements Listener {
 
         private void escala(String n, float s) {
             int i = d.i(n);
-            if (i >= 0) sc[i] = s;
+            if (i >= 0) sc[i].set(s, s, s);
         }
 
         /** Lado: +1 direita do chefe (peca _d), -1 esquerda. roll positivo = para fora. */
@@ -580,7 +585,10 @@ final class CorposChefes implements Listener {
                 default -> { }
             }
             // arqueiro: segura o arco esticado enquanto mira (mao esquerda) e a direita puxa a corda
-            if (mob.isHandRaised() || soltou > 0) {
+            Material naMao = mob.getEquipment() == null ? Material.AIR : mob.getEquipment().getItemInMainHand().getType();
+            boolean arco = naMao == Material.BOW || naMao == Material.CROSSBOW;
+            if (mob.isHandRaised() && naMao == Material.TRIDENT && acao == Acao.NADA) acao(Acao.LANCA, 16);
+            if (arco && (mob.isHandRaised() || soltou > 0)) {
                 float puxa = soltou > 0 ? soltou / 6f : 1f;
                 bP[1] = 85 + olharP;
                 bY[1] = 10;
@@ -725,6 +733,122 @@ final class CorposChefes implements Listener {
             set("presas", -presa, 0, 0);
         }
 
+        private void escala3(String n, float x, float y, float z) {
+            int i = d.i(n);
+            if (i >= 0) sc[i].set(x, y, z);
+        }
+
+        // ----------------------------------------------------------- 4 patas (Devastador, Besta Zoglin)
+        private void poseQuadrupede(Quaternionf global, Vector3f gOff) {
+            float v = vel, t = tk - acaoDesde, k = acaoDura <= 0 ? 1 : t / acaoDura;
+            float resp = (float) Math.sin(tk * 0.07), s2 = (float) Math.sin(fase * 2);
+            float cP = 1.2f * resp, cR = 2.5f * (float) Math.sin(fase) * v, sobe = 0.5f * Math.abs((float) Math.cos(fase)) * v + 0.15f * resp;
+            float hP = olharP * 0.6f + 4 * (float) Math.sin(tk * 0.045) * (1 - v) + 5 * s2 * v, hY = olharY * 0.8f, mand = 3 + 3 * Math.max(0, resp);
+            float caudaY = 14 * (float) Math.sin(tk * 0.15) + 18 * (float) Math.sin(fase) * v, caudaP = 8 + 6 * v;
+            float avanco = 0;
+            float[] perna = new float[4], joelho = new float[4];   // fd, fe, td, te
+            String[] ks = {"fd", "fe", "td", "te"};
+            for (int i = 0; i < 4; i++) {
+                // trote: patas em diagonal juntas (fd+te / fe+td)
+                double ph = fase + ((i == 0 || i == 3) ? 0 : Math.PI);
+                float sw = (float) Math.sin(ph), lift = (float) Math.max(0, Math.cos(ph));
+                perna[i] = 28 * sw * v;
+                joelho[i] = (i < 2 ? -38 : 34) * lift * v;
+            }
+            switch (acao) {
+                case GOLPE, GOLPE_RAPIDO -> {   // abaixa a cabeca, avanca e da a chifrada para cima
+                    float[] g = curva(k, 0.45f, 0.58f);
+                    hP += -26 * g[0] + 38 * g[1];
+                    cP += 8 * g[0] - 10 * g[1];
+                    mand += 26 * (g[0] + g[1]);
+                    avanco = 6 * g[1] - 2 * g[0];
+                    perna[0] += -14 * g[0] + 22 * g[1];
+                    perna[1] += -14 * g[0] + 22 * g[1];
+                    perna[2] += 12 * g[0];
+                    perna[3] += 12 * g[0];
+                }
+                case LANCA, MAGIA -> {   // urra: ergue a cabeca e treme
+                    float[] g = curva(k, 0.55f, 0.7f);
+                    float treme = (float) Math.sin(tk * 1.9) * 3 * g[0];
+                    hP += 30 * g[0] + 10 * g[1] + treme;
+                    mand += 40 * g[0] + 20 * g[1];
+                    cP += -6 * g[0];
+                    cR += treme * 0.6f;
+                }
+                default -> { }
+            }
+            cR += 8 * dano * (float) Math.sin(tk * 2.1);
+            hP += 14 * dano;
+            mand += 20 * dano;
+            if (morto) {   // tomba de lado, patas duras
+                float m = ss((tk - morteDesde) / 24f);
+                global.rotateZ(rad(88 * m));
+                gOff.set(0, -0.15f * esc * m, 0);
+                for (int i = 0; i < 4; i++) {
+                    perna[i] = (i < 2 ? 20 : -20) * m;
+                    joelho[i] = 0;
+                }
+                hP = -20 * m;
+                mand = 30 * m;
+                caudaY = 0;
+            }
+            set("corpo", -cP, 0, cR);
+            mover("corpo", 0, sobe, -avanco);
+            set("cabeca", hP, hY, -cR * 0.5f);
+            set("mandibula", -mand, 0, 0);
+            set("cauda", caudaP, caudaY, 0);
+            for (int i = 0; i < 4; i++) {
+                set("coxa_" + ks[i], perna[i], 0, 0);
+                set("canela_" + ks[i], joelho[i], 0, 0);
+            }
+        }
+
+        // ----------------------------------------------------------- gosma: estica, achata e quica
+        private void poseGosma(Quaternionf global, Vector3f gOff) {
+            float v = vel, t = tk - acaoDesde, k = acaoDura <= 0 ? 1 : t / acaoDura;
+            float resp = (float) Math.sin(tk * 0.09);
+            double hp = fase * 0.55;
+            float pulo = (float) Math.max(0, Math.sin(hp)), pouso = (float) Math.max(0, -Math.sin(hp));
+            float sy = 1 + 0.04f * resp + 0.16f * pulo * v - 0.22f * pouso * v, sxz = 1 - 0.03f * resp - 0.08f * pulo * v + 0.14f * pouso * v;
+            float alto = 7 * pulo * v, abre = 0.4f + 0.4f * Math.max(0, resp), inclina = 6 * (float) Math.cos(hp) * v;
+            switch (acao) {
+                case GOLPE, GOLPE_RAPIDO -> {   // estica para cima e se joga em cima do alvo
+                    float[] g = curva(k, 0.45f, 0.6f);
+                    sy += 0.3f * g[0] - 0.35f * g[1];
+                    sxz += -0.14f * g[0] + 0.28f * g[1];
+                    alto += 5 * g[0];
+                    abre += 3 * (g[0] + g[1]);
+                    inclina += 18 * g[1];
+                }
+                case LANCA, MAGIA -> {   // treme inteira e cospe
+                    float[] g = curva(k, 0.55f, 0.7f);
+                    float treme = (float) Math.sin(tk * 2.2) * 0.08f * g[0];
+                    sy += treme;
+                    sxz -= treme;
+                    abre += 3.5f * g[1] + 1.5f * g[0];
+                }
+                default -> { }
+            }
+            // apanhou: balanca como gelatina
+            float jig = dano * (float) Math.sin(tk * 1.7) * 0.18f;
+            sy += jig;
+            sxz -= jig * 0.8f;
+            if (morto) {   // derrete no chao
+                float m = ss((tk - morteDesde) / 30f);
+                sy = 1 - 0.85f * m;
+                sxz = 1 + 0.6f * m;
+                alto = 0;
+                abre = 2 * m;
+            }
+            set("corpo", -inclina, 0, 0);
+            escala3("corpo", sxz, sy, sxz);
+            mover("corpo", 0, alto, 0);
+            // a parte de cima vira para o alvo e balanca com atraso
+            set("cima", 3 * (float) Math.sin(tk * 0.11) - inclina * 0.4f, olharY * 0.5f, 2 * (float) Math.sin(tk * 0.07));
+            escala3("cima", 1 / Math.max(0.6f, sxz) * 0.98f + 0.02f, 1, 1 / Math.max(0.6f, sxz) * 0.98f + 0.02f);
+            mover("mandibula", 0, -abre, 0);
+        }
+
         /** Junta as pecas em cadeia (filho gira em volta do pivo do pai) e manda as transformacoes. */
         private void aplicar(Quaternionf global, Vector3f gOff) {
             PecaDef[] ps = d.pecas();
@@ -738,7 +862,8 @@ final class CorposChefes implements Listener {
                     rw[i] = new Quaternionf(q[i]);
                 } else {
                     PecaDef pai = ps[p.pai()];
-                    Vector3f rel = rest.sub(lugar(pai)).add(off[i]);
+                    // o pai esticado/achatado (gosma) leva os filhos junto
+                    Vector3f rel = rest.sub(lugar(pai)).mul(sc[p.pai()]).add(off[i]);
                     pw[i] = rw[p.pai()].transform(rel, new Vector3f()).add(pw[p.pai()]);
                     rw[i] = new Quaternionf(rw[p.pai()]).mul(q[i]);
                 }
@@ -746,11 +871,11 @@ final class CorposChefes implements Listener {
             for (int i = 0; i < ps.length; i++) {
                 Vector3f pos = global.transform(pw[i], new Vector3f()).add(gOff);
                 Quaternionf r = new Quaternionf(global).mul(rw[i]);
-                float e = esc * sc[i];
+                Vector3f e = new Vector3f(sc[i]).mul(esc);
                 ItemDisplay x = pecas[i];
                 x.setInterpolationDelay(0);
                 x.setInterpolationDuration(PASSO);
-                x.setTransformation(new Transformation(pos, r, new Vector3f(e, e, e), new Quaternionf()));
+                x.setTransformation(new Transformation(pos, r, e, new Quaternionf()));
             }
         }
     }

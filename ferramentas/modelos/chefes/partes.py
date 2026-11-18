@@ -22,6 +22,8 @@ sys.path.insert(0, AQUI)
 sys.path.insert(0, os.path.join(AQUI, '..'))
 import chefes3d as K  # noqa: E402
 import bruxa3d as BX  # noqa: E402
+import chefes3d_b as KB  # noqa: E402
+import chefes3d_c as KC  # noqa: E402  (15-20 refeitos)
 H, A, C = K.H, K.A, K.C
 import kit  # noqa: E402
 
@@ -31,15 +33,17 @@ SAIDA = sys.argv[1] if len(sys.argv) > 1 else '/tmp/masm3d'
 BRACO = ('umero', 'cotovelo', 'radio', 'mao', 'dedo', 'bracelete', 'manga', 'punho', 'luva', 'braco', 'unha', 'garra', 'chama_mao',
          'bracadeira', 'chama', 'chama2', 'pocao', 'rolha', 'manga_ponta')
 ARMA = ('cabo', 'picareta', 'ponta', 'lamina', 'lamina_luz', 'guarda', 'cajado', 'cajado_aro', 'caveirinha', 'caveira_olho', 'orbe',
-        'machado', 'machado2', 'fio', 'arco', 'arco_ponta', 'corda_arco', 'cristal_cajado')
+        'machado', 'machado2', 'fio', 'arco', 'arco_ponta', 'corda_arco', 'cristal_cajado', 'bola', 'cravo', 'gancho', 'gancho2',
+        'tridente_base', 'ponta_luz', 'pena_cajado', 'cabo_aro', 'machado_ponta', 'sangue', 'cabo_alca', 'pa', 'pa_terra', 'farpa',
+        'osso_cajado', 'cabo_ponta', 'fio_ponta', 'sangue2', 'pa_gola', 'pa_ponta', 'rebite')
 PERNA = ('femur', 'joelho', 'canela', 'pe', 'perna', 'bota', 'joelheira', 'caneleira')
-CAPA = ('capa', 'capa_barra', 'manto', 'trapo', 'estandarte', 'mastro', 'pele_capa')
+CAPA = ('capa', 'capa_barra', 'manto', 'trapo', 'estandarte', 'mastro', 'pele_capa', 'casaco_rabo')
 
 
 def H_(**kw):
     """Esqueleto humano: ombro (dx,y,z), cotovelo y, quadril (dx,y), joelho y, pescoco (y,z), capa (y,z)."""
     base = dict(tipo='humanoide', ombro=(5.2, 6.8, 8.0), cotovelo=0.8, quadril=(2.1, -3.0), joelho=-9.6, pescoco=(8.6, 8.0),
-                mand=None, capa=None, cabeca_nomes=(), braco_extra=(), extra={}, sem_pernas=False, saia=None, z_perna=8.0)
+                mand=None, capa=None, cabeca_nomes=(), braco_extra=(), perna_extra=(), extra={}, sem_pernas=False, saia=None, z_perna=8.0)
     base.update(kw)
     return base
 
@@ -72,10 +76,54 @@ RIGS = {
                                         capa=(12.0, 10.0), cabeca_nomes=('cristal', 'aro', 'boca'), esc=1.05,
                                         extra={'orbita': ((8.0, 6.0, 8.0), None, ('estilhaco', 'estilhaco_luz'))})),
     'rainha': dict(fonte='c_rainha', tipo='aranha', esc=0.95),
+    # ---- lote 11-20
+    'carcereiro': dict(fonte='c_carcereiro', **H_(ombro=(8.8, 10.4, 8.0), cotovelo=2.0, quadril=(3.0, -2.0), joelho=-8.4, pescoco=(11.0, 6.6),
+                                                  mand=(11.0, 6.0), cabeca_nomes=('antena', 'antena_luz', 'grade', 'grade_h', 'boca_luz'),
+                                                  braco_extra=('ombro', 'ombreira', 'algema', 'corrente'), esc=1.0)),
+    'farao': dict(fonte='c_farao', **H_(ombro=(5.4, 7.0, 8.2), cotovelo=2.0, quadril=(2.0, -2.0), joelho=-8.4, pescoco=(7.4, 7.8), capa=(7.0, 11.0),
+                                        cabeca_nomes=('nemes', 'nemes_lado', 'listra', 'listra_topo', 'nemes_trás', 'naja', 'naja_olho', 'faixa_rosto', 'barba'),
+                                        braco_extra=('faixa_braco',), perna_extra=('faixa_perna',), esc=1.0)),
+    'afogado': dict(fonte='c_afogado', **H_(ombro=(6.6, 8.0, 8.0), cotovelo=2.0, quadril=(2.6, -2.0), joelho=-8.4, pescoco=(8.2, 7.8), capa=(8.6, 11.4),
+                                            cabeca_nomes=('meia_caveira', 'olho_fundo', 'barba', 'barba_ponta', 'cabelo', 'cabelo_lado', 'coroa', 'coroa_ponta',
+                                                          'perola', 'coral', 'coral_ramo'),
+                                            braco_extra=('ombreira', 'ombreira2', 'coral_ombro', 'coral_ombro_ramo', 'craca_ombro', 'alga_braco'),
+                                            perna_extra=('alga_perna', 'craca'), esc=1.0)),
+    'xama': dict(fonte='c_xama', **H_(ombro=(5.2, 7.0, 8.2), cotovelo=2.0, quadril=(2.0, -2.0), joelho=-8.4, pescoco=(7.0, 8.0),
+                                      cabeca_nomes=('pena', 'faixa_cocar', 'mascara', 'mascara_testa', 'nariz_masc', 'boca_masc', 'pintura_masc', 'olho_fundo',
+                                                    'sobrancelha_masc', 'dente_masc', 'chifre_masc'),
+                                      braco_extra=('pintura_braco',), perna_extra=('pintura', 'perneira'), esc=1.0)),
+    'carrasco': dict(fonte='c_carrasco', **H_(ombro=(7.4, 8.8, 8.0), cotovelo=1.0, quadril=(2.8, -2.0), joelho=-8.4, pescoco=(9.6, 8.0), capa=(9.8, 11.6),
+                                              cabeca_nomes=('capuz', 'capuz_ponta', 'capuz_ponta2', 'capuz_manto', 'furo', 'costura', 'costura_v'),
+                                              braco_extra=('ombreira', 'ombreira2', 'espeto', 'ombro', 'tira_ombro'), perna_extra=('bota_tira', 'bota_fivela'), esc=1.0)),
+    'coveiro': dict(fonte='c_coveiro', **H_(ombro=(5.4, 7.6, 8.1), cotovelo=2.0, quadril=(2.0, -2.0), joelho=-8.4, pescoco=(8.4, 7.6), mand=(9.0, 6.0),
+                                            capa=(-5.8, 10.3),
+                                            cabeca_nomes=('aba', 'cartola', 'fita', 'cartola_topo', 'cartola_remendo', 'vela', 'cera', 'chama_vela', 'olho_fundo',
+                                                          'nariz', 'olheira', 'ponto', 'cabelo'),
+                                            braco_extra=('lampiao', 'lampiao_alca', 'lampiao_luz', 'lampiao_topo', 'lampiao_barra'), perna_extra=('bota_cano',), esc=1.0)),
+    'ventos': dict(fonte='c_ventos', **H_(ombro=(6.6, 8.6, 8.0), cotovelo=1.0, pescoco=(9.8, 8.0), sem_pernas=True, esc=1.0,
+                                          cabeca_nomes=('capuz', 'coroa_fogo', 'chifre', 'boca'), braco_extra=('ombro',),
+                                          extra={'fogo': ((8.0, -10.0, 8.0), None, ('fogo', 'fogo_ponta')),
+                                                 'anel1': ((8.0, -9.0, 8.0), None, ()), 'anel2': ((8.0, -2.0, 8.0), None, ())})),
+    'devastador': dict(fonte='c_devastador', tipo='quadrupede', esc=1.0, corpo=(8.0, -4.0, 17.5), cabeca=(8.0, -1.0, 6.0), mand=(8.0, -8.0, 0.0),
+                       cauda=(8.0, 0.0, 28.0), joelho=-10.0, patas={'fd': (12.6, 9.4), 'fe': (3.4, 9.4), 'td': (12.6, 24.2), 'te': (3.4, 24.2)},
+                       cabeca_nomes=('cabeca', 'capacete', 'focinho', 'narina', 'olho', 'chifre', 'chifre2', 'chifre3', 'pescoco'),
+                       mand_nomes=('mandibula', 'dente_b', 'presa')),
+    'zoglin': dict(fonte='c_zoglin', tipo='quadrupede', esc=1.0, corpo=(8.0, -4.0, 16.0), cabeca=(8.0, -1.0, 5.0), mand=(8.0, -8.0, 2.0),
+                   cauda=(8.0, 0.0, 25.0), joelho=-10.0, patas={'fd': (12.0, 9.0), 'fe': (4.0, 9.0), 'td': (11.6, 22.0), 'te': (4.4, 22.0)},
+                   cabeca_nomes=('cabeca', 'mascara_osso', 'mascara_racha', 'focinho', 'focinho_ponta', 'narina', 'olho', 'olho_fundo', 'orelha', 'orelha_rasgo'),
+                   mand_nomes=('mandibula', 'presa', 'presa_ponta', 'presa_ponta2', 'dente_b')),
+    # 18/11: a Gosma virou a Rainha da Gosma (humana da cintura para cima, vestido de gosma no lugar das pernas)
+    'gosma': dict(fonte='c_gosma', **H_(ombro=(3.9, 6.2, 8.0), cotovelo=1.4, pescoco=(7.4, 8.0), sem_pernas=True, saia=(-3.0, 8.0), capa=(13.0, 10.9),
+                                        cabeca_nomes=('cabelo', 'franja', 'franja_ponta', 'mecha', 'mecha_ponta', 'laco_cabelo', 'coroa', 'coroa_ponta', 'joia',
+                                                      'olho', 'pupila_olho', 'brilho_olho', 'cilio', 'bochecha', 'boca_s', 'pescoco'),
+                                        braco_extra=('manga_fita',), esc=1.0,
+                                        extra={'orbita': ((8.0, 4.0, 8.0), None, ('gota_voa', 'gota_voa_luz'))})),
 }
 # masmorra -> modelo
 MASMORRAS = {'CRIPTA': 'rei', 'NINHO': 'rainha', 'MINA': 'mineiro', 'PANTANO': 'bruxa', 'GELO': 'gelo', 'TORRE': 'mago',
-             'FORJA': 'chamas', 'BASTIAO': 'piglin', 'WITHER': 'general', 'CIDADELA': 'vazio'}
+             'FORJA': 'chamas', 'BASTIAO': 'piglin', 'WITHER': 'general', 'CIDADELA': 'vazio',
+             'PRISAO': 'carcereiro', 'DESERTO': 'farao', 'QUARTEL': 'devastador', 'VENTOS': 'ventos', 'AFOGADA': 'afogado',
+             'SELVA': 'xama', 'CASTELO': 'carrasco', 'COVIL': 'zoglin', 'CEMITERIO': 'coveiro', 'ESGOTO': 'gosma'}
 
 
 def cx(c):
@@ -133,7 +181,7 @@ def humanoide(nome, r, cs):
         for pn, (_, _, nomes) in r['extra'].items():
             if comeca(n, nomes):
                 dest = pn
-        if dest is None and nome == 'chamas' and comeca(n, ('vareta', 'vareta_luz')):
+        if dest is None and 'anel1' in pecas and comeca(n, ('vareta', 'vareta_luz')):
             dest = 'anel1' if cy(c) < -5.5 else 'anel2'
         if dest:
             out[dest].append(c)
@@ -151,7 +199,7 @@ def humanoide(nome, r, cs):
                 continue
             out[('antebraco_' if cy(c) < r['cotovelo'] or comeca(n, ARMA) else 'braco_') + lado].append(c)
             continue
-        if not r['sem_pernas'] and comeca(n, PERNA) and cy(c) < qy + 1.0:
+        if not r['sem_pernas'] and comeca(n, PERNA + tuple(r['perna_extra'])) and cy(c) < qy + 1.0:
             corte = cortar(c, r['joelho'])
             if corte:
                 fila[:0] = list(corte)
@@ -195,6 +243,49 @@ def aranha(r, cs):
     return out, pecas
 
 
+def quadrupede(r, cs):
+    pecas = {'corpo': (r['corpo'], None), 'cabeca': (r['cabeca'], 'corpo'), 'mandibula': (r['mand'], 'cabeca'), 'cauda': (r['cauda'], 'corpo')}
+    for k, (x, z) in r['patas'].items():
+        pecas['coxa_' + k] = ((x, -6.0, z), 'corpo')
+        pecas['canela_' + k] = ((x, r['joelho'], z), 'coxa_' + k)
+    out = {k: [] for k in pecas}
+    fila = list(cs)
+    zc = r['corpo'][2]
+    while fila:
+        c = fila.pop(0)
+        n = c.nome
+        if comeca(n, ('pata', 'casco', 'joelheira', 'corrente', 'corrente_elo')):
+            corte = cortar(c, r['joelho'])
+            if corte:
+                fila[:0] = list(corte)
+                continue
+            k = ('f' if (c.de[2] + c.ate[2]) / 2 < zc else 't') + ('d' if cx(c) > 8 else 'e')
+            out[('canela_' if cy(c) < r['joelho'] else 'coxa_') + k].append(c)
+        elif comeca(n, r['mand_nomes']):
+            out['mandibula'].append(c)
+        elif comeca(n, r['cabeca_nomes']):
+            out['cabeca'].append(c)
+        elif comeca(n, ('cauda',)):
+            out['cauda'].append(c)
+        else:
+            out['corpo'].append(c)
+    return out, pecas
+
+
+def gosma(r, cs):
+    pecas = {'corpo': ((8.0, -16.0, 8.0), None), 'cima': ((8.0, -5.0, 8.0), 'corpo'), 'mandibula': ((8.0, -11.0, 0.0), 'corpo')}
+    out = {k: [] for k in pecas}
+    for c in cs:
+        n = c.nome
+        if comeca(n, ('dente_b',)):
+            out['mandibula'].append(c)
+        elif cy(c) > -5.0 and not comeca(n, ('pingo', 'bolha')):
+            out['cima'].append(c)
+        else:
+            out['corpo'].append(c)
+    return out, pecas
+
+
 def mover(c, d):
     n = copy.deepcopy(c)
     n.de = c.de + np.array(d)
@@ -216,7 +307,7 @@ def gerar(saida, modelos):
         fonte = r['fonte']
         A.registrar(A.PALETAS[fonte])
         cs = H.CORPOS[fonte](False)
-        out, pecas = aranha(r, cs) if r['tipo'] == 'aranha' else humanoide(nome, r, cs)
+        out, pecas = {'aranha': aranha, 'quadrupede': quadrupede, 'gosma': gosma}.get(r['tipo'], lambda r, cs: humanoide(nome, r, cs))(r, cs)
         info = {'tipo': r['tipo'], 'esc': r['esc'], 'pecas': []}
         previas = []
         # previa do corpo inteiro (pecas no lugar), para conferir que nada sumiu

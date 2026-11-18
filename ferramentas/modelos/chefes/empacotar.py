@@ -67,7 +67,8 @@ zipar(B, os.path.join(SAIDA, 'corona_masmorras3d.mcpack'), {'manifest.json': jso
 
 # ---- Geyser: pecas + arma invisivel na mao do mob
 mapa = json.load(open(os.path.join(TMP, 'corona-masmorras3d.json')))
-for item in ('bow', 'diamond_pickaxe', 'netherite_axe', 'netherite_sword', 'golden_sword', 'trident'):
+for item in ('bow', 'crossbow', 'trident', 'iron_shovel', 'iron_sword', 'iron_hoe', 'golden_sword', 'golden_axe', 'diamond_pickaxe',
+             'diamond_axe', 'diamond_hoe', 'netherite_axe', 'netherite_sword', 'netherite_hoe', 'book', 'shield'):
     mapa['items'].setdefault(f'minecraft:{item}', []).append({
         'type': 'definition', 'model': 'corona:masmorras/vazio', 'bedrock_identifier': f'corona:masm_vazio_{item}',
         'display_name': 'Arma do chefe', 'bedrock_options': {'icon': 'masm_vazio', 'display_handheld': True}})
