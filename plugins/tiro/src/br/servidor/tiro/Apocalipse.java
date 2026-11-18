@@ -100,6 +100,11 @@ final class Apocalipse implements Listener {
             new Oferta("u:sobrevivente:boots", 1, 8), new Oferta("u:exercito:helmet", 1, 22), new Oferta("u:exercito:chestplate", 1, 38),
             new Oferta("u:exercito:leggings", 1, 32), new Oferta("u:exercito:boots", 1, 22)};
 
+    /** 18/11 (Paulo): defesa da casa (fileira de baixo da loja). Sao os blocos normais do jogo: da para fazer na bancada tambem. */
+    static final Oferta[] DEFESA = {
+            new Oferta("b:OAK_FENCE", 16, 4), new Oferta("b:OAK_FENCE_GATE", 2, 3), new Oferta("b:COBBLESTONE_WALL", 16, 6),
+            new Oferta("b:IRON_BARS", 16, 10), new Oferta("b:IRON_DOOR", 1, 8), new Oferta("b:LEVER", 2, 1)};
+
     Apocalipse(Tiro pl) {
         this.pl = pl;
         kSaque = new NamespacedKey(pl, "saque");
@@ -108,6 +113,84 @@ final class Apocalipse implements Listener {
         criarMundo();
         saques.addAll(pl.dados.getStringList("zumbi.saques"));
         Bukkit.getScheduler().runTaskTimer(pl, this::ciclo, 100L, 60L);
+        Bukkit.getScheduler().runTaskTimer(pl, this::golpes, 120L, 20L);
+    }
+
+    // ------------------------------------------------------------------ Noite de Sangue: infectados quebram a casa
+
+    /** Golpes que cada bloco aguenta. Cercas, muros e grades sao a defesa boa; o resto cai rapido. */
+    static double resistencia(Material m) {
+        String n = m.name();
+        if (m == Material.IRON_BARS) return 40;
+        if (m == Material.IRON_DOOR || m == Material.IRON_TRAPDOOR) return 30;
+        if (n.endsWith("_WALL")) return 30;
+        if (n.equals("NETHER_BRICK_FENCE")) return 30;
+        if (n.endsWith("_FENCE") || n.endsWith("_FENCE_GATE")) return 20;
+        if (n.endsWith("_DOOR") || n.endsWith("_TRAPDOOR")) return 8;
+        float h = m.getHardness();
+        if (h < 1) return 3;
+        if (h < 2.6) return 6;
+        if (h < 10) return 10;
+        return 25;
+    }
+
+    private final Map<Block, Double> vida = new HashMap<>();
+    private boolean eraSangue;
+
+    private void golpes() {
+        if (mundo == null) return;
+        boolean sangue = noiteDeSangue();
+        if (!sangue) {
+            if (eraSangue) {   // amanheceu: as rachaduras somem
+                for (Block b : vida.keySet()) for (Player p : mundo.getPlayers()) p.sendBlockDamage(b.getLocation(), 0f);
+                vida.clear();
+            }
+            eraSangue = false;
+            return;
+        }
+        eraSangue = true;
+        for (Zombie zb : mundo.getEntitiesByClass(Zombie.class)) {
+            Zumbis.Tipo tp = pl.zumbis.tipo(zb);
+            if (tp == null || zb.isDead() || !(zb.getTarget() instanceof Player alvo) || alvo.getWorld() != mundo) continue;
+            Location l = zb.getLocation();
+            double dist = l.distance(alvo.getLocation());
+            if (dist < 1.8 || dist > 20) continue;
+            org.bukkit.util.Vector dir = alvo.getLocation().toVector().subtract(l.toVector()).setY(0);
+            if (dir.lengthSquared() < 0.01) continue;
+            dir.normalize();
+            Block alvoB = null;
+            for (int dy = 1; dy >= 0 && alvoB == null; dy--) {
+                Block b = l.clone().add(dir.clone().multiply(0.9)).add(0, dy + 0.2, 0).getBlock();
+                Material m = b.getType();
+                if (m.isAir() || !m.isSolid() || m.getHardness() < 0 || noAbrigo(b.getLocation())) continue;
+                alvoB = b;
+            }
+            if (alvoB == null) continue;
+            if (alvoB.getBlockData() instanceof org.bukkit.block.data.Bisected bi && bi.getHalf() == org.bukkit.block.data.Bisected.Half.TOP
+                    && org.bukkit.Tag.DOORS.isTagged(alvoB.getType())) alvoB = alvoB.getRelative(0, -1, 0);
+            double max = resistencia(alvoB.getType());
+            double forca = switch (tp) {
+                case TANQUE -> 4;
+                case CHEFE -> 5;
+                default -> 1;
+            };
+            double v = vida.getOrDefault(alvoB, max) - forca;
+            zb.swingMainHand();
+            Location c = alvoB.getLocation().add(0.5, 0.5, 0.5);
+            boolean ferro = alvoB.getType().name().contains("IRON");
+            mundo.playSound(c, ferro ? Sound.ENTITY_ZOMBIE_ATTACK_IRON_DOOR : Sound.ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR, 0.8f, 0.9f + rnd.nextFloat() * 0.2f);
+            mundo.spawnParticle(Particle.BLOCK, c, 8, 0.3, 0.3, 0.3, 0, alvoB.getBlockData());
+            if (v <= 0) {
+                vida.remove(alvoB);
+                for (Player p : mundo.getPlayers()) if (p.getLocation().distanceSquared(c) < 48 * 48) p.sendBlockDamage(c, 0f);
+                mundo.playSound(c, Sound.ENTITY_ZOMBIE_BREAK_WOODEN_DOOR, 1f, 0.8f);
+                alvoB.breakNaturally();
+            } else {
+                vida.put(alvoB, v);
+                float prog = (float) Math.min(0.95, 1 - v / max);
+                for (Player p : mundo.getPlayers()) if (p.getLocation().distanceSquared(c) < 48 * 48) p.sendBlockDamage(c, prog);
+            }
+        }
     }
 
     void desligar() {
@@ -322,6 +405,14 @@ final class Apocalipse implements Listener {
             case "m" -> pl.armas.municao(p[1], o.qtd());
             case "a" -> pl.armas.arma(p[1]);
             case "u" -> pl.armas.uniforme(p[1], p[2]);
+            case "b" -> {
+                ItemStack it = new ItemStack(Material.valueOf(p[1]), o.qtd());
+                ItemMeta m = it.getItemMeta();
+                m.lore(List.of(Tiro.txt("§7Resistência contra infectados: §f" + (int) resistencia(Material.valueOf(p[1])) + " golpes"),
+                        Tiro.txt("§8Também dá para fazer na bancada.")));
+                it.setItemMeta(m);
+                yield it;
+            }
             default -> coisa(p[1], o.qtd());
         };
     }
@@ -501,7 +592,12 @@ final class Apocalipse implements Listener {
 
     /** Dentro de um terreno marcado (GriefPrevention) em que o jogador pode construir: seguro, menos na Noite de Sangue. */
     boolean seguroNoTerreno(Player p) {
-        if (mundo == null || p.getWorld() != mundo || noiteDeSangue()) return false;
+        return !noiteDeSangue() && emTerreno(p);
+    }
+
+    /** O jogador esta num terreno marcado dele (ou em que pode construir), seja qual for a noite. */
+    boolean emTerreno(Player p) {
+        if (mundo == null || p.getWorld() != mundo) return false;
         try {
             me.ryanhamshire.GriefPrevention.Claim c = me.ryanhamshire.GriefPrevention.GriefPrevention.instance.dataStore.getClaimAt(p.getLocation(), false, null);
             return c != null && (p.getUniqueId().equals(c.getOwnerID()) || c.allowBuild(p, Material.STONE) == null);
@@ -544,19 +640,9 @@ final class Apocalipse implements Listener {
             for (Player p : ps) {
                 if (sangue) {
                     p.showTitle(Title.title(Tiro.txt("§4§l☾ NOITE DE SANGUE ☽"), Tiro.txt("§cHoje o seu terreno NÃO segura os infectados")));
-                    p.sendMessage(PREFIXO + "§4§lNoite de Sangue! §7Até amanhecer os infectados §catacam dentro dos terrenos§7 e §cquebram portas§7.");
+                    p.sendMessage(PREFIXO + "§4§lNoite de Sangue! §7Até amanhecer os infectados §catacam dentro dos terrenos§7 e §cquebram portas e paredes§7. §6Cercas, muros e grades§7 aguentam muito mais (bancada ou Mercador).");
                     p.playSound(p.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.5f, 0.6f);
                 } else p.sendMessage(PREFIXO + "§aA Noite de Sangue acabou. §7Dentro do seu terreno você está seguro de novo.");
-            }
-        }
-        if (sangue) for (Zombie zb : mundo.getEntitiesByClass(Zombie.class)) {
-            if (pl.zumbis.tipo(zb) == null) continue;
-            Block base = zb.getLocation().getBlock();
-            for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) for (int dy = 0; dy <= 1; dy++) {
-                Block b = base.getRelative(dx, dy, dz);
-                if (!org.bukkit.Tag.DOORS.isTagged(b.getType()) || noAbrigo(b.getLocation())) continue;
-                b.setType(Material.AIR, true);
-                mundo.playSound(b.getLocation(), Sound.ENTITY_ZOMBIE_BREAK_WOODEN_DOOR, 1f, 0.9f);
             }
         }
         // musica de chefe: toca enquanto um Chefe de Horda ou um Tanque estiver a menos de 45 blocos
@@ -595,8 +681,12 @@ final class Apocalipse implements Listener {
                 tem++;
                 if (t == Zumbis.Tipo.CHEFE) chefePerto = true;
             }
+            // 18/11 (Paulo): de noite os infectados vao ate a casa do jogador e ficam cercando; na Noite de Sangue entram
+            boolean cerco = noite && emTerreno(p);
+            if (cerco) cercar(p, sangue);
             // andarilhos soltos (poucos): nascem fora da vista, saindo do chao
-            int max = (noite ? pl.getConfig().getInt("zumbi.zumbis-de-noite", 11) : pl.getConfig().getInt("zumbi.zumbis-de-dia", 5)) / 2 + z;
+            int max = (noite ? pl.getConfig().getInt("zumbi.zumbis-de-noite", 11) : pl.getConfig().getInt("zumbi.zumbis-de-dia", 5)) / 2 + z
+                    + (cerco ? pl.getConfig().getInt("zumbi.cerco-extra", 5) : 0);
             if (tem < max) {
                 Location onde = lugar(p, 22, 38, -1);
                 if (onde != null) {
@@ -625,6 +715,46 @@ final class Apocalipse implements Listener {
             barras.get(id).removeAll();
             return true;
         });
+    }
+
+    private final Map<UUID, Long> cercoAvisado = new HashMap<>();
+
+    /**
+     * Cerco: os infectados num raio de 48 blocos andam ate a casa e ficam rondando em volta (6 a 10 blocos), gemendo.
+     * Numa noite comum eles nao atacam dentro do terreno; na Noite de Sangue vao direto no jogador e quebram as portas.
+     */
+    private void cercar(Player p, boolean sangue) {
+        Location c = p.getLocation();
+        long noiteN = mundo.getFullTime() / 24000;
+        int rondando = 0;
+        for (Entity e : p.getNearbyEntities(48, 24, 48)) {
+            if (!(e instanceof Zombie zb) || pl.zumbis.tipo(zb) == null || zb.isDead()) continue;
+            if (sangue) {
+                if (zb.getTarget() == null) zb.setTarget(p);
+                rondando++;
+                continue;
+            }
+            double ang = (zb.getEntityId() * 2.39996) % (Math.PI * 2) + (System.currentTimeMillis() / 9000.0) % (Math.PI * 2) * 0.15;
+            double r = 6 + (zb.getEntityId() % 5);
+            Location alvo = c.clone().add(Math.cos(ang) * r, 0, Math.sin(ang) * r);
+            alvo.setY(chao(alvo.getBlockX(), alvo.getBlockZ()) + 1);
+            if (zb.getLocation().distanceSquared(alvo) > 2.5 * 2.5) zb.getPathfinder().moveTo(alvo, 1.0);
+            else zb.lookAt(p);
+            if (zb.getLocation().distanceSquared(c) < 14 * 14) {
+                rondando++;
+                if (rnd.nextInt(6) == 0) mundo.playSound(zb.getLocation(), Sound.ENTITY_ZOMBIE_AMBIENT, 1f, 0.8f);
+            }
+        }
+        Long av = cercoAvisado.get(p.getUniqueId());
+        if (rondando >= 3 && (av == null || av != noiteN)) {
+            cercoAvisado.put(p.getUniqueId(), noiteN);
+            if (sangue) p.showTitle(Title.title(Tiro.txt("§4§lELES ESTÃO ENTRANDO"), Tiro.txt("§cSegure as portas até amanhecer!")));
+            else {
+                p.showTitle(Title.title(Tiro.txt("§c§lCERCARAM A SUA CASA"), Tiro.txt("§7Fique dentro até amanhecer...")));
+                p.sendMessage(PREFIXO + "§7Os infectados §ccercaram a sua casa§7. Dentro do terreno eles não te pegam, mas na §4Noite de Sangue§7 eles quebram portas e paredes. Proteja a casa com §6cercas, muros ou grades§7.");
+            }
+            p.playSound(c, Sound.ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR, 1f, 0.7f);
+        }
     }
 
     private int chao(int x, int z) {
@@ -839,7 +969,7 @@ final class Apocalipse implements Listener {
 
     private void abrirLoja(Player p) {
         Loja h = new Loja();
-        h.inv = Bukkit.createInventory(h, 27, Tiro.txt("§8Mercador do Abrigo §7(paga com sucata)"));
+        h.inv = Bukkit.createInventory(h, 45, Tiro.txt("§8Mercador do Abrigo §7(paga com sucata)"));
         for (int i = 0; i < OFERTAS.length; i++) {
             ItemStack it = daOferta(OFERTAS[i]);
             if (pl.visual != null) pl.visual.desenhar(p, it);
@@ -852,7 +982,19 @@ final class Apocalipse implements Listener {
             it.setItemMeta(m);
             h.inv.setItem(i < 7 ? i + 1 : i < 13 ? i + 4 : i + 5, it);
         }
-        h.inv.setItem(22, pl.armas.item("saldo", Material.PRISMARINE_SHARD, "§bSua sucata: §f" + contar(p, "sucata"), 1, "§7Mate infectados e abra barris", "§7de suprimento para juntar mais."));
+        for (int i = 0; i < DEFESA.length; i++) {
+            ItemStack it = daOferta(DEFESA[i]);
+            ItemMeta m = it.getItemMeta();
+            List<net.kyori.adventure.text.Component> lore = new ArrayList<>(m.lore());
+            lore.add(Tiro.txt(""));
+            lore.add(Tiro.txt("§bPreço: " + DEFESA[i].preco() + " sucata"));
+            lore.add(Tiro.txt("§eClique para comprar"));
+            m.lore(lore);
+            it.setItemMeta(m);
+            h.inv.setItem(29 + i, it);
+        }
+        h.inv.setItem(28, pl.armas.item("info_defesa", Material.SHIELD, "§6§lDefesa da casa", 1, "§7Na §4Noite de Sangue§7 os infectados", "§7quebram portas e paredes.", "§7Cercas, muros e grades aguentam", "§7muito mais golpes."));
+        h.inv.setItem(40, pl.armas.item("saldo", Material.PRISMARINE_SHARD, "§bSua sucata: §f" + contar(p, "sucata"), 1, "§7Mate infectados e abra barris", "§7de suprimento para juntar mais."));
         p.openInventory(h.inv);
     }
 
@@ -861,9 +1003,11 @@ final class Apocalipse implements Listener {
         if (!(e.getInventory().getHolder() instanceof Loja)) return;
         e.setCancelled(true);
         if (!(e.getWhoClicked() instanceof Player p) || e.getClickedInventory() != e.getInventory()) return;
-        int s = e.getSlot(), i = s >= 1 && s <= 7 ? s - 1 : s >= 11 && s <= 16 ? s - 4 : s >= 18 && s <= 25 ? s - 5 : -1;
-        if (i < 0 || i >= OFERTAS.length) return;
-        Oferta o = OFERTAS[i];
+        int s = e.getSlot(), i = s >= 1 && s <= 7 ? s - 1 : s >= 11 && s <= 16 ? s - 4 : s >= 18 && s <= 26 ? s - 5 : -1;
+        Oferta o;
+        if (s >= 29 && s < 29 + DEFESA.length) o = DEFESA[s - 29];
+        else if (i >= 0 && i < OFERTAS.length) o = OFERTAS[i];
+        else return;
         if (contar(p, "sucata") < o.preco()) {
             p.sendMessage(PREFIXO + "§cFalta sucata: custa §b" + o.preco() + "§c e você tem §b" + contar(p, "sucata") + "§c.");
             p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
