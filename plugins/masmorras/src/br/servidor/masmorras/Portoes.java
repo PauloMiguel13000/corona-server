@@ -37,7 +37,7 @@ import org.bukkit.persistence.PersistentDataType;
  */
 final class Portoes implements Listener {
 
-    static final int PX = 29, PZ_NETHER = -10, PZ_END = 10;   // portais no lobby (lado leste, atravessa no x)
+    static final int PX = 37, PZ_NETHER = -13, PZ_END = 13;   // portais no lobby v5 (faixa de fora, lado leste, atravessa no x)
     static final int CHEGADA_X = 0, CHEGADA_Z = 0, CHEGADA_Y_NETHER = 100, CHEGADA_Y_END = 80;
 
     private final Masmorras pl;
@@ -57,7 +57,7 @@ final class Portoes implements Listener {
         File feito = new File(pl.getDataFolder(), "portoes-v2.txt");
         if (!feito.exists()) {
             try {
-                construirLobby();
+                if (pl.getResource("lobby5.txt.gz") == null) construirLobby();   // lobby v5: o LobbyMundo ja poe os portoes
                 if (mm.nether != null) construirChegada(mm.nether, CHEGADA_Y_NETHER, true);
                 if (mm.end != null) construirChegada(mm.end, CHEGADA_Y_END, false);
                 Files.writeString(feito.toPath(), "construido em " + new java.util.Date() + "\n");

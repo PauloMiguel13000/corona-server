@@ -34,10 +34,12 @@ import org.bukkit.persistence.PersistentDataType;
  */
 final class PortaisNivel implements Listener {
 
-    /** Portais no lado oeste do lobby (atravessa no x), um por nivel. */
-    static final int PX = -29;
+    /**
+     * 18/11 (lobby v5): os portais ficam nos portoes do lobby novo (nivel 2 a leste, 3 ao sul, 4 a oeste) e o 5 ao lado
+     * do 4. {x, z, eixoX (1 = o vao se estende no x), nivel}. Quem constroi agora e o LobbyMundo.construirV5.
+     */
+    static final int[][] PORTAIS = {{38, 0, 0, 2}, {0, 38, 1, 3}, {-38, 0, 0, 4}, {-37, -13, 0, 5}};
     private static final int[] NIVEIS = {2, 3, 4, 5};
-    private static final int[] PZ = {-21, -7, 7, 21};
 
     private final Masmorras pl;
     private final MundoMasmorras mm;
@@ -57,7 +59,7 @@ final class PortaisNivel implements Listener {
     void iniciar() {
         if (mm.normal == null || !ativo()) return;
         File feito = new File(pl.getDataFolder(), "portais-nivel-v2.txt");
-        if (feito.exists()) return;
+        if (feito.exists() || new File(pl.getDataFolder(), "lobby-mundo-v5.txt").exists() || pl.getResource("lobby5.txt.gz") != null) return;
         try {
             construir();
             Files.writeString(feito.toPath(), "construido em " + new java.util.Date() + "\n");
@@ -75,22 +77,23 @@ final class PortaisNivel implements Listener {
     /** Moldura e cor de cada nivel (quanto mais alto, mais "perigoso"). */
     static String[] visual(int nivel) {
         return switch (nivel) {
-            case 2 -> new String[] {"minecraft:mossy_stone_bricks", "minecraft:oxidized_copper", "minecraft:moss_block", "§a"};
-            case 3 -> new String[] {"minecraft:deepslate_bricks", "minecraft:gold_block", "minecraft:polished_deepslate", "§e"};
-            case 4 -> new String[] {"minecraft:blackstone", "minecraft:diamond_block", "minecraft:polished_blackstone", "§b"};
-            default -> new String[] {"minecraft:obsidian", "minecraft:netherite_block", "minecraft:crying_obsidian", "§d"};
+            case 2 -> new String[] {"minecraft:mossy_stone_bricks", "minecraft:oxidized_copper", "minecraft:moss_block", "§e"};
+            case 3 -> new String[] {"minecraft:deepslate_bricks", "minecraft:gold_block", "minecraft:polished_deepslate", "§6"};
+            case 4 -> new String[] {"minecraft:blackstone", "minecraft:diamond_block", "minecraft:polished_blackstone", "§c"};
+            default -> new String[] {"minecraft:obsidian", "minecraft:netherite_block", "minecraft:crying_obsidian", "§5"};
         };
     }
 
     private void construir() {
         World w = mm.normal;
         int y = GeradorMundo.LOBBY_Y;
-        w.getChunkAt(PX >> 4, 0).load(true);
-        for (int i = 0; i < NIVEIS.length; i++) {
-            int nivel = NIVEIS[i], z = PZ[i];
+        for (int[] q : PORTAIS) {
+            if (q[2] == 1) continue;   // so o caminho antigo (sem o lobby v5): portais que atravessam no x
+            int nivel = q[3], z = q[1];
+            w.getChunkAt(q[0] >> 4, z >> 4).load(true);
             String[] v = visual(nivel);
-            portal(w, PX, y, z, v[0], v[1], v[2]);
-            texto(w, new Location(w, PX + 0.5, y + 6.8, z + 0.5),
+            portal(w, q[0], y, z, v[0], v[1], v[2]);
+            texto(w, new Location(w, q[0] + 0.5, y + 6.8, z + 0.5),
                     v[3] + "§lÁREA DE NÍVEL " + nivel + "\n§7Masmorras de nível " + nivel + " do mapa\n§8equipamento nível " + nivel + " ou melhor", 1.1f);
         }
         pl.getLogger().info("Portais dos niveis 2 a 5 construidos no lobby (oeste).");
@@ -258,9 +261,19 @@ final class PortaisNivel implements Listener {
 
     /** Qual portal e este bloco (ou -1). */
     private int qual(Block b) {
-        if (b.getX() != PX) return -1;
-        for (int i = 0; i < PZ.length; i++) if (Math.abs(b.getZ() - PZ[i]) <= 1) return i;
+        for (int i = 0; i < PORTAIS.length; i++) {
+            int[] q = PORTAIS[i];
+            boolean ok = q[2] == 1 ? b.getZ() == q[1] && Math.abs(b.getX() - q[0]) <= 1 : b.getX() == q[0] && Math.abs(b.getZ() - q[1]) <= 1;
+            if (ok) return i;
+        }
         return -1;
+    }
+
+    /** Lugar logo na frente do portal, do lado do centro do lobby. */
+    static Location frente(World w, int[] q, Block b, Location de) {
+        double x = q[2] == 1 ? b.getX() + 0.5 : q[0] - Integer.signum(q[0]) + 0.5;
+        double z = q[2] == 1 ? q[1] - Integer.signum(q[1]) + 0.5 : b.getZ() + 0.5;
+        return new Location(w, x, de.getY(), z, de.getYaw(), de.getPitch());
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -279,11 +292,11 @@ final class PortaisNivel implements Listener {
         Long ate = espera.get(p.getUniqueId());
         if (ate != null && agora < ate) return;
         espera.put(p.getUniqueId(), agora + 4000L);
-        int nivel = NIVEIS[i];
+        int nivel = PORTAIS[i][3];
         // 16/11: o portal agora pede o Nivel de Masmorra (vencer todas as do nivel anterior), nao mais o equipamento
         if (pl.progresso != null && !pl.progresso.pode(p, nivel)) {
             pl.progresso.avisarTrancado(p, "A área de nível " + nivel, nivel);
-            Location fora = new Location(w, PX + 1.5, to.getY(), b.getZ() + 0.5, to.getYaw(), to.getPitch());
+            Location fora = frente(w, PORTAIS[i], b, to);
             p.teleport(fora);
             return;
         }

@@ -94,7 +94,7 @@ final class Missoes implements Listener {
 
     private void montar() {
         // 08/11 (pedido do Paulo): as missoes acompanham o nivel de poder - 5 por NPC, liberam nos niveis das habilidades (0/15/30/45/60)
-        npcs.add(new Npc("ferreiro", "Ferreiro Brum", "§6", "weaponsmith", 5, -5, 45f, List.of(
+        npcs.add(new Npc("ferreiro", "Ferreiro Brum", "§6", "weaponsmith", 11, -11, 45f, List.of(
                 m("ferreiro1", "Primeiro Sangue", Tipo.MONSTROS, 15, 1, 0, "Derrote 15 monstros dentro de masmorras.",
                         item(Material.IRON_SWORD, 1, "Espada do Ferreiro", "sharpness:1", "unbreaking:1")),
                 m("ferreiro2", "Aço Temperado", Tipo.CHEFES, 2, 1, 1, "Derrote 2 chefes de masmorra.",
@@ -105,7 +105,7 @@ final class Missoes implements Listener {
                         item(Material.DIAMOND_SWORD, 1, "Lâmina do Abismo", "sharpness:4", "unbreaking:3", "looting:2")),
                 m("ferreiro5", "Obra-Prima", Tipo.CHEFES, 8, 4, 4, "Derrote 8 chefes de nível 4 ou mais.",
                         item(Material.NETHERITE_SWORD, 1, "Obra-Prima do Ferreiro", "sharpness:5", "unbreaking:3", "looting:3", "mending:1")))));
-        npcs.add(new Npc("armeira", "Armeira Tália", "§b", "armorer", -5, -5, -45f, List.of(
+        npcs.add(new Npc("armeira", "Armeira Tália", "§b", "armorer", -11, -11, -45f, List.of(
                 m("armeira1", "Cabeça no Lugar", Tipo.MONSTROS, 10, 1, 0, "Derrote 10 monstros dentro de masmorras.",
                         item(Material.IRON_HELMET, 1, "Elmo da Armeira", "protection:1")),
                 m("armeira2", "Peito Aberto", Tipo.CHEFES, 1, 2, 1, "Derrote 1 chefe de nível 2 ou mais.",
@@ -116,7 +116,7 @@ final class Missoes implements Listener {
                         item(Material.DIAMOND_CHESTPLATE, 1, "Couraça da Armeira", "protection:3", "unbreaking:2")),
                 m("armeira5", "Inquebrável", Tipo.CHEFES, 8, 4, 4, "Derrote 8 chefes de nível 4 ou mais.",
                         item(Material.NETHERITE_CHESTPLATE, 1, "Couraça Inquebrável", "protection:4", "unbreaking:3", "mending:1")))));
-        npcs.add(new Npc("cacadora", "Caçadora Ísis", "§2", "fletcher", -5, 5, -135f, List.of(
+        npcs.add(new Npc("cacadora", "Caçadora Ísis", "§2", "fletcher", -11, 11, -135f, List.of(
                 m("cacadora1", "Olho de Águia", Tipo.MONSTROS, 20, 1, 0, "Derrote 20 monstros dentro de masmorras.",
                         item(Material.BOW, 1, "Arco da Caçadora", "power:1"), item(Material.ARROW, 32, null)),
                 m("cacadora2", "Pés Ligeiros", Tipo.CHEFES, 2, 1, 1, "Derrote 2 chefes de masmorra.",
@@ -127,7 +127,7 @@ final class Missoes implements Listener {
                         item(Material.BOW, 1, "Arco Sem Fim", "power:4", "infinity:1", "unbreaking:3"), item(Material.ARROW, 1, null)),
                 m("cacadora5", "Asas da Caçadora", Tipo.CHEFES, 8, 4, 4, "Derrote 8 chefes de nível 4 ou mais.",
                         item(Material.DIAMOND_BOOTS, 1, "Botas da Caçadora", "feather_falling:4", "protection:3", "unbreaking:3", "mending:1"), item(Material.ELYTRA, 1, "Asas da Caçadora", "unbreaking:3")))));
-        npcs.add(new Npc("alquimista", "Alquimista Vera", "§d", "cleric", 5, 5, 135f, List.of(
+        npcs.add(new Npc("alquimista", "Alquimista Vera", "§d", "cleric", 11, 11, 135f, List.of(
                 m("alquimista1", "Primeiros Socorros", Tipo.MONSTROS, 10, 1, 0, "Derrote 10 monstros dentro de masmorras.",
                         Loja.pocao(org.bukkit.potion.PotionType.HEALING), Loja.pocao(org.bukkit.potion.PotionType.HEALING), item(Material.GOLDEN_APPLE, 2, null)),
                 m("alquimista2", "Elixir", Tipo.CHEFES, 1, 1, 1, "Derrote 1 chefe de masmorra.",

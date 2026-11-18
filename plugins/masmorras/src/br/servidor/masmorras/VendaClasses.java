@@ -71,7 +71,8 @@ final class VendaClasses implements Listener {
 
     void garantirNpc(org.bukkit.World mundo, int y, int x, int z) {
         if (!mundo.isChunkLoaded(x >> 4, z >> 4)) return;
-        Location l = new Location(mundo, x + 0.5, y + 2, z + 0.5, -90f, 0f);
+        // 18/11 (lobby v5): olha para o centro da praca
+        Location l = new Location(mundo, x + 0.5, y + 2, z + 0.5, (float) Math.toDegrees(Math.atan2(x, -z)), 0f);
         for (Entity e : mundo.getNearbyEntities(l, 3, 3, 3)) if (e.getPersistentDataContainer().has(kNpc)) return;
         Villager v = pl.loja.npc(l, "§6§lVendedor de Classes", null, Loja.profissao(0), kNpc, 1);
         Villager.Profession prof = Registry.VILLAGER_PROFESSION.get(NamespacedKey.minecraft("mason"));

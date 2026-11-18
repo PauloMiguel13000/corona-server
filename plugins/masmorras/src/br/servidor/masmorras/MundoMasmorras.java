@@ -76,7 +76,7 @@ final class MundoMasmorras implements Listener {
             return;
         }
         regras(normal);
-        normal.setSpawnLocation(new Location(normal, 0.5, GeradorMundo.LOBBY_Y + 1, 3.5, 0f, 0f));
+        normal.setSpawnLocation(new Location(normal, 0.5, GeradorMundo.LOBBY_Y + 1, 14.5, 180f, 0f));
         pl.getLogger().info("Mundo das Masmorras pronto: " + normal.getName() + " (zonas " + zonas()[0] + "/" + zonas()[1] + "/" + zonas()[2] + ").");
         if (pl.getConfig().getBoolean("mundo-novo.nether-end", true)) {
             nether = new WorldCreator(pl.getConfig().getString("mundos.nether", "masmorras_nether")).environment(World.Environment.NETHER)
@@ -129,6 +129,10 @@ final class MundoMasmorras implements Listener {
      */
     Location spawnLobby() {
         int y = GeradorMundo.LOBBY_Y;
+        // 18/11 (lobby v5): na estrada do sul, de frente para a coroa e a fonte
+        Block p0 = normal.getBlockAt(0, y, 14);
+        if (p0.getType().isSolid() && p0.getRelative(0, 1, 0).getType().isAir() && p0.getRelative(0, 2, 0).getType().isAir())
+            return new Location(normal, 0.5, y + 1, 14.5, 180f, 0f);
         for (int r = 3; r <= 10; r++)
             for (int[] d : new int[][] {{0, r}, {0, -r}, {r, 0}, {-r, 0}, {r, r}, {-r, -r}, {r, -r}, {-r, r}}) {
                 Block chao = normal.getBlockAt(d[0], y, d[1]);

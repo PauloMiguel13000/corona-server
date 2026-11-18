@@ -390,8 +390,10 @@ final class Progresso implements Listener {
             if (!(x instanceof TextDisplay td)) continue;
             String novo = null;
             if (td.getPersistentDataContainer().has(kPortal, PersistentDataType.INTEGER)) {
+                Integer marca = td.getPersistentDataContainer().get(kPortal, PersistentDataType.INTEGER);
                 int z = td.getLocation().getBlockZ();
-                int nivel = z < -14 ? 2 : z < 0 ? 3 : z < 14 ? 4 : 5;
+                // lobby v5: a marca guarda o nivel; os letreiros antigos (marca 1) iam pelo z
+                int nivel = marca != null && marca >= 2 ? marca : z < -14 ? 2 : z < 0 ? 3 : z < 14 ? 4 : 5;
                 novo = PortaisNivel.visual(nivel)[3] + "§lÁREA DE NÍVEL " + nivel + "\n§7Masmorras de nível " + nivel + " do mapa\n§6precisa do Nível de Masmorra " + nivel;
             } else if (td.getPersistentDataContainer().has(kPortao, PersistentDataType.INTEGER) && td.getLocation().getX() > 20) {
                 boolean nether = td.getLocation().getZ() < 0;

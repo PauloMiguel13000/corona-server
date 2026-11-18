@@ -96,7 +96,23 @@ final class LobbyMundo implements Listener {
                 pl.getLogger().warning("Lobby v4 (coroa e farol) nao terminou: " + ex);
             }
         }
+        File v5 = new File(pl.getDataFolder(), "lobby-mundo-v5.txt");
+        if (!v5.exists() && pl.getResource("lobby5.txt.gz") != null) {
+            try {
+                construirV5();
+                Files.writeString(v5.toPath(), "construido em " + new java.util.Date() + "\n");
+            } catch (Throwable ex) {
+                pl.getLogger().warning("Lobby v5 (praca nova) nao terminou: " + ex);
+                ex.printStackTrace();
+            }
+        }
+        File plantas = new File(pl.getDataFolder(), "lobby-plantas-v1.txt");
+        if (!plantas.exists()) Bukkit.getScheduler().runTaskLater(pl, () -> limparPlantasSoltas(plantas), 200L);
         Bukkit.getScheduler().runTaskTimer(pl, this::ambiente, 80L, 8L);
+        // 18/11: NPCs andando e falando, moradores e a trilha da masmorra ???
+        NpcsLobby vida = new NpcsLobby(pl);
+        Bukkit.getPluginManager().registerEvents(vida, pl);
+        vida.iniciar(mundo, y);
         File v3 = new File(pl.getDataFolder(), "lobby-mundo-v3.txt");
         if (pl.chocadeiras != null) {
             try {
@@ -252,8 +268,16 @@ final class LobbyMundo implements Listener {
         pl.getLogger().info("Lobby do Mundo das Masmorras construido (praca de " + (R * 2 + 1) + " blocos).");
     }
 
-    static final int[][] BONECOS = {{15, 15}, {21, 15}, {15, 19}, {21, 19}};
-    static final int VENDEDOR_X = -26, VENDEDOR_Z = 8;
+    // 18/11 (lobby v5): campo de treino a leste-sul, Vendedor de Classes no pavilhao noroeste junto do Mestre das Classes
+    static final int[][] BONECOS = {{24, 8}, {28, 8}, {24, 12}, {28, 12}};
+    static final int VENDEDOR_X = -19, VENDEDOR_Z = -22;
+    /** Lobby v5: Mercador (pavilhao nordeste), Guia (sudeste), Mestre das Classes (noroeste) e a esmeralda de volta. */
+    static final double[] MERCADOR = {20.5, -19.5}, GUIA = {20.5, 20.5}, CLASSES = {-21.5, -18.5};
+    static final int ESM_X = -37, ESM_Z = 13;
+
+    private static float olharCentro(double x, double z) {
+        return (float) Math.toDegrees(Math.atan2(x, -z));
+    }
 
     /** v2 (Fase 2): pedestal e letreiro do Vendedor de Classes e letreiros dos 4 NPCs de missao em volta da fonte. */
     private void construirV2() {
@@ -328,6 +352,158 @@ final class LobbyMundo implements Listener {
         pl.getLogger().info("Lobby v4: coroa gigante, farol vermelho e bandeiras.");
     }
 
+
+    /** Area das Chocadeiras (nao mexe: tem ovo chocando). */
+    private static boolean naChocadeira(double x, double z) {
+        return Math.hypot(x - Chocadeiras.CX, z - Chocadeiras.CZ) <= 7.0;
+    }
+
+    static final int R5 = 44;
+
+    /**
+     * v5 (18/11, desenho aprovado pelo Paulo: "TA PERFEITO"): praca redonda de raio 44 com coroa gigante na fonte,
+     * 4 portoes por nivel nos eixos (N verde = nivel 1, L amarelo = 2, S laranja = 3, O vermelho = 4), nivel 5 e a
+     * esmeralda de volta na faixa oeste, Nether e End na faixa leste, 3 pavilhoes dos NPCs nas diagonais, canteiros de
+     * grama de verdade, muralha com 4 torres. Os blocos vem de res/lobby5.txt.gz (ferramentas/lobby/lobby5.py). So
+     * blocos cheios, poucas entidades e luz por bloco invisivel: leve no celular. A area das Chocadeiras fica como esta.
+     */
+    private void construirV5() throws java.io.IOException {
+        long t0 = System.currentTimeMillis();
+        for (int cx = -4; cx <= 3; cx++) for (int cz = -4; cz <= 3; cz++) mundo.getChunkAt(cx, cz).load(true);
+        // 1) tira as entidades da praca antiga (letreiros, NPCs, bonecos, itens) -- menos jogadores e Chocadeiras
+        int tiradas = 0;
+        for (Entity e : mundo.getEntities()) {
+            Location l = e.getLocation();
+            if (e instanceof Player || l.getY() < y - 6 || l.getY() > y + 50) continue;
+            if (Math.hypot(l.getX(), l.getZ()) > R5 + 6 || naChocadeira(l.getX(), l.getZ())) continue;
+            if (e instanceof Display || e instanceof Villager || e instanceof org.bukkit.entity.Mannequin || e instanceof org.bukkit.entity.ArmorStand
+                    || e instanceof org.bukkit.entity.Item || e instanceof org.bukkit.entity.Interaction || e instanceof org.bukkit.entity.WanderingTrader) {
+                e.remove();
+                tiradas++;
+            }
+        }
+        girando.clear();
+        placares.clear();
+        // 2) limpa tudo em cima e firma o chao
+        for (int x = -R5 - 4; x <= R5 + 4; x++)
+            for (int z = -R5 - 4; z <= R5 + 4; z++) {
+                double d = Math.hypot(x, z);
+                if (d > R5 + 4 || naChocadeira(x, z)) continue;
+                for (int k = y + 1; k <= y + 45; k++) {
+                    Block b = mundo.getBlockAt(x, k, z);
+                    if (!b.getType().isAir()) b.setType(Material.AIR, false);
+                }
+                for (int k = y - 4; k <= y - 1; k++) por(x, k, z, d <= R5 ? Material.STONE_BRICKS : Material.DIRT);
+            }
+        // 3) os blocos do desenho
+        int n = 0;
+        java.util.Map<Integer, BlockData> pal = new java.util.HashMap<>();
+        try (var in = pl.getResource("lobby5.txt.gz");
+             var br = new java.io.BufferedReader(new java.io.InputStreamReader(new java.util.zip.GZIPInputStream(in), java.nio.charset.StandardCharsets.UTF_8))) {
+            String linha;
+            while ((linha = br.readLine()) != null) {
+                if (linha.isEmpty() || linha.charAt(0) == '#') continue;
+                String[] p = linha.split(" ");
+                if (p[0].equals("P")) {
+                    pal.put(Integer.parseInt(p[1]), Bukkit.createBlockData(p[2]));
+                    continue;
+                }
+                int x = Integer.parseInt(p[0]), dy = Integer.parseInt(p[1]), z = Integer.parseInt(p[2]);
+                if (naChocadeira(x, z)) continue;
+                mundo.getBlockAt(x, y + dy, z).setBlockData(pal.get(Integer.parseInt(p[3])), false);
+                n++;
+            }
+        }
+        // 4) letreiros
+        texto(new Location(mundo, 0.5, y + 18, 0.5), "§6§lMUNDO DAS MASMORRAS\n§7Portões: §anível 1 §7norte • §enível 2 §7leste • §6nível 3 §7sul • §cnível 4 §7oeste", 1.5f, false);
+        texto(new Location(mundo, MERCADOR[0], y + 12, MERCADOR[1]), "§5§lMERCADOR LENDÁRIO\n§7Moeda de Reviver, relíquias e itens raros\n§8paga com coronas", 1.1f, false);
+        texto(new Location(mundo, GUIA[0], y + 12, GUIA[1]), "§e§lGUIA DAS MASMORRAS\n§7Mostra todas as masmorras e dá a bússola\n§8clique nele", 1.1f, false);
+        texto(new Location(mundo, -19.5, y + 12, -19.5), "§b§lMESTRE DAS CLASSES\n§7Escolha ou troque a sua classe\n§6§lVENDEDOR DE CLASSES\n§7Lutador, Saiyajin, Cipó e Tridente (coronas)", 1.1f, false);
+        texto(new Location(mundo, 0.5, y + 13.5, -37.5), "§a§lNÍVEL 1\n§7As masmorras de nível 1 ficam em volta do lobby\n§8saia por aqui", 1.2f, false);
+        texto(new Location(mundo, ESM_X + 0.5, y + 7, ESM_Z + 0.5), "§a§lVOLTAR AO SPAWN\n§7pise na esmeralda", 1.0f, false);
+        texto(new Location(mundo, 26.5, y + 5, 11), "§e§lCAMPO DE TREINO\n§7bata nos bonecos e veja o seu dano", 1.0f, false);
+        TextDisplay p1 = texto(new Location(mundo, 11.5, y + 7.5, -25.5), "§c§lCHEFES DERROTADOS\n§7carregando...", 1.5f, true);
+        TextDisplay p2 = texto(new Location(mundo, -10.5, y + 7.5, -25.5), "§b§lMAIORES NÍVEIS DE PODER\n§7carregando...", 1.5f, true);
+        p1.getPersistentDataContainer().set(kPlacar, PersistentDataType.INTEGER, 1);
+        p2.getPersistentDataContainer().set(kPlacar, PersistentDataType.INTEGER, 2);
+        placares.add(p1);
+        placares.add(p2);
+        if (pl.missoes != null)
+            for (Missoes.Npc m : pl.missoes.npcs())
+                texto(new Location(mundo, m.x() + 0.5, y + 3.3, m.z() + 0.5), m.cor() + "§l" + m.nome().toUpperCase(java.util.Locale.ROOT) + "\n§7missões: " + descricaoCurta(m.id()), 0.9f, false);
+        // portais (os letreiros levam a marca que o Progresso usa para manter o texto certo)
+        NamespacedKey kPortal = new NamespacedKey(pl, "portal_nivel_enfeite"), kPortao = new NamespacedKey(pl, "portao_enfeite");
+        for (int[] q : PortaisNivel.PORTAIS) {
+            int nivel = q[3];
+            boolean noPortao = Math.abs(q[0]) == 38 || Math.abs(q[1]) == 38;
+            TextDisplay t = texto(new Location(mundo, q[0] + 0.5, y + (noPortao ? 13.5 : 7.5), q[1] + 0.5),
+                    PortaisNivel.visual(nivel)[3] + "§lÁREA DE NÍVEL " + nivel + "\n§7Masmorras de nível " + nivel + " do mapa\n§6precisa do Nível de Masmorra " + nivel, 1.2f, false);
+            t.getPersistentDataContainer().set(kPortal, PersistentDataType.INTEGER, nivel);
+        }
+        TextDisplay tn = texto(new Location(mundo, Portoes.PX + 0.5, y + 7.5, Portoes.PZ_NETHER + 0.5), "§c§lNETHER DAS MASMORRAS\n§7Masmorras de nível 3 e 4 no fogo\n§6precisa do Nível de Masmorra " + Progresso.NETHER, 1.1f, false);
+        TextDisplay te = texto(new Location(mundo, Portoes.PX + 0.5, y + 7.5, Portoes.PZ_END + 0.5), "§d§lEND DAS MASMORRAS\n§7Masmorras de nível 4 e 5 no vazio\n§6precisa do Nível de Masmorra " + Progresso.END, 1.1f, false);
+        tn.getPersistentDataContainer().set(kPortao, PersistentDataType.INTEGER, 1);
+        te.getPersistentDataContainer().set(kPortao, PersistentDataType.INTEGER, 1);
+        mundo.setSpawnLocation(new Location(mundo, 0.5, y + 1, 14.5, 180f, 0f));
+        pl.getLogger().info("Lobby v5: praca nova com " + n + " blocos (" + tiradas + " entidades antigas tiradas) em " + (System.currentTimeMillis() - t0) + " ms.");
+    }
+
+    /**
+     * 18/11 (Sui: "saindo do spawn tem grama flutuando"): passa nos chunks em volta do lobby (raio 160) e tira as plantas
+     * que ficaram sem chao embaixo (capim, flores, samambaia, arbustos). Um chunk por tick, uma vez so.
+     */
+    private void limparPlantasSoltas(File marca) {
+        java.util.List<int[]> fila = new java.util.ArrayList<>();
+        for (int cx = -10; cx <= 10; cx++) for (int cz = -10; cz <= 10; cz++) if (Math.hypot(cx * 16 + 8, cz * 16 + 8) <= 168) fila.add(new int[] {cx, cz});
+        int[] i = {0}, tiradas = {0};
+        Bukkit.getScheduler().runTaskTimer(pl, tarefa -> {
+            if (mundo == null) { tarefa.cancel(); return; }
+            for (int k = 0; k < 2 && i[0] < fila.size(); k++, i[0]++) {
+                int[] c = fila.get(i[0]);
+                org.bukkit.Chunk ch = mundo.getChunkAt(c[0], c[1]);
+                for (int bx = 0; bx < 16; bx++)
+                    for (int bz = 0; bz < 16; bz++) {
+                        int x = c[0] * 16 + bx, z = c[1] * 16 + bz;
+                        if (naChocadeira(x, z)) continue;
+                        int topo = Math.min(mundo.getHighestBlockYAt(x, z) + 2, y + 60);
+                        for (int yy = y - 20; yy <= topo; yy++) {
+                            Block b = ch.getBlock(bx, yy, bz);
+                            if (!planta(b.getType())) continue;
+                            Block baixo = b.getRelative(BlockFace.DOWN);
+                            boolean ok = chaoDePlanta(baixo.getType()) || (baixo.getType() == b.getType() && b.getBlockData() instanceof org.bukkit.block.data.Bisected);
+                            if (!ok) {
+                                b.setType(Material.AIR, false);
+                                tiradas[0]++;
+                            }
+                        }
+                    }
+            }
+            if (i[0] >= fila.size()) {
+                tarefa.cancel();
+                pl.getLogger().info("Lobby: " + tiradas[0] + " plantas soltas (sem chao) tiradas em volta do lobby.");
+                try {
+                    Files.writeString(marca.toPath(), "feito em " + new java.util.Date() + ": " + tiradas[0] + " plantas\n");
+                } catch (java.io.IOException ignored) {
+                }
+            }
+        }, 1L, 1L);
+    }
+
+    private static boolean planta(Material m) {
+        if (org.bukkit.Tag.SMALL_FLOWERS.isTagged(m)) return true;
+        return switch (m.name()) {
+            case "SUNFLOWER", "LILAC", "ROSE_BUSH", "PEONY", "PITCHER_PLANT", "TORCHFLOWER" -> true;
+            case "SHORT_GRASS", "TALL_GRASS", "FERN", "LARGE_FERN", "DEAD_BUSH", "SWEET_BERRY_BUSH", "BUSH", "FIREFLY_BUSH",
+                 "SHORT_DRY_GRASS", "TALL_DRY_GRASS", "LEAF_LITTER", "PINK_PETALS", "WILDFLOWERS" -> true;
+            default -> false;
+        };
+    }
+
+    private static boolean chaoDePlanta(Material m) {
+        return org.bukkit.Tag.DIRT.isTagged(m) || m == Material.SAND || m == Material.RED_SAND || m == Material.FARMLAND || m == Material.MOSS_BLOCK
+                || m == Material.MUD || m == Material.SUSPICIOUS_SAND || m == Material.TERRACOTTA || m.name().endsWith("_TERRACOTTA") && !m.name().contains("GLAZED");
+    }
+
     private int ambTick;
 
     /** Particulas do farol (espiral de almas subindo pelo feixe) e um sino distante de vez em quando. */
@@ -340,13 +516,13 @@ final class LobbyMundo implements Listener {
         double base = ambTick * 0.35;
         for (int braco = 0; braco < 3; braco++) {
             double a = base + braco * (Math.PI * 2 / 3);
-            double h = (ambTick * 0.6 + braco * 7) % 22;
+            double h = (ambTick * 0.6 + braco * 7) % 12;
             double r = 1.2 + 0.6 * Math.sin(h * 0.4);
-            Location l = new Location(mundo, 0.5 + Math.cos(a) * r, y + 3 + h, 0.5 + Math.sin(a) * r);
+            Location l = new Location(mundo, 0.5 + Math.cos(a) * r, y + 15.5 + h, 0.5 + Math.sin(a) * r);
             mundo.spawnParticle(org.bukkit.Particle.SOUL_FIRE_FLAME, l, 1, 0, 0, 0, 0);
             if (ambTick % 3 == 0) mundo.spawnParticle(org.bukkit.Particle.END_ROD, l, 1, 0.1, 0.1, 0.1, 0.01);
         }
-        if (ambTick % 450 == 0) mundo.playSound(new Location(mundo, 0.5, y + 24, 0.5), org.bukkit.Sound.BLOCK_BELL_RESONATE, 1.2f, 0.6f);
+        if (ambTick % 450 == 0) mundo.playSound(new Location(mundo, 0.5, y + 14, 0.5), org.bukkit.Sound.BLOCK_BELL_RESONATE, 1.2f, 0.6f);
     }
 
     private static String descricaoCurta(String id) {
@@ -498,16 +674,16 @@ final class LobbyMundo implements Listener {
     // ------------------------------------------------------------------ npcs
 
     private void garantirNpcs() {
-        if (mundo == null || !mundo.isChunkLoaded(0, -2) || !mundo.isChunkLoaded(1, 0) || !mundo.isChunkLoaded(-2, 0)) return;
+        if (mundo == null || !mundo.isChunkLoaded(1, -2) || !mundo.isChunkLoaded(1, 1) || !mundo.isChunkLoaded(-2, -2)) return;
         try {
-            Location merc = new Location(mundo, 0.5, y + 2, -26.5, 0f, 0f);
+            Location merc = new Location(mundo, MERCADOR[0], y + 2, MERCADOR[1], olharCentro(MERCADOR[0], MERCADOR[1]), 0f);
             if (!existe(merc, pl.loja.kMercador)) pl.loja.npc(merc, "§5§lMercador Lendário", null, Loja.profissao(6), pl.loja.kMercador, 6);
-            Location guia = new Location(mundo, 26.5, y + 2, 0.5, 90f, 0f);
+            Location guia = new Location(mundo, GUIA[0], y + 2, GUIA[1], olharCentro(GUIA[0], GUIA[1]), 0f);
             if (!existe(guia, kGuia)) {
                 Villager v = pl.loja.npc(guia, "§e§lGuia das Masmorras", null, Loja.profissao(0), kGuia, 1);
                 v.setProfession(Hub.Registry.VILLAGER_PROFESSION.get(NamespacedKey.minecraft("cartographer")));
             }
-            Location cls = new Location(mundo, -25.5, y + 2, 0.5, -90f, 0f);
+            Location cls = new Location(mundo, CLASSES[0], y + 2, CLASSES[1], olharCentro(CLASSES[0], CLASSES[1]), 0f);
             if (!existe(cls, kClasses)) {
                 Villager v = pl.loja.npc(cls, "§b§lMestre das Classes", null, Loja.profissao(0), kClasses, 1);
                 v.setProfession(Hub.Registry.VILLAGER_PROFESSION.get(NamespacedKey.minecraft("librarian")));
@@ -515,7 +691,7 @@ final class LobbyMundo implements Listener {
             if (pl.missoes != null) pl.missoes.garantirNpcs(mundo, y);
             if (pl.vendaClasses != null) pl.vendaClasses.garantirNpc(mundo, y, VENDEDOR_X, VENDEDOR_Z);
             for (int[] c : BONECOS) {
-                Location l = new Location(mundo, c[0] + 0.5, y + 1, c[1] + 0.5, 180f, 0f);
+                Location l = new Location(mundo, c[0] + 0.5, y + 1, c[1] + 0.5, 90f, 0f);
                 boolean tem = false;
                 for (Entity e : mundo.getNearbyEntities(l, 1, 2, 1)) if (e.getPersistentDataContainer().has(kBoneco)) tem = true;
                 if (tem) continue;
@@ -613,7 +789,8 @@ final class LobbyMundo implements Listener {
         Location to = e.getTo();
         if (mundo == null || !to.getWorld().equals(mundo)) return;
         if (to.getBlockX() == e.getFrom().getBlockX() && to.getBlockZ() == e.getFrom().getBlockZ() && to.getBlockY() == e.getFrom().getBlockY()) return;
-        if (Math.abs(to.getBlockX()) <= 1 && to.getBlockZ() >= 25 && to.getBlockZ() <= 27 && to.getBlock().getRelative(BlockFace.DOWN).getType() == Material.EMERALD_BLOCK) {
+        boolean naEsmeralda = (to.getBlockX() == ESM_X && to.getBlockZ() == ESM_Z) || (Math.abs(to.getBlockX()) <= 1 && to.getBlockZ() >= 25 && to.getBlockZ() <= 27);
+        if (naEsmeralda && to.getBlock().getRelative(BlockFace.DOWN).getType() == Material.EMERALD_BLOCK) {
             World w = Bukkit.getWorld(pl.mundoSpawnPrincipal());
             if (w == null) return;
             Player p = e.getPlayer();
