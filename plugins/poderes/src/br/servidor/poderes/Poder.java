@@ -18,7 +18,7 @@ public enum Poder {
 
     // ---- Engenheiro
     TORRETA("torreta", "Torre Arqueira", "§a", Material.DISPENSER, 30,
-            "Coloca uma torre que atira flechas", "nos seus inimigos por 20s."),
+            "Coloca uma torre que atira flechas", "nos seus inimigos por 9s."),
     TORRE_GELO("torregelo", "Torre de Gelo", "§b", Material.BLUE_ICE, 35,
             "Torre que congela os inimigos", "com um raio de gelo (lentidao)."),
     TORRE_FOGO("torrefogo", "Torre Lanca-Chamas", "§6", Material.MAGMA_BLOCK, 35,

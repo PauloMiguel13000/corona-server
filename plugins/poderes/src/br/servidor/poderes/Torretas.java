@@ -51,11 +51,11 @@ final class Torretas implements Listener {
 
     /** Tipos de torre: alcance (blocos), intervalo entre ataques (ticks), duracao (s). */
     enum Tipo {
-        ARQUEIRA("Torre Arqueira", "§a", 16, 10, 20),
-        GELO("Torre de Gelo", "§b", 12, 15, 20),
-        FOGO("Torre Lanca-Chamas", "§6", 8, 10, 20),
-        TESLA("Torre Tesla", "§e", 12, 30, 20),
-        CANHAO("Torre Canhao", "§8", 22, 50, 20);
+        ARQUEIRA("Torre Arqueira", "§a", 16, 10, 9),
+        GELO("Torre de Gelo", "§b", 12, 15, 9),
+        FOGO("Torre Lanca-Chamas", "§6", 8, 10, 9),
+        TESLA("Torre Tesla", "§e", 12, 30, 9),
+        CANHAO("Torre Canhao", "§8", 22, 50, 9);
 
         final String nome;
         final String cor;
@@ -83,7 +83,7 @@ final class Torretas implements Listener {
     /**
      * 16/11 (Sui no Discord: "subir nivel de engenheiro hoje e frustrante, o dano nao acompanha"): as torres crescem com o
      * nivel de poder ate o nivel 60 (teto): dano contra monstros ate 2,5x (por cima da forca normal do nivel), duracao
-     * de 20s ate 35s e recarga ate 30% menor. Contra jogador (PvP) o dano continua o de antes.
+     * de 9s ate 16s e recarga ate 30% menor. Contra jogador (PvP) o dano continua o de antes.
      */
     static final int NIVEL_TETO = 60;
     /**
@@ -107,7 +107,8 @@ final class Torretas implements Listener {
     }
 
     static int segundos(Tipo tipo, int nivel) {
-        return tipo.segundos + (int) Math.round(15 * nivel01(nivel));
+        // 18/11 (Paulo): o pessoal ficava no canto com escudo e as torres faziam tudo. Metade menos 1: 20s -> 9s, 35s -> 16s
+        return tipo.segundos + (int) Math.round(7 * nivel01(nivel));
     }
 
     static double fatorRecarga(int nivel) {
