@@ -2314,6 +2314,12 @@ public final class Masmorras extends JavaPlugin implements Listener {
                 s.sendMessage("So no jogo.");
                 return true;
             }
+            // 18/11 (Sui: "tem alguma forma de esconder esse painel?"): /nivel painel liga e desliga o placar da direita
+            if (progresso != null && progresso.ativo() && a.length > 0 && (a[0].equalsIgnoreCase("painel") || a[0].equalsIgnoreCase("placar"))) {
+                boolean escondeu = progresso.alternarPlacar(p);
+                p.sendMessage(txt(PREFIXO + (escondeu ? "§7Painel das masmorras escondido. §f/nivel painel §7mostra de novo." : "§aPainel das masmorras de volta. §f/nivel painel §7esconde.")));
+                return true;
+            }
             if (progresso != null && progresso.ativo() && !(a.length > 0 && a[0].toLowerCase(java.util.Locale.ROOT).startsWith("equip"))) progresso.comando(p);
             else PortaisNivel.comando(p);
             return true;

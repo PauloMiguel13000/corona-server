@@ -120,7 +120,7 @@ public enum Poder {
     LACO("laco", "Laço de Espinhos", "§2", Material.WEEPING_VINES, 16,
             "Laça os inimigos onde você olha,", "junta todos no meio e eles sangram."),
     FLOR_CARNIVORA("florcarnivora", "Flor Carnívora", "§c", Material.PITCHER_PLANT, 35,
-            "Planta uma flor gigante por 10s que", "puxa e morde quem chegar perto."),
+            "Planta uma flor gigante (10s a 20s pelo", "nível) que puxa e morde quem chegar perto."),
     SELVA_VIVA("selvaviva", "Selva Viva", "§a", Material.JUNGLE_SAPLING, 60,
             "Cipós brotam em volta: os inimigos ficam", "pendurados e estrangulados; você se cura.");
 

@@ -138,6 +138,8 @@ final class Cipo {
     // ------------------------------------------------------------------ 3. Laco de Espinhos
 
     boolean laco(Player p) {
+        // 18/11 (Sui: "a duracao deveria aumentar conforme o lvl"): 3 s no nivel 0 ate 6 s no teto
+        final int dur = (int) Math.round(60 * (1 + Torretas.nivel01(pl.nivelDePoder(p))));
         Location c = pl.hab.mira(p, 22);
         World w = c.getWorld();
         double f = pl.fator(p);
@@ -153,13 +155,13 @@ final class Cipo {
         for (LivingEntity le : presos) {
             Vector v = c.toVector().subtract(le.getLocation().toVector()).setY(0);
             if (v.lengthSquared() > 0.25) le.setVelocity(v.normalize().multiply(0.8).setY(0.2));
-            if (pl.causarDano(le, DANO_LACO * f, p)) le.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 70, 3));
+            if (pl.causarDano(le, DANO_LACO * f, p)) le.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, dur + 10, 3));
         }
         presos.removeIf(le -> !le.isValid() || le.isDead());
         // os amarrados ficam presos uns aos outros pelos espinhos (3 s, sangrando)
         final int[] t = {0};
         Bukkit.getScheduler().runTaskTimer(pl, tarefa -> {
-            if (t[0] > 60) {
+            if (t[0] > dur) {
                 tarefa.cancel();
                 return;
             }
@@ -179,6 +181,8 @@ final class Cipo {
     // ------------------------------------------------------------------ 4. Flor Carnivora
 
     boolean flor(Player p) {
+        // 18/11 (Sui): 10 s no nivel 0 ate 20 s no teto
+        final int dur = (int) Math.round(200 * (1 + Torretas.nivel01(pl.nivelDePoder(p))));
         Location c = pl.hab.mira(p, 18);
         World w = c.getWorld();
         double f = pl.fator(p);
@@ -206,7 +210,7 @@ final class Cipo {
         }
         final int[] t = {0};
         Bukkit.getScheduler().runTaskTimer(pl, tarefa -> {
-            if (t[0] > 200 || !p.isOnline()) {
+            if (t[0] > dur || !p.isOnline()) {
                 tarefa.cancel();
                 pl.props.remover(flor3d);
                 Fx.p(w, Particle.COMPOSTER, c.clone().add(0, 1, 0), 30, 0.8, 0.8, 0.8, 0);
@@ -246,13 +250,15 @@ final class Cipo {
             }
             t[0]++;
         }, 0L, 1L);
-        Poderes.barra(p, "§c§lFLOR CARNÍVORA! §7Ela puxa e morde quem chegar perto (10s).");
+        Poderes.barra(p, "§c§lFLOR CARNÍVORA! §7Ela puxa e morde quem chegar perto (" + (dur / 20) + "s).");
         return true;
     }
 
     // ------------------------------------------------------------------ 5. Selva Viva
 
     boolean selva(Player p) {
+        // 18/11 (Sui): 4 s no nivel 0 ate 8 s no teto
+        final int dur = (int) Math.round(80 * (1 + Torretas.nivel01(pl.nivelDePoder(p))));
         Location c = p.getLocation();
         World w = c.getWorld();
         double f = pl.fator(p);
@@ -267,13 +273,13 @@ final class Cipo {
                     rnd().nextDouble(-0.4, 0.4), 5, 70, BRILHO);
         }
         pl.fx.anel(c.clone().add(0, 0.2, 0), b(Material.MOSS_BLOCK), raio, 8, 28, 0.4f, BRILHO);
-        p.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 1));
-        p.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 100, 0));
+        p.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, dur + 20, 1));
+        p.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, dur + 20, 0));
         List<LivingEntity> pegos = pl.hab.inimigosPerto(c, raio, 4, p);
         for (LivingEntity le : pegos) le.setVelocity(new Vector(0, 0.75, 0));
         final int[] t = {0};
         Bukkit.getScheduler().runTaskTimer(pl, tarefa -> {
-            if (t[0] > 80) {
+            if (t[0] > dur) {
                 tarefa.cancel();
                 return;
             }

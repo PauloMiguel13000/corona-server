@@ -42,12 +42,15 @@ final class Progresso implements Listener {
 
     private final Masmorras pl;
     private final NamespacedKey kAviso;
+    /** 18/11: quem escondeu o painel com /nivel painel. */
+    private final NamespacedKey kSemPlacar;
     private final NamespacedKey kPortal, kPortao;
     private final Map<UUID, Long> ultimoAviso = new HashMap<>();
 
     Progresso(Masmorras pl) {
         this.pl = pl;
         this.kAviso = new NamespacedKey(pl, "nivel_masmorra_aviso");
+        this.kSemPlacar = new NamespacedKey(pl, "sem_placar");
         this.kPortal = new NamespacedKey(pl, "portal_nivel_enfeite");
         this.kPortao = new NamespacedKey(pl, "portao_enfeite");
     }
@@ -285,7 +288,8 @@ final class Progresso implements Listener {
                 p.teleportAsync(lugarSeguro(p, p.getLocation()), PlayerTeleportEvent.TeleportCause.PLUGIN);
                 avisarTrancado(p, "A área de nível " + a, a);
             }
-            if (pl.getConfig().getBoolean("progresso.placar", true)) placar(p);
+            if (pl.getConfig().getBoolean("progresso.placar", true) && !p.getPersistentDataContainer().has(kSemPlacar)) placar(p);
+            else tirarPlacar(p);
         }
     }
 
@@ -323,6 +327,7 @@ final class Progresso implements Listener {
         l.add("§1 ");
         if (n < MAX) l.add("§7Vença todas: libera o §e" + (n + 1) + (n + 1 == NETHER ? " §7+ §cNether" : n + 1 == END ? " §7+ §dEnd" : ""));
         l.add("§e/nivel §8• §e/masmorras menu");
+        l.add("§8/nivel painel: esconder");
         java.util.Set<String> agora = new java.util.HashSet<>();
         for (int i = 0; i < l.size(); i++) {
             String e = l.get(i);
@@ -331,6 +336,19 @@ final class Progresso implements Listener {
             o.getScore(e).setScore(l.size() - i);
         }
         for (String e : new ArrayList<>(sb.getEntries())) if (!agora.contains(e)) sb.resetScores(e);
+    }
+
+    /** 18/11: /nivel painel. Devolve true se escondeu. */
+    boolean alternarPlacar(Player p) {
+        org.bukkit.persistence.PersistentDataContainer d = p.getPersistentDataContainer();
+        if (d.has(kSemPlacar)) {
+            d.remove(kSemPlacar);
+            if (mundoDasMasmorras(p.getWorld())) placar(p);
+            return false;
+        }
+        d.set(kSemPlacar, PersistentDataType.BYTE, (byte) 1);
+        tirarPlacar(p);
+        return true;
     }
 
     void tirarPlacar(Player p) {

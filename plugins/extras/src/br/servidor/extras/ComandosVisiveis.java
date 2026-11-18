@@ -7,6 +7,7 @@ import java.util.Set;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerCommandSendEvent;
 
 /**
@@ -35,5 +36,22 @@ final class ComandosVisiveis implements Listener {
             String x = c.toLowerCase(Locale.ROOT);
             return x.indexOf(':') >= 0 || ESCONDIDOS.contains(x) || extra.contains(x);
         });
+    }
+
+    /** 18/11 (Sui: "o /plugins ta liberado, tem q bloquear pra evitar roubos"): quem nao e admin nao usa mais. */
+    private static final Set<String> BLOQUEADOS = Set.of("plugins", "pl", "version", "ver", "about", "icanhasbukkit", "?");
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void usar(PlayerCommandPreprocessEvent e) {
+        if (e.getPlayer().hasPermission("extras.admin") || e.getPlayer().isOp()) return;
+        String m = e.getMessage();
+        if (m.length() < 2) return;
+        String cmd = m.substring(1).split(" ", 2)[0].toLowerCase(Locale.ROOT);
+        int i = cmd.indexOf(':');
+        String base = i >= 0 ? cmd.substring(i + 1) : cmd;
+        if (BLOQUEADOS.contains(base)) {
+            e.setCancelled(true);
+            e.getPlayer().sendMessage(Extras.txt("§cComando desconhecido. §7Use §f/ajuda§7."));
+        }
     }
 }
