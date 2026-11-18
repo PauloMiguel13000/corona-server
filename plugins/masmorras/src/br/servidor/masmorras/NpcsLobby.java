@@ -111,7 +111,11 @@ final class NpcsLobby implements Listener {
 
     /** A cada 5 s: acha os NPCs do lobby (e da trilha), cria os moradores que faltam. */
     private void conferir() {
-        if (mundo == null || !mundo.isChunkLoaded(0, 0)) return;
+        if (mundo == null) return;
+        // 18/11 (Paulo: "acho que o vigia morreu"): os NPCs longe nao dependem do lobby estar carregado
+        if (vigia != null && garantirLonge(vigia, 2, "§6§lVigia das Ruínas", "cartographer", Villager.Type.DESERT)) acampamento(vigia, false);
+        if (andarilha != null && garantirLonge(andarilha, 3, "§5§lAndarilha Cega", "cleric", Villager.Type.TAIGA)) acampamento(andarilha, true);
+        if (!mundo.isChunkLoaded(0, 0)) return;
         // moradores
         for (int i = 0; i < MORADORES.length; i++) {
             Object[] m = MORADORES[i];
@@ -135,8 +139,6 @@ final class NpcsLobby implements Listener {
             Block b = mundo.getBlockAt(l.getBlockX() + 1, l.getBlockY(), l.getBlockZ() + 1);
             if (b.getType().isAir()) b.setType(Material.SOUL_LANTERN, false);
         }
-        if (vigia != null && garantirLonge(vigia, 2, "§6§lVigia das Ruínas", "cartographer", Villager.Type.DESERT)) acampamento(vigia, false);
-        if (andarilha != null && garantirLonge(andarilha, 3, "§5§lAndarilha Cega", "cleric", Villager.Type.TAIGA)) acampamento(andarilha, true);
         tirarRepetidos();
         // registra quem anda
         andantes.keySet().removeIf(u -> {
@@ -429,9 +431,12 @@ final class NpcsLobby implements Listener {
                 int x = x0 + (int) Math.round(Math.cos(a) * r), z = z0 + (int) Math.round(Math.sin(a) * r);
                 if (!mundo.isChunkLoaded(x >> 4, z >> 4)) continue;
                 Block b = mundo.getHighestBlockAt(x, z);
+                while ((b.getType() == Material.SNOW || b.isPassable() && !b.isLiquid()) && b.getY() > mundo.getMinHeight()) b = b.getRelative(0, -1, 0);
                 Material m = b.getType();
                 if (!m.isSolid() || m.name().contains("LEAVES") || m.name().contains("LOG") || b.isLiquid()) continue;
-                if (b.getRelative(0, 1, 0).isLiquid() || !b.getRelative(0, 1, 0).isPassable() || !b.getRelative(0, 2, 0).isPassable()) continue;
+                Block pe = b.getRelative(0, 1, 0);
+                if (pe.isLiquid() || !pe.isPassable() || !b.getRelative(0, 2, 0).isPassable() || m == Material.ICE || m == Material.POWDER_SNOW) continue;
+                if (pe.getType() == Material.SNOW) pe.setType(Material.AIR, false);
                 return new Location(mundo, x + 0.5, b.getY() + 1, z + 0.5);
             }
         return null;
