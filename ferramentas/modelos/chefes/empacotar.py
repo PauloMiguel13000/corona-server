@@ -43,6 +43,12 @@ def zipar(pasta, destino, extras):
                 z.writestr(zi, open(f, 'rb').read())
 
 
+# ---- aneis elementais (19/11): texturas no Java e no Bedrock + mapa do Geyser
+import aneis  # noqa: E402
+mapa = json.load(open(os.path.join(TMP, 'corona-masmorras3d.json')))
+it = json.load(open(os.path.join(TMP, 'item_texture_masm.json')))
+aneis.gerar(TMP, mapa, it)
+
 # ---- Java
 mcmeta = json.dumps({'pack': {'description': '§6§lMasmorras §7- chefes 3D (Corona Server)', 'min_format': [97, 0], 'max_format': [199, 0]}})
 jz = os.path.join(SAIDA, 'java.zip')
@@ -53,7 +59,6 @@ os.replace(jz, os.path.join(SAIDA, nome_java))
 
 # ---- Bedrock
 B = os.path.join(TMP, 'bedrock')
-it = json.load(open(os.path.join(TMP, 'item_texture_masm.json')))
 os.makedirs(os.path.join(B, 'textures', 'items', 'corona', 'masm'), exist_ok=True)
 Image.new('RGBA', (16, 16), (0, 0, 0, 0)).save(os.path.join(B, 'textures', 'items', 'corona', 'masm', 'masm_vazio.png'))
 it['masm_vazio'] = {'textures': 'textures/items/corona/masm/masm_vazio'}
@@ -65,8 +70,7 @@ manifest = {'format_version': 2, 'header': {'name': 'Corona Masmorras 3D', 'desc
             'modules': [{'type': 'resources', 'uuid': u('modulo'), 'version': [1, 0, 0]}]}
 zipar(B, os.path.join(SAIDA, 'corona_masmorras3d.mcpack'), {'manifest.json': json.dumps(manifest, indent=1)})
 
-# ---- Geyser: pecas + arma invisivel na mao do mob
-mapa = json.load(open(os.path.join(TMP, 'corona-masmorras3d.json')))
+# ---- Geyser: pecas + arma invisivel na mao do mob (o mapa ja tem os aneis)
 for item in ('bow', 'crossbow', 'trident', 'iron_shovel', 'iron_sword', 'iron_hoe', 'golden_sword', 'golden_axe', 'diamond_pickaxe',
              'diamond_axe', 'diamond_hoe', 'netherite_axe', 'netherite_sword', 'netherite_hoe', 'book', 'shield'):
     mapa['items'].setdefault(f'minecraft:{item}', []).append({

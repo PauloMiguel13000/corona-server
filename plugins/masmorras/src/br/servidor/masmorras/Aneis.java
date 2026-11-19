@@ -130,8 +130,26 @@ final class Aneis implements Listener {
         m.setEnchantmentGlintOverride(true);
         m.setMaxStackSize(1);
         m.getPersistentDataContainer().set(kAnel, PersistentDataType.STRING, e.name());
+        desenho(m, e);
         it.setItemMeta(m);
         return it;
+    }
+
+    /** 19/11: o desenho de anel do pacote das masmorras (custom_model_data "anel_<elemento>"). */
+    private static void desenho(ItemMeta m, Elem e) {
+        var c = m.getCustomModelDataComponent();
+        c.setStrings(List.of("anel_" + e.name().toLowerCase(Locale.ROOT)));
+        m.setCustomModelDataComponent(c);
+    }
+
+    /** Aneis feitos antes do desenho: ganham o desenho quando passam pela mao. */
+    private void atualizar(ItemStack it, Elem e) {
+        if (it == null || !it.hasItemMeta()) return;
+        ItemMeta m = it.getItemMeta();
+        String quer = "anel_" + e.name().toLowerCase(Locale.ROOT);
+        if (m.getCustomModelDataComponent().getStrings().contains(quer)) return;
+        desenho(m, e);
+        it.setItemMeta(m);
     }
 
     Elem anelDe(ItemStack it) {
@@ -159,6 +177,7 @@ final class Aneis implements Listener {
         Elem el = anelDe(mao);
         if (el == null) return;
         e.setCancelled(true);
+        atualizar(mao, el);
         ItemStack antes = p.getInventory().getItemInOffHand();
         p.getInventory().setItemInOffHand(mao);
         p.getInventory().setItemInMainHand(antes);
@@ -173,6 +192,7 @@ final class Aneis implements Listener {
             if (!vale(p.getWorld())) continue;
             Elem e = usando(p);
             if (e == null) continue;
+            atualizar(p.getInventory().getItemInOffHand(), e);
             switch (e) {
                 case FOGO -> p.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 60, 0, true, false, true));
                 case AGUA -> {
