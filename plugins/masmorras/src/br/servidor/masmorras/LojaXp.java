@@ -50,9 +50,9 @@ final class LojaXp implements Listener {
     record Oferta(String nome, Material icone, long preco, String desc, String tipo, int valor) {}
 
     static final Oferta[] LOJA = {
-            new Oferta("§a§lVIP por 1 dia", Material.EMERALD, 3000, "Tag, bônus de coronas e kit do VIP por 24 horas", "vip", 1),
-            new Oferta("§a§lVIP por 3 dias", Material.EMERALD_BLOCK, 8000, "Tag, bônus de coronas e kit do VIP por 3 dias", "vip", 3),
-            new Oferta("§a§lVIP por 7 dias", Material.BEACON, 16000, "Tag, bônus de coronas e kit do VIP por 7 dias", "vip", 7),
+            new Oferta("§a§lVIP por 1 dia", Material.EMERALD, 70000, "Tag, bônus de coronas e kit do VIP por 24 horas", "vip", 1),
+            new Oferta("§a§lVIP por 3 dias", Material.EMERALD_BLOCK, 185000, "Tag, bônus de coronas e kit do VIP por 3 dias", "vip", 3),
+            new Oferta("§a§lVIP por 7 dias", Material.BEACON, 375000, "Tag, bônus de coronas e kit do VIP por 7 dias", "vip", 7),
             new Oferta("§e§l250 coronas", Material.GOLD_NUGGET, 1500, "Coronas para gastar nas lojas do servidor", "coronas", 250),
             new Oferta("§e§l1.000 coronas", Material.GOLD_INGOT, 5500, "Coronas para gastar nas lojas do servidor", "coronas", 1000),
             new Oferta("§6§lTotem da Imortalidade", Material.TOTEM_OF_UNDYING, 6000, "Não morre uma vez", "item", 1),
@@ -299,6 +299,20 @@ final class LojaXp implements Listener {
         p.sendMessage(Masmorras.txt("§6§lLoja de XP: §fComprou " + o.nome() + "§f por §a" + fmt(o.preco()) + " XP§f. Saldo: §a" + fmt(saldo(p))));
         pl.getLogger().info("Loja de XP: " + p.getName() + " comprou " + o.tipo() + " " + o.valor() + " por " + o.preco() + " XP");
         abrirLoja(p);
+    }
+
+    // 18/11 (Paulo): o jogador ganha so 40% do XP normal, venha de onde vier (monstro, minerio, fornalha, pesca...)
+    private final java.util.Map<java.util.UUID, Double> sobraXp = new java.util.HashMap<>();
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void menosXp(org.bukkit.event.player.PlayerExpChangeEvent e) {
+        int a = e.getAmount();
+        if (a <= 0) return;
+        double f = pl.getConfig().getDouble("xp.multiplicador", 0.40);
+        double v = a * f + sobraXp.getOrDefault(e.getPlayer().getUniqueId(), 0.0);
+        int inteiro = (int) Math.floor(v);
+        sobraXp.put(e.getPlayer().getUniqueId(), v - inteiro);
+        e.setAmount(inteiro);
     }
 
     @EventHandler

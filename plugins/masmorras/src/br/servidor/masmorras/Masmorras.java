@@ -251,6 +251,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(mecanicas, this);
         getServer().getPluginManager().registerEvents(new PacoteMusicaJava(this), this);
         Bukkit.getScheduler().runTaskLater(this, () -> { try { inferno.mundo(); } catch (Throwable ex) { getLogger().warning("Mundo de Herobrine: " + ex); } }, 200L);
+        Bukkit.getScheduler().runTaskLater(this, () -> { try { inferno.tirarIlhaAntiga(); } catch (Throwable ex) { getLogger().warning("Ilha antiga: " + ex); } }, 300L);
         getServer().getPluginManager().registerEvents(new Vidas(this), this);
         hub = new Hub(this);
         getServer().getPluginManager().registerEvents(loja, this);

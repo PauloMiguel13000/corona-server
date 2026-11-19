@@ -273,11 +273,12 @@ final class Encantos implements Listener {
 
     void abrir(Player p) {
         Menu m = new Menu();
-        m.inv = Bukkit.createInventory(m, 54, Masmorras.txt("§5§lEncantador §8(livros pagos com XP)"));
-        long saldo = pl.lojaXp.saldo(p);
+        m.inv = Bukkit.createInventory(m, 54, Masmorras.txt("§5§lEncantador §8(livros pagos com o seu XP)"));
+        // 18/11 (Paulo): os livros sao pagos com o XP normal do Minecraft (a barra verde do jogador), nao com o do banco
+        long saldo = LojaXp.total(p);
         ItemStack info = new ItemStack(Material.EXPERIENCE_BOTTLE);
         ItemMeta im = info.getItemMeta();
-        im.displayName(t("§a§lSeu XP no banco: " + LojaXp.fmt(saldo)));
+        im.displayName(t("§a§lSeu XP: " + LojaXp.fmt(saldo) + " §7(nível " + p.getLevel() + ")"));
         im.lore(List.of(t("§7Clique num livro para comprar."), t("§7Depois clique com ele em cima do item que quer encantar."),
                 t("§8Até " + MAX_POR_ITEM + " encantos especiais por item. Dois livros iguais sobem o nível.")));
         info.setItemMeta(im);
@@ -315,11 +316,13 @@ final class Encantos implements Listener {
                 p.sendActionBar(Masmorras.txt("§cSua mochila está cheia."));
                 return;
             }
-            if (!pl.lojaXp.gastar(p, preco)) {
-                p.sendMessage(Masmorras.txt("§d§lEncantador: §fFaltam §c" + LojaXp.fmt(preco - pl.lojaXp.saldo(p)) + " XP§f no banco. Guarde XP com o §aBanqueiro de XP§f."));
+            long tem = LojaXp.total(p);
+            if (tem < preco) {
+                p.sendMessage(Masmorras.txt("§d§lEncantador: §fFaltam §c" + LojaXp.fmt(preco - tem) + " XP§f. Você tem §a" + LojaXp.fmt(tem) + "§f (nível " + p.getLevel() + ")."));
                 p.playSound(p.getLocation(), "minecraft:entity.villager.no", 1f, 1f);
                 return;
             }
+            LojaXp.definir(p, tem - preco);
             p.getInventory().addItem(livro(enc, n));
             p.playSound(p.getLocation(), "minecraft:item.book.page_turn", 1f, 1f);
             p.playSound(p.getLocation(), "minecraft:entity.experience_orb.pickup", 0.8f, 0.8f);
