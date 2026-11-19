@@ -51,11 +51,12 @@ final class Torretas implements Listener {
 
     /** Tipos de torre: alcance (blocos), intervalo entre ataques (ticks), duracao (s). */
     enum Tipo {
-        ARQUEIRA("Torre Arqueira", "§a", 16, 10, 5),
-        GELO("Torre de Gelo", "§b", 12, 15, 5),
-        FOGO("Torre Lanca-Chamas", "§6", 8, 10, 5),
-        TESLA("Torre Tesla", "§e", 12, 30, 5),
-        CANHAO("Torre Canhao", "§8", 22, 50, 5);
+        // 19/11 (Paulo: "nerfar o tempo do tiro, para demorar mais"): intervalos ~40% maiores (eram 10/15/10/30/50)
+        ARQUEIRA("Torre Arqueira", "§a", 16, 15, 5),
+        GELO("Torre de Gelo", "§b", 12, 20, 5),
+        FOGO("Torre Lanca-Chamas", "§6", 8, 15, 5),
+        TESLA("Torre Tesla", "§e", 12, 40, 5),
+        CANHAO("Torre Canhao", "§8", 22, 70, 5);
 
         final String nome;
         final String cor;
@@ -107,8 +108,17 @@ final class Torretas implements Listener {
     }
 
     static int segundos(Tipo tipo, int nivel) {
-        // 18/11 (Paulo): o pessoal ficava no canto com escudo e as torres faziam tudo. depois 5s a 12s
-        return tipo.segundos + (int) Math.round(7 * nivel01(nivel));
+        return (ticksDuracao(tipo, nivel) + 19) / 20;
+    }
+
+    /** 19/11 (Paulo: "nerfar o tempo que ela fica para 9,5 segundos"): 5 s no nivel 0 ate 9,5 s no nivel 60 (era ate 12 s). */
+    static int ticksDuracao(Tipo tipo, int nivel) {
+        int t = tipo.segundos * 20 + (int) Math.round(90 * nivel01(nivel));
+        return t - t % 5;   // o relogio da torre anda de 5 em 5 ticks
+    }
+
+    static String textoDuracao(Tipo tipo, int nivel) {
+        return Poderes.num(ticksDuracao(tipo, nivel) / 20.0);
     }
 
     static double fatorRecarga(int nivel) {
@@ -208,12 +218,13 @@ final class Torretas implements Listener {
         double esc = escala(nivel);
         fator *= esc;
         escalas.put(t.getUniqueId(), esc);
-        int seg = herdado > 0 ? (herdado + 19) / 20 : segundos(tipo, nivel);
+        int dur = herdado > 0 ? herdado : ticksDuracao(tipo, nivel);
+        int seg = (dur + 19) / 20;
         Poderes.barra(p, tipo.cor + tipo.nome + (herdado > 0 ? " §freposicionada §7(sobram §e" + seg + "s§7)" : " §fcolocada por §e" + seg + "s")
                 + (esc > 1.001 ? " §7(dano x" + Poderes.num(esc) + " pelo nível)" : ""));
         final double fat = fator;
 
-        final int[] ticks = {herdado > 0 ? herdado : seg * 20};
+        final int[] ticks = {dur};
         restante.put(t.getUniqueId(), ticks);
         colocadaEm.put(t.getUniqueId(), System.currentTimeMillis());
         final int[] carga = {tipo.intervalo};
