@@ -205,8 +205,21 @@ final class LojaXp implements Listener {
         m.inv.setItem(4, botao(Material.EXPERIENCE_BOTTLE, "§a§lSeu saldo: " + fmt(s) + " XP", emNiveis(s)));
         for (int i = 0; i < LOJA.length; i++) {
             Oferta o = LOJA[i];
-            m.inv.setItem(SLOTS_LOJA[i], botao(o.icone(), o.nome(), "§7" + o.desc(), "§fPreço: " + (s >= o.preco() ? "§a" : "§c") + fmt(o.preco()) + " XP", emNiveis(o.preco()),
-                    o.tipo().equals("vip") ? "§8só para quem não tem VIP maior (VIP+, MVP, LENDA)" : "", "§eclique para comprar"));
+            ItemStack b = botao(o.icone(), o.nome(), "§7" + o.desc(), "§fPreço: " + (s >= o.preco() ? "§a" : "§c") + fmt(o.preco()) + " XP", emNiveis(o.preco()),
+                    o.tipo().equals("vip") ? "§8só para quem não tem VIP maior (VIP+, MVP, LENDA)" : "", "§eclique para comprar");
+            if (o.tipo().equals("anel") && pl.aneis != null) {
+                // 19/11 (Paulo: "cade os aneis"): na loja aparece o proprio anel, com o desenho do pacote
+                ItemStack anel = pl.aneis.anel(Aneis.Elem.values()[o.valor()]);
+                ItemMeta am = anel.getItemMeta();
+                List<net.kyori.adventure.text.Component> l = new ArrayList<>(am.lore());
+                l.add(Masmorras.txt(""));
+                l.addAll(b.getItemMeta().lore().subList(1, 3));
+                l.add(Masmorras.txt("§eclique para comprar").decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
+                am.lore(l);
+                anel.setItemMeta(am);
+                b = anel;
+            }
+            m.inv.setItem(SLOTS_LOJA[i], b);
         }
         m.inv.setItem(31, botao(Material.ARROW, "§7Voltar ao banco"));
         p.openInventory(m.inv);
