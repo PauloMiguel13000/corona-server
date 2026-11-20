@@ -12,8 +12,8 @@ import org.bukkit.persistence.PersistentDataType;
 
 /**
  * 20/11 (Paulo: "cada skill no maximo 15... caso no futuro eu peca, aumentamos o limite"): cada skill do /skill para de
- * ganhar XP no nivel 15 (skills.limite-por-rebirth deixa subir com o REBIRTH, hoje 0). O que ja passou fica; no jogo o nivel de poder vale no maximo 60 (Papi).
- * Config: skills.limite-base (15), skills.limite-por-rebirth (0), skills.limite-maximo (60).
+ * ganhar XP no nivel 15 e +5 por REBIRTH do jogador ("a cada rebirth do player e mais 5 levels"). O que ja passou fica; no jogo o nivel de poder vale no maximo 60 (Papi).
+ * Config: skills.limite-base (15), skills.limite-por-rebirth (5), skills.limite-maximo (60).
  */
 final class LimitePoder implements Listener {
 
@@ -27,7 +27,7 @@ final class LimitePoder implements Listener {
 
     int limite(Player p) {
         Integer rb = p.getPersistentDataContainer().get(K_REBIRTH, PersistentDataType.INTEGER);
-        int base = pl.getConfig().getInt("skills.limite-base", 15), por = pl.getConfig().getInt("skills.limite-por-rebirth", 0);
+        int base = pl.getConfig().getInt("skills.limite-base", 15), por = pl.getConfig().getInt("skills.limite-por-rebirth", 5);
         return Math.min(pl.getConfig().getInt("skills.limite-maximo", 60), base + por * (rb == null ? 0 : Math.max(0, rb)));
     }
 
@@ -50,6 +50,6 @@ final class LimitePoder implements Listener {
         if (u != null && agora - u < 900_000L) return;
         avisado.put(k, agora);
         p.sendMessage(Poderes.txt("§6§lLIMITE DA SKILL §8» §7Essa skill chegou no nível §f" + lim + "§7 (o máximo agora). "
-                + "§7Para ficar mais forte: §d/runa §7(runas da classe)."));
+                + "§dCada REBIRTH sobe o limite em +5 §7(§f/rebirth§7). Para ficar mais forte agora: §d/runa§7."));
     }
 }
