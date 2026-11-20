@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'
 import armaduras_tematicas as A  # noqa: E402
 import armaduras_v3 as V3  # noqa: E402
 import elmos3d as E  # noqa: E402
+import silhuetas_n6 as S6  # noqa: E402
 from base import C, fbm, hash2, mix, ss  # noqa: E402
 
 N6 = {   # id: (veios, peca do elmo 3D, cor do metal base, cor do veio, cor do friso)
@@ -133,6 +134,8 @@ _orig_elmo = V3.elmo_forma
 
 
 def elmo_forma_n6(f, estilo, modelo, var):
+    if modelo.startswith('n6_'):
+        return S6.elmo(modelo[3:], f)
     if modelo == 'ancestral':
         return elmo_ancestral(f)
     return _orig_elmo(f, estilo, modelo, var)
@@ -213,9 +216,9 @@ def pintar_face_n6(id_, rec, t, parte, face, camada, x0, y0, x1, y1, sem):
     # refaz o mapa de tipos (o pintar original nao devolve) para saber onde ha placa
     if parte == 'head':
         if camada == 1:
-            elmo_ancestral(f)
+            S6.elmo(id_, f)
     elif not (parte == 'rarm' and camada == 2):
-        tpl_ancestral(f, '')
+        S6.CORPO[id_](f, '')
     placa = np.isin(f.tipo, (PLACA, V3.METAL2)) & (a > 0)
     # metal quase preto com o tom do tema (escurece a placa que veio do material)
     b = np.asarray(C(base))
@@ -237,14 +240,23 @@ def pintar_face_n6(id_, rec, t, parte, face, camada, x0, y0, x1, y1, sem):
     branco = mix(cv, C('#ffffff'), 0.45)
     c = c * (1 - glow[..., None] * 0.6) + cv * glow[..., None] * 0.6
     c = np.where((v > 0.5)[..., None], branco * v[..., None] + cv * (1 - v[..., None]), c)
-    # nucleo do peito (gema em losango)
+    # partes acesas, vidro e vazio estrelado
+    tp = f.tipo
+    luz = (tp == BRILHO) & (a > 0)
+    c = np.where(luz[..., None], mix(cv, C('#ffffff'), 0.25) * np.ones_like(c), c)
+    vid = (tp == V3.VIDRO) & (a > 0)
+    reflexo = np.clip(1 - np.abs(f.S - f.T - 0.2) * 6, 0, 1)[..., None]
+    c = np.where(vid[..., None], mix(b * 2.2, cv, 0.45) * np.ones_like(c) * 0.8 + reflexo * 0.35, c)
+    if id_ == 'CAOS':
+        vz = (tp == ESCURO) & (a > 0)
+        est = hash2(np.floor(f.X).astype(int), np.floor(f.Y).astype(int), sem + 99) > 0.965
+        c = np.where((vz & est)[..., None], mix(cv, C('#ffffff'), 0.5) * np.ones_like(c), c)
+    # nucleo do peito: forma propria de cada masmorra
     if parte == 'body' and camada == 1 and face == 'south':
-        d = np.abs(f.S - 0.5) * f.W + np.abs(f.T - 0.3) * f.H
-        aro = (d < 9) & (d >= 6.5)
-        gema = d < 6.5
+        gema, aro = S6.nucleo(id_, f)
         c = np.where(aro[..., None], np.asarray(C(friso)) * np.ones_like(c), c)
-        brilho = np.clip(1 - d / 6.5, 0, 1)[..., None]
-        c = np.where(gema[..., None], cv * (0.7 + 0.3 * brilho) + (1 - cv) * brilho * 0.7, c)
+        cen = np.clip(1 - np.hypot((f.S - 0.5) * f.W, (f.T - 0.3) * f.H) / 7, 0, 1)[..., None]
+        c = np.where(gema[..., None], cv * (0.75 + 0.25 * cen) + (1 - cv) * cen * 0.6, c)
         a = np.where(gema | aro, 1.0, a)
     return np.clip(c, 0, 1), a
 
@@ -336,7 +348,8 @@ E.pecas = pecas_n6
 E.estilo_de = estilo_n6
 
 for id_ in N6:
-    V3.MODELO[id_] = 'ancestral'
+    V3.MODELOS['n6_' + id_] = S6.CORPO[id_]
+    V3.MODELO[id_] = 'n6_' + id_
     V3.ESTILO_V3[id_] = 'n6'   # nao usa rosto de elmo antigo nenhum
     V3.VARIANTE.pop(id_, None)
 
