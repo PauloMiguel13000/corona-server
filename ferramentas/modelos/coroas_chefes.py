@@ -41,6 +41,11 @@ MOLDE = {
     'DISTORCIDO': ('folhas', 'WARPED_NYLIUM'), 'ALMAS': ('halo', 'SOUL_LANTERN'), 'OBSIDIANA': ('chifres', 'CRYING_OBSIDIAN'),
     'ILHAS': ('cristais', 'PURPUR_BLOCK'), 'NAVE': ('engrenagem', 'SHULKER_BOX'), 'TRONO': ('chifres', 'OBSIDIAN'),
     'CORO': ('folhas', 'CHORUS_FLOWER'), 'ABISMO': ('halo', 'END_ROD'),
+    # 20/11: nivel 6
+    'CINZAS': ('chamas', 'MAGMA_BLOCK'), 'CATACUMBA': ('caveira', 'SKELETON_SKULL'), 'PINACULO': ('cristais', 'LIGHTNING_ROD'),
+    'RUBRA': ('coroa', 'REDSTONE_BLOCK'), 'ECO': ('tentaculos', 'SCULK'), 'PUTRIDO': ('folhas', 'MOSS_BLOCK'),
+    'GLACIAR': ('cristais', 'BLUE_ICE'), 'ABISSAL': ('coroa', 'PRISMARINE'), 'TITAS': ('engrenagem', 'ANVIL'),
+    'CAOS': ('halo', 'CRYING_OBSIDIAN'),
 }
 
 

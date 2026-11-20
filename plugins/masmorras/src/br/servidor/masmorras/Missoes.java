@@ -303,15 +303,8 @@ final class Missoes implements Listener {
         if (m == null) m = Material.matchMaterial("IRON_" + peca);
         ItemStack it = new ItemStack(m);
         if (t.nivel == 4 || t.nivel >= 5) it.addUnsafeEnchantment(Enchantment.PROTECTION, t.nivel >= 6 ? 4 : t.nivel >= 5 ? 2 : 1);
-        // 20/11 (Paulo: "tera novas armaduras"): as pecas do nivel 6 vem com acabamento (trim) proprio de cada masmorra,
-        // que aparece igual no Java e no Bedrock, e Inquebravel III
-        if (t.nivel >= 6) {
-            it.addUnsafeEnchantment(Enchantment.UNBREAKING, 3);
-            if (it.getItemMeta() instanceof org.bukkit.inventory.meta.ArmorMeta am) {
-                am.setTrim(Reliquias.trimNivel6(t));
-                it.setItemMeta(am);
-            }
-        }
+        // 20/11: pecas do nivel 6 com Inquebravel III (a armadura de cada masmorra vem do pacote: corona:<tema>)
+        if (t.nivel >= 6) it.addUnsafeEnchantment(Enchantment.UNBREAKING, 3);
         return pl.reliquias != null ? pl.reliquias.aplicar(it, t) : it;
     }
 

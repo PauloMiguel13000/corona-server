@@ -95,6 +95,17 @@ R = {
     'TRONO': ('obsidiana', 'olho', 'chifres', 'estrelas', '#6a1fa0', '#c060ff'),
     'CORO': ('tecido', 'flor', 'capuz', 'costuras', '#c9a0dc', '#f0d0ff'),
     'ABISMO': ('vazio', 'estrela', 'capuz', 'estrelas', '#2b2b40', '#8080ff'),
+    # 20/11: nivel 6
+    'CINZAS': ('lava', 'chama', 'chifres', 'rachaduras', '#e07020', '#ffb060'),
+    'CATACUMBA': ('metal_escuro', 'caveira', 'coroa', 'runas', '#205a70', '#60e0ff'),
+    'PINACULO': ('metal', 'raio', 'coroa', 'runas', '#c0a020', '#ffe040'),
+    'RUBRA': ('metal_escuro', 'morcego', 'presas', 'linhas', '#a00018', '#ff3040'),
+    'ECO': ('sculk', 'alma', 'olhos', 'correntes', '#0a8090', '#40f0ff'),
+    'PUTRIDO': ('cogumelo', 'cogumelo', 'capuz', 'pintas', '#40a030', '#a0ff60'),
+    'GLACIAR': ('gelo', 'floco', 'coroa', 'rachaduras', '#a0e0ff', '#e0ffff'),
+    'ABISSAL': ('metal_claro', 'ancora', 'viseira', 'cracas', '#2050c0', '#60c0ff'),
+    'TITAS': ('metal', 'escudo', 'viseira', 'rebites', '#8a8a9a', '#e0e0f0'),
+    'CAOS': ('vazio', 'olho', 'chifres', 'estrelas', '#8020c0', '#ff60ff'),
 }
 
 # ------------------------------------------------------------------ emblemas (pixel art 9x9: . vazio, # cor, o escuro, * brilho)

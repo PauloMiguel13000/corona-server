@@ -46,6 +46,9 @@ MODELO = {
     'CAMARA_TESTES': 'mecanico', 'RELOGIO': 'mecanico', 'MINA': 'mecanico', 'FORJA': 'mecanico',
     'VULCAO': 'magma', 'AFOGADA': 'escamas', 'ESGOTO': 'escamas', 'VENTOS': 'ventos', 'ILHAS': 'ventos',
     'ACAMPAMENTO': 'couro_batido', 'FAZENDA': 'couro_batido', 'MOINHO': 'couro_batido',
+    # 20/11: nivel 6
+    'CINZAS': 'magma', 'CATACUMBA': 'esqueleto', 'PINACULO': 'placas', 'RUBRA': 'sobretudo', 'ECO': 'inseto',
+    'PUTRIDO': 'fungo', 'GLACIAR': 'gelo', 'ABISSAL': 'escamas', 'TITAS': 'placas', 'CAOS': 'barbaro',
 }
 # variantes dentro do mesmo modelo
 VARIANTE = {'SANGUE': 'vampiro', 'LABORATORIO': 'jaleco', 'CEMITERIO': 'coveiro', 'FAROL': 'marinha', 'NAUFRAGIO': 'pirata',
@@ -53,7 +56,7 @@ VARIANTE = {'SANGUE': 'vampiro', 'LABORATORIO': 'jaleco', 'CEMITERIO': 'coveiro'
             'PANTANO': 'bruxa', 'VIUVA': 'bruxa', 'CIDADELA': 'astral', 'MINA': 'mineiro', 'RELOGIO': 'relojoeiro',
             'FORJA': 'ferreiro', 'ESGOTO': 'gosma', 'TRONO': 'demonio', 'BASTIAO': 'ouro', 'FAZENDA': 'fazendeiro',
             'MOINHO': 'fazendeiro', 'CIDADE_ANTIGA': 'sculk', 'SECRETA': 'sombra', 'WITHER': 'wither', 'GELO': 'rei',
-            'TROVAO': 'trovao', 'CRIPTA_REAL': 'morto'}
+            'TROVAO': 'trovao', 'CRIPTA_REAL': 'morto', 'PINACULO': 'trovao', 'RUBRA': 'vampiro', 'ECO': 'sculk', 'GLACIAR': 'rei', 'CAOS': 'demonio'}
 
 # tipos de pintura de cada regiao
 VAZIO, PLACA, ACAB, PANO, PANO2, COURO, PELO, OSSO, MALHA, ESCURO, BRILHO, PELE_ARM, METAL2, FURO, VIDRO = range(15)

@@ -26,7 +26,7 @@ MCPACK_BASE = os.path.join(AQUI, 'res', 'pack', 'corona.mcpack')
 OUT = os.path.join(AQUI, 'out_v2')
 BED = os.path.join(OUT, 'bedrock')
 JOUT = os.path.join(OUT, 'java', 'assets', 'corona')
-VERSAO = [1, 6, 0]
+VERSAO = [1, 15, 0]   # 20/11: o do servidor ja estava em 1.14.2
 
 MATERIAIS_ARMADURA = {'leather': 'LEATHER', 'chainmail': 'CHAINMAIL', 'golden': 'GOLDEN', 'iron': 'IRON', 'diamond': 'DIAMOND', 'netherite': 'NETHERITE'}
 PROTECAO = {  # valores de armadura vanilla

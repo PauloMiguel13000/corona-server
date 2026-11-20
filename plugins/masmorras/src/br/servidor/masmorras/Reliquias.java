@@ -318,27 +318,17 @@ final class Reliquias implements Listener {
     /** reliquias.elmo-3d (padrao true): elmo das armaduras tematicas em 3D (sem asset_id). false = volta ao elmo plano. */
     static volatile boolean elmo3d = true;
 
-    /**
-     * 20/11: as 10 masmorras do nivel 6 ainda nao tem textura propria no pacote: a armadura fica de netherite com
-     * acabamento (trim) proprio, que aparece igual no Java e no Bedrock, e a espada usa o modelo 3D do tema parecido.
-     * Assim nunca aparece item sem textura.
-     */
+    /** 20/11: tema parecido de cada masmorra do nivel 6 (so referencia; desde o pacote 1.15 cada uma tem armadura, espada e coroa proprias). */
     static final java.util.Map<String, String> NIVEL6_VISUAL = java.util.Map.of("CINZAS", "VULCAO", "CATACUMBA", "CRIPTA_REAL",
             "PINACULO", "TROVAO", "RUBRA", "SANGUE", "ECO", "CIDADE_ANTIGA", "PUTRIDO", "DISTORCIDO", "GLACIAR", "GELEIRA",
             "ABISSAL", "AFOGADA", "TITAS", "FORJA", "CAOS", "TRONO");
 
     static void visualDoPacote(ItemStack it, String tema, java.util.logging.Logger log) {
         String n = it.getType().name();
-        String up = tema.toUpperCase(java.util.Locale.ROOT);
-        if (NIVEL6_VISUAL.containsKey(up)) {
-            if (!n.endsWith("_SWORD")) {
-                if (it.getItemMeta() instanceof org.bukkit.inventory.meta.ArmorMeta am && !am.hasTrim() && Tipo.TODOS.get(up) != null) {
-                    am.setTrim(trimNivel6(Tipo.TODOS.get(up)));
-                    it.setItemMeta(am);
-                }
-                return;
-            }
-            tema = NIVEL6_VISUAL.get(up);
+        // pecas do nivel 6 feitas antes do pacote 1.15 vinham com trim do jogo: agora tem a armadura propria
+        if (NIVEL6_VISUAL.containsKey(tema.toUpperCase(java.util.Locale.ROOT)) && it.getItemMeta() instanceof org.bukkit.inventory.meta.ArmorMeta am && am.hasTrim()) {
+            am.setTrim(null);
+            it.setItemMeta(am);
         }
         String id = tema.toLowerCase(java.util.Locale.ROOT);
         if (id.equals("herobrine")) {
@@ -435,7 +425,10 @@ final class Reliquias implements Listener {
         boolean armadura = n.endsWith("_HELMET") || n.endsWith("_CHESTPLATE") || n.endsWith("_LEGGINGS") || n.endsWith("_BOOTS");
         if (!armadura && modelo(n) == null && !(tema.equalsIgnoreCase("herobrine") && pecaHerobrine(n) != null)) return false;
         try {
-            if (it.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL)) return n.endsWith("_HELMET") && acertarElmo(it, tema);
+            boolean nv6Velho = NIVEL6_VISUAL.containsKey(tema.toUpperCase(java.util.Locale.ROOT)) && it.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL)
+                    && !it.getData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL).value().contains(tema.toLowerCase(java.util.Locale.ROOT));
+            boolean trimVelho = NIVEL6_VISUAL.containsKey(tema.toUpperCase(java.util.Locale.ROOT)) && it.getItemMeta() instanceof org.bukkit.inventory.meta.ArmorMeta am0 && am0.hasTrim();
+            if (!nv6Velho && !trimVelho && it.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL)) return n.endsWith("_HELMET") && acertarElmo(it, tema);
         } catch (Throwable ex) {
             return false;
         }
