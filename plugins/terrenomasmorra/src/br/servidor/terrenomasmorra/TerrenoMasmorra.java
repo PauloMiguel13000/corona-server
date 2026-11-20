@@ -165,6 +165,9 @@ public final class TerrenoMasmorra extends JavaPlugin implements Listener {
             int cx1 = (int) c[1] - margemMasmorra, cz1 = (int) c[2] - margemMasmorra, cx2 = (int) c[3] + margemMasmorra, cz2 = (int) c[4] + margemMasmorra;
             if (x1 <= cx2 && x2 >= cx1 && z1 <= cz2 && z2 >= cz1) return "perto demais de uma masmorra (fique a mais de " + margemMasmorra + " blocos dela)";
         }
+        // 20/11 (Paulo: "ficaram lugares que nao podem ser claimados, mesmo sem mobs"): os pontos de monstros nao travam
+        // mais o terreno; quem manda e o terreno: o Masmorras nao faz nascer monstro de campo dentro de terreno marcado
+        if (!getConfig().getBoolean("bloquear-pontos-de-monstros", false)) return null;
         if (!ligar()) return "protecao dos pontos de monstros indisponivel agora, tente mais tarde";
         if ((long) (x2 - x1) * (z2 - z1) > 4_000_000L) return "terreno grande demais para conferir de uma vez; marque em partes menores";
         try {

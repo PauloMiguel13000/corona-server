@@ -40,7 +40,27 @@ def zipar(pasta, destino, extras):
                 f = os.path.join(raiz, a)
                 zi = zipfile.ZipInfo(os.path.relpath(f, pasta).replace(os.sep, '/'), (2026, 1, 1, 0, 0, 0))
                 zi.compress_type = zipfile.ZIP_DEFLATED
-                z.writestr(zi, open(f, 'rb').read())
+                dados = open(f, 'rb').read()
+                # 20/11 (Paulo: "otimize as resources, estao demorando pra baixar"): PNG em paleta de 256 cores (~80% menor)
+                if a.endswith('.png'):
+                    dados = png256(dados)
+                z.writestr(zi, dados)
+
+
+def png256(d):
+    import io
+    from PIL import Image, ImageChops
+    try:
+        im = Image.open(io.BytesIO(d))
+        im.load()
+        rgba = im.convert('RGBA')
+        q = rgba.quantize(colors=256, method=Image.Quantize.FASTOCTREE, dither=Image.Dither.NONE)
+        o = io.BytesIO()
+        q.save(o, 'PNG', optimize=True)
+        alfa = ImageChops.difference(rgba.getchannel('A'), q.convert('RGBA').getchannel('A')).getextrema()[1]
+        return o.getvalue() if len(o.getvalue()) < len(d) and alfa <= 8 else d
+    except Exception:
+        return d
 
 
 # ---- aneis elementais (19/11): texturas no Java e no Bedrock + mapa do Geyser

@@ -60,8 +60,8 @@ import org.joml.Vector3f;
  */
 final class CorposChefes implements Listener {
 
-    static final String URL_PADRAO = "https://corona-server.duckdns.org/pacotes/corona_masmorras3d_java-a17da0eb36.zip";
-    static final String SHA1_PADRAO = "a17da0eb36abda02871736454f837af01b624f6f";
+    static final String URL_PADRAO = "https://corona-server.duckdns.org/pacotes/corona_masmorras3d_java-2ad7be2bca.zip";
+    static final String SHA1_PADRAO = "2ad7be2bca5e1aaebdd9472016d19e198f9809d6";
     private static final UUID ID = UUID.nameUUIDFromBytes("corona-masmorras-3d".getBytes(StandardCharsets.UTF_8));
     private static final int PASSO = 2;   // ticks entre uma pose e outra (o cliente desliza entre elas)
 

@@ -213,7 +213,24 @@ final class Campos implements Listener {
         return new Location(w, x + 0.5, b.getY() + 1, z + 0.5, (float) (Math.random() * 360), 0f);
     }
 
+    /** Tem terreno do GriefPrevention aqui (ou perto, raio do campo)? */
+    private static boolean temTerreno(World w, int x, int z) {
+        try {
+            if (!Bukkit.getPluginManager().isPluginEnabled("GriefPrevention")) return false;
+            me.ryanhamshire.GriefPrevention.DataStore ds = me.ryanhamshire.GriefPrevention.GriefPrevention.instance.dataStore;
+            for (int[] o : new int[][] {{0, 0}, {RAIO_CAMPO, 0}, {-RAIO_CAMPO, 0}, {0, RAIO_CAMPO}, {0, -RAIO_CAMPO}})
+                if (ds.getClaimAt(new Location(w, x + o[0], 64, z + o[1]), true, null) != null) return true;
+        } catch (Throwable ignored) {
+        }
+        return false;
+    }
+
     private void nascer(World w, Campo c) {
+        // 20/11: terreno marcado (GriefPrevention) ganha do ponto de monstros: ali nao nasce monstro de campo
+        if (temTerreno(w, c.x, c.z)) {
+            vazioEm.put(c.chave, System.currentTimeMillis() + 30 * 60_000L);
+            return;
+        }
         if (pl.protegendo(w, c.x, w.getHighestBlockYAt(c.x, c.z), c.z) != null) {
             vazioEm.put(c.chave, System.currentTimeMillis() + 60 * 60_000L);   // dentro de uma masmorra: nao usa
             return;
