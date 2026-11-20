@@ -552,7 +552,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
             for (Masmorra m : todas) if (m.mundo.equals(w.getName())) loc.aceitar(new int[] {m.tudo.cx(), m.tudo.cz()});
             locais.put(w.getName(), loc);
             for (Tipo t : Tipo.de(o)) {
-                int quer = getConfig().getInt("quantidade." + t.id, 0), tem = 0;
+                int quer = getConfig().getInt("quantidade." + t.id, t.nivel >= 6 ? 1 : 0), tem = 0;
                 for (Masmorra m : todas) if (m.tipo == t && m.mundo.equals(w.getName())) tem++;
                 for (int i = tem; i < quer; i++) fila.add(new Pedido(t, w));
             }
@@ -773,7 +773,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         for (Masmorra m : todas) if (!m.tipo.secreta && !demolir.contains(m)) porTipo.computeIfAbsent(m.mundo + "|" + m.tipo.id, k -> new ArrayList<>()).add(m);
         int sobrando = 0;
         for (List<Masmorra> l : porTipo.values()) {
-            int quer = getConfig().getInt("quantidade." + l.get(0).tipo.id, 0);
+            int quer = getConfig().getInt("quantidade." + l.get(0).tipo.id, l.get(0).tipo.nivel >= 6 ? 1 : 0);
             if (l.size() <= quer) continue;
             l.sort(Comparator.comparingDouble(x -> x.tudo == null ? 1e9 : Math.hypot(x.tudo.cx(), x.tudo.cz())));
             for (int i = quer; i < l.size(); i++) {
