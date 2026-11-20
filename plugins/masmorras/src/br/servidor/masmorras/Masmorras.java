@@ -1751,6 +1751,15 @@ public final class Masmorras extends JavaPlugin implements Listener {
             p.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 100, 0));
     }
 
+    /** 20/11: marca quando o chefe acerta alguem (o golpe de alcance so entra quando o golpe normal nao sai). */
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    public void chefeAcertou(EntityDamageByEntityEvent e) {
+        if (!(e.getEntity() instanceof Player)) return;
+        Integer id = e.getDamager().getPersistentDataContainer().get(kChefe, PersistentDataType.INTEGER);
+        Masmorra m = id == null ? null : porId.get(id);
+        if (m != null && m.chefe != null && m.chefe.e.equals(e.getDamager())) m.chefe.ultimoAcerto = System.currentTimeMillis();
+    }
+
     @SuppressWarnings("deprecation")
     private static final NamespacedKey KEY_BALA_TORRE = new NamespacedKey("poderes", "torreta_bala");
 

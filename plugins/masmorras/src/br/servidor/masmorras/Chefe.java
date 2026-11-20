@@ -46,6 +46,8 @@ final class Chefe {
     /** 20/11 (Paulo: "boss Imperador das Cinzas parece que fica bugado"): anti-travamento. */
     double travX = Double.NaN, travZ;
     long travDesde;
+    /** 20/11 (Paulo: "o boss nao ataca de volta"): ultima vez que o chefe acertou alguem (golpe normal do jogo). */
+    long ultimoAcerto;
     boolean furioso, curou;
     // particularidades
     long inicioLuta = -1, proximaZona, escudoAte;
@@ -209,6 +211,7 @@ final class Chefe {
             }
         }
         destravar(alvo, agora);
+        golpeDeAlcance(ps, agora);
         // furioso na metade da vida
         if (!furioso && e.getHealth() <= vidaMax / 2) {
             furioso = true;
@@ -231,6 +234,43 @@ final class Chefe {
         // teias velhas somem
         if (!teias.isEmpty() && rnd.nextInt(4) == 0) tirarTeias(false);
         return true;
+    }
+
+    /**
+     * Chefe grande de corpo a corpo (Imperador das Cinzas e outros com escala alta): o golpe do jogo as vezes nao sai
+     * (o caminho nao cabe o corpo dele, jogador encostado na parede ou embaixo de enfeite). Se ninguem levou golpe dele
+     * nos ultimos 2,2 s e tem alguem ao alcance do braco (proporcional ao tamanho), ele bate do mesmo jeito.
+     */
+    private void golpeDeAlcance(List<Player> ps, long agora) {
+        if (e instanceof org.bukkit.entity.Creaking || e instanceof org.bukkit.entity.Shulker || e instanceof Warden) return;
+        if (pl.mecanicas != null && pl.mecanicas.emCena(this)) return;
+        boolean distancia = e instanceof org.bukkit.entity.Witch || e instanceof org.bukkit.entity.Spellcaster || e instanceof org.bukkit.entity.Blaze
+                || e instanceof org.bukkit.entity.Pillager || e instanceof org.bukkit.entity.Ghast || e.getEquipment() != null
+                && (e.getEquipment().getItemInMainHand().getType() == org.bukkit.Material.BOW || e.getEquipment().getItemInMainHand().getType() == org.bukkit.Material.CROSSBOW);
+        if (distancia || agora - ultimoAcerto < 2200 || agora < proximoSoco) return;
+        AttributeInstance sc = e.getAttribute(Attribute.SCALE);
+        double escala = sc == null ? 1 : sc.getValue();
+        double alcance = 1.6 + 1.05 * escala + e.getWidth() / 2;
+        Location el = e.getLocation();
+        Player melhor = null;
+        double md = alcance * alcance;
+        for (Player p : ps) {
+            if (p.isDead() || p.getGameMode() == org.bukkit.GameMode.CREATIVE || p.getGameMode() == org.bukkit.GameMode.SPECTATOR) continue;
+            double dx = p.getX() - el.getX(), dz = p.getZ() - el.getZ(), dy = p.getY() - el.getY();
+            if (dy < -1.5 || dy > e.getHeight() + 0.5) continue;
+            double d2 = dx * dx + dz * dz;
+            if (d2 < md) { md = d2; melhor = p; }
+        }
+        if (melhor == null) return;
+        proximoSoco = agora + 1300;
+        ultimoAcerto = agora;
+        e.swingMainHand();
+        org.bukkit.util.Vector olhar = melhor.getLocation().toVector().subtract(el.toVector()).setY(0);
+        if (olhar.lengthSquared() > 0.01) e.setRotation((float) Math.toDegrees(Math.atan2(-olhar.getX(), olhar.getZ())), 0f);
+        AttributeInstance ad = e.getAttribute(Attribute.ATTACK_DAMAGE);
+        melhor.damage(ad == null ? Math.max(4, t.dano) : ad.getValue(), e);
+        if (olhar.lengthSquared() > 0.01) melhor.setVelocity(melhor.getVelocity().add(olhar.normalize().multiply(0.5).setY(0.25)));
+        e.getWorld().playSound(el, "minecraft:entity.player.attack.sweep", 1f, 0.6f);
     }
 
     /**
