@@ -31,7 +31,9 @@ import org.bukkit.persistence.PersistentDataType;
  * O item continua no corpo (nada sai do inventario, nada se perde): so o excesso nao conta.
  *  - Protecao (e Protecao contra Fogo/Explosao/Projeteis): o dano recebido e refeito como se o encantamento fosse o teto;
  *  - Afiacao/Julgamento/Ruina dos Artropodes: o dano do golpe e refeito com o teto;
- *  - Forca (arco): o dano da flecha e refeito com o teto.
+ *  - Forca (arco): o dano da flecha e refeito com o teto;
+ *  - Clava: Densidade com o teto (Brecha so conta para barrar a entrada);
+ *  - com item acima do teto (no corpo ou no inventario) nao entra em masmorra nenhuma.
  * Tetos por nivel em config (teto-equip.protecao / teto-equip.afiacao, nivel 1 a 6). Fora das masmorras nao muda nada.
  */
 final class TetoEquip implements Listener {
@@ -162,6 +164,12 @@ final class TetoEquip implements Listener {
                 real += 2.5 * arma.getEnchantmentLevel(Enchantment.BANE_OF_ARTHROPODS);
                 cap += 2.5 * Math.min(teto, arma.getEnchantmentLevel(Enchantment.BANE_OF_ARTHROPODS));
             }
+            // clava: Densidade da +0,5 de dano por nivel a cada bloco de queda (o excesso sai); Brecha fica barrada na entrada
+            int den = arma.getEnchantmentLevel(Enchantment.DENSITY);
+            if (den > teto && p.getFallDistance() > 1.5f) {
+                e.setDamage(Math.max(0, e.getDamage() - 0.5 * (den - teto) * p.getFallDistance()));
+                avisar(p);
+            }
             if (real <= cap) return;
             double base = baseArma(arma);
             e.setDamage(e.getDamage() * (base + cap) / (base + real));
@@ -187,6 +195,104 @@ final class TetoEquip implements Listener {
         if (forca > 0) f.getPersistentDataContainer().set(new org.bukkit.NamespacedKey(pl, "teto_forca"), PersistentDataType.INTEGER, forca);
     }
 
+    // ------------------------------------------------------------------ 20/11 (Paulo): com item acima do teto nao entra
+
+    private static final Enchantment[] DEFESA = {Enchantment.PROTECTION, Enchantment.FIRE_PROTECTION, Enchantment.BLAST_PROTECTION, Enchantment.PROJECTILE_PROTECTION};
+    private static final Enchantment[] ATAQUE = {Enchantment.SHARPNESS, Enchantment.SMITE, Enchantment.BANE_OF_ARTHROPODS, Enchantment.POWER, Enchantment.DENSITY, Enchantment.BREACH};
+    private final Map<UUID, long[]> ultimaVez = new HashMap<>();   // uuid -> {id da masmorra, visto em}
+
+    private static String nomeEnc(Enchantment e) {
+        if (e.equals(Enchantment.PROTECTION)) return "Proteção";
+        if (e.equals(Enchantment.FIRE_PROTECTION)) return "Proteção contra Fogo";
+        if (e.equals(Enchantment.BLAST_PROTECTION)) return "Proteção contra Explosões";
+        if (e.equals(Enchantment.PROJECTILE_PROTECTION)) return "Proteção contra Projéteis";
+        if (e.equals(Enchantment.SHARPNESS)) return "Afiação";
+        if (e.equals(Enchantment.SMITE)) return "Julgamento";
+        if (e.equals(Enchantment.BANE_OF_ARTHROPODS)) return "Ruína dos Artrópodes";
+        if (e.equals(Enchantment.DENSITY)) return "Densidade";
+        if (e.equals(Enchantment.BREACH)) return "Brecha";
+        return "Força";
+    }
+
+    private static String nomeItem(ItemStack it) {
+        if (it.hasItemMeta() && it.getItemMeta().hasCustomName())
+            return net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(it.getItemMeta().customName());
+        String n = it.getType().name().toLowerCase(java.util.Locale.ROOT).replace('_', ' ');
+        return Character.toUpperCase(n.charAt(0)) + n.substring(1);
+    }
+
+    private String confere(ItemStack it, int tp, int ta, int fundo) {
+        if (it == null || it.getType().isAir() || !it.hasItemMeta()) return null;
+        for (Enchantment e : DEFESA) {
+            int lv = it.getEnchantmentLevel(e);
+            if (lv > tp) return nomeItem(it) + " §7(" + nomeEnc(e) + " " + Progresso.romano(lv) + ")";
+        }
+        for (Enchantment e : ATAQUE) {
+            int lv = it.getEnchantmentLevel(e);
+            if (lv > ta) return nomeItem(it) + " §7(" + nomeEnc(e) + " " + Progresso.romano(lv) + ")";
+        }
+        // itens dentro de shulker e de bundle tambem contam
+        if (fundo < 2 && it.getItemMeta() instanceof org.bukkit.inventory.meta.BlockStateMeta bm && bm.getBlockState() instanceof org.bukkit.block.ShulkerBox sb) {
+            for (ItemStack d : sb.getInventory().getContents()) {
+                String r = confere(d, tp, ta, fundo + 1);
+                if (r != null) return r + " §8(dentro da caixa)";
+            }
+        }
+        if (fundo < 2 && it.getItemMeta() instanceof org.bukkit.inventory.meta.BundleMeta bu) {
+            for (ItemStack d : bu.getItems()) {
+                String r = confere(d, tp, ta, fundo + 1);
+                if (r != null) return r + " §8(dentro do pacote)";
+            }
+        }
+        return null;
+    }
+
+    /** Primeiro item (no corpo ou no inventario) acima do teto do nivel do jogador, ou null. */
+    String excesso(Player p) {
+        int tp = tetoProtecao(p), ta = tetoAfiacao(p);
+        for (ItemStack it : p.getInventory().getContents()) {
+            String r = confere(it, tp, ta, 0);
+            if (r != null) return r;
+        }
+        return confere(p.getItemOnCursor(), tp, ta, 0);
+    }
+
+    /**
+     * Chamado a cada volta do laco das masmorras para quem esta dentro de uma sala. So barra na ENTRADA (quem ja estava
+     * dentro e pegou um item no bau nao e jogado para fora: ali vale o teto de dano). true = barrado.
+     */
+    boolean barrarNaEntrada(Player p, Masmorra m) {
+        if (!ligado() || !pl.getConfig().getBoolean("teto-equip.barrar-entrada", true) || p.hasPermission("masmorras.admin")) return false;
+        long agora = System.currentTimeMillis();
+        long[] u = ultimaVez.get(p.getUniqueId());
+        boolean entrando = u == null || u[0] != m.id || agora - u[1] > 30000L;
+        if (!entrando) {
+            u[1] = agora;
+            return false;
+        }
+        String ex = excesso(p);
+        if (ex == null) {
+            ultimaVez.put(p.getUniqueId(), new long[] {m.id, agora});
+            return false;
+        }
+        ultimaVez.remove(p.getUniqueId());
+        org.bukkit.World w = Bukkit.getWorld(m.mundo);
+        if (w != null) {
+            org.bukkit.Location fora = new org.bukkit.Location(w, m.saidaX + 0.5, m.saidaY, m.saidaZ + 0.5, p.getLocation().getYaw() + 180f, 0f);
+            p.setFallDistance(0);
+            p.teleportAsync(fora, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.PLUGIN);
+        }
+        Long ult = avisado.get(p.getUniqueId());
+        if (ult == null || agora - ult > 4000L) {
+            avisado.put(p.getUniqueId(), agora);
+            p.showTitle(net.kyori.adventure.title.Title.title(Masmorras.txt("§c§lITEM ACIMA DO SEU NÍVEL"), Masmorras.txt("§7Guarde antes de entrar")));
+            p.sendMessage(Masmorras.txt("§6§lTETO §8» §cVocê não pode entrar com: §f" + ex));
+            p.sendMessage(Masmorras.txt("§7No §fNível de Masmorra " + nivel(p) + " §7o máximo é §bProteção " + Progresso.romano(Math.max(1, tetoProtecao(p)))
+                    + " §7e §cAfiação/Força/Densidade/Brecha " + Progresso.romano(Math.max(1, tetoAfiacao(p))) + "§7. Guarde o item (baú, baú do Ender) e entre de novo."));
+        }
+        return true;
+    }
+
     // ------------------------------------------------------------------ aviso
 
     private void avisar(Player p) {
@@ -199,7 +305,7 @@ final class TetoEquip implements Listener {
 
     String texto(Player p) {
         return "§6§lTETO §8» §7No §fNível de Masmorra " + nivel(p) + " §7vale até §bProteção " + Progresso.romano(Math.max(1, tetoProtecao(p)))
-                + " §7e §cAfiação/Força " + Progresso.romano(Math.max(1, tetoAfiacao(p))) + "§7. O que passar disso não conta aqui. §8(suba de nível para liberar)";
+                + " §7e §cAfiação/Força/Densidade/Brecha " + Progresso.romano(Math.max(1, tetoAfiacao(p))) + "§7. O que passar disso não conta aqui. §8(suba de nível para liberar)";
     }
 
     @EventHandler

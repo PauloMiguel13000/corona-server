@@ -1561,6 +1561,11 @@ public final class Masmorras extends JavaPlugin implements Listener {
                     barrados.add(p);
                     continue;
                 }
+                // 20/11 (Paulo: "se ja tiver com esses itens no inventario ou usando, nao pode entrar em dungeon nenhuma")
+                if (s >= 0 && teto != null && teto.barrarNaEntrada(p, m)) {
+                    barrados.add(p);
+                    continue;
+                }
                 // 17/11 (Paulo: "estao correndo reto para o boss sem limpar os monstros"): a sala seguinte (e a do
                 // chefe) so abre quando nao sobra monstro vivo das salas anteriores
                 if (ordem != null && !ordem.conferir(p, m, s, agora)) {
