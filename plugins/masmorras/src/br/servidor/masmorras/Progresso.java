@@ -157,6 +157,7 @@ final class Progresso implements Listener {
             return;
         }
         pl.missoes.zerarParaRebirth(p);
+        if (pl.teto != null) pl.teto.esquecer(p);
         int n = ja + 1;
         p.getPersistentDataContainer().set(K_REBIRTH, org.bukkit.persistence.PersistentDataType.INTEGER, n);
         p.showTitle(net.kyori.adventure.title.Title.title(Masmorras.txt("§5§l✦ §d§lR E B I R T H §5§l✦"),

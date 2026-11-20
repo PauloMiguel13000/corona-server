@@ -147,6 +147,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
     PortaisNivel portaisNivel;
     Progresso progresso;
     EstrelaRenascido estrela;
+    TetoEquip teto;
     OrdemSalas ordem;
     Trilha trilha;
 
@@ -430,6 +431,8 @@ public final class Masmorras extends JavaPlugin implements Listener {
         progresso.iniciar();
         estrela = new EstrelaRenascido(this);
         getServer().getPluginManager().registerEvents(estrela, this);
+        teto = new TetoEquip(this);   // 20/11: encantamento so vale ate o teto do nivel de masmorra
+        getServer().getPluginManager().registerEvents(teto, this);
         ConfigurationSection ms = banco.getConfigurationSection("mapas");
         if (ms != null)
             for (String k : ms.getKeys(false)) {
@@ -2479,6 +2482,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
                     return true;
                 }
                 missoes.definirNivelMasmorra(alvo, n);
+                if (teto != null) teto.esquecer(alvo);
                 p.sendMessage(txt(PREFIXO + "§a" + alvo.getName() + " agora está no §6Nível de Masmorra " + n + "§a (todas as áreas até o " + n + " liberadas)."));
                 if (alvo != p) alvo.sendMessage(txt(PREFIXO + "§aVocê está no §6Nível de Masmorra " + n + "§a."));
                 return true;
@@ -2491,6 +2495,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
             }
             if (progresso != null && progresso.ativo() && !(a.length > 0 && a[0].toLowerCase(java.util.Locale.ROOT).startsWith("equip"))) progresso.comando(p);
             else PortaisNivel.comando(p);
+            if (teto != null) p.sendMessage(txt(teto.texto(p)));
             return true;
         }
         if (cmd.getName().equalsIgnoreCase("musica")) {
