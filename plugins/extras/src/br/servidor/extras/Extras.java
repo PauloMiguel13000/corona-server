@@ -74,6 +74,10 @@ public final class Extras extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new SemReceitas(), this);
         kitsContexto = new KitsContexto(this);
         Bukkit.getPluginManager().registerEvents(kitsContexto, this);
+        // 20/11: blocos de terreno ao entrar (primeira vez e todo dia) e a cada 12 h jogadas
+        ClaimBonus claimBonus = new ClaimBonus(this);
+        Bukkit.getPluginManager().registerEvents(claimBonus, this);
+        claimBonus.iniciar();
         tesouro = new Tesouro(this);
         Bukkit.getPluginManager().registerEvents(tesouro, this);
         painelDia = new PainelDia(this);

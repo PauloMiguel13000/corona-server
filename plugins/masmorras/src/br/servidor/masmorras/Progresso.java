@@ -37,7 +37,7 @@ import org.bukkit.persistence.PersistentDataType;
  */
 final class Progresso implements Listener {
 
-    static final int MAX = 5;
+    static final int MAX = 6;   // 20/11 (Paulo: "o limite agora vai ser lvl 6")
     static final int NETHER = 3, END = 4;
 
     private final Masmorras pl;
@@ -104,6 +104,82 @@ final class Progresso implements Listener {
             Bukkit.broadcast(Masmorras.txt(Masmorras.PREFIXO + "§6§l★ " + p.getName() + " §evenceu os chefes de TODAS as masmorras e virou §6§lMESTRE DAS MASMORRAS§e!"));
         }
         return n;
+    }
+
+    // ================================================================== 20/11 REBIRTH
+    /** Quantos REBIRTH a pessoa ja fez (fica no jogador, o Poderes le para os slots de runa extras). */
+    static final NamespacedKey K_REBIRTH = new NamespacedKey("masmorras", "rebirth");
+
+    static int rebirths(Player p) {
+        Integer n = p.getPersistentDataContainer().get(K_REBIRTH, org.bukkit.persistence.PersistentDataType.INTEGER);
+        return n == null ? 0 : n;
+    }
+
+    static String romano(int n) {
+        String[] r = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"};
+        return n >= 0 && n < r.length ? r[n] : String.valueOf(n);
+    }
+
+    /** Titulo do chat e do TAB: ✦REBIRTH✦ (II, III... a partir do segundo). */
+    static String titulo(int n) {
+        if (n <= 0) return "";
+        return "§5§l✦§d§lREBIRTH" + (n > 1 ? " " + romano(n) : "") + "§5§l✦ ";
+    }
+
+    /** Terminou TODAS as masmorras de TODOS os niveis (1 a MAX). */
+    boolean podeRenascer(Player p) {
+        if (!ativo()) return false;
+        recalcular(p, false);
+        if (nivel(p) < MAX) return false;
+        for (int n = 1; n <= MAX; n++) if (!faltam(p, n).isEmpty()) return false;
+        return true;
+    }
+
+    void comandoRebirth(Player p, String[] a) {
+        int ja = rebirths(p);
+        if (!podeRenascer(p)) {
+            p.sendMessage(Masmorras.txt("§5§l✦ REBIRTH §8» §7Para renascer, vença o chefe de §fTODAS §7as masmorras de §fTODOS §7os níveis (1 a " + MAX + ")."));
+            p.sendMessage(Masmorras.txt("§7Você volta ao §fNível de Masmorra 1 §7e refaz tudo, mas ganha §d+1 slot de runa §7(§c+0,3% de dano §7e §a+0,3% de defesa§7) e o título §5§l✦§d§lREBIRTH§5§l✦§7."));
+            if (ja > 0) p.sendMessage(Masmorras.txt("§7Seus renascimentos: §d" + ja));
+            String f = falta(p);
+            if (!f.isEmpty()) p.sendMessage(Masmorras.txt("§7» " + f));
+            return;
+        }
+        if (a.length == 0 || !a[0].equalsIgnoreCase("confirmar")) {
+            p.sendMessage(Masmorras.txt("§5§l✦ REBIRTH §8» §fVocê pode renascer! §7Volta ao §fNível de Masmorra 1 §7(a trilha zera; itens e coronas ficam)."));
+            p.sendMessage(Masmorras.txt("§7Ganha §d+1 slot de runa §7(+0,3% de dano e defesa) e o título. Para confirmar: §d§l/rebirth confirmar"));
+            return;
+        }
+        pl.missoes.zerarParaRebirth(p);
+        int n = ja + 1;
+        p.getPersistentDataContainer().set(K_REBIRTH, org.bukkit.persistence.PersistentDataType.INTEGER, n);
+        p.showTitle(net.kyori.adventure.title.Title.title(Masmorras.txt("§5§l✦ §d§lR E B I R T H §5§l✦"),
+                Masmorras.txt("§fRenascimento " + romano(n) + " §7— de volta ao nível 1, mais forte")));
+        p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 0.6f);
+        p.playSound(p.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.5f, 1.6f);
+        p.getWorld().spawnParticle(Particle.REVERSE_PORTAL, p.getLocation().add(0, 1, 0), 120, 0.6, 1.2, 0.6, 0.15);
+        p.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, p.getLocation().add(0, 1, 0), 60, 0.6, 0.9, 0.6, 0.4);
+        Bukkit.broadcast(Masmorras.txt(Masmorras.PREFIXO + titulo(n) + "§f" + p.getName() + " §dRENASCEU! §7Venceu todas as masmorras e voltou ao nível 1 para ficar ainda mais forte."));
+        // TAB do Poderes (le a marca)
+        Bukkit.getScheduler().runTaskLater(pl, () -> { if (p.isOnline()) Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "poderes atualizartab " + p.getName()); }, 5L);
+    }
+
+    /** O titulo REBIRTH aparece antes do nome no chat (por cima da tag de VIP). */
+    @org.bukkit.event.EventHandler(priority = org.bukkit.event.EventPriority.HIGH, ignoreCancelled = true)
+    public void chatRebirth(io.papermc.paper.event.player.AsyncChatEvent e) {
+        int n = rebirths(e.getPlayer());
+        if (n <= 0) return;
+        net.kyori.adventure.text.Component tag = Masmorras.txt(titulo(n));
+        io.papermc.paper.chat.ChatRenderer antes = e.renderer();
+        e.renderer((src, nome, msg, quem) -> tag.append(antes.render(src, nome, msg, quem)));
+    }
+
+    /** Quem entra com rebirth salvo e sem a marca no jogador (perdeu o dado): devolve a marca. */
+    @org.bukkit.event.EventHandler
+    public void entrouRebirth(org.bukkit.event.player.PlayerJoinEvent e) {
+        if (pl.missoes == null) return;
+        int salvo = pl.missoes.rebirthsSalvos(e.getPlayer());
+        if (salvo > rebirths(e.getPlayer())) e.getPlayer().getPersistentDataContainer().set(K_REBIRTH, org.bukkit.persistence.PersistentDataType.INTEGER, salvo);
     }
 
     boolean pode(Player p, int nivelMasmorra) {

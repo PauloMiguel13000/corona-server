@@ -37,12 +37,12 @@ import org.bukkit.persistence.PersistentDataType;
  */
 final class LojaXp implements Listener {
 
-    static final double[] BANCO = {26.5, -10.5}, ENCANTADOR = {-25.5, -10.5};
+    static final double[] BANCO = {26.5, -10.5}, ENCANTADOR = {-25.5, -10.5}, RUNAS = {-25.5, 9.5};
 
     private final Masmorras pl;
     private final File arquivo;
     private final YamlConfiguration dados;
-    final NamespacedKey kBanco, kEncantador;
+    final NamespacedKey kBanco, kEncantador, kRunas;
     private static final NamespacedKey VIP_NIVEL = new NamespacedKey("extras", "vip_nivel");
     private World mundo;
     private int y;
@@ -72,6 +72,7 @@ final class LojaXp implements Listener {
         dados = YamlConfiguration.loadConfiguration(arquivo);
         kBanco = new NamespacedKey(pl, "lobby_banco");
         kEncantador = new NamespacedKey(pl, "lobby_encantador");
+        kRunas = new NamespacedKey(pl, "lobby_runas");
     }
 
     void iniciar(World w, int yChao) {
@@ -86,6 +87,21 @@ final class LojaXp implements Listener {
                 java.nio.file.Files.writeString(feito.toPath(), "construido em " + new java.util.Date() + "\n");
             } catch (Throwable ex) {
                 pl.getLogger().warning("Banco/Encantador do lobby: " + ex);
+            }
+        }
+        // 20/11: Mestre das Runas (abre o /runa do Poderes), com estrado de ametista
+        File fr = new File(pl.getDataFolder(), "lobby-runas-v1.txt");
+        if (!fr.exists()) {
+            try {
+                mundo.getChunkAt(-2, 0).load(true);
+                int rx = (int) Math.floor(RUNAS[0]), rz = (int) Math.floor(RUNAS[1]);
+                for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) bloco(rx + dx, 0, rz + dz, dx == 0 && dz == 0 ? "amethyst_block" : "purpur_block");
+                for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) for (int k = 1; k <= 3; k++)
+                    if (!(dx == 0 && dz == 0)) mundo.getBlockAt(rx + dx, y + k, rz + dz).setType(org.bukkit.Material.AIR, false);
+                texto(new Location(mundo, RUNAS[0], y + 3.6, RUNAS[1]), "§d§lMESTRE DAS RUNAS\n§7Suba o nível da sua classe (1 a 60)\n§8clique nele ou use /runa");
+                java.nio.file.Files.writeString(fr.toPath(), "construido em " + new java.util.Date() + "\n");
+            } catch (Throwable ex) {
+                pl.getLogger().warning("Mestre das Runas: " + ex);
             }
         }
         Bukkit.getScheduler().runTaskTimer(pl, this::garantir, 140L, 200L);
@@ -338,18 +354,19 @@ final class LojaXp implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void falar(PlayerInteractEntityEvent e) {
         var d = e.getRightClicked().getPersistentDataContainer();
-        boolean banco = d.has(kBanco), enc = d.has(kEncantador);
-        if (!banco && !enc) return;
+        boolean banco = d.has(kBanco), enc = d.has(kEncantador), runas = d.has(kRunas);
+        if (!banco && !enc && !runas) return;
         e.setCancelled(true);
         if (e.getHand() != org.bukkit.inventory.EquipmentSlot.HAND) return;
-        if (banco) abrirBanco(e.getPlayer());
+        if (runas) e.getPlayer().performCommand("runa");
+        else if (banco) abrirBanco(e.getPlayer());
         else pl.encantos.abrir(e.getPlayer());
     }
 
     @EventHandler(ignoreCancelled = true)
     public void naoApanha(org.bukkit.event.entity.EntityDamageEvent e) {
         var d = e.getEntity().getPersistentDataContainer();
-        if (d.has(kBanco) || d.has(kEncantador)) e.setCancelled(true);
+        if (d.has(kBanco) || d.has(kEncantador) || d.has(kRunas)) e.setCancelled(true);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -362,6 +379,7 @@ final class LojaXp implements Listener {
         if (mundo == null) return;
         npc(BANCO, kBanco, "§2§lBanqueiro de XP", "librarian");
         npc(ENCANTADOR, kEncantador, "§5§lEncantador", "cleric");
+        npc(RUNAS, kRunas, "§d§lMestre das Runas", "cartographer");
     }
 
     private void npc(double[] c, NamespacedKey k, String nome, String prof) {

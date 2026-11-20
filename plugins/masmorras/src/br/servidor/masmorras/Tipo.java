@@ -621,6 +621,8 @@ final class Tipo {
             case 2 -> { t.grade = 5; t.celula = 24; t.salas = 7; t.meiaMin = 5; t.meiaMax = 8; t.arenaMeia = 11; t.alturaSala = 6; t.alturaArena = 11; t.ramos = 2; t.corredor = 1; }
             case 3 -> { t.grade = 6; t.celula = 26; t.salas = 9; t.meiaMin = 5; t.meiaMax = 9; t.arenaMeia = 13; t.alturaSala = 6; t.alturaArena = 13; t.ramos = 3; t.corredor = 2; }
             case 4 -> { t.grade = 6; t.celula = 28; t.salas = 10; t.meiaMin = 6; t.meiaMax = 10; t.arenaMeia = 14; t.alturaSala = 7; t.alturaArena = 14; t.ramos = 3; t.corredor = 2; }
+            // 20/11: nivel 6 maior ainda (mais salas e arena maior)
+            case 6 -> { t.grade = 7; t.celula = 30; t.salas = 13; t.meiaMin = 6; t.meiaMax = 11; t.arenaMeia = 16; t.alturaSala = 7; t.alturaArena = 16; t.ramos = 4; t.corredor = 2; }
             default -> { t.grade = 7; t.celula = 28; t.salas = 12; t.meiaMin = 6; t.meiaMax = 10; t.arenaMeia = 15; t.alturaSala = 7; t.alturaArena = 15; t.ramos = 4; t.corredor = 2; }
         }
         // o Nether e pequeno (borda de 1250): grade 5x5
@@ -630,8 +632,8 @@ final class Tipo {
             t.ramos = Math.min(t.ramos, 2);
         }
         if (t.estilo == Estilo.TORRE) {
-            t.torreMeia = t.nivel >= 5 ? 12 : 11;
-            t.salas = t.nivel >= 5 ? 8 : 7;
+            t.torreMeia = t.nivel >= 6 ? 13 : t.nivel >= 5 ? 12 : 11;
+            t.salas = t.nivel >= 6 ? 9 : t.nivel >= 5 ? 8 : 7;
             t.alturaSala = 6;
             t.alturaArena = 12;
             t.ramos = 0;

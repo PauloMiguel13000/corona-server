@@ -179,7 +179,7 @@ final class Hub implements Listener {
             int x = i < 9 ? -19 : -14, z = -16 + (i % 9) * 4;
             i++;
             por(x, Y + 1, z, "minecraft:polished_blackstone_bricks");
-            por(x, Y + 2, z, "minecraft:" + (t.nivel >= 5 ? "purpur_pillar" : COR_NIVEL[Math.min(4, t.nivel)] + "_concrete"));
+            por(x, Y + 2, z, "minecraft:" + (t.nivel >= 6 ? "crying_obsidian" : t.nivel >= 5 ? "purpur_pillar" : COR_NIVEL[Math.min(4, t.nivel)] + "_concrete"));
             item(new Location(mundo, x + 0.5, Y + 3.4, z + 0.5), new org.bukkit.inventory.ItemStack(Masmorras.icone(t)), 0.9f);
             texto(new Location(mundo, x + 0.5, Y + 4.4, z + 0.5), "§c§l" + t.chefeNome + "\n§7" + t.nome + " §8• " + COR_TXT[Math.min(4, t.nivel)] + "nível " + t.nivel
                     + (t.esp != null && t.esp != Tipo.Esp.NENHUMA ? "\n§d" + t.esp.desc : ""), 0.55f);

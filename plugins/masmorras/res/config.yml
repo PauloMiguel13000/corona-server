@@ -44,6 +44,17 @@ quantidade:
   WITHER: 2 # Nether, nivel 4 - General Wither
   COVIL: 2 # Nether, nivel 4 - Besta Zoglin (zonas que explodem)
   CIDADELA: 2 # End, nivel 5 - Senhor do Vazio
+  # 20/11: nivel 6 (anel de fora do Mundo das Masmorras, Terras Devastadas)
+  CINZAS: 1 # nivel 6 - Imperador das Cinzas
+  CATACUMBA: 1 # nivel 6 - Lich Eterno
+  PINACULO: 1 # nivel 6 - Senhor das Tempestades
+  RUBRA: 1 # nivel 6 - Conde Rubro
+  ECO: 1 # nivel 6 - Colosso do Eco
+  PUTRIDO: 1 # nivel 6 - Mae Putrida
+  GLACIAR: 1 # nivel 6 - Rainha do Inverno
+  ABISSAL: 1 # nivel 6 - Leviata Abissal
+  TITAS: 1 # nivel 6 - Tita de Ferro
+  CAOS: 1 # nivel 6 - Arauto do Caos
   PRISAO: 2 # End, nivel 5 - O Carcereiro
   CEMITERIO: 2 # nivel 1 - O Coveiro (Cemitério Esquecido)
   ESGOTO: 2 # nivel 1 - Gosma Primordial (Esgoto Gosmento)
@@ -134,7 +145,7 @@ xp-classes:
 # o Nether e 8 vezes menor (1 bloco la = 8 aqui).
 borda:
   aplicar: true
-  normal: 8200
+  normal: 11400   # 20/11: era 8200; cresceu para o anel do nivel 6 (de 4400 ate 5700 do centro)
   nether: 1250
   end: 6000
 

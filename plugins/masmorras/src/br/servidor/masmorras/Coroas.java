@@ -40,7 +40,10 @@ final class Coroas {
             Map.entry("GELEIRA", "PACKED_ICE"), Map.entry("SANGUE", "REDSTONE_BLOCK"), Map.entry("RELOGIO", "CLOCK"), Map.entry("LABIRINTO", "BONE_BLOCK"),
             Map.entry("CRIPTA_REAL", "LAPIS_BLOCK"), Map.entry("DELTA", "IRON_BLOCK"), Map.entry("CARMESIM", "CRIMSON_NYLIUM"), Map.entry("DISTORCIDO", "WARPED_NYLIUM"),
             Map.entry("ALMAS", "SOUL_LANTERN"), Map.entry("OBSIDIANA", "CRYING_OBSIDIAN"), Map.entry("ILHAS", "PURPUR_BLOCK"), Map.entry("NAVE", "SHULKER_BOX"),
-            Map.entry("TRONO", "OBSIDIAN"), Map.entry("CORO", "CHORUS_FLOWER"), Map.entry("ABISMO", "END_ROD"));
+            Map.entry("TRONO", "OBSIDIAN"), Map.entry("CORO", "CHORUS_FLOWER"), Map.entry("ABISMO", "END_ROD"),
+            Map.entry("CINZAS", "MAGMA_BLOCK"), Map.entry("CATACUMBA", "SOUL_LANTERN"), Map.entry("PINACULO", "LIGHTNING_ROD"), Map.entry("RUBRA", "REDSTONE_BLOCK"),
+            Map.entry("ECO", "SCULK_CATALYST"), Map.entry("PUTRIDO", "MOSS_BLOCK"), Map.entry("GLACIAR", "BLUE_ICE"), Map.entry("ABISSAL", "HEART_OF_THE_SEA"),
+            Map.entry("TITAS", "ANVIL"), Map.entry("CAOS", "CRYING_OBSIDIAN"));
 
     private final Masmorras pl;
     private final NamespacedKey kCoroa;

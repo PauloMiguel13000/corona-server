@@ -150,6 +150,49 @@ public final class Masmorras extends JavaPlugin implements Listener {
     Trilha trilha;
 
     /** A masmorra que tem esse bloco dentro (ou null). */
+    /**
+     * 20/11 (Paulo: "a entrada do castelo do Carrasco esta bloqueada"): masmorras ja construidas cujo tunel terminou
+     * dentro do morro ganham um corredor reto para o norte ate o ar livre (3 de largura, 4 de altura). Uma vez so.
+     */
+    void abrirEntradasPresas() {
+        File marca = new File(getDataFolder(), "entradas-abertas-v1.txt");
+        if (marca.exists()) return;
+        int abertas = 0;
+        StringBuilder log = new StringBuilder();
+        for (Masmorra m : new ArrayList<>(todas)) {
+            if (m.demolindo || m.tipo == null || m.tipo.estilo == Tipo.Estilo.TORRE || m.tipo.onde != Tipo.Onde.NORMAL) continue;
+            World w = Bukkit.getWorld(m.mundo);
+            if (w == null) continue;
+            int x0 = m.saidaX, y0 = m.saidaY, z1 = m.saidaZ - 1;
+            w.getChunkAt(x0 >> 4, z1 >> 4).load(true);
+            boolean preso = false;
+            for (int x = x0 - 1; x <= x0 + 1; x++) if (!w.getBlockAt(x, y0 + 1, z1).isPassable() || !w.getBlockAt(x, y0, z1).isPassable()) preso = true;
+            if (!preso) continue;
+            int k = 0;
+            for (; k < 48; k++) {
+                int z = z1 - k;
+                w.getChunkAt(x0 >> 4, z >> 4).load(true);
+                boolean livre = true;
+                for (int x = x0 - 1; x <= x0 + 1; x++) if (w.getHighestBlockYAt(x, z, org.bukkit.HeightMap.MOTION_BLOCKING_NO_LEAVES) >= y0) livre = false;
+                if (livre) break;
+                for (int x = x0 - 1; x <= x0 + 1; x++) {
+                    Masmorra outra = masmorraEm(w, x, y0, z);
+                    if (outra != null && outra != m) continue;
+                    Block chao = w.getBlockAt(x, y0 - 1, z);
+                    if (chao.isPassable()) chao.setType(Material.STONE_BRICKS, false);
+                    for (int y = y0; y <= y0 + 3; y++) w.getBlockAt(x, y, z).setType(Material.AIR, false);
+                }
+            }
+            abertas++;
+            log.append(m.tipo.id).append(" #").append(m.id).append(" em ").append(x0).append(",").append(y0).append(",").append(m.saidaZ).append(" (").append(k).append(" blocos)\n");
+        }
+        try {
+            java.nio.file.Files.writeString(marca.toPath(), "abertas " + abertas + "\n" + log);
+        } catch (Exception ignored) {
+        }
+        if (abertas > 0) getLogger().info("Entradas presas no morro abertas: " + abertas + " (" + log.toString().replace('\n', ' ') + ")");
+    }
+
     Masmorra masmorraEm(World w, int x, int y, int z) {
         for (Masmorra m : todas) if (m.mundo.equals(w.getName()) && m.dentro(x, y, z)) return m;
         return null;
@@ -252,6 +295,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(new PacoteMusicaJava(this), this);
         Bukkit.getScheduler().runTaskLater(this, () -> { try { inferno.mundo(); } catch (Throwable ex) { getLogger().warning("Mundo de Herobrine: " + ex); } }, 200L);
         Bukkit.getScheduler().runTaskLater(this, () -> { try { inferno.tirarIlhaAntiga(); } catch (Throwable ex) { getLogger().warning("Ilha antiga: " + ex); } }, 300L);
+        Bukkit.getScheduler().runTaskLater(this, () -> { try { abrirEntradasPresas(); } catch (Throwable ex) { getLogger().warning("Entradas presas: " + ex); } }, 700L);
         getServer().getPluginManager().registerEvents(new Vidas(this), this);
         hub = new Hub(this);
         getServer().getPluginManager().registerEvents(loja, this);
@@ -470,7 +514,8 @@ public final class Masmorras extends JavaPlugin implements Listener {
 
     int borda(Tipo.Onde o) {
         return switch (o) {
-            case NORMAL -> getConfig().getInt("borda.normal", 10000);
+            // 20/11 (nivel 6): o mundo cresce para caber o anel novo de fora (raio 5700; o anel 6 vai de 4400 a 5700)
+            case NORMAL -> Math.max(getConfig().getInt("borda.normal", 11400), getConfig().getBoolean("nivel6.ativo", true) ? 11400 : 0);
             case NETHER -> getConfig().getInt("borda.nether", 1250);
             case END -> getConfig().getInt("borda.end", 10000);
         };
@@ -2143,7 +2188,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         ItemStack info = new ItemStack(Material.BOOK);
         ItemMeta im = info.getItemMeta();
         im.displayName(txt("§e§lComo funciona"));
-        im.lore(List.of(txt("§7Número no ícone = nível (1 a 5)."), txt("§7Mais longe do spawn = mais forte."), txt("§7A bússola aponta para a entrada"),
+        im.lore(List.of(txt("§7Número no ícone = nível (1 a 6)."), txt("§7Mais longe do spawn = mais forte."), txt("§7A bússola aponta para a entrada"),
                 txt("§7(só funciona neste mundo)."), txt("§7Mapa com todas: §f/masmorras mapa")));
         info.setItemMeta(im);
         h.inv.setItem(linhas * 9 - 5, info);
@@ -2329,6 +2374,25 @@ public final class Masmorras extends JavaPlugin implements Listener {
         if (cmd.getName().equalsIgnoreCase("darespada")) return darItens().comando(s, a, true);
         if (cmd.getName().equalsIgnoreCase("galeria")) return galeria.comando(s, a);
         if (cmd.getName().equalsIgnoreCase("trilha")) return missoes != null && missoes.comandoTrilha(s, a);
+        if (cmd.getName().equalsIgnoreCase("rebirth")) {
+            if (s instanceof org.bukkit.entity.Player p && progresso != null) progresso.comandoRebirth(p, a);
+            return true;
+        }
+        // 20/11 (Paulo: "loja de XP pelo /xp loja"): /xp loja e /xp banco; o resto vai para o /xp do jogo (equipe)
+        if (cmd.getName().equalsIgnoreCase("xp")) {
+            String sub = a.length > 0 ? a[0].toLowerCase(java.util.Locale.ROOT) : "";
+            if (s instanceof org.bukkit.entity.Player p && lojaXp != null && (sub.isEmpty() || sub.equals("loja") || sub.equals("shop") || sub.equals("banco") || sub.equals("bank"))) {
+                if (sub.startsWith("ban")) lojaXp.abrirBanco(p);
+                else lojaXp.abrirLoja(p);
+                return true;
+            }
+            if (!s.hasPermission("minecraft.command.xp") && !s.isOp()) {
+                s.sendMessage(txt(PREFIXO + "§7Use §f/xp loja §7(Loja de XP) ou §f/xp banco §7(Banco de XP)."));
+                return true;
+            }
+            Bukkit.dispatchCommand(s, "minecraft:xp " + String.join(" ", a));
+            return true;
+        }
         if (cmd.getName().equalsIgnoreCase("nivel")) {
             if (!(s instanceof org.bukkit.entity.Player p)) {
                 s.sendMessage("So no jogo.");

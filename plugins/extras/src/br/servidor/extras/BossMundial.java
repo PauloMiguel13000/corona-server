@@ -837,19 +837,50 @@ final class BossMundial implements Listener {
         return it;
     }
 
+    /** Montante antigo (encantamentos escondidos e a linha escrita a mao): mostra os encantamentos de verdade. */
+    boolean corrigirMontante(ItemStack it) {
+        if (it == null || !it.hasItemMeta()) return false;
+        org.bukkit.inventory.meta.ItemMeta m = it.getItemMeta();
+        if (!"espada".equals(m.getPersistentDataContainer().get(kDrop, PersistentDataType.STRING)) || !m.hasItemFlag(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS)) return false;
+        m.removeItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
+        if (m.lore() != null) {
+            List<net.kyori.adventure.text.Component> l = new java.util.ArrayList<>();
+            for (net.kyori.adventure.text.Component c : m.lore()) {
+                String t = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(c);
+                if (t.contains("Afiação V") || t.isBlank()) continue;
+                l.add(c);
+            }
+            m.lore(l);
+        }
+        it.setItemMeta(m);
+        return true;
+    }
+
+    @EventHandler(priority = org.bukkit.event.EventPriority.HIGH)
+    public void montanteNaBigorna(org.bukkit.event.inventory.PrepareAnvilEvent e) {
+        ItemStack r = e.getResult();
+        if (r != null && corrigirMontante(r)) e.setResult(r);
+        for (ItemStack it : e.getInventory().getContents()) corrigirMontante(it);
+    }
+
+    @EventHandler
+    public void montanteAoEntrar(org.bukkit.event.player.PlayerJoinEvent e) {
+        for (ItemStack it : e.getPlayer().getInventory().getContents()) corrigirMontante(it);
+    }
+
     /** O Montante do Colosso: espada de netherite grande, com o modelo do pacote. */
     @SuppressWarnings("UnstableApiUsage")
     ItemStack espadaDoColosso() {
         ItemStack it = new ItemStack(Material.NETHERITE_SWORD);
         org.bukkit.inventory.meta.ItemMeta m = it.getItemMeta();
         m.displayName(Extras.txt("§6§lMontante do Colosso"));
-        m.lore(List.of(Extras.txt("§7A espada colossal do §6Colosso da Coroa Partida§7."), Extras.txt("§7Raríssima: só cai do boss mundial."), Extras.txt(""),
-                Extras.txt("§bAfiação V §8| §bAspecto Flamejante II §8| §bInquebrável III")));
+        // 20/11 (Sui: "Colosso + livro na bigorna so mostra os 3 encantamentos"): os encantamentos agora aparecem de
+        // verdade (antes ficavam escondidos e a descricao tinha so os 3 de fabrica escritos a mao)
+        m.lore(List.of(Extras.txt("§7A espada colossal do §6Colosso da Coroa Partida§7."), Extras.txt("§7Raríssima: só cai do boss mundial.")));
         m.addEnchant(org.bukkit.enchantments.Enchantment.SHARPNESS, 5, true);
         m.addEnchant(org.bukkit.enchantments.Enchantment.FIRE_ASPECT, 2, true);
         m.addEnchant(org.bukkit.enchantments.Enchantment.UNBREAKING, 3, true);
         m.setEnchantmentGlintOverride(false);
-        m.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
         m.getPersistentDataContainer().set(kDrop, PersistentDataType.STRING, "espada");
         it.setItemMeta(m);
         try {

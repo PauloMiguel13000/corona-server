@@ -40,9 +40,17 @@ commands:
     usage: /trilha [nivel]
     aliases: [caminho, jornada]
   nivel:
-    description: Nivel de Masmorra (1 a 5) - quais chefes faltam para liberar o proximo (/nivel equipamento = nivel do equipamento)
+    description: Nivel de Masmorra (1 a 6) - quais chefes faltam para liberar o proximo (/nivel equipamento = nivel do equipamento)
     usage: /nivel [equipamento | painel]
     aliases: [level, equipamento, equip, lvl]
+  rebirth:
+    description: REBIRTH - quem venceu todas as masmorras volta ao nivel 1 e ganha slots de runa extras
+    usage: /rebirth [confirmar]
+    aliases: [renascer, rebirt, renascimento]
+  xp:
+    description: Loja de XP e Banco de XP (/xp loja, /xp banco)
+    usage: /xp [loja|banco]
+    aliases: [lojaxp, xploja]
   musica:
     description: Liga e desliga a trilha das masmorras so para voce
     usage: /musica

@@ -241,6 +241,7 @@ final class Campos implements Listener {
             case 1 -> 18;
             case 2 -> 30;
             case 3 -> 45;
+            case 6 -> 80;
             default -> 60;
         };
         int eliteEm = r.nextInt(100) < pl.getConfig().getInt("campos.chance-elite", chanceElite) ? r.nextInt(tipos.size()) : -1;
@@ -348,6 +349,7 @@ final class Campos implements Listener {
             case 1 -> 3 + r.nextInt(2);
             case 2 -> 4 + r.nextInt(2);
             case 3 -> 4 + r.nextInt(3);
+            case 6 -> 6 + r.nextInt(3);
             default -> 5 + r.nextInt(3);
         };
         switch (c.tipo) {
@@ -449,6 +451,7 @@ final class Campos implements Listener {
                 case 1 -> "§a";
                 case 2 -> "§e";
                 case 3 -> "§6";
+                case 6 -> "§4§l";
                 default -> "§c";
             };
             // vida e dano sobem com o nivel do anel
@@ -456,12 +459,14 @@ final class Campos implements Listener {
                 case 1 -> 0.85;
                 case 2 -> 1.25;
                 case 3 -> 1.75;
+                case 6 -> 3.6;
                 default -> 2.3;
             };
             double fatorDano = switch (c.nivel) {
                 case 1 -> 1.0;
                 case 2 -> 1.25;
                 case 3 -> 1.6;
+                case 6 -> 2.8;
                 default -> 2.0;
             };
             if (elite) {

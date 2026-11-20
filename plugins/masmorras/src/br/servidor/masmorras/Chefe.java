@@ -42,7 +42,7 @@ final class Chefe {
     final BossBar barra;
     final List<Player> vendo = new ArrayList<>();
     final Random rnd = new Random();
-    long proximaHab, semJogadorDesde = -1;
+    long proximaHab, semJogadorDesde = -1, proximoSoco;
     boolean furioso, curou;
     // particularidades
     long inicioLuta = -1, proximaZona, escudoAte;
@@ -148,12 +148,62 @@ final class Chefe {
         // preso na arena
         Caixa a = m.arenaLuta();
         if (!a.crescer(1).contem(e.getX(), e.getY(), e.getZ())) e.teleport(centro());
+        // 20/11 (Sui: "da para subir nas torres da arena e atirar de cima" e "mobs flutuando acima da arena"): ninguem
+        // fica em cima dos pilares/enfeites da arena — jogador e monstro em pe la em cima voltam para o chao
+        double alto = a.y1() + 3.2;
+        if (!avulso && a.y2() - a.y1() >= 6) {
+            if (e.getY() > alto && !(e instanceof org.bukkit.entity.Shulker) && !(e instanceof org.bukkit.entity.Flying) && !e.hasPotionEffect(PotionEffectType.LEVITATION)
+                    && (e.isOnGround() || e.getVelocity().lengthSquared() < 0.0004)) e.teleport(centro());
+            for (Player p : ps) {
+                if (p.getY() <= alto || !p.isOnGround() || p.isFlying() || p.getGameMode() == org.bukkit.GameMode.CREATIVE || p.getGameMode() == org.bukkit.GameMode.SPECTATOR) continue;
+                Location c = centro();
+                Location volta = new Location(p.getWorld(), c.getX() + rnd.nextInt(5) - 2, a.y1(), c.getZ() + rnd.nextInt(5) - 2, p.getYaw(), p.getPitch());
+                p.setFallDistance(0);
+                p.teleport(volta);
+                p.sendActionBar(Masmorras.txt("§cSem acampar em cima das torres da arena: lute no chão!"));
+            }
+            for (org.bukkit.entity.Entity x : e.getWorld().getNearbyEntities(new Location(e.getWorld(), a.cx() + 0.5, (a.y1() + a.y2()) / 2.0, a.cz() + 0.5),
+                    (a.x2() - a.x1()) / 2.0 + 1, (a.y2() - a.y1()) / 2.0 + 1, (a.z2() - a.z1()) / 2.0 + 1)) {
+                if (!(x instanceof org.bukkit.entity.Mob mob) || x == e || x instanceof org.bukkit.entity.Flying || x instanceof org.bukkit.entity.Vex
+                        || x instanceof org.bukkit.entity.Phantom || x instanceof org.bukkit.entity.Bat || x instanceof org.bukkit.entity.Blaze || x instanceof org.bukkit.entity.Allay
+                        || x instanceof org.bukkit.entity.Shulker || x instanceof org.bukkit.entity.ArmorStand || mob.hasPotionEffect(PotionEffectType.LEVITATION)) continue;
+                if (x.getY() > alto && (x.isOnGround() || mob.getVelocity().lengthSquared() < 0.0004 && !mob.isInsideVehicle())) {
+                    Location c = centro();
+                    x.teleport(new Location(x.getWorld(), c.getX() + rnd.nextInt(7) - 3, a.y1(), c.getZ() + rnd.nextInt(7) - 3));
+                }
+            }
+        }
         // alvo
         Player alvo = maisPerto(ps);
         if (e instanceof Warden w) {
             for (Player p : ps) if (w.getAnger(p) < 90) w.increaseAnger(p, 90);
         } else if (e instanceof Mob mob) {
             if (mob.getTarget() == null || !(mob.getTarget() instanceof Player tp) || !ps.contains(tp)) mob.setTarget(alvo);
+        }
+        // 20/11 (Sui: "o boss Rangedor nao ataca"): o Creaking congela quando alguem olha para ele e ai nao bate; o chefe
+        // agora anda e bate sozinho em quem estiver perto, mesmo sendo olhado (rangendo)
+        if (e instanceof org.bukkit.entity.Creaking && alvo != null) {
+            Location el = e.getLocation(), al = alvo.getLocation();
+            double d2 = el.distanceSquared(al);
+            if (d2 <= 3.6 * 3.6) {
+                if (agora >= proximoSoco) {
+                    proximoSoco = agora + 1100;
+                    e.swingMainHand();
+                    AttributeInstance ad = e.getAttribute(Attribute.ATTACK_DAMAGE);
+                    alvo.damage(ad == null ? Math.max(4, t.dano) : ad.getValue(), e);
+                    e.getWorld().playSound(el, "minecraft:entity.creaking.attack", 1f, 0.8f);
+                }
+            } else if (d2 < 30 * 30) {
+                org.bukkit.util.Vector dir = al.toVector().subtract(el.toVector()).setY(0);
+                if (dir.lengthSquared() > 0.01) {
+                    Location prox = el.clone().add(dir.normalize().multiply(0.9));
+                    prox.setDirection(dir);
+                    if (prox.getBlock().isPassable() && prox.clone().add(0, 1, 0).getBlock().isPassable()) {
+                        e.teleport(prox);
+                        if (rnd.nextInt(3) == 0) e.getWorld().playSound(el, "minecraft:entity.creaking.step", 0.8f, 0.8f);
+                    }
+                }
+            }
         }
         // furioso na metade da vida
         if (!furioso && e.getHealth() <= vidaMax / 2) {
@@ -551,11 +601,21 @@ final class Chefe {
     }
 
     private void usarHabilidade(List<Player> ps, Player alvo) {
-        if (pl.corpos3d != null) pl.corpos3d.magia(e);
-        if (t.habs == null || t.habs.length == 0 || alvo == null) return;
+        if (t.habs == null || t.habs.length == 0 || alvo == null) {
+            if (pl.corpos3d != null) pl.corpos3d.magia(e);
+            return;
+        }
         Tipo.Hab h = forcada != null ? forcada : t.habs[rnd.nextInt(t.habs.length)];
         if (h == Tipo.Hab.CURA && forcada == null) {
             if (curou || e.getHealth() > vidaMax * 0.35) h = t.habs[0];
+        }
+        // 20/11 (Sui: "corrigir a animacao do arco do boss da Cripta"): a rajada de flechas de quem segura arco usa a
+        // animacao de puxar o arco (antes todas as habilidades faziam a de magia, de bracos para cima)
+        if (pl.corpos3d != null) {
+            boolean temArco = e.getEquipment() != null && (e.getEquipment().getItemInMainHand().getType() == org.bukkit.Material.BOW
+                    || e.getEquipment().getItemInMainHand().getType() == org.bukkit.Material.CROSSBOW);
+            if (h == Tipo.Hab.FLECHAS && temArco) pl.corpos3d.arco(e);
+            else pl.corpos3d.magia(e);
         }
         int n = t.nivel;
         World w = e.getWorld();

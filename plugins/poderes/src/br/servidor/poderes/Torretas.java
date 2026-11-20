@@ -56,7 +56,10 @@ final class Torretas implements Listener {
         GELO("Torre de Gelo", "§b", 12, 20, 5),
         FOGO("Torre Lanca-Chamas", "§6", 8, 15, 5),
         TESLA("Torre Tesla", "§e", 12, 40, 5),
-        CANHAO("Torre Canhao", "§8", 22, 70, 5);
+        CANHAO("Torre Canhao", "§8", 22, 70, 5),
+        // 20/11 (Sui/Paulo): a 5a habilidade do Engenheiro virou a TORRE SUPREMA: junta todas as torres (flecha, gelo,
+        // fogo, raio e canhao em sequencia), atira rapido e nao sai da fila das 3 torres (nao "rouba" vaga nem e trocada)
+        SUPREMA("Torre Suprema", "§d§l", 18, 10, 5);
 
         final String nome;
         final String cor;
@@ -131,7 +134,28 @@ final class Torretas implements Listener {
     /** Dano final no alvo: contra jogador tira o bonus das torres (PvP fica como era). */
     private double fa(ArmorStand t, LivingEntity le, double dano) {
         if (le instanceof Player) return dano / escalas.getOrDefault(t.getUniqueId(), 1.0);
+        if (plugin.runas != null) {
+            Player dono = donoDe(t);
+            if (dono != null) {
+                dano *= plugin.runas.fatorTorre(dono, tipoDe(t));
+                plugin.runas.tiroDaTorre(dono, le, dano);
+            }
+        }
         return chefe(le) ? dano * DANO_EM_CHEFE : dano;
+    }
+
+    Player donoDe(ArmorStand t) {
+        String v = t.getPersistentDataContainer().get(chaveTorreta, PersistentDataType.STRING);
+        try {
+            return v == null ? null : Bukkit.getPlayer(UUID.fromString(v));
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    String tipoDe(ArmorStand t) {
+        String v = t.getPersistentDataContainer().get(chaveTipo, PersistentDataType.STRING);
+        return v == null ? "" : v;
     }
 
     private final Poderes plugin;
@@ -181,10 +205,11 @@ final class Torretas implements Listener {
             int[] r = restante.get(velha);
             herdado = r != null ? Math.max(60, r[0]) : -1;
             removerUma(dono0, tipo, false);
-        } else if (ativas != null && ativas.size() >= MAX_ATIVAS) {
+        } else if (tipo != Tipo.SUPREMA && ativas != null && ativas.entrySet().stream().filter(x -> x.getKey() != Tipo.SUPREMA).count() >= MAX_ATIVAS) {
             Tipo maisVelha = null;
             long quando = Long.MAX_VALUE;
             for (Map.Entry<Tipo, UUID> en : ativas.entrySet()) {
+                if (en.getKey() == Tipo.SUPREMA) continue;
                 long q = colocadaEm.getOrDefault(en.getValue(), 0L);
                 if (q < quando) {
                     quando = q;
@@ -219,6 +244,7 @@ final class Torretas implements Listener {
         fator *= esc;
         escalas.put(t.getUniqueId(), esc);
         int dur = herdado > 0 ? herdado : ticksDuracao(tipo, nivel);
+        if (herdado <= 0 && plugin.runas != null) dur = (int) Math.round(dur * plugin.runas.torreDuracao(p)) / 5 * 5;
         int seg = (dur + 19) / 20;
         Poderes.barra(p, tipo.cor + tipo.nome + (herdado > 0 ? " §freposicionada §7(sobram §e" + seg + "s§7)" : " §fcolocada por §e" + seg + "s")
                 + (esc > 1.001 ? " §7(dano x" + Poderes.num(esc) + " pelo nível)" : ""));
@@ -238,7 +264,7 @@ final class Torretas implements Listener {
                 removerUma(dono, tipo, true);
                 return;
             }
-            carga[0] += 5;
+            carga[0] += 5 + (plugin.runas == null ? 0 : (int) Math.round(5 * plugin.runas.torreRapida(p)));
             if (ticks[0] % 10 == 0) enfeitar(t, tipo);
             LivingEntity alvo = carga[0] >= tipo.intervalo ? escolherAlvo(p, t, tipo.alcance) : null;
             String tempo = ((ticks[0] + 19) / 20) + "s";
@@ -263,6 +289,7 @@ final class Torretas implements Listener {
             case FOGO -> Color.fromRGB(255, 140, 30);
             case TESLA -> Color.fromRGB(255, 235, 90);
             case CANHAO -> Color.fromRGB(120, 120, 130);
+            case SUPREMA -> Color.fromRGB(220, 90, 255);
         };
     }
 
@@ -273,6 +300,7 @@ final class Torretas implements Listener {
             case FOGO -> Material.ORANGE_STAINED_GLASS;
             case TESLA -> Material.YELLOW_STAINED_GLASS;
             case CANHAO -> Material.GRAY_STAINED_GLASS;
+            case SUPREMA -> Material.PURPLE_STAINED_GLASS;
         });
     }
 
@@ -319,6 +347,16 @@ final class Torretas implements Listener {
                 eq.setLeggings(new ItemStack(Material.NETHERITE_LEGGINGS));
                 eq.setBoots(new ItemStack(Material.NETHERITE_BOOTS));
             }
+            case SUPREMA -> {
+                a.setArms(true);
+                eq.setHelmet(new ItemStack(Material.BEACON));
+                eq.setChestplate(couro(Material.LEATHER_CHESTPLATE, Color.fromRGB(150, 40, 220)));
+                eq.setLeggings(new ItemStack(Material.NETHERITE_LEGGINGS));
+                eq.setBoots(new ItemStack(Material.GOLDEN_BOOTS));
+                eq.setItemInMainHand(new ItemStack(Material.END_ROD));
+                eq.setItemInOffHand(new ItemStack(Material.BLAZE_ROD));
+                a.setGlowing(true);
+            }
         }
         for (EquipmentSlot s : EquipmentSlot.values()) {
             try {
@@ -352,6 +390,10 @@ final class Torretas implements Listener {
             case FOGO -> Fx.p(w, Particle.FLAME, topo, 3, 0.2, 0.2, 0.2, 0.01);
             case TESLA -> Fx.p(w, Particle.ELECTRIC_SPARK, topo.add(0, 0.4, 0), 4, 0.15, 0.3, 0.15, 0.05);
             case CANHAO -> Fx.p(w, Particle.SMOKE, topo, 3, 0.15, 0.1, 0.15, 0.01);
+            case SUPREMA -> {
+                Fx.p(w, Particle.WITCH, topo, 4, 0.3, 0.3, 0.3, 0.01);
+                Fx.p(w, Particle.ELECTRIC_SPARK, topo.add(0, 0.4, 0), 2, 0.15, 0.3, 0.15, 0.05);
+            }
             default -> { }
         }
     }
@@ -441,8 +483,21 @@ final class Torretas implements Listener {
             case FOGO -> fogo(dono, t, alvo, f);
             case TESLA -> tesla(dono, t, alvo, f);
             case CANHAO -> canhao(dono, t, alvo, f);
+            case SUPREMA -> {
+                // a cada tiro uma torre diferente: flecha, gelo, flecha, fogo, flecha, raio, flecha, canhao
+                int k = supremaPasso.merge(t.getUniqueId(), 1, Integer::sum);
+                switch (k % 8) {
+                    case 1 -> gelo(dono, t, alvo, f * 0.8);
+                    case 3 -> fogo(dono, t, alvo, f * 0.8);
+                    case 5 -> tesla(dono, t, alvo, f * 0.7);
+                    case 7 -> canhao(dono, t, alvo, f * 0.6);
+                    default -> flecha(dono, t, alvo, f);
+                }
+            }
         }
     }
+
+    private final Map<UUID, Integer> supremaPasso = new HashMap<>();
 
     private void flecha(Player dono, ArmorStand t, LivingEntity alvo, double f) {
         World w = t.getWorld();

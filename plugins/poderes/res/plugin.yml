@@ -20,6 +20,9 @@ commands:
   petestrelas:
     description: Estrelas (1 a 5) dos seus pets e fusao de pets repetidos
     aliases: [estrelaspet, fundirpet, fusaopet, petfundir, petestrela]
+  runa:
+    description: Runas da sua classe (nivel 1 a 60, +0,1% de ataque e defesa por nivel)
+    aliases: [runas, nivelclasse]
   voar:
     description: Liga/desliga o voo dentro do seu terreno
     aliases: [cfly, claimfly]

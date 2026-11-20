@@ -37,7 +37,8 @@ final class Premios {
             case 2 -> 300;
             case 3 -> 600;
             case 4 -> 1000;
-            default -> 1500;
+            case 5 -> 1500;
+            default -> 2200;
         };
     }
 
@@ -50,12 +51,20 @@ final class Premios {
             // 16/11: Paulo avisou no Discord que o molde de melhoria de netherite aparece do nivel 4 para cima
             case 4 -> new Opcao[] {o("DIAMOND", 3, 6), o("NETHERITE_SCRAP", 1, 1, 0.7), o("NETHERITE_UPGRADE_SMITHING_TEMPLATE", 1, 1, 0.3),
                     o("GOLDEN_APPLE", 1, 2), o("EXPERIENCE_BOTTLE", 10, 16)};
+            // 20/11: nivel 6 (o mais forte)
+            case 6 -> new Opcao[] {o("NETHERITE_INGOT", 1, 2), o("NETHERITE_UPGRADE_SMITHING_TEMPLATE", 1, 1), o("DIAMOND", 8, 12),
+                    o("TOTEM_OF_UNDYING", 1, 1, 0.8), o("ENCHANTED_GOLDEN_APPLE", 1, 1, 0.35), o("EXPERIENCE_BOTTLE", 24, 36)};
             default -> new Opcao[] {o("NETHERITE_INGOT", 1, 1, 0.5), o("NETHERITE_UPGRADE_SMITHING_TEMPLATE", 1, 1, 0.7), o("DIAMOND", 5, 8),
                     o("TOTEM_OF_UNDYING", 1, 1, 0.5), o("EXPERIENCE_BOTTLE", 16, 24)};
         };
     }
 
     private static Opcao[] sorteio(int nivel) {
+        if (nivel >= 6) return new Opcao[] {o("ELYTRA", 1, 1, 0.3), o("NETHER_STAR", 1, 1, 0.25), o("HEAVY_CORE", 1, 1, 0.15),
+                enc("NETHERITE_SWORD", "sharpness:5", "unbreaking:3", "looting:3", "fire_aspect:2"), enc("NETHERITE_AXE", "sharpness:5", "unbreaking:3"),
+                enc("NETHERITE_CHESTPLATE", "protection:4", "unbreaking:3"), enc("NETHERITE_HELMET", "protection:4", "unbreaking:3"),
+                enc("BOW", "power:5", "unbreaking:3", "flame:1", "punch:2"), o("NETHERITE_INGOT", 1, 2, 0.5), o("SHULKER_SHELL", 2, 4),
+                livro("mending:1", "protection:4", "sharpness:5", "power:5", "unbreaking:3", "looting:3", "fortune:3", "feather_falling:4")};
         return switch (nivel) {
             // niveis 1 a 3 mais fracos (pedido do Paulo, 04/11): menos encantamento e material pior; 05/11: todos um pouco mais fracos
             case 1 -> new Opcao[] {o("GOLDEN_APPLE", 1, 1, 0.3), o("DIAMOND", 1, 2), enc("STONE_SWORD", "sharpness:1"),
@@ -85,7 +94,7 @@ final class Premios {
 
     /** Um equipamento encantado do nivel (para os monstros soltarem como reliquia, de vez em quando). */
     static Item equipamento(int nivel, Random r) {
-        nivel = Math.max(1, Math.min(5, nivel));
+        nivel = Math.max(1, Math.min(6, nivel));
         List<Opcao> l = new ArrayList<>();
         for (Opcao op : sorteio(nivel)) if (!op.livro() && op.encantos().length > 0) l.add(op);
         return fazer(l.get(r.nextInt(l.size())), r);
@@ -97,7 +106,7 @@ final class Premios {
 
     /** Sorteia o premio do chefe. */
     static List<Item> sortear(int nivel, Random r) {
-        nivel = Math.max(1, Math.min(5, nivel));
+        nivel = Math.max(1, Math.min(6, nivel));
         List<Item> l = new ArrayList<>();
         for (Opcao op : garantidos(nivel)) if (op.chance() >= 1 || r.nextDouble() < op.chance()) l.add(fazer(op, r));
         Opcao[] s = sorteio(nivel);
@@ -118,7 +127,7 @@ final class Premios {
     /** Todos os materiais e encantamentos usados (para conferir no inicio). */
     static List<String> materiais() {
         List<String> l = new ArrayList<>();
-        for (int n = 1; n <= 5; n++) {
+        for (int n = 1; n <= 6; n++) {
             for (Opcao op : garantidos(n)) l.add(op.material());
             for (Opcao op : sorteio(n)) l.add(op.material());
         }
@@ -127,7 +136,7 @@ final class Premios {
 
     static List<String> encantamentos() {
         List<String> l = new ArrayList<>();
-        for (int n = 1; n <= 5; n++)
+        for (int n = 1; n <= 6; n++)
             for (Opcao op : sorteio(n)) for (String e : op.encantos()) l.add(e.split(":")[0]);
         return l;
     }

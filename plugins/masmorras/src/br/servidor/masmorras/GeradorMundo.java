@@ -60,6 +60,8 @@ final class GeradorMundo extends ChunkGenerator {
 
     /** Nivel (1 a 4) do ponto, pela distancia do centro. */
     int nivel(double r) {
+        // 20/11 (Paulo: "o limite agora vai ser lvl 6"): o anel de fora (depois de zonas[3]) e a area de nivel 6
+        if (zonas.length > 3 && r >= zonas[3]) return 6;
         if (r < zonas[0]) return 1;
         if (r < zonas[1]) return 2;
         if (r < zonas[2]) return 3;
@@ -121,6 +123,15 @@ final class GeradorMundo extends ChunkGenerator {
                         double lg = n(lagos, x + 5000, z + 5000);
                         return lg > 0.2 ? Biome.OCEAN : lg > -0.05 ? Biome.STONY_SHORE : Biome.WINDSWEPT_GRAVELLY_HILLS;
                     }
+                }
+            }
+            case 6 -> {
+                // Terras Devastadas: delta de basalto, floresta carmesim, vale das almas e floresta distorcida
+                switch (setor(x, z, 4, 0.7)) {
+                    case 0 -> { return Biome.BASALT_DELTAS; }
+                    case 1 -> { return Biome.CRIMSON_FOREST; }
+                    case 2 -> { return Biome.SOUL_SAND_VALLEY; }
+                    default -> { return Biome.WARPED_FOREST; }
                 }
             }
             default -> {
@@ -190,10 +201,18 @@ final class GeradorMundo extends ChunkGenerator {
             double m0 = 1 - mistura(r, zonas[1]), m1 = mistura(r, zonas[2]);
             if (m0 > 0) h = h * (1 - m0) + z2(x, z) * m0;
             if (m1 > 0) h = h * (1 - m1) + z4(x, z) * m1;
+        } else if (nv == 6) {
+            h = z6(x, z);
+            double m0 = 1 - mistura(r, zonas[3]);
+            if (m0 > 0) h = h * (1 - m0) + z4(x, z) * m0;
         } else {
             h = z4(x, z);
             double m0 = 1 - mistura(r, zonas[2]);
             if (m0 > 0) h = h * (1 - m0) + z3(x, z) * m0;
+            if (zonas.length > 3) {
+                double m1 = mistura(r, zonas[3]);
+                if (m1 > 0) h = h * (1 - m1) + z6(x, z) * m1;
+            }
         }
         return h + n(detalhe, x, z) * 1.6;
     }
@@ -245,6 +264,14 @@ final class GeradorMundo extends ChunkGenerator {
             case 2 -> { return 67 + m * 14 + Math.max(0, c) * 8; }                         // vales escuros (as ilhas ficam no ceu)
             default -> { return 72 + m * 14 + Math.max(0, c) * 8; }                        // gelo
         }
+    }
+
+    /** Nivel 6 (Terras Devastadas): planaltos rachados com fendas e picos de basalto. */
+    private double z6(double x, double z) {
+        double m = n(morros, x, z), c = n(cristas, x, z);
+        double crista = 1 - Math.abs(c);
+        double fenda = Math.abs(n(rios, x * 1.7, z * 1.7)) < 0.04 ? -10 : 0;
+        return 76 + m * 16 + crista * crista * crista * 34 + fenda;
     }
 
     /** Ilhas flutuantes do setor escuro do nivel 4: devolve [base, topo] ou null. */
@@ -319,6 +346,10 @@ final class GeradorMundo extends ChunkGenerator {
         Material topoB, baixo = Material.DIRT;
         int camadas = 3;
         switch (nome) {
+            case "basalt_deltas" -> { topoB = mc > 0.45 ? Material.MAGMA_BLOCK : mc < -0.35 ? Material.BLACKSTONE : Material.BASALT; baixo = Material.BLACKSTONE; camadas = 4; }
+            case "crimson_forest" -> { topoB = Material.CRIMSON_NYLIUM; baixo = Material.NETHERRACK; camadas = 4; }
+            case "warped_forest" -> { topoB = Material.WARPED_NYLIUM; baixo = Material.NETHERRACK; camadas = 4; }
+            case "soul_sand_valley" -> { topoB = mc > 0.2 ? Material.SOUL_SAND : Material.SOUL_SOIL; baixo = Material.SOUL_SOIL; camadas = 4; }
             case "desert" -> { topoB = Material.SAND; baixo = Material.SANDSTONE; camadas = 4; }
             case "beach" -> { topoB = Material.SAND; baixo = Material.SAND; }
             case "river" -> { topoB = h <= MAR + 1 ? Material.SAND : Material.GRASS_BLOCK; }
@@ -395,7 +426,8 @@ final class GeradorMundo extends ChunkGenerator {
                         Biome.SAVANNA, Biome.SAVANNA_PLATEAU, Biome.OCEAN, Biome.BEACH, Biome.JUNGLE, Biome.BAMBOO_JUNGLE, Biome.DARK_FOREST,
                         Biome.BADLANDS, Biome.ERODED_BADLANDS, Biome.WOODED_BADLANDS, Biome.PALE_GARDEN, Biome.OLD_GROWTH_PINE_TAIGA,
                         Biome.OLD_GROWTH_SPRUCE_TAIGA, Biome.STONY_SHORE, Biome.WINDSWEPT_GRAVELLY_HILLS, Biome.JAGGED_PEAKS, Biome.FROZEN_PEAKS,
-                        Biome.SNOWY_SLOPES, Biome.GROVE, Biome.WINDSWEPT_FOREST, Biome.DEEP_DARK);
+                        Biome.SNOWY_SLOPES, Biome.GROVE, Biome.WINDSWEPT_FOREST, Biome.DEEP_DARK,
+                        Biome.BASALT_DELTAS, Biome.CRIMSON_FOREST, Biome.SOUL_SAND_VALLEY, Biome.WARPED_FOREST);
             }
         };
     }

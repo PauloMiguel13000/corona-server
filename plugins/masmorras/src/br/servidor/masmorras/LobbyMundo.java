@@ -106,6 +106,14 @@ final class LobbyMundo implements Listener {
                 ex.printStackTrace();
             }
         }
+        // 20/11 (nivel 6): portal da area de nivel 6 na faixa oeste, no lugar da esmeralda antiga (constroi se faltar)
+        Bukkit.getScheduler().runTaskLater(pl, () -> {
+            try {
+                portalNivel6();
+            } catch (Throwable ex) {
+                pl.getLogger().warning("Portal do nivel 6 nao terminou: " + ex);
+            }
+        }, 120L);
         File plantas = new File(pl.getDataFolder(), "lobby-plantas-v1.txt");
         if (!plantas.exists()) Bukkit.getScheduler().runTaskLater(pl, () -> limparPlantasSoltas(plantas), 200L);
         Bukkit.getScheduler().runTaskTimer(pl, this::ambiente, 80L, 8L);
@@ -425,7 +433,6 @@ final class LobbyMundo implements Listener {
         texto(new Location(mundo, GUIA[0], y + 12, GUIA[1]), "§e§lGUIA DAS MASMORRAS\n§7Mostra todas as masmorras e dá a bússola\n§8clique nele", 1.1f, false);
         texto(new Location(mundo, -19.5, y + 12, -19.5), "§b§lMESTRE DAS CLASSES\n§7Escolha ou troque a sua classe\n§6§lVENDEDOR DE CLASSES\n§7Lutador, Saiyajin, Cipó e Tridente (coronas)", 1.1f, false);
         texto(new Location(mundo, 0.5, y + 13.5, -37.5), "§a§lNÍVEL 1\n§7As masmorras de nível 1 ficam em volta do lobby\n§8saia por aqui", 1.2f, false);
-        texto(new Location(mundo, ESM_X + 0.5, y + 7, ESM_Z + 0.5), "§a§lVOLTAR AO SPAWN\n§7pise na esmeralda", 1.0f, false);
         texto(new Location(mundo, 26.5, y + 5, 11), "§e§lCAMPO DE TREINO\n§7bata nos bonecos e veja o seu dano", 1.0f, false);
         TextDisplay p1 = texto(new Location(mundo, 11.5, y + 7.5, -25.5), "§c§lCHEFES DERROTADOS\n§7carregando...", 1.5f, true);
         TextDisplay p2 = texto(new Location(mundo, -10.5, y + 7.5, -25.5), "§b§lMAIORES NÍVEIS DE PODER\n§7carregando...", 1.5f, true);
@@ -451,6 +458,39 @@ final class LobbyMundo implements Listener {
         te.getPersistentDataContainer().set(kPortao, PersistentDataType.INTEGER, 1);
         mundo.setSpawnLocation(new Location(mundo, 0.5, y + 1, 14.5, 180f, 0f));
         pl.getLogger().info("Lobby v5: praca nova com " + n + " blocos (" + tiradas + " entidades antigas tiradas) em " + (System.currentTimeMillis() - t0) + " ms.");
+    }
+
+    /** Portal do nivel 6 (mesmo desenho do 5, espelhado no sul da faixa oeste). So constroi se ainda nao tiver. */
+    private void portalNivel6() {
+        if (mundo == null) return;
+        int px = ESM_X, pz = ESM_Z;
+        mundo.getChunkAt(px >> 4, pz >> 4).load(true);
+        if (mundo.getBlockAt(px, y + 2, pz).getType() == Material.NETHER_PORTAL) return;
+        String[] v = PortaisNivel.visual(6);
+        // tira a esmeralda antiga (estrado, arco e letreiro) e abre o lugar
+        for (Entity e : mundo.getNearbyEntities(new Location(mundo, px + 0.5, y + 5, pz + 0.5), 3, 6, 4))
+            if (e instanceof TextDisplay) e.remove();
+        for (int x = px - 1; x <= px + 3; x++)
+            for (int z = pz - 3; z <= pz + 3; z++) {
+                for (int k = y + 1; k <= y + 8; k++) mundo.getBlockAt(x, k, z).setType(Material.AIR, false);
+                mundo.getBlockAt(x, y, z).setBlockData(Bukkit.createBlockData("minecraft:polished_blackstone_bricks"), false);
+            }
+        for (int w = -2; w <= 2; w++)
+            for (int dy = 0; dy <= 5; dy++) {
+                boolean borda = Math.abs(w) == 2 || dy == 0 || dy == 5;
+                String b;
+                if (!borda) b = "minecraft:nether_portal[axis=z]";
+                else if (Math.abs(w) == 2 && (dy == 0 || dy == 5 || dy % 2 == 1)) b = v[1];
+                else b = v[0];
+                mundo.getBlockAt(px, y + dy, pz + w).setBlockData(Bukkit.createBlockData(b), false);
+            }
+        mundo.getBlockAt(px, y + 6, pz).setBlockData(Bukkit.createBlockData("minecraft:soul_lantern"), false);
+        for (int w = -2; w <= 2; w++)
+            for (int k = 1; k <= 2; k++) mundo.getBlockAt(px + k, y, pz + w).setBlockData(Bukkit.createBlockData(v[2]), false);
+        TextDisplay t = texto(new Location(mundo, px + 0.5, y + 7.5, pz + 0.5),
+                v[3] + "§lÁREA DE NÍVEL 6\n§7Terras Devastadas: as 10 masmorras mais fortes\n§6precisa do Nível de Masmorra 6", 1.2f, false);
+        t.getPersistentDataContainer().set(new NamespacedKey(pl, "portal_nivel_enfeite"), PersistentDataType.INTEGER, 6);
+        pl.getLogger().info("Portal do nivel 6 construido no lobby (" + px + ", " + pz + ").");
     }
 
     /**

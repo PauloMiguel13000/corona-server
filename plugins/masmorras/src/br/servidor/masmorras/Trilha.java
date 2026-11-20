@@ -119,29 +119,29 @@ final class Trilha implements Listener {
         DURACAO.put("chefe_antiga", 67.50);
         DURACAO.put("chefe_explorar", 49.09);
 
-        fam("cripta", "CRIPTA", "CEMITERIO", "CRIPTA_REAL", "TUMBA", "OSSOS");
+        fam("cripta", "CRIPTA", "CEMITERIO", "CRIPTA_REAL", "TUMBA", "OSSOS", "CATACUMBA");
         fam("catedral", "CATEDRAL", "MAUSOLEU");
-        fam("vampiro", "SANGUE", "CASTELO");
+        fam("vampiro", "SANGUE", "CASTELO", "RUBRA");
         fam("aranha", "NINHO", "VIUVA");
         fam("mina", "MINA", "TESOURO");
         fam("deserto", "DESERTO");
-        fam("pantano", "PANTANO", "ESGOTO", "FUNGOS");
+        fam("pantano", "PANTANO", "ESGOTO", "FUNGOS", "PUTRIDO");
         fam("floresta", "BOSQUE_PALIDO", "MOINHO", "FAZENDA");
         fam("jardim", "JARDIM");
         fam("selva", "SELVA", "COVIL_LOBOS", "COVIL");
         fam("quartel", "QUARTEL", "ACAMPAMENTO");
-        fam("gelo", "GELO", "URSO", "GELEIRA", "NEVE");
-        fam("mar", "NAUFRAGIO", "CORAL");
+        fam("gelo", "GELO", "URSO", "GELEIRA", "NEVE", "GLACIAR");
+        fam("mar", "NAUFRAGIO", "CORAL", "ABISSAL");
         fam("farol", "FAROL");
         fam("afogada", "AFOGADA");
         fam("relogio", "LABORATORIO", "CAMARA_TESTES", "RELOGIO");
         fam("arcano", "TORRE", "BIBLIOTECA", "OBSERVATORIO", "ARCANO");
         fam("coliseu", "COLISEU", "LABIRINTO", "TRONO");
-        fam("trovao", "TROVAO", "VENTOS");
-        fam("fogo", "VULCAO", "CRATERA", "FORJA", "DELTA");
+        fam("trovao", "TROVAO", "VENTOS", "PINACULO");
+        fam("fogo", "VULCAO", "CRATERA", "FORJA", "DELTA", "CINZAS", "TITAS");
         fam("nether", "BASTIAO", "WITHER", "CARMESIM", "DISTORCIDO", "ALMAS", "OBSIDIANA", "FORTALEZA");
-        fam("vazio", "CIDADELA", "PRISAO", "ILHAS", "NAVE", "CORO", "VAZIO", "ABISMO", "CIDADE_END");
-        fam("antiga", "CIDADE_ANTIGA", "SECRETA");
+        fam("vazio", "CIDADELA", "PRISAO", "ILHAS", "NAVE", "CORO", "VAZIO", "ABISMO", "CIDADE_END", "CAOS");
+        fam("antiga", "CIDADE_ANTIGA", "SECRETA", "ECO");
     }
 
     private static void fam(String faixa, String... ids) {

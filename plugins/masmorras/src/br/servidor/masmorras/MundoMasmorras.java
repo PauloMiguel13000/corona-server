@@ -60,8 +60,10 @@ final class MundoMasmorras implements Listener {
 
     int[] zonas() {
         List<Integer> l = pl.getConfig().getIntegerList("mundo-novo.zonas");
-        if (l.size() < 3) return new int[] {900, 1900, 3000};
-        return new int[] {l.get(0), l.get(1), l.get(2)};
+        // 20/11: zonas[3] = onde comeca o nivel 6 (a borda antiga era 4100; mistura de 4320 a 4480)
+        int z6 = pl.getConfig().getInt("mundo-novo.zona-nivel6", 4400);
+        if (l.size() < 3) return new int[] {900, 1900, 3000, z6};
+        return new int[] {l.get(0), l.get(1), l.get(2), l.size() > 3 ? l.get(3) : z6};
     }
 
     /** Cria (ou carrega) os mundos. Chamado no onEnable antes de tudo que usa mundos.normal. */

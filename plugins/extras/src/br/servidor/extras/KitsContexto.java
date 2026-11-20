@@ -43,7 +43,36 @@ final class KitsContexto implements Listener {
             new Kit("aventureiro", Lugar.MASMORRA, "§c§lKit Aventureiro", Material.IRON_SWORD, 24, "Espada e arco de ferro/encantados, flechas, escudo e cota de malha"),
             new Kit("alquimista", Lugar.MASMORRA, "§d§lKit Alquimista", Material.SPLASH_POTION, 12, "Poções de cura, regeneração e força + maçãs douradas"),
             new Kit("explorador", Lugar.MASMORRA, "§e§lKit Explorador", Material.TORCH, 12, "Tochas, cenouras douradas, balde de leite e bússola"),
+            // 20/11 (Paulo: "loja de XP e runas abrem por um item no kit geral"): vale no Survival e nas Masmorras
+            new Kit("geral", Lugar.OUTRO, "§b§lKit Geral", Material.AMETHYST_SHARD, 1, "Itens que abrem a Loja de XP e as Runas da classe"),
     };
+
+    /** Itens do Kit Geral: segurar e clicar (botao direito / tocar e segurar no celular) abre o menu. */
+    static final NamespacedKey K_MENU = new NamespacedKey("extras", "item_menu");
+
+    static ItemStack itemMenu(Material m, String nome, String cmd, String... lore) {
+        ItemStack i = new ItemStack(m);
+        ItemMeta im = i.getItemMeta();
+        im.displayName(Extras.txt(nome));
+        List<net.kyori.adventure.text.Component> l = new ArrayList<>();
+        for (String s : lore) l.add(Extras.txt(s));
+        l.add(Extras.txt("§a▶ Segure e clique para abrir"));
+        im.lore(l);
+        im.setEnchantmentGlintOverride(true);
+        im.getPersistentDataContainer().set(K_MENU, PersistentDataType.STRING, cmd);
+        i.setItemMeta(im);
+        return i;
+    }
+
+    @EventHandler(priority = EventPriority.LOW)
+    public void usarItemMenu(org.bukkit.event.player.PlayerInteractEvent e) {
+        if (e.getHand() != org.bukkit.inventory.EquipmentSlot.HAND || e.getItem() == null || !e.getItem().hasItemMeta()) return;
+        if (e.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_AIR && e.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) return;
+        String cmd = e.getItem().getItemMeta().getPersistentDataContainer().get(K_MENU, PersistentDataType.STRING);
+        if (cmd == null) return;
+        e.setCancelled(true);
+        e.getPlayer().performCommand(cmd);
+    }
 
     static final Set<String> SURVIVAL = Set.of("world", "world_nether", "world_the_end");   // plots agora sao da Prisao
 
@@ -90,7 +119,7 @@ final class KitsContexto implements Listener {
         for (int i = 0; i < 27; i++) inv.setItem(i, vidro);
         int slot = 10;
         for (Kit k : KITS) {
-            if (k.lugar != l) continue;
+            if (k.lugar != l && !k.id.equals("geral")) continue;
             long f = falta(p, k);
             ItemStack it = new ItemStack(f > 0 ? Material.GRAY_DYE : k.icone);
             ItemMeta m = it.getItemMeta();
@@ -114,6 +143,9 @@ final class KitsContexto implements Listener {
         mm.lore(List.of(Extras.txt("§7Kits do servidor (§e/kit§7)."), Extras.txt("§a▶ Clique para abrir")));
         mais.setItemMeta(mm);
         inv.setItem(26, mais);
+        // 20/11: atalhos direto para a Loja de XP e as Runas
+        inv.setItem(0, itemMenu(Material.EMERALD, "§a§lLoja de XP", "xp loja", "§7Troque o seu XP por VIP, coronas e itens."));
+        inv.setItem(8, itemMenu(Material.AMETHYST_SHARD, "§d§lRunas da Classe", "runa", "§7Suba o nível da sua classe (1 a 60)."));
         p.openInventory(inv);
         p.playSound(p.getLocation(), Sound.BLOCK_CHEST_OPEN, 0.6f, 1.2f);
     }
@@ -139,11 +171,13 @@ final class KitsContexto implements Listener {
         int s = e.getSlot();
         if (s == 22) { p.closeInventory(); p.performCommand("vip kit"); return; }
         if (s == 26) { p.closeInventory(); p.performCommand("kit"); return; }
+        if (s == 0) { p.closeInventory(); p.performCommand("xp loja"); return; }
+        if (s == 8) { p.closeInventory(); p.performCommand("runa"); return; }
         int i = (s - 10) / 2;
         if (s < 10 || (s - 10) % 2 != 0 || i >= t.kits.size()) return;
         Kit k = t.kits.get(i);
         p.closeInventory();
-        if (lugar(p.getWorld()) != k.lugar || Cosmeticos.noSpawn(p.getLocation())) return;
+        if (!k.id.equals("geral") && (lugar(p.getWorld()) != k.lugar || Cosmeticos.noSpawn(p.getLocation()))) return;
         long f = falta(p, k);
         if (f > 0) { p.sendMessage(Extras.txt("§c" + k.nome + " §cdisponível em " + tempo(f) + ".")); p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.8f, 1f); return; }
         p.getPersistentDataContainer().set(chave(k), PersistentDataType.LONG, System.currentTimeMillis());
@@ -193,6 +227,8 @@ final class KitsContexto implements Listener {
                     it(Material.COOKED_BEEF, 12));
             case "alquimista" -> List.of(pocao(Material.SPLASH_POTION, PotionType.HEALING, 3), pocao(Material.POTION, PotionType.REGENERATION, 1),
                     pocao(Material.POTION, PotionType.STRENGTH, 1), it(Material.GOLDEN_APPLE, 2));
+            case "geral" -> List.of(itemMenu(Material.EMERALD, "§a§lLoja de XP", "xp loja", "§7Troque o seu XP por VIP, coronas e itens."),
+                    itemMenu(Material.AMETHYST_SHARD, "§d§lRunas da Classe", "runa", "§7Suba o nível da sua classe (1 a 60)."));
             case "explorador" -> List.of(it(Material.TORCH, 48), it(Material.GOLDEN_CARROT, 16), it(Material.MILK_BUCKET, 1), it(Material.COMPASS, 1));
             default -> List.of();
         };

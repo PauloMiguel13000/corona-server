@@ -416,7 +416,7 @@ final class TiposNovos {
 
         t = n("COVIL_LOBOS", "Covil dos Lobos", "Lobo Alfa", Onde.NORMAL, 1, Estilo.SUBTERRANEA, "musgo", "COVIL LOBOS", "Lobos");
         t.lacaios = m("ZOMBIE", "SKELETON", "SPIDER", "ZOMBIE");
-        chefe(t, "WOLF", 150, 2.2, 7);
+        chefe(t, "WOLF", 260, 2.4, 8);   // 20/11 (Sui: "o lobo morre muito rapido"): era 150 de vida
         t.habs = h(Hab.INVESTIDA, Hab.SANGRAR, Hab.RUGIDO, Hab.INVOCAR);
         t.ajudantes = m("ZOMBIE", "SKELETON");
         t.esp = Esp.FRENESI;
@@ -743,6 +743,105 @@ final class TiposNovos {
         t.esp = Esp.ESCURIDAO;
         t.aura = "REVERSE_PORTAL";
         rel(t, "do Arqueiro do Vazio", "§8", 0x2B2B40, "REVERSE_PORTAL", "VAZIO", "Flecha do Vazio", "o alvo flutua", "entity_interaction_range", 0.3, false, "Mira do Vazio", "acerta mais longe");
+
+        nivel6();
+    }
+
+    /**
+     * 20/11 (Paulo: "crie mais 10 dungeons agora, so que lvl 6, mais dificil que as de lvl 5", "o limite agora vai ser
+     * lvl 6"): as 10 masmorras de nivel 6 ficam no anel novo de fora do Mundo das Masmorras (Terras Devastadas), com
+     * chefes mais fortes que os do nivel 5 (vida 640-820, dano 19-24), 4 habilidades e particularidade cada.
+     */
+    static void nivel6() {
+        Tipo t = n("CINZAS", "Cidadela das Cinzas", "Imperador das Cinzas", Onde.NORMAL, 6, Estilo.SUBTERRANEA, "basalto", "CIDADELA CINZAS", "Cinzas");
+        t.lacaios = m("WITHER_SKELETON", "BLAZE", "MAGMA_CUBE", "WITHER_SKELETON");
+        chefe(t, "WITHER_SKELETON", 760, 2.3, 22, "HAND:NETHERITE_SWORD", "HEAD:NETHERITE_HELMET", "CHEST:NETHERITE_CHESTPLATE");
+        t.habs = h(Hab.METEORO, Hab.ANEL_FOGO, Hab.AURA_WITHER, Hab.ONDA_CHOQUE);
+        t.ajudantes = m("WITHER_SKELETON", "BLAZE");
+        t.esp = Esp.FURIA_TEMPO;
+        t.aura = "WHITE_ASH";
+        rel(t, "do Imperador das Cinzas", "§6", 0xE07020, "FLAME", "CHAMAS", "Brasa Eterna", "fogo forte e dano extra", "attack_damage", 1.5, false, "Coroa de Cinzas", "+1,5 de dano");
+
+        t = n("CATACUMBA", "Catacumba Eterna", "Lich Eterno", Onde.NORMAL, 6, Estilo.SUBTERRANEA, "almas", "CATACUMBA", "Catacumba");
+        t.lacaios = m("STRAY", "WITHER_SKELETON", "BOGGED", "VEX");
+        chefe(t, "STRAY", 700, 2.2, 20, "HAND:BOW", "HEAD:NETHERITE_HELMET");
+        t.habs = h(Hab.CRANIOS, Hab.DRENAR, Hab.INVOCAR, Hab.GELO_PRISAO);
+        t.ajudantes = m("STRAY", "VEX");
+        t.esp = Esp.REVIVER;
+        t.aura = "SOUL";
+        rel(t, "do Lich Eterno", "§b", 0x60E0FF, "SOUL", "MURCHAR", "Toque do Lich", "Wither forte no alvo", "max_health", 4.0, false, "Filactério", "+2 corações");
+
+        t = n("PINACULO", "Pináculo da Tempestade", "Senhor das Tempestades", Onde.NORMAL, 6, Estilo.TORRE, "cobre", "PINÁCULO", "Pináculo");
+        t.lacaios = m("BREEZE", "VINDICATOR", "PILLAGER", "BREEZE");
+        chefe(t, "EVOKER", 720, 2.2, 21);
+        t.habs = h(Hab.CORRENTE_RAIO, Hab.RAIO, Hab.VENTANIA, Hab.LEVITAR);
+        t.ajudantes = m("BREEZE", "VEX");
+        t.esp = Esp.ELEMENTOS;
+        t.aura = "ELECTRIC_SPARK";
+        rel(t, "do Senhor das Tempestades", "§e", 0xFFE040, "ELECTRIC_SPARK", "VENTANIA", "Trovão", "joga o alvo longe", "attack_speed", 0.4, false, "Pressa do Raio", "+0,4 de velocidade de ataque");
+
+        t = n("RUBRA", "Fortaleza Rubra", "Conde Rubro", Onde.NORMAL, 6, Estilo.SUBTERRANEA, "sangue", "FORTALEZA RUBRA", "Rubra");
+        t.lacaios = m("VINDICATOR", "EVOKER", "PILLAGER", "VINDICATOR");
+        chefe(t, "VINDICATOR", 780, 2.1, 23, "HAND:NETHERITE_AXE", "HEAD:NETHERITE_HELMET");
+        t.habs = h(Hab.SANGRAR, Hab.INVESTIDA, Hab.LAMINAS, Hab.GRITO);
+        t.ajudantes = m("VINDICATOR", "EVOKER");
+        t.esp = Esp.VAMPIRO;
+        t.aura = "DAMAGE_INDICATOR";
+        rel(t, "do Conde Rubro", "§4", 0xA00018, "DAMAGE_INDICATOR", "SANGRAR", "Sede de Sangue", "o alvo sangra", "max_health", 4.0, false, "Sangue Nobre", "+2 corações");
+
+        t = n("ECO", "Núcleo do Eco", "Colosso do Eco", Onde.NORMAL, 6, Estilo.SUBTERRANEA, "sculk", "NÚCLEO DO ECO", "Eco");
+        t.lacaios = m("SKELETON", "ZOMBIE", "ENDERMAN", "VEX");
+        chefe(t, "RAVAGER", 820, 1.9, 24);
+        t.habs = h(Hab.RUGIDO, Hab.PISAO, Hab.CEGAR, Hab.BURACO_NEGRO);
+        t.ajudantes = m("ENDERMAN", "VEX");
+        t.esp = Esp.ESCURIDAO;
+        t.aura = "SCULK_SOUL";
+        rel(t, "do Colosso do Eco", "§3", 0x0A8090, "SCULK_SOUL", "SONICO", "Grito Sônico", "dano alto e escuridão", "armor", 2.0, false, "Casco de Eco", "+2 de armadura");
+
+        t = n("PUTRIDO", "Jardim Pútrido", "Mãe Pútrida", Onde.NORMAL, 6, Estilo.SUBTERRANEA, "distorcido", "JARDIM PÚTRIDO", "Pútrido");
+        t.lacaios = m("ZOMBIE", "CAVE_SPIDER", "WITCH", "BOGGED");
+        chefe(t, "WITCH", 680, 2.3, 19);
+        t.habs = h(Hab.NUVEM_VENENO, Hab.POCOES, Hab.ENXAME, Hab.ESPINHOS);
+        t.ajudantes = m("CAVE_SPIDER", "WITCH");
+        t.esp = Esp.ONDAS;
+        t.aura = "SPORE_BLOSSOM_AIR";
+        rel(t, "da Mãe Pútrida", "§2", 0x40A030, "SPORE_BLOSSOM_AIR", "VENENO", "Podridão", "veneno forte no alvo", "luck", 2.0, false, "Fertilidade", "+2 de sorte");
+
+        t = n("GLACIAR", "Glaciar Eterno", "Rainha do Inverno", Onde.NORMAL, 6, Estilo.SUBTERRANEA, "gelo_azul", "GLACIAR ETERNO", "Glaciar");
+        t.lacaios = m("STRAY", "STRAY", "SKELETON", "VEX");
+        chefe(t, "STRAY", 720, 2.3, 21, "HAND:BOW", "HEAD:DIAMOND_HELMET");
+        t.habs = h(Hab.CONGELAR, Hab.GELO_PRISAO, Hab.FLECHAS, Hab.VENTANIA);
+        t.ajudantes = m("STRAY", "VEX");
+        t.esp = Esp.CRISTAIS;
+        t.aura = "SNOWFLAKE";
+        rel(t, "da Rainha do Inverno", "§b", 0xA0E0FF, "SNOWFLAKE", "CONGELAR", "Inverno Eterno", "congela o alvo", "movement_speed", 0.015, false, "Passo de Gelo", "anda mais rápido");
+
+        t = n("ABISSAL", "Santuário Abissal", "Leviatã Abissal", Onde.NORMAL, 6, Estilo.SUBTERRANEA, "prismarinho", "SANTUÁRIO ABISSAL", "Abissal");
+        t.lacaios = m("DROWNED", "DROWNED", "GUARDIAN", "BOGGED");
+        chefe(t, "DROWNED", 740, 2.4, 22, "HAND:TRIDENT", "HEAD:NETHERITE_HELMET");
+        t.habs = h(Hab.TRIDENTES, Hab.PUXAR, Hab.CORRENTE_RAIO, Hab.ONDA_CHOQUE);
+        t.ajudantes = m("DROWNED", "GUARDIAN");
+        t.esp = Esp.ESCUDO_LACAIOS;
+        t.aura = "BUBBLE_POP";
+        rel(t, "do Leviatã Abissal", "§9", 0x2050C0, "BUBBLE_POP", "CORRENTEZA", "Maré Abissal", "puxa e afoga o alvo", "oxygen_bonus", 3.0, false, "Guelras", "fica muito mais tempo embaixo d'água");
+
+        t = n("TITAS", "Forja dos Titãs", "Titã de Ferro", Onde.NORMAL, 6, Estilo.SUBTERRANEA, "obsidiana", "FORJA DOS TITÃS", "Titãs");
+        t.lacaios = m("PIGLIN_BRUTE", "WITHER_SKELETON", "MAGMA_CUBE", "PIGLIN_BRUTE");
+        chefe(t, "PIGLIN_BRUTE", 800, 2.5, 23, "HAND:NETHERITE_AXE", "HEAD:NETHERITE_HELMET", "CHEST:NETHERITE_CHESTPLATE");
+        t.habs = h(Hab.MARTELO, Hab.PISAO, Hab.ARREMESSO, Hab.ESCUDO);
+        t.ajudantes = m("PIGLIN_BRUTE", "MAGMA_CUBE");
+        t.esp = Esp.ESPINHOS_PELE;
+        t.aura = "LAVA";
+        rel(t, "do Titã de Ferro", "§7", 0x8A8A9A, "CRIT", "ESMAGAR", "Golpe do Titã", "esmaga e atordoa o alvo", "armor_toughness", 2.0, false, "Liga de Titã", "+2 de resistência da armadura");
+
+        t = n("CAOS", "Trono do Caos", "Arauto do Caos", Onde.NORMAL, 6, Estilo.TORRE, "fimpedra", "TRONO DO CAOS", "Caos");
+        t.lacaios = m("ENDERMAN", "SHULKER", "VINDICATOR", "EVOKER");
+        chefe(t, "ILLUSIONER", 760, 2.2, 22, "HAND:BOW");
+        t.habs = h(Hab.TROCA, Hab.BURACO_NEGRO, Hab.EXPLOSAO_ARCANA, Hab.SUMIR);
+        t.ajudantes = m("ENDERMAN", "EVOKER");
+        t.esp = Esp.CLONES;
+        t.aura = "REVERSE_PORTAL";
+        rel(t, "do Arauto do Caos", "§5", 0x8020C0, "REVERSE_PORTAL", "VAZIO", "Rasgo do Caos", "o alvo flutua e leva dano", "attack_damage", 1.5, false, "Fúria do Caos", "+1,5 de dano");
     }
 
     private TiposNovos() {}

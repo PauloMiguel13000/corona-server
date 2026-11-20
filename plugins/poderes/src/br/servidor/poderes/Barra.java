@@ -313,6 +313,15 @@ final class Barra implements Listener {
         m.setEnchantmentGlintOverride(lib);
         m.setMaxStackSize(1);
         m.setUnbreakable(true);
+        // 20/11 (Sui: "a quinta habilidade do arqueiro bloqueia o arco normal"): a recarga vai num grupo proprio da
+        // habilidade, e nao no material (antes a recarga da Tempestade, que usa o icone de arco, travava todos os arcos)
+        try {
+            var uc = m.getUseCooldown();
+            uc.setCooldownSeconds(0.05f);
+            uc.setCooldownGroup(new org.bukkit.NamespacedKey(pl, "hab_" + po.id));
+            m.setUseCooldown(uc);
+        } catch (Throwable ignored) {
+        }
         m.getPersistentDataContainer().set(kItem, PersistentDataType.STRING, po.id);
         m.getPersistentDataContainer().set(kLib, PersistentDataType.BYTE, (byte) (lib ? 1 : 0));
         it.setItemMeta(m);
@@ -322,7 +331,21 @@ final class Barra implements Listener {
     /** Chamado pelo lancar(): mostra a recarga no item (funciona no PC e no celular). */
     void recarga(Player p, Poder po) {
         if (!ligada(p)) return;
-        p.setCooldown(po.icone, Math.max(1, pl.recargaSeg(p, po) * 20));
+        int t = Math.max(1, pl.recargaSeg(p, po) * 20);
+        var inv = p.getInventory();
+        for (int s : SLOTS) {
+            ItemStack it = inv.getItem(s);
+            if (it == null || !it.hasItemMeta() || !po.id.equals(it.getItemMeta().getPersistentDataContainer().get(kItem, PersistentDataType.STRING))) continue;
+            if (it.getItemMeta().hasUseCooldown()) {
+                p.setCooldown(it, t);
+                return;
+            }
+        }
+        // item antigo (sem grupo): so nao trava arcos, bestas, tridentes, pérolas e bolas de neve de verdade
+        switch (po.icone) {
+            case BOW, CROSSBOW, TRIDENT, ENDER_PEARL, SNOWBALL, WIND_CHARGE, FIRE_CHARGE, ARROW, SPECTRAL_ARROW -> { }
+            default -> p.setCooldown(po.icone, t);
+        }
     }
 
     /** Trocou de classe: refaz os itens; se a barra estava desligada, liga (ou marca para ligar nas masmorras). */

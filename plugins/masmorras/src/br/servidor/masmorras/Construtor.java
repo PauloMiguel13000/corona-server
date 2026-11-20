@@ -52,7 +52,7 @@ final class Construtor {
         };
         if (t.secreta) return new String[] {"§4§l???", "§8Nível ?", "§7Não deveria", "§7estar aqui."};
         String chefe = t.chefeNome.replace("Senhor das ", "Sr. das ").replace("Senhor dos ", "Sr. dos ").replace("Senhor do ", "Sr. do ");
-        return new String[] {"§4§l" + nome, "§eNível " + t.nivel + " §7de 5", "§fChefe:", "§c" + chefe};
+        return new String[] {"§4§l" + nome, "§eNível " + t.nivel + " §7de " + Progresso.MAX, "§fChefe:", "§c" + chefe};
     }
 
     static final String AR = "minecraft:air";
@@ -516,6 +516,21 @@ final class Construtor {
                 if (!t.luzNoTeto) por(x0, fim + 4, z, t.luz);
             }
             o.protecao.add(new Caixa(x0 - 2, fim, z, x0 + 2, fim + 5, z));
+        }
+        // 20/11 (Paulo: "entrada do castelo do Carrasco bloqueada"): se o tunel acabou dentro do morro (56 degraus e
+        // ainda nao saiu), continua reto para o norte ate o ar livre, com 3 de largura e 4 de altura
+        if (fim == oy - 1 + s && t.onde == Tipo.Onde.NORMAL) {
+            for (int k = 3; k < 48; k++) {
+                int z = z0 - s - k;
+                boolean livre = true;
+                for (int x = x0 - 1; x <= x0 + 1; x++) if (d.chao(x, z) > fim) livre = false;
+                if (livre) break;
+                for (int x = x0 - 1; x <= x0 + 1; x++) {
+                    por(x, fim, z, piso(x, fim, z));
+                    for (int y = fim + 1; y <= fim + 4; y++) por(x, y, z, AR);
+                }
+                o.protecao.add(new Caixa(x0 - 1, fim, z, x0 + 1, fim + 4, z));
+            }
         }
         o.tunel = s;
         o.saidaX = x0;

@@ -84,11 +84,11 @@ final class Habilidades implements Listener {
     // Arqueiro
     // 18/11 (Sui e Paulo: "arqueira fraca em animacao e habilidades"): mais dano, flechas que atravessam, tiro na
     // cabeca, marca do cacador, fogo no chao, chuva com marcacao e golpe final, e a passiva no arco de verdade.
-    static final double DANO_TIRO = 7.0;           // atravessa ate 3; na cabeca 1,5x
-    static final double DANO_EXPLOSIVA = 9.0;      // + chao em chamas 3 s
-    static final double DANO_MULTIPLO = 3.5;       // por flecha (7), cada uma atravessa 1
-    static final double DANO_CHUVA = 2.4;          // a cada 1/4 s, 3 segundos, + estouro final
-    static final double DANO_TEMPESTADE = 5.0;     // por flecha (4 rajadas, ate 10 alvos)
+    static final double DANO_TIRO = 5.0;   // 20/11 nerf (Paulo): era 7           // atravessa ate 3; na cabeca 1,5x
+    static final double DANO_EXPLOSIVA = 6.5;   // era 9      // + chao em chamas 3 s
+    static final double DANO_MULTIPLO = 2.5;   // era 3,5       // por flecha (7), cada uma atravessa 1
+    static final double DANO_CHUVA = 1.7;   // era 2,4          // a cada 1/4 s, 3 segundos, + estouro final
+    static final double DANO_TEMPESTADE = 3.6;   // era 5     // por flecha (4 rajadas, ate 10 alvos)
     static final double MARCA_BONUS = 1.25;        // alvo marcado (3 acertos seguidos) leva +25% das flechas
     /** Alvo marcado pelo cacador -> ate quando. */
     private final Map<UUID, Long> marcados = new HashMap<>();
@@ -1831,12 +1831,46 @@ final class Habilidades implements Listener {
         }, 10L, 10L);
     }
 
+    // 20/11 (Sui): a 1a habilidade do arqueiro virou um buff do arco: "Olho de Aguia", de 8 a 15 s pelo nivel,
+    // flecha do arco de verdade +30% de dano e 35% mais rapida (com rastro dourado)
+    static final double OLHO_DANO = 1.30, OLHO_VELOC = 1.35;
+    private final Map<UUID, Long> olhoAte = new HashMap<>();
+
+    static int olhoSegundos(int nivel) {
+        return 8 + (int) Math.round(7 * Torretas.nivel01(Math.max(0, nivel)));
+    }
+
+    boolean olho(Player p) {
+        Long t = olhoAte.get(p.getUniqueId());
+        return t != null && t > System.currentTimeMillis();
+    }
+
     boolean tiroCerteiro(Player p) {
-        puxar(p, Color.fromRGB(255, 230, 120), 4, () -> {
-            p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ARROW_SHOOT, 1f, 1.5f);
-            flecha(p, p.getEyeLocation().getDirection().normalize(), 50, 3.5, DANO_TIRO * plugin.fator(p), false, 2);
-        });
+        int seg = olhoSegundos(plugin.nivelDePoder(p));
+        olhoAte.put(p.getUniqueId(), System.currentTimeMillis() + seg * 1000L);
+        Poderes.barra(p, "§6§lOLHO DE ÁGUIA! §7arco mais forte por §f" + seg + "s");
+        p.getWorld().playSound(p.getLocation(), Sound.ITEM_CROSSBOW_LOADING_END, 1f, 1.4f);
+        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PHANTOM_FLAP, 0.6f, 1.6f);
+        Fx.p(p.getWorld(), Particle.END_ROD, p.getLocation().add(0, 1, 0), 18, 0.4, 0.6, 0.4, 0.03);
+        final int[] k = {0};
+        Bukkit.getScheduler().runTaskTimer(plugin, tarefa -> {
+            if (!p.isOnline() || !olho(p) || ++k[0] > seg * 2) {
+                tarefa.cancel();
+                if (p.isOnline()) Poderes.barra(p, "§7Olho de Águia acabou.");
+                return;
+            }
+            Fx.p(p.getWorld(), Particle.WAX_ON, p.getEyeLocation().add(p.getEyeLocation().getDirection().multiply(0.6)), 2, 0.15, 0.15, 0.15, 0);
+        }, 10L, 10L);
         return true;
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void olhoAtirou(org.bukkit.event.entity.EntityShootBowEvent e) {
+        if (!(e.getEntity() instanceof Player p) || !olho(p) || plugin.semPoderes(p.getWorld())) return;
+        if (!(e.getProjectile() instanceof org.bukkit.entity.AbstractArrow a)) return;
+        a.setVelocity(a.getVelocity().multiply(OLHO_VELOC));
+        a.setDamage(a.getDamage() * OLHO_DANO);
+        a.setCritical(true);
     }
 
     boolean flechaExplosiva(Player p) {
@@ -1870,7 +1904,7 @@ final class Habilidades implements Listener {
         if (!(e.getDamager() instanceof org.bukkit.entity.AbstractArrow a) || !(a.getShooter() instanceof Player p)) return;
         if (!(e.getEntity() instanceof LivingEntity alvo) || plugin.classe(p) != Classe.ARQUEIRO || plugin.semPoderes(p.getWorld())) return;
         if (plugin.ehAliado(alvo, p)) return;
-        double mult = 1.2 + 0.4 * Torretas.nivel01(Math.max(0, plugin.nivelDePoder(p)));
+        double mult = 1.1 + 0.2 * Torretas.nivel01(Math.max(0, plugin.nivelDePoder(p)));   // 20/11 nerf: era +20% a +60%
         Long marca = marcados.get(alvo.getUniqueId());
         if (marca != null && marca > System.currentTimeMillis()) mult *= MARCA_BONUS;
         if (a.getLocation().getY() > alvo.getEyeLocation().getY() - 0.35) {

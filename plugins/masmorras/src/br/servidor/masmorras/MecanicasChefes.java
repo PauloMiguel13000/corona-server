@@ -175,6 +175,17 @@ final class MecanicasChefes implements Listener {
         t("ILHAS", "END_ROD", Material.END_STONE, 0xE0E0A0, "pedras do fim", 0, Mec.CHUVA, Mec.ANEIS);
         t("NAVE", "END_ROD", Material.PURPUR_PILLAR, 0xC080E0, "cascos", 0, Mec.ALVOS, Mec.BOMBA);
         t("TRONO", "PORTAL", Material.OBSIDIAN, 0x401060, "pedaços do trono", 0, Mec.INVESTIDA, Mec.CHUVA);
+        // ---------------- nivel 6 (20/11): tres mecanicas cada
+        t("CINZAS", "WHITE_ASH", Material.MAGMA_BLOCK, 0xE07020, "brasas", 0, Mec.CHUVA, Mec.CHAO, Mec.ANEIS);
+        t("CATACUMBA", "SOUL", Material.SOUL_LANTERN, 0x60E0FF, "almas", 0, Mec.SOMBRAS, Mec.CHAO, Mec.ELO);
+        t("PINACULO", "ELECTRIC_SPARK", Material.LIGHTNING_ROD, 0xFFE040, "raios", 0, Mec.CHUVA, Mec.ANEIS, Mec.REDEMOINHO);
+        t("RUBRA", "DAMAGE_INDICATOR", Material.REDSTONE_BLOCK, 0xA00018, "lâminas", 0, Mec.LAMINA, Mec.INVESTIDA, Mec.CHAO);
+        t("ECO", "SCULK_SOUL", Material.SCULK_SHRIEKER, 0x0A8090, "ecos", 0, Mec.SILENCIO, Mec.INVESTIDA, Mec.ELO);
+        t("PUTRIDO", "SPORE_BLOSSOM_AIR", Material.MOSS_BLOCK, 0x40A030, "esporos", 0, Mec.MINAS, Mec.RASTRO, Mec.CASULO);
+        t("GLACIAR", "SNOWFLAKE", Material.BLUE_ICE, 0xA0E0FF, "blocos de gelo", 0, Mec.CHUVA, Mec.INVESTIDA, Mec.ANEIS);
+        t("ABISSAL", "BUBBLE_POP", Material.PRISMARINE, 0x2050C0, "ondas", 0, Mec.MARE, Mec.ANEIS, Mec.ALVOS);
+        t("TITAS", "CRIT", Material.ANVIL, 0x8A8A9A, "bigornas", 0, Mec.CHUVA, Mec.INVESTIDA, Mec.BOMBA);
+        t("CAOS", "REVERSE_PORTAL", Material.CRYING_OBSIDIAN, 0x8020C0, "rasgos", 0, Mec.BURACO, Mec.SOMBRAS, Mec.OLHAR);
     }
 
     static final NamespacedKey K_SOMBRA = new NamespacedKey("masmorras", "sombra");

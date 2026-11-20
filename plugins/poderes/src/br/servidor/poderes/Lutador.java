@@ -378,7 +378,9 @@ final class Lutador implements Listener {
             if (empurra.lengthSquared() > 0.01) empurra.normalize();
             for (LivingEntity le : naFrente(p, 3.6, 0.55)) {
                 le.setNoDamageTicks(0);
-                if (!pl.causarDano(le, DANO_RAJADA * f, p)) continue;
+                // 20/11 (Sui): cada soco da rajada bate como o soco normal do Lutador (com a passiva e a Furia, se ligada)
+                double socoNormal = (danoBase(p) + bonusAtual(p)) * (ultimo ? 1.2 : 0.6);
+                if (!pl.causarDano(le, Math.max(DANO_RAJADA * f, socoNormal), p)) continue;
                 if (ultimo) le.setVelocity(empurra.clone().multiply(1.4).setY(0.45));
                 else le.setVelocity(le.getVelocity().multiply(0.3).add(empurra.clone().multiply(0.1)));
             }

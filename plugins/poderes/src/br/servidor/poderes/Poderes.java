@@ -75,6 +75,8 @@ public final class Poderes extends JavaPlugin implements Listener {
     private Torretas torretas;
     Habilidades hab;
     Lutador lut;
+    /** 20/11: Runas e niveis por classe (1 a 60) + REBIRTH. */
+    Runas runas;
     Cipo cipo;
     VenenoCipo venenoCipo;
     Travas travas;
@@ -190,6 +192,9 @@ public final class Poderes extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(torretas, this);
         Bukkit.getPluginManager().registerEvents(hab, this);
         Bukkit.getPluginManager().registerEvents(lut, this);
+        runas = new Runas(this);
+        Bukkit.getPluginManager().registerEvents(runas, this);
+        runas.iniciar();
         Bukkit.getScheduler().runTaskTimer(this, this::verificarVooTerreno, 40L, 10L);
         Bukkit.getScheduler().runTaskTimer(this, () -> { for (Player p : Bukkit.getOnlinePlayers()) vidaEngenheiro(p); }, 40L, 40L);
         for (Player p : Bukkit.getOnlinePlayers()) atualizarTab(p);
@@ -343,7 +348,7 @@ public final class Poderes extends JavaPlugin implements Listener {
         Classe c = classe(p);
         String tag = Externo.tag(p);
         String t = tag == null ? "" : "§8[§d" + tag + "§8] ";
-        String v = tagVip(p);
+        String v = Runas.tituloRebirth(p) + tagVip(p);
         if (c == null) p.playerListName(tag == null && v.isEmpty() ? null : txt(v + t + "§f" + p.getName()));
         else p.playerListName(txt(v + c.cor + "[" + c.nome + "] " + t + "§f" + p.getName()));
     }
@@ -379,8 +384,9 @@ public final class Poderes extends JavaPlugin implements Listener {
 
     /** Recarga em segundos (as torres do Engenheiro recarregam ate 30% mais rapido no nivel de poder 60). */
     int recargaSeg(Player p, Poder po) {
-        if (!ehTorre(po)) return po.recargaSeg;
-        return Math.max(1, (int) Math.round(po.recargaSeg * Torretas.fatorRecarga(nivelDePoder(p))));
+        double rr = runas == null ? 1.0 : runas.fatorRecarga(p);
+        if (!ehTorre(po)) return Math.max(1, (int) Math.round(po.recargaSeg * rr));
+        return Math.max(1, (int) Math.round(po.recargaSeg * Torretas.fatorRecarga(nivelDePoder(p)) * rr));
     }
 
     /** Forca dos poderes cresce com o nivel: de 1x (nivel 0) ate 2x (nivel 200). */
@@ -388,6 +394,7 @@ public final class Poderes extends JavaPlugin implements Listener {
         int n = nivelDePoder(p);
         if (n < 0) n = 0;
         double base = (1.0 + Math.min(n, 200) / 200.0) * getConfig().getDouble("habilidades.dano-multiplicador", 1.3);
+        if (runas != null) base *= runas.fatorHab(p);
         return hab == null ? base : base * hab.multiplicador(p);
     }
 
@@ -567,7 +574,7 @@ public final class Poderes extends JavaPlugin implements Listener {
             case TORRE_GELO -> torretas.colocar(p, Torretas.Tipo.GELO, fator(p));
             case TORRE_FOGO -> torretas.colocar(p, Torretas.Tipo.FOGO, fator(p));
             case TORRE_TESLA -> torretas.colocar(p, Torretas.Tipo.TESLA, fator(p));
-            case TORRE_CANHAO -> torretas.colocar(p, Torretas.Tipo.CANHAO, fator(p));
+            case TORRE_CANHAO -> torretas.colocar(p, Torretas.Tipo.SUPREMA, fator(p));
             // Saiyajin
             case KI_BLAST -> hab.kiBlast(p);
             case TELEPORTE_INSTANTANEO -> hab.teleInstantaneo(p);
@@ -1464,7 +1471,7 @@ public final class Poderes extends JavaPlugin implements Listener {
                     case TORRE_GELO -> Torretas.Tipo.GELO;
                     case TORRE_FOGO -> Torretas.Tipo.FOGO;
                     case TORRE_TESLA -> Torretas.Tipo.TESLA;
-                    case TORRE_CANHAO -> Torretas.Tipo.CANHAO;
+                    case TORRE_CANHAO -> Torretas.Tipo.SUPREMA;
                     default -> Torretas.Tipo.ARQUEIRA;
                 };
                 lore.add(txt("§fDuração: §e" + Torretas.textoDuracao(tt, nivel) + "s"));
@@ -1634,7 +1641,7 @@ public final class Poderes extends JavaPlugin implements Listener {
             case TORRE_GELO -> num(Torretas.DANO_GELO * f) + " §7+ lentidao forte";
             case TORRE_FOGO -> num(Torretas.DANO_FOGO * f) + " §7(2 por segundo) + fogo";
             case TORRE_TESLA -> num(Torretas.DANO_TESLA * f) + " §7+ " + num(Torretas.DANO_TESLA_PULO * f) + " em mais 2";
-            case TORRE_CANHAO -> num(Torretas.DANO_CANHAO * f) + " §7em area";
+            case TORRE_CANHAO -> num(Torretas.DANO_ARQUEIRA * f) + " §7rapido + gelo, fogo, raio e canhao";
             case KI_BLAST -> num(Habilidades.DANO_KI * f) + " §7por esfera (" + Habilidades.KI_RAJADA + ", ou " + Habilidades.KI_RAJADA_SSJ + " transformado)";
             case KAMEHAMEHA -> num(DANO_KAMEHAMEHA * f) + " §7x" + KAMEHAMEHA_ACERTOS + " em 3s (total §c" + num(DANO_KAMEHAMEHA * f * KAMEHAMEHA_ACERTOS) + "§7)";
             case GOLEM -> num(DANO_GOLEM_SOCO * f) + " §7+ explosao ate §c" + num(DANO_GOLEM_EXPLOSAO * f);
@@ -1652,7 +1659,7 @@ public final class Poderes extends JavaPlugin implements Listener {
             case TRIDENTE_RAIO -> num(Habilidades.DANO_TRIDENTE_RAIO * f) + " §7em ate 3 inimigos";
             case REDEMOINHO -> num(Habilidades.DANO_REDEMOINHO * f) + " §7x8 (4s) + puxa";
             case POSEIDON -> num(Habilidades.DANO_POSEIDON * f) + " §7em area + forca do mar";
-            case TIRO_CERTEIRO -> num(Habilidades.DANO_TIRO * f);
+            case TIRO_CERTEIRO -> "§7arco §c+" + Math.round(Habilidades.OLHO_DANO * 100 - 100) + "% §7e flecha mais rapida (8 a 15s)";
             case FLECHA_EXPLOSIVA -> num(Habilidades.DANO_EXPLOSIVA * f) + " §7em area";
             case MULTIPLO -> num(Habilidades.DANO_MULTIPLO * f) + " §7por flecha (5)";
             case CHUVA_FLECHAS -> num(Habilidades.DANO_CHUVA * f) + " §7x12 em area (3s)";
@@ -1810,6 +1817,13 @@ public final class Poderes extends JavaPlugin implements Listener {
             return true;
         }
         if (nome.equals("classe")) return comandoClasse(s, args);
+        // 20/11: /runa (Runas da classe) e o aviso do REBIRTH (o Masmorras chama "poderes atualizartab <nick>")
+        if (nome.equals("runa")) return runas.comando(s, args);
+        if (nome.equals("poderes") && args.length >= 2 && args[0].equalsIgnoreCase("atualizartab") && !(s instanceof Player)) {
+            Player alvo = Bukkit.getPlayerExact(args[1]);
+            if (alvo != null) atualizarTab(alvo);
+            return true;
+        }
         if (nome.equals("voar")) {
             if (!(s instanceof Player p)) {
                 s.sendMessage("Somente jogadores.");

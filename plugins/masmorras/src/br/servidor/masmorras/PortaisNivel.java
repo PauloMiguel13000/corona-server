@@ -38,8 +38,9 @@ final class PortaisNivel implements Listener {
      * 18/11 (lobby v5): os portais ficam nos portoes do lobby novo (nivel 2 a leste, 3 ao sul, 4 a oeste) e o 5 ao lado
      * do 4. {x, z, eixoX (1 = o vao se estende no x), nivel}. Quem constroi agora e o LobbyMundo.construirV5.
      */
-    static final int[][] PORTAIS = {{38, 0, 0, 2}, {0, 38, 1, 3}, {-38, 0, 0, 4}, {-37, -13, 0, 5}};
-    private static final int[] NIVEIS = {2, 3, 4, 5};
+    // 20/11: + nivel 6 na faixa oeste, no lugar da esmeralda antiga (a volta ao spawn continua na esmeralda do sul)
+    static final int[][] PORTAIS = {{38, 0, 0, 2}, {0, 38, 1, 3}, {-38, 0, 0, 4}, {-37, -13, 0, 5}, {-37, 13, 0, 6}};
+    private static final int[] NIVEIS = {2, 3, 4, 5, 6};
 
     private final Masmorras pl;
     private final MundoMasmorras mm;
@@ -80,6 +81,7 @@ final class PortaisNivel implements Listener {
             case 2 -> new String[] {"minecraft:mossy_stone_bricks", "minecraft:oxidized_copper", "minecraft:moss_block", "§e"};
             case 3 -> new String[] {"minecraft:deepslate_bricks", "minecraft:gold_block", "minecraft:polished_deepslate", "§6"};
             case 4 -> new String[] {"minecraft:blackstone", "minecraft:diamond_block", "minecraft:polished_blackstone", "§c"};
+            case 6 -> new String[] {"minecraft:red_nether_bricks", "minecraft:redstone_block", "minecraft:crimson_nylium", "§4"};
             default -> new String[] {"minecraft:obsidian", "minecraft:netherite_block", "minecraft:crying_obsidian", "§5"};
         };
     }
@@ -177,14 +179,31 @@ final class PortaisNivel implements Listener {
         switch (nivel) {
             case 2 -> { r1 = z[0]; r2 = z[1]; }
             case 3 -> { r1 = z[1]; r2 = z[2]; }
-            case 4 -> { r1 = z[2]; r2 = z[2] + (borda - z[2]) * 0.5; }
+            case 4 -> { r1 = z[2]; r2 = z.length > 3 ? z[3] - 80 : z[2] + (borda - z[2]) * 0.5; }
+            case 6 -> { r1 = z.length > 3 ? z[3] + 120 : borda - 300; r2 = borda; }
             default -> { r1 = z[2] + (borda - z[2]) * 0.5; r2 = borda; }
         }
         r1 += 40;
         r2 = Math.max(r1 + 10, r2 - 40);
-        double quer = pl.getConfig().getDouble("portais.distancia-das-masmorras", 400);
+        // 20/11 (Sui/Paulo: "os portais teleportam mais longe da dungeon do que ir andando do spawn"): agora cai a uns
+        // 150 blocos de uma masmorra DAQUELE nivel (nem colado, nem longe); conta so as masmorras do nivel
+        double quer = pl.getConfig().getDouble("portais.distancia-das-masmorras-v2", 150);
         List<double[]> portas = new ArrayList<>();
-        for (Masmorra m : pl.todas) if (m.mundo.equals(w.getName()) && !m.demolindo) portas.add(new double[] {m.saidaX, m.saidaZ});
+        for (Masmorra m : pl.todas) if (m.mundo.equals(w.getName()) && !m.demolindo && !m.tipo.secreta && m.tipo.nivel == nivel) portas.add(new double[] {m.saidaX, m.saidaZ});
+        if (!portas.isEmpty()) {
+            ThreadLocalRandom rr = ThreadLocalRandom.current();
+            double[] alvo = portas.get(rr.nextInt(portas.size()));
+            for (int t = 0; t < 40; t++) {
+                double a = rr.nextDouble() * Math.PI * 2, d = quer * (0.8 + rr.nextDouble() * 0.4);
+                int x = (int) (alvo[0] + Math.cos(a) * d), zz = (int) (alvo[1] + Math.sin(a) * d);
+                if (!w.getWorldBorder().isInside(new Location(w, x, 64, zz)) || pertoDaSecreta(w, x, zz)) continue;
+                boolean colado = false;
+                for (Masmorra m : pl.todas) if (m.mundo.equals(w.getName()) && !m.demolindo && Math.hypot(m.saidaX - x, m.saidaZ - zz) < 70) colado = true;
+                if (colado) continue;
+                Location d0 = Loja.lugarPerto(w, x, w.getHighestBlockYAt(x, zz) + 1, zz);
+                if (d0 != null) return d0;
+            }
+        }
         ThreadLocalRandom rnd = ThreadLocalRandom.current();
         int bx = 0, bz = 0;
         double melhor = -1;
@@ -245,7 +264,8 @@ final class PortaisNivel implements Listener {
         double r = switch (nivel) {
             case 2 -> (z[0] + z[1]) / 2.0;
             case 3 -> (z[1] + z[2]) / 2.0;
-            case 4 -> z[2] + (borda - z[2]) * 0.3;
+            case 4 -> z[2] + ((z.length > 3 ? z[3] : borda) - z[2]) * 0.4;
+            case 6 -> z.length > 3 ? (z[3] + borda) / 2.0 : borda - 200;
             default -> z[2] + (borda - z[2]) * 0.7;
         };
         for (int t = 0; t < 12; t++) {
@@ -331,7 +351,7 @@ final class PortaisNivel implements Listener {
         p.teleportAsync(d, PlayerTeleportEvent.TeleportCause.PLUGIN).thenAccept(ok -> {
             if (!ok) return;
             p.showTitle(net.kyori.adventure.title.Title.title(Masmorras.txt(visual(nivel)[3] + "§lÁREA DE NÍVEL " + nivel),
-                    Masmorras.txt("§7As masmorras ficam longe daqui: siga a bússola")));
+                    Masmorras.txt("§7Tem uma masmorra perto: siga a bússola")));
             p.playSound(p.getLocation(), "minecraft:block.portal.travel", 0.5f, 1.1f - nivel * 0.1f);
             Masmorra perto = null;
             double md = Double.MAX_VALUE;

@@ -200,6 +200,20 @@ final class Missoes implements Listener {
         return dados.getBoolean("progresso." + chave(p.getName()) + ".mestre", false);
     }
 
+    /** 20/11 REBIRTH: apaga a trilha e o Nivel de Masmorra (o resto, itens e coronas, fica). */
+    void zerarParaRebirth(Player p) {
+        dados.set("trilha." + chave(p.getName()), null);
+        dados.set("progresso." + chave(p.getName()) + ".nivel", 1);
+        dados.set("progresso." + chave(p.getName()) + ".mestre", null);
+        int n = dados.getInt("progresso." + chave(p.getName()) + ".rebirth", 0) + 1;
+        dados.set("progresso." + chave(p.getName()) + ".rebirth", n);
+        salvarAgora();
+    }
+
+    int rebirthsSalvos(Player p) {
+        return dados.getInt("progresso." + chave(p.getName()) + ".rebirth", 0);
+    }
+
     void marcarMestreMasmorras(Player p) {
         dados.set("progresso." + chave(p.getName()) + ".mestre", true);
         salvarAgora();
@@ -244,7 +258,7 @@ final class Missoes implements Listener {
     private static final String[] PECAS_RESTO = {"LEGGINGS", "BOOTS"};
 
     private static String materialDoNivel(int nivel) {
-        return switch (Math.max(1, Math.min(5, nivel))) {
+        return switch (Math.max(1, Math.min(6, nivel))) {
             case 1 -> "CHAINMAIL";
             case 2 -> "IRON";
             case 3, 4 -> "DIAMOND";
@@ -253,7 +267,7 @@ final class Missoes implements Listener {
     }
 
     static int metaMonstros(int nivel) {
-        return 10 + 5 * Math.max(1, Math.min(5, nivel));
+        return 10 + 5 * Math.max(1, Math.min(6, nivel));
     }
 
     /** As masmorras da trilha, na ordem: nivel 1 primeiro. As secretas ficam de fora. */
@@ -288,7 +302,16 @@ final class Missoes implements Listener {
         Material m = Material.matchMaterial(materialDoNivel(t.nivel) + "_" + peca);
         if (m == null) m = Material.matchMaterial("IRON_" + peca);
         ItemStack it = new ItemStack(m);
-        if (t.nivel == 4 || t.nivel >= 5) it.addUnsafeEnchantment(Enchantment.PROTECTION, t.nivel >= 5 ? 2 : 1);
+        if (t.nivel == 4 || t.nivel >= 5) it.addUnsafeEnchantment(Enchantment.PROTECTION, t.nivel >= 6 ? 4 : t.nivel >= 5 ? 2 : 1);
+        // 20/11 (Paulo: "tera novas armaduras"): as pecas do nivel 6 vem com acabamento (trim) proprio de cada masmorra,
+        // que aparece igual no Java e no Bedrock, e Inquebravel III
+        if (t.nivel >= 6) {
+            it.addUnsafeEnchantment(Enchantment.UNBREAKING, 3);
+            if (it.getItemMeta() instanceof org.bukkit.inventory.meta.ArmorMeta am) {
+                am.setTrim(Reliquias.trimNivel6(t));
+                it.setItemMeta(am);
+            }
+        }
         return pl.reliquias != null ? pl.reliquias.aplicar(it, t) : it;
     }
 
@@ -400,16 +423,16 @@ final class Missoes implements Listener {
         int nivel = prox != null ? prox.nivel : 5;
         if (a.length > 0) {
             try {
-                nivel = Math.max(1, Math.min(5, Integer.parseInt(a[0])));
+                nivel = Math.max(1, Math.min(6, Integer.parseInt(a[0])));
             } catch (NumberFormatException e) {
-                p.sendMessage(Masmorras.txt("§7Use: §f/trilha §7ou §f/trilha <nível de 1 a 5>"));
+                p.sendMessage(Masmorras.txt("§7Use: §f/trilha §7ou §f/trilha <nível de 1 a 6>"));
                 return true;
             }
         }
         p.sendMessage(Masmorras.txt("§6§l⚔ TRILHA DAS MASMORRAS §7— feitas: §f" + feitas(p) + "§7/" + todas.size()));
         p.sendMessage(Masmorras.txt("§7Em cada masmorra: o §cchefe §7dá o §epeitoral§7, e os §fmonstros §7dão §ecalça e botas§7. Só uma vez cada."));
         StringBuilder resumo = new StringBuilder("§7Níveis: ");
-        for (int nv = 1; nv <= 5; nv++) {
+        for (int nv = 1; nv <= 6; nv++) {
             int tot = 0, ok = 0;
             for (br.servidor.masmorras.Tipo t : todas) if (t.nivel == nv) { tot++; if (trilhaCompleta(p, t)) ok++; }
             if (tot == 0) continue;

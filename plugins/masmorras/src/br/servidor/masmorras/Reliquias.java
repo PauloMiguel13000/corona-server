@@ -318,9 +318,29 @@ final class Reliquias implements Listener {
     /** reliquias.elmo-3d (padrao true): elmo das armaduras tematicas em 3D (sem asset_id). false = volta ao elmo plano. */
     static volatile boolean elmo3d = true;
 
+    /**
+     * 20/11: as 10 masmorras do nivel 6 ainda nao tem textura propria no pacote: a armadura fica de netherite com
+     * acabamento (trim) proprio, que aparece igual no Java e no Bedrock, e a espada usa o modelo 3D do tema parecido.
+     * Assim nunca aparece item sem textura.
+     */
+    static final java.util.Map<String, String> NIVEL6_VISUAL = java.util.Map.of("CINZAS", "VULCAO", "CATACUMBA", "CRIPTA_REAL",
+            "PINACULO", "TROVAO", "RUBRA", "SANGUE", "ECO", "CIDADE_ANTIGA", "PUTRIDO", "DISTORCIDO", "GLACIAR", "GELEIRA",
+            "ABISSAL", "AFOGADA", "TITAS", "FORJA", "CAOS", "TRONO");
+
     static void visualDoPacote(ItemStack it, String tema, java.util.logging.Logger log) {
-        String id = tema.toLowerCase(java.util.Locale.ROOT);
         String n = it.getType().name();
+        String up = tema.toUpperCase(java.util.Locale.ROOT);
+        if (NIVEL6_VISUAL.containsKey(up)) {
+            if (!n.endsWith("_SWORD")) {
+                if (it.getItemMeta() instanceof org.bukkit.inventory.meta.ArmorMeta am && !am.hasTrim() && Tipo.TODOS.get(up) != null) {
+                    am.setTrim(trimNivel6(Tipo.TODOS.get(up)));
+                    it.setItemMeta(am);
+                }
+                return;
+            }
+            tema = NIVEL6_VISUAL.get(up);
+        }
+        String id = tema.toLowerCase(java.util.Locale.ROOT);
         if (id.equals("herobrine")) {
             // conjunto cosmetico proprio: icone (item_model, que o Geyser tambem usa no Bedrock) e armadura no corpo
             try {
@@ -499,7 +519,81 @@ final class Reliquias implements Listener {
             novo.add(aplicar(it.clone(), m.tipo));
         }
         novo.removeIf(x -> x == null);
+        // 20/11 (Sui/Paulo: "loot da Torre do Relogio e das torres ruim, tabua, madeira, machado"): tira o lixo das
+        // tabelas do jogo e completa o bau com saque do nivel da masmorra (quanto mais alto o nivel, melhor)
+        novo.removeIf(x -> lixo(x.getType()));
+        novo.addAll(bonusDoNivel(m.tipo.nivel, b.getLocation()));
+        while (novo.size() > 27) novo.remove(novo.size() - 1);
         e.setLoot(novo);
+    }
+
+    /** 20/11: acabamento (trim) das armaduras do nivel 6: desenho por masmorra, cor pelo elemento do chefe. */
+    static org.bukkit.inventory.meta.trim.ArmorTrim trimNivel6(Tipo t) {
+        org.bukkit.inventory.meta.trim.TrimPattern pat = switch (t.id) {
+            case "CINZAS" -> org.bukkit.inventory.meta.trim.TrimPattern.SNOUT;
+            case "CATACUMBA" -> org.bukkit.inventory.meta.trim.TrimPattern.RIB;
+            case "PINACULO" -> org.bukkit.inventory.meta.trim.TrimPattern.BOLT;
+            case "RUBRA" -> org.bukkit.inventory.meta.trim.TrimPattern.VEX;
+            case "ECO" -> org.bukkit.inventory.meta.trim.TrimPattern.SILENCE;
+            case "PUTRIDO" -> org.bukkit.inventory.meta.trim.TrimPattern.WILD;
+            case "GLACIAR" -> org.bukkit.inventory.meta.trim.TrimPattern.WARD;
+            case "ABISSAL" -> org.bukkit.inventory.meta.trim.TrimPattern.TIDE;
+            case "TITAS" -> org.bukkit.inventory.meta.trim.TrimPattern.SENTRY;
+            default -> org.bukkit.inventory.meta.trim.TrimPattern.EYE;
+        };
+        org.bukkit.inventory.meta.trim.TrimMaterial mat = switch (Aneis.elementoDe(t)) {
+            case FOGO -> org.bukkit.inventory.meta.trim.TrimMaterial.REDSTONE;
+            case AGUA -> org.bukkit.inventory.meta.trim.TrimMaterial.DIAMOND;
+            case TERRA -> org.bukkit.inventory.meta.trim.TrimMaterial.EMERALD;
+            case VENTO -> org.bukkit.inventory.meta.trim.TrimMaterial.QUARTZ;
+            case RAIO -> org.bukkit.inventory.meta.trim.TrimMaterial.GOLD;
+            default -> org.bukkit.inventory.meta.trim.TrimMaterial.AMETHYST;
+        };
+        return new org.bukkit.inventory.meta.trim.ArmorTrim(mat, pat);
+    }
+
+    static boolean lixo(Material t) {
+        String n = t.name();
+        return n.endsWith("_PLANKS") || n.endsWith("_LOG") || n.endsWith("_WOOD") || n.endsWith("_STEM") || n.endsWith("_SAPLING")
+                || n.startsWith("WOODEN_") || n.startsWith("STONE_") && (n.endsWith("_AXE") || n.endsWith("_PICKAXE") || n.endsWith("_SHOVEL") || n.endsWith("_HOE") || n.endsWith("_SWORD"))
+                || n.endsWith("_SLAB") || n.endsWith("_STAIRS") || n.endsWith("_CARPET") || n.endsWith("_WOOL") && t != Material.WHITE_WOOL
+                || t == Material.STICK || t == Material.WHEAT || t == Material.WHEAT_SEEDS || t == Material.BEETROOT_SEEDS || t == Material.PUMPKIN_SEEDS
+                || t == Material.MELON_SEEDS || t == Material.POTATO || t == Material.CARROT || t == Material.BEETROOT || t == Material.DIRT
+                || t == Material.COBBLESTONE || t == Material.GRAVEL || t == Material.SAND || t == Material.TORCH || t == Material.BAMBOO
+                || t == Material.CHEST || t == Material.BARREL || t == Material.CRAFTING_TABLE || t == Material.BOWL || t == Material.PAPER
+                || t == Material.ROTTEN_FLESH || t == Material.BONE || t == Material.STRING && rnd().nextBoolean() || t == Material.GLASS_BOTTLE
+                || t == Material.SNOWBALL || t == Material.FEATHER || t == Material.LEATHER || t == Material.CLAY_BALL || t == Material.FLINT;
+    }
+
+    /** Saque extra garantido por nivel (1 a 6). */
+    static List<ItemStack> bonusDoNivel(int nivel, Location onde) {
+        var r = rnd();
+        int n = Math.max(1, Math.min(6, nivel));
+        List<ItemStack> l = new ArrayList<>();
+        l.add(new ItemStack(Material.EXPERIENCE_BOTTLE, 2 + n * 2 + r.nextInt(n + 2)));
+        l.add(new ItemStack(Material.EMERALD, 2 + n * 2 + r.nextInt(n * 2 + 1)));
+        if (n >= 2) l.add(new ItemStack(Material.GOLD_INGOT, 2 + r.nextInt(2 + n * 2)));
+        if (n >= 2 && r.nextDouble() < 0.25 + 0.1 * n) l.add(new ItemStack(Material.DIAMOND, 1 + r.nextInt(n)));
+        if (n >= 3) l.add(new ItemStack(Material.GOLDEN_APPLE, 1 + r.nextInt(Math.max(1, n - 2))));
+        if (n >= 3 && r.nextDouble() < 0.35) l.add(new ItemStack(Material.ENDER_PEARL, 2 + r.nextInt(3)));
+        if (n >= 4 && r.nextDouble() < 0.15 * (n - 3)) l.add(new ItemStack(Material.NETHERITE_SCRAP, 1 + (n >= 6 ? r.nextInt(2) : 0)));
+        if (n >= 4 && r.nextDouble() < 0.3) l.add(new ItemStack(Material.TOTEM_OF_UNDYING));
+        if (n >= 5 && r.nextDouble() < 0.06 * (n - 4)) l.add(new ItemStack(Material.ENCHANTED_GOLDEN_APPLE));
+        if (n >= 5 && r.nextDouble() < 0.12 * (n - 4)) l.add(new ItemStack(Material.NETHERITE_INGOT));
+        if (n >= 6 && r.nextDouble() < 0.25) l.add(new ItemStack(Material.NETHERITE_UPGRADE_SMITHING_TEMPLATE));
+        // livro encantado do jogo nos niveis altos (o resto do bau ja vem da tabela do tema)
+        if (n >= 3 && r.nextDouble() < 0.12 * n) {
+            ItemStack livro = new ItemStack(Material.ENCHANTED_BOOK);
+            var em = (org.bukkit.inventory.meta.EnchantmentStorageMeta) livro.getItemMeta();
+            org.bukkit.enchantments.Enchantment[] bons = {org.bukkit.enchantments.Enchantment.SHARPNESS, org.bukkit.enchantments.Enchantment.PROTECTION,
+                    org.bukkit.enchantments.Enchantment.POWER, org.bukkit.enchantments.Enchantment.UNBREAKING, org.bukkit.enchantments.Enchantment.EFFICIENCY,
+                    org.bukkit.enchantments.Enchantment.FEATHER_FALLING, org.bukkit.enchantments.Enchantment.LOOTING, org.bukkit.enchantments.Enchantment.MENDING};
+            var en = bons[r.nextInt(bons.length)];
+            em.addStoredEnchant(en, Math.min(en.getMaxLevel(), Math.max(1, n - 2 + r.nextInt(2))), true);
+            livro.setItemMeta(em);
+            l.add(livro);
+        }
+        return l;
     }
 
     /** Reliquia no chao: brilha e mostra o nome. */

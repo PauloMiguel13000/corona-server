@@ -236,6 +236,15 @@ final class CorposChefes implements Listener {
         it.setData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL, net.kyori.adventure.key.Key.key("corona", "masmorras/vazio"));
     }
 
+    /** Animacao de puxar e soltar o arco (rajada de flechas do chefe arqueiro). */
+    void arco(LivingEntity e) {
+        Corpo c = corpos.get(e.getUniqueId());
+        if (c != null) {
+            c.soltou = 6;
+            c.acao(Acao.NADA, 1);
+        }
+    }
+
     /** Animacao de magia (habilidade especial do chefe). */
     void magia(LivingEntity e) {
         Corpo c = corpos.get(e.getUniqueId());

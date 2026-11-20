@@ -40,9 +40,14 @@ final class Locais {
     int[] faixa(Tipo t) {
         if (zonas != null && onde == Tipo.Onde.NORMAL) {
             // mundo novo: cada nivel e um anel (com folga de 120 nas divisas); o nivel 1 comeca depois do planalto do lobby
+            // 20/11: nivel 6 no anel novo de fora (zonas[3] ate a borda); o 4 vai ate zonas[3]
+            if (t.nivel >= 6 && zonas.length > 3) {
+                int de = zonas[3] + 160, ate = borda - 260;
+                return new int[] {de, Math.max(de + 100, ate)};
+            }
             int n = Math.max(1, Math.min(4, t.nivel));
             int de = n == 1 ? 250 : zonas[n - 2] + 120;
-            int ate = n == 4 ? borda - 260 : zonas[n - 1] - 120;
+            int ate = n == 4 ? (zonas.length > 3 ? Math.min(borda - 260, zonas[3] - 160) : borda - 260) : zonas[n - 1] - 120;
             return new int[] {de, Math.max(de + 100, ate)};
         }
         return switch (onde) {

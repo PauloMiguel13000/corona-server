@@ -25,8 +25,8 @@ public enum Poder {
             "Torre de curto alcance que", "queima tudo que chegar perto."),
     TORRE_TESLA("torretesla", "Torre Tesla", "§e", Material.COPPER_BLOCK, 45,
             "Choque eletrico que pula", "de um inimigo para outro."),
-    TORRE_CANHAO("torrecanhao", "Torre Canhao", "§8", Material.ANVIL, 60,
-            "Artilharia pesada: bala que explode", "em area, de bem longe."),
+    TORRE_CANHAO("torrecanhao", "Torre Suprema", "§d", Material.ANVIL, 60,
+            "Junta todas as torres: flecha rapida,", "gelo, fogo, raio e canhao. Fora da fila."),
 
     // ---- Saiyajin
     KI_BLAST("kiblast", "Rajada de Ki", "§e", Material.GLOWSTONE_DUST, 3,
@@ -89,15 +89,15 @@ public enum Poder {
             "Tsunami em volta de voce e", "forca do mar por 10 segundos."),
 
     // ---- Arqueiro
-    TIRO_CERTEIRO("tirocerteiro", "Tiro Certeiro", "§f", Material.ARROW, 2,
-            "Flecha rapida que atravessa 3 inimigos;", "na cabeca da 1,5x. 3 acertos marcam o alvo."),
+    TIRO_CERTEIRO("tirocerteiro", "Olho de Aguia", "§f", Material.ARROW, 20,
+            "Seu arco fica mais forte e a flecha", "mais rapida por 8 a 15s (pelo nivel)."),
     FLECHA_EXPLOSIVA("flechaexplosiva", "Flecha Explosiva", "§c", Material.FIREWORK_STAR, 10,
             "Explode onde acerta e deixa o chao", "em chamas por 3s (nao quebra blocos)."),
     MULTIPLO("multiplo", "Disparo Multiplo", "§e", Material.SPECTRAL_ARROW, 12,
             "7 flechas em leque que atravessam;", "voce pula um pouco para tras."),
-    CHUVA_FLECHAS("chuvaflechas", "Chuva de Flechas", "§7", Material.CROSSBOW, 30,
+    CHUVA_FLECHAS("chuvaflechas", "Chuva de Flechas", "§7", Material.CROSSBOW, 22,
             "Chove flecha onde voce olha por 3s,", "deixa lento e estoura no final."),
-    TEMPESTADE("tempestade", "Tempestade de Flechas", "§6", Material.BOW, 60,
+    TEMPESTADE("tempestade", "Tempestade de Flechas", "§6", Material.BOW, 42,
             "Flechas que perseguem ate 10", "inimigos, em 4 rajadas."),
 
     // ---- Lutador (passiva: soco de mao vazia mais forte, sobe com o nivel)
