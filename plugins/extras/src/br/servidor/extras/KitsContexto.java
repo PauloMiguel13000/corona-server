@@ -137,6 +137,12 @@ final class KitsContexto implements Listener {
         m.lore(List.of(Extras.txt("§7Para VIPs: kit diário + coronas."), Extras.txt("§a▶ Clique (ou §e/vip kit§a)")));
         vip.setItemMeta(m);
         inv.setItem(22, vip);
+        ItemStack sem = new ItemStack(Material.ENDER_CHEST);
+        ItemMeta sm = sem.getItemMeta();
+        sm.displayName(Extras.txt("§d§lKit VIP da semana"));
+        sm.lore(List.of(Extras.txt("§7Para VIPs: kit semanal do seu nível."), Extras.txt("§a▶ Clique (ou §e/vip semanal§a)")));
+        sem.setItemMeta(sm);
+        inv.setItem(24, sem);
         ItemStack mais = new ItemStack(Material.CHEST);
         ItemMeta mm = mais.getItemMeta();
         mm.displayName(Extras.txt("§e§lOutros kits"));
@@ -170,6 +176,7 @@ final class KitsContexto implements Listener {
         if (!(e.getWhoClicked() instanceof Player p) || e.getClickedInventory() != e.getView().getTopInventory()) return;
         int s = e.getSlot();
         if (s == 22) { p.closeInventory(); p.performCommand("vip kit"); return; }
+        if (s == 24) { p.closeInventory(); p.performCommand("vip semanal"); return; }
         if (s == 26) { p.closeInventory(); p.performCommand("kit"); return; }
         if (s == 0) { p.closeInventory(); p.performCommand("xp loja"); return; }
         if (s == 8) { p.closeInventory(); p.performCommand("runa"); return; }

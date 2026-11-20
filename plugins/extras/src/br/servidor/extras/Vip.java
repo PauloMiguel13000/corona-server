@@ -289,7 +289,7 @@ final class Vip implements Listener {
             }
             // o anuncio e o efeito de entrada ficam no Entradas (depois do login, um efeito por nivel)
             if (nv.n() >= 3) trajePrimeiraVez(p, c);
-            p.sendMessage(Extras.txt(nv.tag() + " §7ativo até §f" + data(c.getLong("ate")) + "§7. Kit do dia: §e/vip kit"));
+            p.sendMessage(Extras.txt(nv.tag() + " §7ativo até §f" + data(c.getLong("ate")) + "§7. Kit do dia: §e/vip kit §7• da semana: §e/vip semanal"));
         }, 60L);
     }
 
@@ -454,6 +454,44 @@ final class Vip implements Listener {
         p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.4f);
     }
 
+    /**
+     * 20/11 (Paulo: "o vip lenda pega um kit foda a cada 7 dias, coloque 1 vez, pq da Elitra... adicione a cada 7 dias
+     * coisas mais inferiores, depois a cada um dia algo mais inferior, nos outros vips a mesma coisa"): o kit grande do
+     * /kit (PlayerKits2) virou de boas-vindas (1 vez so); este e o semanal, mais fraco (sem elitra e sem maca encantada).
+     */
+    private static List<ItemStack> kitSemanal(int n) {
+        List<ItemStack> l = new ArrayList<>();
+        int[][] q = {{}, {32, 24, 2, 4, 0, 0, 0, 0}, {48, 32, 4, 8, 8, 0, 0, 0}, {64, 48, 6, 12, 16, 1, 0, 0}, {64, 64, 8, 16, 16, 2, 1, 32}};
+        Material[] m = {Material.GOLDEN_CARROT, Material.EXPERIENCE_BOTTLE, Material.GOLDEN_APPLE, Material.DIAMOND, Material.ENDER_PEARL,
+                Material.NETHERITE_SCRAP, Material.TOTEM_OF_UNDYING, Material.FIREWORK_ROCKET};
+        for (int i = 0; i < m.length; i++) if (q[n][i] > 0) l.add(new ItemStack(m[i], q[n][i]));
+        return l;
+    }
+
+    private static final int[] PENAS_SEMANA = {0, 1, 2, 3, 5};
+
+    private void pegarSemanal(Player p) {
+        Nivel nv = info(p);
+        if (nv == null) {
+            p.sendMessage(Extras.txt("§cO kit da semana é só para VIP. §7Veja: §e/vip"));
+            return;
+        }
+        ConfigurationSection c = secao(p.getName(), false);
+        long agora = System.currentTimeMillis(), ultimo = c.getLong("semanal-ultimo", 0), semana = 7 * 86_400_000L;
+        if (agora - ultimo < semana) {
+            long falta = semana - (agora - ultimo);
+            p.sendMessage(Extras.txt("§7Kit da semana já pego. Volta em §f" + (falta / 86_400_000L) + "d " + (falta / 3_600_000L % 24) + "h§7."));
+            return;
+        }
+        c.set("semanal-ultimo", agora);
+        salvar();
+        for (ItemStack it : kitSemanal(nv.n()))
+            for (ItemStack sobra : p.getInventory().addItem(it).values()) p.getWorld().dropItemNaturally(p.getLocation(), sobra);
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "poderes darpena " + p.getName() + " " + PENAS_SEMANA[nv.n()]);
+        p.sendMessage(Extras.txt("§a✔ Kit da semana " + nv.tag() + "§a! §7(o grande do §f/kit §7é de boas-vindas, 1 vez só)"));
+        p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.2f);
+    }
+
     // ------------------------------------------------------------------ /vip
 
     boolean comando(CommandSender s, String[] a) {
@@ -538,6 +576,7 @@ final class Vip implements Listener {
         Nivel nv = info(p);
         switch (sub) {
             case "kit" -> pegarKit(p);
+            case "semanal", "semana", "kitsemanal" -> pegarSemanal(p);
             case "traje", "armadura", "rei" -> {
                 if (traje == null) return true;
                 ConfigurationSection ct = secao(p.getName(), true);
@@ -626,6 +665,6 @@ final class Vip implements Listener {
         }
         String site = pl.getConfig().getString("vip.site", "");
         p.sendMessage(Extras.txt(site.isBlank() ? "§7Como comprar: §fem breve! Fale com o dono do servidor." : "§7Compre em: §b" + site));
-        if (nv != null) p.sendMessage(Extras.txt("§7Comandos: §e/vip kit§7, §e/vip particulas§7, §e/vip chapeu§7, §e/vip traje§7, §e/vip voar"));
+        if (nv != null) p.sendMessage(Extras.txt("§7Comandos: §e/vip kit§7, §e/vip semanal§7, §e/vip particulas§7, §e/vip chapeu§7, §e/vip traje§7, §e/vip voar"));
     }
 }
