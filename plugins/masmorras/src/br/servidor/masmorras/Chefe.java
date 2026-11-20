@@ -43,6 +43,9 @@ final class Chefe {
     final List<Player> vendo = new ArrayList<>();
     final Random rnd = new Random();
     long proximaHab, semJogadorDesde = -1, proximoSoco;
+    /** 20/11 (Paulo: "boss Imperador das Cinzas parece que fica bugado"): anti-travamento. */
+    double travX = Double.NaN, travZ;
+    long travDesde;
     boolean furioso, curou;
     // particularidades
     long inicioLuta = -1, proximaZona, escudoAte;
@@ -205,6 +208,7 @@ final class Chefe {
                 }
             }
         }
+        destravar(alvo, agora);
         // furioso na metade da vida
         if (!furioso && e.getHealth() <= vidaMax / 2) {
             furioso = true;
@@ -227,6 +231,52 @@ final class Chefe {
         // teias velhas somem
         if (!teias.isEmpty() && rnd.nextInt(4) == 0) tirarTeias(false);
         return true;
+    }
+
+    /**
+     * Chefe parado no mesmo lugar por 7 s com alguem longe (preso em pilar, em bloco, sem achar caminho, ou com a IA
+     * desligada por engano depois de uma cena): liga a IA de novo e o leva para perto do alvo, num lugar livre.
+     */
+    private void destravar(Player alvo, long agora) {
+        if (alvo == null || e instanceof org.bukkit.entity.Shulker || e instanceof org.bukkit.entity.Creaking) return;
+        if (pl.mecanicas != null && pl.mecanicas.emCena(this)) {
+            travX = Double.NaN;
+            return;
+        }
+        if (e instanceof Mob mob && !mob.isAware()) mob.setAware(true);
+        Location el = e.getLocation();
+        if (Double.isNaN(travX) || Math.hypot(el.getX() - travX, el.getZ() - travZ) > 1.2) {
+            travX = el.getX();
+            travZ = el.getZ();
+            travDesde = agora;
+            return;
+        }
+        if (agora - travDesde < 7000 || el.distanceSquared(alvo.getLocation()) < 4.5 * 4.5) return;
+        // quem ataca de longe (arco, magia) pode ficar parado de proposito vendo o alvo
+        boolean distancia = e instanceof org.bukkit.entity.Witch || e instanceof org.bukkit.entity.Spellcaster || e instanceof org.bukkit.entity.Blaze
+                || e instanceof org.bukkit.entity.Pillager || e.getEquipment() != null && (e.getEquipment().getItemInMainHand().getType() == org.bukkit.Material.BOW
+                || e.getEquipment().getItemInMainHand().getType() == org.bukkit.Material.CROSSBOW);
+        if (distancia && e.hasLineOfSight(alvo)) {
+            travDesde = agora;
+            return;
+        }
+        travX = Double.NaN;
+        Location al = alvo.getLocation();
+        for (int k = 0; k < 12; k++) {
+            double a = rnd.nextDouble() * Math.PI * 2, r = 2.5 + rnd.nextDouble() * 2;
+            Location q = new Location(al.getWorld(), al.getX() + Math.cos(a) * r, al.getY(), al.getZ() + Math.sin(a) * r);
+            if (!m.arenaLuta().contem(q.getX(), q.getY(), q.getZ())) continue;
+            boolean livre = true;
+            for (int dy = 0; dy < Math.ceil(e.getHeight()) && livre; dy++) livre = q.clone().add(0, dy, 0).getBlock().isPassable();
+            if (!livre || q.clone().add(0, -1, 0).getBlock().isPassable()) continue;
+            q.setDirection(al.toVector().subtract(q.toVector()));
+            e.getWorld().spawnParticle(Particle.LARGE_SMOKE, el.clone().add(0, 1, 0), 30, 0.5, 1, 0.5, 0.02);
+            e.teleport(q);
+            e.getWorld().spawnParticle(Particle.LARGE_SMOKE, q.clone().add(0, 1, 0), 30, 0.5, 1, 0.5, 0.02);
+            if (e instanceof Mob mob) mob.setTarget(alvo);
+            pl.getLogger().info("Chefe destravado na masmorra #" + m.id + " (" + t.chefeNome + ")");
+            return;
+        }
     }
 
     // ------------------------------------------------------------------ particularidades

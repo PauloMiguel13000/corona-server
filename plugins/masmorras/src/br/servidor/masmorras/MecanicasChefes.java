@@ -309,6 +309,12 @@ final class MecanicasChefes implements Listener {
         return l.cena != null;
     }
 
+    /** Tem uma cena rodando (o chefe pode estar parado de proposito). */
+    boolean emCena(Chefe c) {
+        Luta l = lutas.get(c);
+        return l != null && l.cena != null;
+    }
+
     /** O chefe esta escondido entre as sombras (nao mostrar as particulas dele). */
     boolean escondendo(Chefe c) {
         Luta l = lutas.get(c);
