@@ -101,6 +101,46 @@ def tpl_ancestral(f, var):
             f.pinta((np.hypot((f.S - 0.5) * 1.6, (f.T - 0.5) * 3.2) < 0.32), ACAB, nova_placa=True)
 
 
+def elmo_ancestral(f):
+    """Elmo fechado proprio do nivel 6: placa inteira, fenda em T com olhos acesos, crista no meio e laminas na nuca."""
+    if f.baixo:
+        return
+    if f.cima:
+        f.ret(PLACA)
+        f.ret(ACAB, 0.44, 0.56, 0, 1)
+        return
+    if f.frente:
+        f.ret(PLACA, 0, 1, 0, 0.62)
+        f.ret(PLACA, 0, 0.5, 0.62, 1)
+        f.ret(PLACA, 0.5, 1, 0.62, 1)
+        f.ret(ACAB, 0, 1, 0, 0.08)
+        f.pinta((f.T > 0.36) & (f.T < 0.46) & (np.abs(f.S - 0.5) < 0.38), ESCURO, nova_placa=False)   # fenda dos olhos
+        f.pinta((np.abs(f.S - 0.5) < 0.06) & (f.T >= 0.46) & (f.T < 0.82), ESCURO, nova_placa=False)  # fenda do T
+        f.pinta((f.T > 0.37) & (f.T < 0.45) & (np.abs(np.abs(f.S - 0.5) - 0.2) < 0.08), BRILHO, nova_placa=False)
+        f.dentes(0.94, 0.06, 0.25)
+        return
+    if f.costas:
+        f.laminas(PLACA, 0, 1, 4)
+        f.ret(ACAB, 0.44, 0.56, 0, 0.5)
+        return
+    f.ret(PLACA, 0, 1, 0, 1)
+    f.ret(ACAB, 0, 1, 0, 0.08)
+    f.ret(ACAB, 0.1, 0.22, 0.3, 0.9)
+    f.dentes(0.9, 0.1, 0.33)
+
+
+_orig_elmo = V3.elmo_forma
+
+
+def elmo_forma_n6(f, estilo, modelo, var):
+    if modelo == 'ancestral':
+        return elmo_ancestral(f)
+    return _orig_elmo(f, estilo, modelo, var)
+
+
+V3.elmo_forma = elmo_forma_n6
+
+
 # ------------------------------------------------------------------ veios de energia (por masmorra)
 
 def _linha(d, w):
@@ -113,7 +153,7 @@ def veios(padrao, X, Y, sem):
     if padrao == 'rachas':
         from base import ridged
         r = ridged(x * 0.35, y * 0.35, 0 * x, 3, 1, sem + 11)
-        return ss(0.62, 0.86, r)
+        return ss(0.5, 0.74, r)
     if padrao == 'runas':
         cx, cy = np.floor(x / 4), np.floor(y / 4)
         fx, fy = x / 4 - cx, y / 4 - cy
@@ -122,8 +162,8 @@ def veios(padrao, X, Y, sem):
         moldura = (fx < 0.08) | (fy < 0.08)
         return np.where(traco & (h > 0.15), 1.0, 0.0) + np.where(moldura & (h > 0.7), 0.6, 0.0)
     if padrao == 'ziguezague':
-        z = np.abs(((x * 0.5 + np.abs(((y * 0.5) % 2) - 1) * 2) % 4) - 2)
-        return _linha(np.abs(z - 1), 0.28)
+        z = np.abs(((x * 0.3 + np.abs(((y * 0.3) % 2) - 1) * 1.6) % 6) - 3)
+        return _linha(np.abs(z - 1.5), 0.22)
     if padrao == 'filigrana':
         a = np.arctan2(np.sin(y * 0.55), np.cos(x * 0.55))
         rr = np.hypot(np.sin(x * 0.55), np.cos(y * 0.55))
@@ -148,15 +188,16 @@ def veios(padrao, X, Y, sem):
     if padrao == 'ondas':
         return _linha(np.abs(np.sin(y * 0.9 + np.sin(x * 0.5) * 2.2)), 0.18)
     if padrao == 'colmeia':
-        q = x / 3.0
-        r = y / 3.0 - q * 0.5
+        q = x / 5.0
+        r = y / 5.0 - q * 0.5
         rq, rr = np.round(q), np.round(r)
         dq, dr = q - rq, r - rr
         d = np.maximum(np.abs(dq), np.maximum(np.abs(dr), np.abs(dq + dr)))
-        return _linha(np.abs(d - 0.5), 0.07)
+        return _linha(np.abs(d - 0.5), 0.06) * 0.9
     if padrao == 'fendas':
-        n = fbm(x * 0.12, y * 0.4, 0 * x, 3, 1, sem + 13)
-        return ss(0.66, 0.78, n) * (1 - ss(0.82, 0.95, n)) * 1.6
+        n = fbm(x * 0.16, y * 0.16, 0 * x, 3, 1, sem + 13)
+        m = fbm(x * 0.05, y * 0.05, 0 * x, 2, 1, sem + 17)
+        return _linha(np.abs(n - 0.5), 0.05) * ss(0.3, 0.5, m)
     return 0 * x
 
 
@@ -172,14 +213,14 @@ def pintar_face_n6(id_, rec, t, parte, face, camada, x0, y0, x1, y1, sem):
     # refaz o mapa de tipos (o pintar original nao devolve) para saber onde ha placa
     if parte == 'head':
         if camada == 1:
-            V3.elmo_forma(f, V3.ESTILO_V3.get(id_, rec[2]), 'ancestral', '')
+            elmo_ancestral(f)
     elif not (parte == 'rarm' and camada == 2):
         tpl_ancestral(f, '')
     placa = np.isin(f.tipo, (PLACA, V3.METAL2)) & (a > 0)
     # metal quase preto com o tom do tema (escurece a placa que veio do material)
     b = np.asarray(C(base))
     lum = c.mean(axis=-1, keepdims=True)
-    escuro = b * (0.55 + 0.9 * lum)
+    escuro = b * (0.85 + 1.6 * lum)
     c = np.where(placa[..., None], escuro, c)
     # frisos dourados nas bordas das placas
     pid = f.pid
@@ -296,6 +337,7 @@ E.estilo_de = estilo_n6
 
 for id_ in N6:
     V3.MODELO[id_] = 'ancestral'
+    V3.ESTILO_V3[id_] = 'n6'   # nao usa rosto de elmo antigo nenhum
     V3.VARIANTE.pop(id_, None)
 
 
