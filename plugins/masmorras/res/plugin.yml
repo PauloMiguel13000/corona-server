@@ -41,7 +41,7 @@ commands:
     aliases: [caminho, jornada]
   nivel:
     description: Nivel de Masmorra (1 a 6) - quais chefes faltam para liberar o proximo (/nivel equipamento = nivel do equipamento)
-    usage: /nivel [equipamento | painel]
+    usage: /nivel [equipamento | painel | max [nick] | set <1-6> [nick]]
     aliases: [level, equipamento, equip, lvl]
   rebirth:
     description: REBIRTH - quem venceu todas as masmorras volta ao nivel 1 e ganha slots de runa extras

@@ -60,7 +60,7 @@ import org.bukkit.util.Vector;
 final class Missao implements Listener {
 
     static final String PREFIXO = "§8[§c§lMissão§8] §7";
-    static final int Y = 64, SETORES = 5, COMP = 40, LARG = 12, MAPA = 4;
+    static final int Y = 64, SETORES = 5, COMP = 40, LARG = 28, MAPA = 5;   // 20/11 (Paulo: "o mapa ta MUITO PEQUENO em largura"): 25 -> 57 de largura
     static final String[] NOMES = {"Entrada da Favela", "Becos", "Campo de Terra", "Galpão da Milícia", "Topo do Morro"};
     static final String[] CLASSES = {"fuzileiro", "medico", "engenheiro", "atirador"};
     static final String[] CLASSE_NOME = {"§aFuzileiro", "§dMédico", "§eEngenheiro", "§bAtirador"};
@@ -534,7 +534,7 @@ final class Missao implements Listener {
         Tiro.regrasDeLobby(mundo);
         mundo.setDifficulty(org.bukkit.Difficulty.NORMAL);
         mundo.setTime(4500);   // 16/11: mapa Favela, de dia
-        for (int cx = -4; cx <= 3; cx++) for (int cz = -3; cz <= (SETORES * COMP + 30) / 16; cz++) mundo.addPluginChunkTicket(cx, cz, pl);
+        for (int cx = -7; cx <= 6; cx++) for (int cz = -3; cz <= (SETORES * COMP + 30) / 16; cz++) mundo.addPluginChunkTicket(cx, cz, pl);
         if (pl.getConfig().getInt("missao-mapa", 0) != MAPA) {
             construir();
             pl.getConfig().set("missao-mapa", MAPA);
@@ -565,7 +565,7 @@ final class Missao implements Listener {
     }
 
     private int larg(int s) {
-        return s == SETORES - 1 ? 18 : LARG;
+        return s == SETORES - 1 ? 34 : LARG;
     }
 
     private int z0(int s) {
@@ -682,6 +682,56 @@ final class Missao implements Listener {
         if (r.nextInt(6) == 0) caixa(bx, topo + 1, bz, bx, topo + 3, bz, Material.LIGHTNING_ROD);   // antena
     }
 
+    /**
+     * 20/11: casa que da para entrar: so a casca (casa oca), com porta de 2 virada para a rua (porta = -1 lado -x, +1 lado
+     * +x), janelas abertas para atirar, piso em cada andar, escada de mao num canto e luz por dentro. Da para subir na laje.
+     */
+    private void casaAberta(int x1, int z1, int x2, int z2, int andares, Random r, int porta) {
+        int ax = Math.min(x1, x2), bx = Math.max(x1, x2), az = Math.min(z1, z2), bz = Math.max(z1, z2);
+        if (bx - ax < 4 || bz - az < 4) {
+            casa(x1, z1, x2, z2, Y, andares, r, false);
+            return;
+        }
+        casa(ax, az, bx, bz, Y, andares, r, true);
+        int topo = Y + andares * 4;
+        // pisos (e a laje de cima), com o buraco da escada no canto do fundo
+        int ex = porta > 0 ? ax + 1 : bx - 1, ez = bz - 1;
+        for (int k = 1; k <= andares; k++) {
+            int y = Y + 4 * k;
+            for (int x = ax + 1; x <= bx - 1; x++)
+                for (int z = az + 1; z <= bz - 1; z++) b(x, y, z, x == ex && z == ez ? Material.AIR : k == andares ? Material.SMOOTH_STONE : Material.SPRUCE_PLANKS);
+        }
+        // escada de mao encostada na parede do fundo (vai ate a laje)
+        org.bukkit.block.data.type.Ladder esc = (org.bukkit.block.data.type.Ladder) Bukkit.createBlockData(Material.LADDER);
+        esc.setFacing(org.bukkit.block.BlockFace.NORTH);
+        for (int y = Y + 1; y <= topo; y++) mundo.getBlockAt(ex, y, ez).setBlockData(esc, false);
+        // porta de 2 de largura e 3 de altura, virada para a rua
+        int px = porta > 0 ? bx : ax, pz = (az + bz) / 2;
+        for (int z = pz; z <= pz + 1; z++) for (int y = Y + 1; y <= Y + 3; y++) b(px, y, z, Material.AIR);
+        // janelas abertas (1x2) em todas as paredes, em cada andar
+        for (int k = 0; k < andares; k++) {
+            int y = Y + 2 + 4 * k;
+            for (int z = az + 2; z <= bz - 2; z += 3) {
+                if (!(k == 0 && z >= pz - 1 && z <= pz + 2)) { b(ax, y, z, Material.AIR); b(ax, y + 1, z, Material.AIR); }
+                b(bx, y, z, Material.AIR); b(bx, y + 1, z, Material.AIR);
+                if (k == 0 && px == bx && z >= pz - 1 && z <= pz + 2) { b(bx, y, z, Material.AIR); }
+            }
+            for (int x = ax + 2; x <= bx - 2; x += 3) {
+                b(x, y, az, Material.AIR); b(x, y + 1, az, Material.AIR);
+                b(x, y, bz, Material.AIR); b(x, y + 1, bz, Material.AIR);
+            }
+        }
+        // moveis simples e luz
+        org.bukkit.block.data.type.Light luz = (org.bukkit.block.data.type.Light) Bukkit.createBlockData(Material.LIGHT);
+        luz.setLevel(12);
+        for (int k = 0; k < andares; k++) {
+            int y = Y + 1 + 4 * k;
+            mundo.getBlockAt((ax + bx) / 2, y + 2, (az + bz) / 2).setBlockData(luz, false);
+            if (r.nextBoolean()) b(porta > 0 ? ax + 1 : bx - 1, y, az + 1, r.nextBoolean() ? Material.BARREL : Material.CRAFTING_TABLE);
+            if (r.nextBoolean()) b(porta > 0 ? ax + 1 : bx - 1, y, az + 2, Material.SPRUCE_SLAB);
+        }
+    }
+
     /** Morro do fundo: so a "pele" (3 camadas) de grama, terra e pedra, com mato e palmeira de vez em quando. */
     private void morro(int x, int z, int altura, Random r) {
         // 16/11: o morro vai ate o chao (so a "pele" ficava flutuando no ceu, visto de baixo)
@@ -734,7 +784,7 @@ final class Missao implements Listener {
         for (int[] c : new int[][] {{-4, -34}, {4, -34}, {-4, -26}, {4, -26}, {0, -30}}) b(c[0], Y + 6, c[1], Material.SEA_LANTERN);
         int fim = SETORES * COMP + 4;
         // limpa o mapa antigo inteiro (o corredor e os muros iam ate x=+-19)
-        for (int z = -14; z <= fim + 1; z++) for (int x = -21; x <= 21; x++) for (int y = Y + 1; y <= Y + 16; y++) b(x, y, z, Material.AIR);
+        for (int z = -24; z <= fim + 30; z++) for (int x = -100; x <= 100; x++) for (int y = Y - 1; y <= Y + 60; y++) if (!mundo.getBlockAt(x, y, z).getType().isAir() && (z > -24 || Math.abs(x) > 7)) b(x, y, z, Material.AIR);
         // chao de cada setor
         for (int z = -14; z <= fim; z++) {
             int s = Math.max(0, Math.min(SETORES - 1, Math.floorDiv(z, COMP))), L = z < 0 ? 6 : larg(s);
@@ -797,13 +847,13 @@ final class Missao implements Listener {
             }
             for (int zz = -24; zz <= fim + 12; zz++)
                 for (int k = 0; k < 9; k++) {
-                    int x = lado * (37 + k);
+                    int x = lado * (LARG + 40 + k);
                     int alt = Y + 30 + (int) (7 * Math.sin(zz / 17.0 + lado) + 5 * Math.sin(zz / 7.3) + k * 1.5);
                     morro(x, zz, alt, r);
                 }
         }
         // serra no fim do mapa (fecha a vista do heliponto) e um morro alto "pao de acucar" ao fundo
-        for (int x = -45; x <= 45; x++)
+        for (int x = -(LARG + 48); x <= LARG + 48; x++)
             for (int k = 0; k < 22; k++) {
                 int zz = fim + 3 + k;
                 int alt = Y + 9 + (int) (5 * Math.sin(x / 9.0) + k * 1.4) + (int) Math.max(0, 16 - Math.abs(x - 12) * 1.2 - Math.max(0, 12 - k) * 1.3);
@@ -825,7 +875,7 @@ final class Missao implements Listener {
         }
         // fundo do corredor e comeco
         for (int x = -6; x <= 6; x++) for (int y = 1; y <= 8; y++) b(x, Y + y, -14, Material.BRICKS);
-        for (int x = -18; x <= 18; x++) for (int y = 1; y <= 24; y++) b(x, Y + y, fim, y <= 8 ? Material.BRICKS : Material.BARRIER);
+        for (int x = -(larg(SETORES - 1) + 6); x <= larg(SETORES - 1) + 6; x++) for (int y = 1; y <= 24; y++) b(x, Y + y, fim, y <= 8 ? Material.BRICKS : Material.BARRIER);
         for (int s = 0; s < SETORES; s++) portao(s, false);
         // ---- cada setor
         for (int s = 0; s < SETORES; s++) {
@@ -848,8 +898,8 @@ final class Missao implements Listener {
                 }
                 case 1 -> {   // becos: casas no meio, beco central (a torreta olha por ele) e becos dos lados
                     for (int[] seg : new int[][] {{za + 1, za + 9}, {za + 21, za + 29}}) {
-                        casa(-10, seg[0], -5, seg[1], Y, 1, r, false);
-                        casa(5, seg[0] + 2, 10, seg[1] - 1, Y, 1 + r.nextInt(2), r, false);
+                        casaAberta(-10, seg[0], -5, seg[1], 1, r, 1);
+                        casaAberta(5, seg[0] + 2, 10, seg[1] - 1, 1 + r.nextInt(2), r, -1);
                     }
                     for (int z = za + 2; z <= zb; z += 6) varal(-L, -6, Y + 7, z, r);
                     for (int z = za + 4; z <= zb; z += 7) varal(6, L, Y + 7, z, r);
@@ -922,6 +972,15 @@ final class Missao implements Listener {
                     palmeira(L - 2, Y + 1, za + 16, r);
                 }
             }
+            // 20/11 (Paulo: "nem deixou os players entrarem nas casas"): casas com porta, janelas abertas, andares e escada
+            if (s != 3) for (int lado = -1; lado <= 1; lado += 2) {
+                int[][] blocos = s == 2 ? new int[][] {} : new int[][] {{za + 1, za + 9}, {za + 19, za + 28}};
+                for (int[] seg : blocos) {
+                    int xa = lado * 12, xb = lado * (12 + 6 + r.nextInt(2));
+                    casaAberta(xa, seg[0], xb, seg[1], 1 + r.nextInt(2), r, -lado);
+                }
+                if (s != 4 && s != 2) casaAberta(lado * (L - 9), za + 12, lado * (L - 3), za + 17, 2, r, -lado);
+            }
             // corredor do meio livre junto do portao e as "lajes" de vigia no fundo (atiradores de elite)
             caixa(-1, Y + 1, z0(s), 1, Y + 3, z0(s) + 3, Material.AIR);
             if (s >= 2) for (int sx = -1; sx <= 1; sx += 2) {
@@ -947,7 +1006,7 @@ final class Missao implements Listener {
                 }
         }
         for (int x = -4; x <= 4; x += 4) for (int z = -34; z <= -26; z += 4) mundo.getBlockAt(x, Y + 3, z).setBlockData(luz, false);
-        pl.getLogger().info("Missao: mapa Favela construido (" + SETORES + " setores).");
+        pl.getLogger().info("Missao: mapa Favela v5 construido (" + SETORES + " setores, " + (2 * LARG + 1) + " de largura, casas com interior).");
     }
 
     // ================================================================== entrar e sair
@@ -1128,12 +1187,13 @@ final class Missao implements Listener {
             }
             noJogo.add(p.getUniqueId());
             equipar(p);
-            p.teleport(partida(0));
+            p.teleport(vaga(noJogo.size() - 1));
             p.sendMessage(PREFIXO + "§fClasse: " + CLASSE_NOME[classe.getOrDefault(p.getUniqueId(), 0)] + "§7. Botão direito atira; esquerdo no ar ou Q recarrega.");
         }
         limpar();
         desmontarTorreta();
         for (int s = 0; s < SETORES; s++) portao(s, false);
+        montarHeli();
         fase = Fase.JOGO;
         setor = 0;
         tempo = 0;
@@ -1141,8 +1201,104 @@ final class Missao implements Listener {
         Bukkit.getScheduler().runTaskLater(pl, () -> {
             if (fase != Fase.JOGO) return;
             portao(0, true);
-            aviso("§c§lSETOR 1", "§f" + NOMES[0] + " §7— limpe a área para o portão abrir", Sound.BLOCK_IRON_DOOR_OPEN);
-        }, 60L);
+            aviso("§c§lINSERÇÃO", "§fAtire pela porta do helicóptero! §7Em 15 s você pula", Sound.BLOCK_IRON_DOOR_OPEN);
+        }, 40L);
+        // 20/11: o piloto avisa e abre o chao; quem ja pulou antes so cai devagar
+        Bukkit.getScheduler().runTaskLater(pl, () -> {
+            if (fase != Fase.JOGO) return;
+            aviso("§e§lPULE!", "§7Desça e limpe o §f" + NOMES[0], Sound.ENTITY_ENDER_DRAGON_FLAP);
+            abrirChaoHeli();
+        }, 20L * 17);
+        Bukkit.getScheduler().runTaskLater(pl, this::tirarHeli, 20L * 24);
+    }
+
+    // ================================================================== 20/11 insercao de helicoptero
+    // (Paulo: "nao adicionou os players descendo de helicoptero podendo atirar da janela nos npcs, depois podendo pular")
+    static final int HX = 0, HY = Y + 17, HZ = 22;   // cauda ate z 9: nao encosta na barreira do portao (z 0-1)
+    private final List<org.bukkit.block.Block> heli = new ArrayList<>();
+    private final List<org.bukkit.block.Block> chaoHeli = new ArrayList<>();
+    private org.bukkit.scheduler.BukkitTask heliTarefa;
+
+    /** Lugar de cada um dentro do helicoptero (duas fileiras viradas para as portas abertas dos lados). */
+    private Location vaga(int i) {
+        int lado = i % 2 == 0 ? -1 : 1;
+        return new Location(mundo, HX + lado * 1 + 0.5, HY + 1, HZ - 2 + (i / 2) * 3 + 0.5, lado < 0 ? 90f : -90f, 20f);
+    }
+
+    private void hb(int x, int y, int z, Material m, boolean chao) {
+        org.bukkit.block.Block bl = mundo.getBlockAt(x, y, z);
+        bl.setType(m, false);
+        heli.add(bl);
+        if (chao) chaoHeli.add(bl);
+    }
+
+    /** Helicoptero de transporte parado no ar em cima do setor 1: piso, teto, cabine, cauda e portas abertas nos dois lados. */
+    private void montarHeli() {
+        tirarHeli();
+        for (int z = HZ - 4; z <= HZ + 4; z++)
+            for (int x = HX - 2; x <= HX + 2; x++) {
+                hb(x, HY, z, Material.GRAY_CONCRETE, Math.abs(x) <= 1 && z >= HZ - 3 && z <= HZ + 3);
+                hb(x, HY + 4, z, Material.GRAY_CONCRETE, false);
+                boolean porta = Math.abs(x) == 2 && z >= HZ - 3 && z <= HZ + 3;   // portas abertas nos lados
+                if (Math.abs(x) == 2 && !porta) for (int y = HY + 1; y <= HY + 3; y++) hb(x, y, z, Material.GRAY_CONCRETE, false);
+                if (porta) hb(x, HY + 3, z, Material.IRON_BARS, false);
+            }
+        // cabine na frente (vidro) e traseira fechada
+        for (int x = HX - 2; x <= HX + 2; x++) for (int y = HY + 1; y <= HY + 3; y++) {
+            hb(x, y, HZ + 5, y == HY + 1 ? Material.GRAY_CONCRETE : Material.LIGHT_BLUE_STAINED_GLASS, false);
+            hb(x, y, HZ - 5, Material.GRAY_CONCRETE, false);
+        }
+        for (int x = HX - 1; x <= HX + 1; x++) hb(x, HY, HZ + 5, Material.GRAY_CONCRETE, false);
+        // cauda e rotor
+        for (int z = HZ - 13; z <= HZ - 6; z++) hb(HX, HY + 3, z, Material.GRAY_CONCRETE, false);
+        hb(HX, HY + 4, HZ - 13, Material.GRAY_CONCRETE, false);
+        hb(HX, HY + 5, HZ - 13, Material.GRAY_CONCRETE, false);
+        hb(HX, HY + 5, HZ, Material.IRON_BLOCK, false);
+        for (int k = -7; k <= 7; k++) {
+            hb(HX + k, HY + 6, HZ, Material.SMOOTH_STONE_SLAB, false);
+            if (k != 0) hb(HX, HY + 6, HZ + k, Material.SMOOTH_STONE_SLAB, false);
+        }
+        org.bukkit.block.data.type.Light luz = (org.bukkit.block.data.type.Light) Bukkit.createBlockData(Material.LIGHT);
+        luz.setLevel(13);
+        org.bukkit.block.Block lb = mundo.getBlockAt(HX, HY + 3, HZ);
+        lb.setBlockData(luz, false);
+        heli.add(lb);
+        // barulho e vento do rotor
+        heliTarefa = Bukkit.getScheduler().runTaskTimer(pl, () -> {
+            if (heli.isEmpty()) return;
+            Location c = new Location(mundo, HX + 0.5, HY + 6.5, HZ + 0.5);
+            mundo.spawnParticle(Particle.CLOUD, c, 10, 3.5, 0.1, 3.5, 0.02);
+            mundo.spawnParticle(Particle.POOF, c.clone().subtract(0, 7, 0), 4, 2, 0.2, 2, 0.01);
+            for (Player p : time()) {
+                p.playSound(c, "tiro.amb_helicoptero", org.bukkit.SoundCategory.AMBIENT, 1.6f, 1.0f);
+                if (p.getLocation().distanceSquared(c) < 12 * 12 && p.getLocation().getY() < HY + 0.5 && p.getLocation().getY() > Y + 2) {
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 60, 0, false, false));
+                }
+            }
+        }, 0L, 30L);
+        for (Player p : mundo.getPlayers()) p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 20 * 30, 0, false, false));
+    }
+
+    private void abrirChaoHeli() {
+        for (org.bukkit.block.Block bl : chaoHeli) bl.setType(Material.AIR, false);
+        chaoHeli.clear();
+        for (Player p : time()) p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 20 * 8, 0, false, false));
+    }
+
+    /** O helicoptero vai embora (some com fumaca); tambem chamado no fim e no limpar. */
+    private void tirarHeli() {
+        if (heliTarefa != null) {
+            heliTarefa.cancel();
+            heliTarefa = null;
+        }
+        if (heli.isEmpty()) return;
+        for (Player p : time()) if (p.getLocation().getY() >= HY - 1 && Math.abs(p.getLocation().getX() - HX) < 4 && Math.abs(p.getLocation().getZ() - HZ) < 8) {
+            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 20 * 8, 0, false, false));
+        }
+        mundo.spawnParticle(Particle.LARGE_SMOKE, new Location(mundo, HX + 0.5, HY + 3, HZ + 0.5), 40, 3, 2, 5, 0.02);
+        for (org.bukkit.block.Block bl : heli) bl.setType(Material.AIR, false);
+        heli.clear();
+        chaoHeli.clear();
     }
 
     private void aviso(String a, String b2, Sound s) {
@@ -1159,6 +1315,7 @@ final class Missao implements Listener {
     }
 
     private void limpar() {
+        tirarHeli();
         for (Zombie z : mundo.getEntitiesByClass(Zombie.class)) z.remove();
         for (IronGolem g : mundo.getEntitiesByClass(IronGolem.class)) g.remove();
         mecha = null;

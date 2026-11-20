@@ -2398,6 +2398,35 @@ public final class Masmorras extends JavaPlugin implements Listener {
                 s.sendMessage("So no jogo.");
                 return true;
             }
+            // 20/11 (Paulo: "crie um comando para eu pegar lvl maximo das dungeons quando eu quiser"): /nivel max [nick]
+            // e /nivel set <1-6> [nick] (so equipe)
+            if (a.length > 0 && (a[0].equalsIgnoreCase("max") || a[0].equalsIgnoreCase("set")) && progresso != null && missoes != null) {
+                if (!p.hasPermission("masmorras.admin")) {
+                    p.sendMessage(txt(PREFIXO + "§cSó a equipe."));
+                    return true;
+                }
+                boolean max = a[0].equalsIgnoreCase("max");
+                int n = Progresso.MAX;
+                int idxNick = 1;
+                if (!max) {
+                    try {
+                        n = Math.max(1, Math.min(Progresso.MAX, Integer.parseInt(a.length > 1 ? a[1] : "")));
+                    } catch (NumberFormatException ex) {
+                        p.sendMessage(txt(PREFIXO + "§7Use: §f/nivel set <1-" + Progresso.MAX + "> [nick] §7ou §f/nivel max [nick]"));
+                        return true;
+                    }
+                    idxNick = 2;
+                }
+                org.bukkit.entity.Player alvo = a.length > idxNick ? Bukkit.getPlayerExact(a[idxNick]) : p;
+                if (alvo == null) {
+                    p.sendMessage(txt(PREFIXO + "§cJogador não está online."));
+                    return true;
+                }
+                missoes.definirNivelMasmorra(alvo, n);
+                p.sendMessage(txt(PREFIXO + "§a" + alvo.getName() + " agora está no §6Nível de Masmorra " + n + "§a (todas as áreas até o " + n + " liberadas)."));
+                if (alvo != p) alvo.sendMessage(txt(PREFIXO + "§aVocê está no §6Nível de Masmorra " + n + "§a."));
+                return true;
+            }
             // 18/11 (Sui: "tem alguma forma de esconder esse painel?"): /nivel painel liga e desliga o placar da direita
             if (progresso != null && progresso.ativo() && a.length > 0 && (a[0].equalsIgnoreCase("painel") || a[0].equalsIgnoreCase("placar"))) {
                 boolean escondeu = progresso.alternarPlacar(p);
