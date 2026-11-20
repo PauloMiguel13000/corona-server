@@ -752,6 +752,8 @@ final class TiposNovos {
      * lvl 6"): as 10 masmorras de nivel 6 ficam no anel novo de fora do Mundo das Masmorras (Terras Devastadas), com
      * chefes mais fortes que os do nivel 5 (vida 640-820, dano 19-24), 4 habilidades e particularidade cada.
      */
+    /** 20/11 (Paulo: "vao ter o mesmo limite de defesa que as de lvl 5... a espada o mesmo teto de dano", para dificultar):
+     *  os bonus das reliquias do nivel 6 nao passam do maior bonus do mesmo tipo nos niveis 1 a 5. */
     static void nivel6() {
         Tipo t = n("CINZAS", "Cidadela das Cinzas", "Imperador das Cinzas", Onde.NORMAL, 6, Estilo.SUBTERRANEA, "basalto", "CIDADELA CINZAS", "Cinzas");
         t.lacaios = m("WITHER_SKELETON", "BLAZE", "MAGMA_CUBE", "WITHER_SKELETON");
@@ -760,7 +762,7 @@ final class TiposNovos {
         t.ajudantes = m("WITHER_SKELETON", "BLAZE");
         t.esp = Esp.FURIA_TEMPO;
         t.aura = "WHITE_ASH";
-        rel(t, "do Imperador das Cinzas", "§6", 0xE07020, "FLAME", "CHAMAS", "Brasa Eterna", "fogo forte e dano extra", "attack_damage", 1.5, false, "Coroa de Cinzas", "+1,5 de dano");
+        rel(t, "do Imperador das Cinzas", "§6", 0xE07020, "FLAME", "CHAMAS", "Brasa Eterna", "fogo forte e dano extra", "attack_damage", 1.0, false, "Coroa de Cinzas", "+1 de dano");
 
         t = n("CATACUMBA", "Catacumba Eterna", "Lich Eterno", Onde.NORMAL, 6, Estilo.SUBTERRANEA, "almas", "CATACUMBA", "Catacumba");
         t.lacaios = m("STRAY", "WITHER_SKELETON", "BOGGED", "VEX");
@@ -769,7 +771,7 @@ final class TiposNovos {
         t.ajudantes = m("STRAY", "VEX");
         t.esp = Esp.REVIVER;
         t.aura = "SOUL";
-        rel(t, "do Lich Eterno", "§b", 0x60E0FF, "SOUL", "MURCHAR", "Toque do Lich", "Wither forte no alvo", "max_health", 4.0, false, "Filactério", "+2 corações");
+        rel(t, "do Lich Eterno", "§b", 0x60E0FF, "SOUL", "MURCHAR", "Toque do Lich", "Wither forte no alvo", "max_health", 2.0, false, "Filactério", "+1 coração");
 
         t = n("PINACULO", "Pináculo da Tempestade", "Senhor das Tempestades", Onde.NORMAL, 6, Estilo.TORRE, "cobre", "PINÁCULO", "Pináculo");
         t.lacaios = m("BREEZE", "VINDICATOR", "PILLAGER", "BREEZE");
@@ -778,7 +780,7 @@ final class TiposNovos {
         t.ajudantes = m("BREEZE", "VEX");
         t.esp = Esp.ELEMENTOS;
         t.aura = "ELECTRIC_SPARK";
-        rel(t, "do Senhor das Tempestades", "§e", 0xFFE040, "ELECTRIC_SPARK", "VENTANIA", "Trovão", "joga o alvo longe", "attack_speed", 0.4, false, "Pressa do Raio", "+0,4 de velocidade de ataque");
+        rel(t, "do Senhor das Tempestades", "§e", 0xFFE040, "ELECTRIC_SPARK", "VENTANIA", "Trovão", "joga o alvo longe", "attack_speed", 0.06, true, "Pressa do Raio", "ataca 6% mais rápido");
 
         t = n("RUBRA", "Fortaleza Rubra", "Conde Rubro", Onde.NORMAL, 6, Estilo.SUBTERRANEA, "sangue", "FORTALEZA RUBRA", "Rubra");
         t.lacaios = m("VINDICATOR", "EVOKER", "PILLAGER", "VINDICATOR");
@@ -787,7 +789,7 @@ final class TiposNovos {
         t.ajudantes = m("VINDICATOR", "EVOKER");
         t.esp = Esp.VAMPIRO;
         t.aura = "DAMAGE_INDICATOR";
-        rel(t, "do Conde Rubro", "§4", 0xA00018, "DAMAGE_INDICATOR", "SANGRAR", "Sede de Sangue", "o alvo sangra", "max_health", 4.0, false, "Sangue Nobre", "+2 corações");
+        rel(t, "do Conde Rubro", "§4", 0xA00018, "DAMAGE_INDICATOR", "SANGRAR", "Sede de Sangue", "o alvo sangra", "max_health", 2.0, false, "Sangue Nobre", "+1 coração");
 
         t = n("ECO", "Núcleo do Eco", "Colosso do Eco", Onde.NORMAL, 6, Estilo.SUBTERRANEA, "sculk", "NÚCLEO DO ECO", "Eco");
         t.lacaios = m("SKELETON", "ZOMBIE", "ENDERMAN", "VEX");
@@ -796,7 +798,7 @@ final class TiposNovos {
         t.ajudantes = m("ENDERMAN", "VEX");
         t.esp = Esp.ESCURIDAO;
         t.aura = "SCULK_SOUL";
-        rel(t, "do Colosso do Eco", "§3", 0x0A8090, "SCULK_SOUL", "SONICO", "Grito Sônico", "dano alto e escuridão", "armor", 2.0, false, "Casco de Eco", "+2 de armadura");
+        rel(t, "do Colosso do Eco", "§3", 0x0A8090, "SCULK_SOUL", "SONICO", "Grito Sônico", "dano alto e escuridão", "armor", 1.5, false, "Casco de Eco", "+1,5 de armadura");
 
         t = n("PUTRIDO", "Jardim Pútrido", "Mãe Pútrida", Onde.NORMAL, 6, Estilo.SUBTERRANEA, "distorcido", "JARDIM PÚTRIDO", "Pútrido");
         t.lacaios = m("ZOMBIE", "CAVE_SPIDER", "WITCH", "BOGGED");
@@ -805,7 +807,7 @@ final class TiposNovos {
         t.ajudantes = m("CAVE_SPIDER", "WITCH");
         t.esp = Esp.ONDAS;
         t.aura = "SPORE_BLOSSOM_AIR";
-        rel(t, "da Mãe Pútrida", "§2", 0x40A030, "SPORE_BLOSSOM_AIR", "VENENO", "Podridão", "veneno forte no alvo", "luck", 2.0, false, "Fertilidade", "+2 de sorte");
+        rel(t, "da Mãe Pútrida", "§2", 0x40A030, "SPORE_BLOSSOM_AIR", "VENENO", "Podridão", "veneno forte no alvo", "luck", 1.5, false, "Fertilidade", "+1,5 de sorte");
 
         t = n("GLACIAR", "Glaciar Eterno", "Rainha do Inverno", Onde.NORMAL, 6, Estilo.SUBTERRANEA, "gelo_azul", "GLACIAR ETERNO", "Glaciar");
         t.lacaios = m("STRAY", "STRAY", "SKELETON", "VEX");
@@ -814,7 +816,7 @@ final class TiposNovos {
         t.ajudantes = m("STRAY", "VEX");
         t.esp = Esp.CRISTAIS;
         t.aura = "SNOWFLAKE";
-        rel(t, "da Rainha do Inverno", "§b", 0xA0E0FF, "SNOWFLAKE", "CONGELAR", "Inverno Eterno", "congela o alvo", "movement_speed", 0.015, false, "Passo de Gelo", "anda mais rápido");
+        rel(t, "da Rainha do Inverno", "§b", 0xA0E0FF, "SNOWFLAKE", "CONGELAR", "Inverno Eterno", "congela o alvo", "movement_speed", 0.025, true, "Passo de Gelo", "anda 2,5% mais rápido");
 
         t = n("ABISSAL", "Santuário Abissal", "Leviatã Abissal", Onde.NORMAL, 6, Estilo.SUBTERRANEA, "prismarinho", "SANTUÁRIO ABISSAL", "Abissal");
         t.lacaios = m("DROWNED", "DROWNED", "GUARDIAN", "BOGGED");
@@ -832,7 +834,7 @@ final class TiposNovos {
         t.ajudantes = m("PIGLIN_BRUTE", "MAGMA_CUBE");
         t.esp = Esp.ESPINHOS_PELE;
         t.aura = "LAVA";
-        rel(t, "do Titã de Ferro", "§7", 0x8A8A9A, "CRIT", "ESMAGAR", "Golpe do Titã", "esmaga e atordoa o alvo", "armor_toughness", 2.0, false, "Liga de Titã", "+2 de resistência da armadura");
+        rel(t, "do Titã de Ferro", "§7", 0x8A8A9A, "CRIT", "ESMAGAR", "Golpe do Titã", "esmaga e atordoa o alvo", "armor_toughness", 1.0, false, "Liga de Titã", "+1 de resistência da armadura");
 
         t = n("CAOS", "Trono do Caos", "Arauto do Caos", Onde.NORMAL, 6, Estilo.TORRE, "fimpedra", "TRONO DO CAOS", "Caos");
         t.lacaios = m("ENDERMAN", "SHULKER", "VINDICATOR", "EVOKER");
@@ -841,7 +843,7 @@ final class TiposNovos {
         t.ajudantes = m("ENDERMAN", "EVOKER");
         t.esp = Esp.CLONES;
         t.aura = "REVERSE_PORTAL";
-        rel(t, "do Arauto do Caos", "§5", 0x8020C0, "REVERSE_PORTAL", "VAZIO", "Rasgo do Caos", "o alvo flutua e leva dano", "attack_damage", 1.5, false, "Fúria do Caos", "+1,5 de dano");
+        rel(t, "do Arauto do Caos", "§5", 0x8020C0, "REVERSE_PORTAL", "VAZIO", "Rasgo do Caos", "o alvo flutua e leva dano", "attack_damage", 1.0, false, "Fúria do Caos", "+1 de dano");
     }
 
     private TiposNovos() {}

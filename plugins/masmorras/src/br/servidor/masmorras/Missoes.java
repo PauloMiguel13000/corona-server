@@ -302,7 +302,7 @@ final class Missoes implements Listener {
         Material m = Material.matchMaterial(materialDoNivel(t.nivel) + "_" + peca);
         if (m == null) m = Material.matchMaterial("IRON_" + peca);
         ItemStack it = new ItemStack(m);
-        if (t.nivel == 4 || t.nivel >= 5) it.addUnsafeEnchantment(Enchantment.PROTECTION, t.nivel >= 6 ? 4 : t.nivel >= 5 ? 2 : 1);
+        if (t.nivel == 4 || t.nivel >= 5) it.addUnsafeEnchantment(Enchantment.PROTECTION, t.nivel >= 5 ? 2 : 1);   // 20/11: nivel 6 = mesmo teto do 5
         // 20/11: pecas do nivel 6 com Inquebravel III (a armadura de cada masmorra vem do pacote: corona:<tema>)
         if (t.nivel >= 6) it.addUnsafeEnchantment(Enchantment.UNBREAKING, 3);
         return pl.reliquias != null ? pl.reliquias.aplicar(it, t) : it;

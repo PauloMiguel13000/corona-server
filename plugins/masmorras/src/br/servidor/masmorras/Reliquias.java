@@ -421,16 +421,17 @@ final class Reliquias implements Listener {
             atualizar(it);
             return true;
         }
+        boolean teto = aplicarTeto(it, tema);
         String n = it.getType().name();
         boolean armadura = n.endsWith("_HELMET") || n.endsWith("_CHESTPLATE") || n.endsWith("_LEGGINGS") || n.endsWith("_BOOTS");
-        if (!armadura && modelo(n) == null && !(tema.equalsIgnoreCase("herobrine") && pecaHerobrine(n) != null)) return false;
+        if (!armadura && modelo(n) == null && !(tema.equalsIgnoreCase("herobrine") && pecaHerobrine(n) != null)) return teto;
         try {
             boolean nv6Velho = NIVEL6_VISUAL.containsKey(tema.toUpperCase(java.util.Locale.ROOT)) && it.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL)
                     && !it.getData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL).value().contains(tema.toLowerCase(java.util.Locale.ROOT));
             boolean trimVelho = NIVEL6_VISUAL.containsKey(tema.toUpperCase(java.util.Locale.ROOT)) && it.getItemMeta() instanceof org.bukkit.inventory.meta.ArmorMeta am0 && am0.hasTrim();
-            if (!nv6Velho && !trimVelho && it.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL)) return n.endsWith("_HELMET") && acertarElmo(it, tema);
+            if (!nv6Velho && !trimVelho && it.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL)) return (n.endsWith("_HELMET") && acertarElmo(it, tema)) | teto;
         } catch (Throwable ex) {
-            return false;
+            return teto;
         }
         visualDoPacote(it, tema, pl.getLogger());
         return true;
@@ -665,7 +666,7 @@ final class Reliquias implements Listener {
         if (ate != null && ate > agora) return;
         if (rnd().nextDouble() >= chance) return;
         recarga.put(p.getUniqueId(), agora + 1200L);
-        int n = Math.max(1, nivelDoTema(id));
+        int n = Math.min(TETO_NIVEL, Math.max(1, nivelDoTema(id)));   // 20/11: golpe do nivel 6 = forca do 5
         p.sendActionBar(Masmorras.txt(tm.cor() + "§l✦ " + tm.golpeNome() + "!"));
         golpe(tm, p, alvo, n, boneco);
     }
@@ -688,6 +689,47 @@ final class Reliquias implements Listener {
         } catch (Throwable t) {
             return false;
         }
+    }
+
+    /** 20/11 (Paulo): dano e defesa das reliquias do nivel 6 (e do 7 depois) param no teto do nivel 5. */
+    static final int TETO_NIVEL = 5;
+    static final int TETO_PROTECAO = 2;
+
+    /** Pecas do nivel 6 feitas antes do teto: Protecao acima de 2 e bonus antigo da reliquia voltam ao teto. */
+    private boolean aplicarTeto(ItemStack it, String tema) {
+        if (nivelDoTema(tema) <= TETO_NIVEL || !it.hasItemMeta()) return false;
+        boolean mudou = false;
+        ItemMeta m = it.getItemMeta();
+        if (m.getEnchantLevel(org.bukkit.enchantments.Enchantment.PROTECTION) > TETO_PROTECAO) {
+            m.removeEnchant(org.bukkit.enchantments.Enchantment.PROTECTION);
+            m.addEnchant(org.bukkit.enchantments.Enchantment.PROTECTION, TETO_PROTECAO, true);
+            mudou = true;
+        }
+        Tema tm = TEMAS.get(tema.toUpperCase(java.util.Locale.ROOT));
+        Attribute at = tm == null ? null : atributo(tm.attr());
+        if (m.hasAttributeModifiers()) {
+            for (Attribute a : new ArrayList<>(m.getAttributeModifiers().keySet())) {
+                java.util.Collection<AttributeModifier> ms = m.getAttributeModifiers(a);
+                if (ms == null) continue;
+                for (AttributeModifier am : new ArrayList<>(ms)) {
+                    if (!am.getKey().getKey().startsWith("reliquia_")) continue;
+                    if (a.equals(at) && am.getOperation() == tm.op() && Math.abs(am.getAmount() - tm.valor()) < 1e-6) continue;
+                    m.removeAttributeModifier(a, am);
+                    if (at != null) m.addAttributeModifier(at, new AttributeModifier(am.getKey(), tm.valor(), tm.op(), am.getSlotGroup()));
+                    mudou = true;
+                }
+            }
+        }
+        if (mudou && tm != null && m.hasLore()) {
+            List<net.kyori.adventure.text.Component> lore = new ArrayList<>(m.lore());
+            for (int i = 0; i < lore.size(); i++) {
+                String plano = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(lore.get(i));
+                if (plano.startsWith("» " + tm.passivoNome() + ":")) lore.set(i, Masmorras.txt(tm.cor() + "» " + tm.passivoNome() + ": §7" + tm.passivoDesc()));
+            }
+            m.lore(lore);
+        }
+        if (mudou) it.setItemMeta(m);
+        return mudou;
     }
 
     private static int nivelDoTema(String id) {

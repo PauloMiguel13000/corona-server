@@ -61,8 +61,9 @@ final class Premios {
 
     private static Opcao[] sorteio(int nivel) {
         if (nivel >= 6) return new Opcao[] {o("ELYTRA", 1, 1, 0.3), o("NETHER_STAR", 1, 1, 0.25), o("HEAVY_CORE", 1, 1, 0.15),
-                enc("NETHERITE_SWORD", "sharpness:5", "unbreaking:3", "looting:3", "fire_aspect:2"), enc("NETHERITE_AXE", "sharpness:5", "unbreaking:3"),
-                enc("NETHERITE_CHESTPLATE", "protection:4", "unbreaking:3"), enc("NETHERITE_HELMET", "protection:4", "unbreaking:3"),
+                // 20/11 (Paulo): nivel 6 com o mesmo teto de dano e de defesa do nivel 5
+                enc("NETHERITE_SWORD", "sharpness:5", "unbreaking:3", "looting:3"), enc("NETHERITE_AXE", "sharpness:5", "unbreaking:3"),
+                enc("NETHERITE_CHESTPLATE", "protection:2", "unbreaking:3"), enc("NETHERITE_HELMET", "protection:2", "unbreaking:3"),
                 enc("BOW", "power:5", "unbreaking:3", "flame:1", "punch:2"), o("NETHERITE_INGOT", 1, 2, 0.5), o("SHULKER_SHELL", 2, 4),
                 livro("mending:1", "protection:4", "sharpness:5", "power:5", "unbreaking:3", "looting:3", "fortune:3", "feather_falling:4")};
         return switch (nivel) {
