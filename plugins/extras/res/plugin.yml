@@ -83,6 +83,9 @@ commands:
   terror:
     description: Vai para o Lobby do Terror (jogos de terror)
     aliases: [lobbyterror]
+  titulo:
+    description: Escolher o seu titulo (so 1 aparece - chat, TAB e em cima da cabeca)
+    aliases: [titulos, meutitulo]
   vip:
     description: 'VIPs do servidor (beneficios, kit do dia, particulas, chapeu, voar). Console - vip dar <jogador> <nivel> <dias>'
     aliases: [vips]

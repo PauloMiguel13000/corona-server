@@ -49,6 +49,7 @@ public final class Extras extends JavaPlugin implements Listener {
     Placas placas;
     Vazio vazio;
     Vip vip;
+    Titulos titulos;
     LobbyMinigames lobby;
     LobbyTerror terror;
     SpawnPrincipal spawnNovo;
@@ -153,6 +154,9 @@ public final class Extras extends JavaPlugin implements Listener {
             getLogger().warning("Asas do Traje do Rei (Java) nao ligaram: " + ex);
         }
         vip.iniciar();
+        titulos = new Titulos(this);   // 20/11: 1 titulo so (/titulo)
+        Bukkit.getPluginManager().registerEvents(titulos, this);
+        titulos.iniciar();
         try {
             mochilas = new Mochilas(this);
             Bukkit.getPluginManager().registerEvents(mochilas, this);
@@ -225,6 +229,7 @@ public final class Extras extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if (titulos != null) titulos.parar();
         if (contadoresLobby != null) contadoresLobby.limpar();
         if (torneioPesca != null) torneioPesca.desligar();
         if (pinata != null) pinata.desligar();
@@ -305,6 +310,11 @@ public final class Extras extends JavaPlugin implements Listener {
         if (!(e.getEntity() instanceof Player p) || !semAtaqueDeMonstro(p.getWorld())) return;
         if (jogadorDe(e.getDamager()) != null) return;
         e.setCancelled(true);
+    }
+
+    /** 20/11: o Clas chama quando a pessoa entra/sai de um cla (o titulo e a tag do cla ficam no mesmo time). */
+    public void atualizarCabeca(Player p) {
+        if (titulos != null) titulos.atualizarCabeca(p);
     }
 
     static Component txt(String legado) {
@@ -969,6 +979,7 @@ public final class Extras extends JavaPlugin implements Listener {
     @Override
     public boolean onCommand(CommandSender s, Command cmd, String label, String[] args) {
         if (cmd.getName().equalsIgnoreCase("vip")) return vip.comando(s, args);
+        if (cmd.getName().equalsIgnoreCase("titulo")) return titulos == null || titulos.comando(s, args);
         if (cmd.getName().equalsIgnoreCase("eventos")) {
             if (painelDia != null) for (String l : painelDia.texto().split("\n")) s.sendMessage(txt(l));
             return true;

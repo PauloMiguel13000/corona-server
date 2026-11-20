@@ -146,6 +146,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
     Portoes portoes;
     PortaisNivel portaisNivel;
     Progresso progresso;
+    EstrelaRenascido estrela;
     OrdemSalas ordem;
     Trilha trilha;
 
@@ -427,6 +428,8 @@ public final class Masmorras extends JavaPlugin implements Listener {
         progresso = new Progresso(this);
         getServer().getPluginManager().registerEvents(progresso, this);
         progresso.iniciar();
+        estrela = new EstrelaRenascido(this);
+        getServer().getPluginManager().registerEvents(estrela, this);
         ConfigurationSection ms = banco.getConfigurationSection("mapas");
         if (ms != null)
             for (String k : ms.getKeys(false)) {
@@ -2427,6 +2430,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
         if (cmd.getName().equalsIgnoreCase("galeria")) return galeria.comando(s, a);
         if (cmd.getName().equalsIgnoreCase("trilha")) return missoes != null && missoes.comandoTrilha(s, a);
         if (cmd.getName().equalsIgnoreCase("rebirth")) {
+            if (s instanceof org.bukkit.entity.Player p && estrela != null && a.length > 0 && a[0].equalsIgnoreCase("estrela")) { estrela.comando(p); return true; }
             if (s instanceof org.bukkit.entity.Player p && progresso != null) progresso.comandoRebirth(p, a);
             return true;
         }

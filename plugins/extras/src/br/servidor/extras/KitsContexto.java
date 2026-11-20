@@ -44,7 +44,7 @@ final class KitsContexto implements Listener {
             new Kit("alquimista", Lugar.MASMORRA, "§d§lKit Alquimista", Material.SPLASH_POTION, 12, "Poções de cura, regeneração e força + maçãs douradas"),
             new Kit("explorador", Lugar.MASMORRA, "§e§lKit Explorador", Material.TORCH, 12, "Tochas, cenouras douradas, balde de leite e bússola"),
             // 20/11 (Paulo: "loja de XP e runas abrem por um item no kit geral"): vale no Survival e nas Masmorras
-            new Kit("geral", Lugar.OUTRO, "§b§lKit Geral", Material.AMETHYST_SHARD, 1, "Itens que abrem a Loja de XP e as Runas da classe"),
+            new Kit("geral", Lugar.OUTRO, "§b§lKit Geral", Material.AMETHYST_SHARD, 1, "Itens que abrem a Loja de XP, as Runas da classe e os Títulos"),
     };
 
     /** Itens do Kit Geral: segurar e clicar (botao direito / tocar e segurar no celular) abre o menu. */
@@ -152,6 +152,7 @@ final class KitsContexto implements Listener {
         // 20/11: atalhos direto para a Loja de XP e as Runas
         inv.setItem(0, itemMenu(Material.EMERALD, "§a§lLoja de XP", "xp loja", "§7Troque o seu XP por VIP, coronas e itens."));
         inv.setItem(8, itemMenu(Material.AMETHYST_SHARD, "§d§lRunas da Classe", "runa", "§7Suba o nível da sua classe (1 a 60)."));
+        inv.setItem(4, itemMenu(Material.NAME_TAG, "§e§lTítulos", "titulo", "§7Escolha o título que aparece no seu nome."));
         p.openInventory(inv);
         p.playSound(p.getLocation(), Sound.BLOCK_CHEST_OPEN, 0.6f, 1.2f);
     }
@@ -180,6 +181,7 @@ final class KitsContexto implements Listener {
         if (s == 26) { p.closeInventory(); p.performCommand("kit"); return; }
         if (s == 0) { p.closeInventory(); p.performCommand("xp loja"); return; }
         if (s == 8) { p.closeInventory(); p.performCommand("runa"); return; }
+        if (s == 4) { p.closeInventory(); p.performCommand("titulo"); return; }
         int i = (s - 10) / 2;
         if (s < 10 || (s - 10) % 2 != 0 || i >= t.kits.size()) return;
         Kit k = t.kits.get(i);
@@ -235,7 +237,8 @@ final class KitsContexto implements Listener {
             case "alquimista" -> List.of(pocao(Material.SPLASH_POTION, PotionType.HEALING, 3), pocao(Material.POTION, PotionType.REGENERATION, 1),
                     pocao(Material.POTION, PotionType.STRENGTH, 1), it(Material.GOLDEN_APPLE, 2));
             case "geral" -> List.of(itemMenu(Material.EMERALD, "§a§lLoja de XP", "xp loja", "§7Troque o seu XP por VIP, coronas e itens."),
-                    itemMenu(Material.AMETHYST_SHARD, "§d§lRunas da Classe", "runa", "§7Suba o nível da sua classe (1 a 60)."));
+                    itemMenu(Material.AMETHYST_SHARD, "§d§lRunas da Classe", "runa", "§7Suba o nível da sua classe (1 a 60)."),
+                    itemMenu(Material.NAME_TAG, "§e§lTítulos", "titulo", "§7Escolha o título que aparece no seu nome."));
             case "explorador" -> List.of(it(Material.TORCH, 48), it(Material.GOLDEN_CARROT, 16), it(Material.MILK_BUCKET, 1), it(Material.COMPASS, 1));
             default -> List.of();
         };

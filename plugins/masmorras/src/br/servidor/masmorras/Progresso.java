@@ -153,7 +153,7 @@ final class Progresso implements Listener {
         }
         if (a.length == 0 || !a[0].equalsIgnoreCase("confirmar")) {
             p.sendMessage(Masmorras.txt("§5§l✦ REBIRTH §8» §fVocê pode renascer! §7Volta ao §fNível de Masmorra 1 §7(a trilha zera; itens e coronas ficam)."));
-            p.sendMessage(Masmorras.txt("§7Ganha §d+1 slot de runa §7(+0,3% de dano e defesa) e o título. Para confirmar: §d§l/rebirth confirmar"));
+            p.sendMessage(Masmorras.txt("§7Ganha §d+1 slot de runa §7(+0,3% de dano e defesa), o título e a §dEstrela do Renascido§7. Para confirmar: §d§l/rebirth confirmar"));
             return;
         }
         pl.missoes.zerarParaRebirth(p);
@@ -166,6 +166,7 @@ final class Progresso implements Listener {
         p.getWorld().spawnParticle(Particle.REVERSE_PORTAL, p.getLocation().add(0, 1, 0), 120, 0.6, 1.2, 0.6, 0.15);
         p.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, p.getLocation().add(0, 1, 0), 60, 0.6, 0.9, 0.6, 0.4);
         Bukkit.broadcast(Masmorras.txt(Masmorras.PREFIXO + titulo(n) + "§f" + p.getName() + " §dRENASCEU! §7Venceu todas as masmorras e voltou ao nível 1 para ficar ainda mais forte."));
+        if (pl.estrela != null) pl.estrela.entregar(p, true);   // item exclusivo
         // TAB do Poderes (le a marca)
         Bukkit.getScheduler().runTaskLater(pl, () -> { if (p.isOnline()) Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "poderes atualizartab " + p.getName()); }, 5L);
     }
@@ -175,6 +176,9 @@ final class Progresso implements Listener {
     public void chatRebirth(io.papermc.paper.event.player.AsyncChatEvent e) {
         int n = rebirths(e.getPlayer());
         if (n <= 0) return;
+        // 20/11: com o Extras ligado, o titulo (1 so, escolhido no /titulo) e colocado por ele
+        org.bukkit.plugin.Plugin ex = Bukkit.getPluginManager().getPlugin("Extras");
+        if (ex != null && ex.isEnabled()) return;
         net.kyori.adventure.text.Component tag = Masmorras.txt(titulo(n));
         io.papermc.paper.chat.ChatRenderer antes = e.renderer();
         e.renderer((src, nome, msg, quem) -> tag.append(antes.render(src, nome, msg, quem)));

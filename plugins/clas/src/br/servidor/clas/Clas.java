@@ -243,7 +243,18 @@ public final class Clas extends JavaPlugin implements Listener {
     /** Tag em cima da cabeca (time do placar "cla_TAG") e no TAB (pelo Poderes, que monta o nome do TAB). */
     void atualizarTag(Player p) {
         Registro.Cla c = r.claDe.get(p.getUniqueId());
-        if (getConfig().getBoolean("cla.tag-na-cabeca", true)) {
+        // 20/11: com o Extras (titulos), ele monta a cabeca inteira (titulo escolhido + tag do cla) num time so
+        boolean extras = false;
+        try {
+            org.bukkit.plugin.Plugin ex = Bukkit.getPluginManager().getPlugin("Extras");
+            if (ex != null && ex.isEnabled()) {
+                ex.getClass().getMethod("atualizarCabeca", Player.class).invoke(ex, p);
+                extras = true;
+            }
+        } catch (Exception ignorado) {
+            // Extras antigo: o Clas faz a tag sozinho
+        }
+        if (!extras && getConfig().getBoolean("cla.tag-na-cabeca", true)) {
             try {
                 Scoreboard sb = Bukkit.getScoreboardManager().getMainScoreboard();
                 Team atual = sb.getEntryTeam(p.getName());

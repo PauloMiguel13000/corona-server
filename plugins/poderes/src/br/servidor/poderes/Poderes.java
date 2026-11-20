@@ -342,6 +342,7 @@ public final class Poderes extends JavaPlugin implements Listener {
 
     /** Tag do VIP (plugin Extras) para o TAB. */
     private static final NamespacedKey CARGO = new NamespacedKey("extras", "cargo");
+    private static final NamespacedKey TITULO_TAB = new NamespacedKey("extras", "titulo_tab");
 
     static String tagVip(Player p) {
         String cargo = p.getPersistentDataContainer().get(CARGO, PersistentDataType.STRING);
@@ -357,7 +358,9 @@ public final class Poderes extends JavaPlugin implements Listener {
         Classe c = classe(p);
         String tag = Externo.tag(p);
         String t = tag == null ? "" : "§8[§d" + tag + "§8] ";
-        String v = Runas.tituloRebirth(p) + tagVip(p);
+        // 20/11: o Extras guarda o titulo escolhido (1 so) em extras:titulo_tab; sem ele, o jeito antigo
+        String esc = p.getPersistentDataContainer().get(TITULO_TAB, PersistentDataType.STRING);
+        String v = esc != null ? esc : Runas.tituloRebirth(p) + tagVip(p);
         if (c == null) p.playerListName(tag == null && v.isEmpty() ? null : txt(v + t + "§f" + p.getName()));
         else p.playerListName(txt(v + c.cor + "[" + c.nome + "] " + t + "§f" + p.getName()));
     }

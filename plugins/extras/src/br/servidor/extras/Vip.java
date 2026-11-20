@@ -314,6 +314,7 @@ final class Vip implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void chat(io.papermc.paper.event.player.AsyncChatEvent e) {
+        if (pl.titulos != null) return;   // 20/11: o titulo (1 so, /titulo) e colocado pelo Titulos
         Integer n = e.getPlayer().getPersistentDataContainer().get(kNivel, PersistentDataType.INTEGER);
         Long ate = e.getPlayer().getPersistentDataContainer().get(kAte, PersistentDataType.LONG);
         boolean vip = !(n == null || n < 1 || n > 4 || ate == null || ate < System.currentTimeMillis());
