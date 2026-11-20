@@ -192,6 +192,13 @@ public final class Poderes extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(torretas, this);
         Bukkit.getPluginManager().registerEvents(hab, this);
         Bukkit.getPluginManager().registerEvents(lut, this);
+        if (Bukkit.getPluginManager().getPlugin("AuraSkills") != null) {
+            try {
+                Bukkit.getPluginManager().registerEvents(new LimitePoder(), this);
+            } catch (Throwable ex) {
+                getLogger().warning("Limite do nivel de poder (AuraSkills): " + ex);
+            }
+        }
         runas = new Runas(this);
         Bukkit.getPluginManager().registerEvents(runas, this);
         runas.iniciar();
@@ -393,7 +400,7 @@ public final class Poderes extends JavaPlugin implements Listener {
     double fator(Player p) {
         int n = nivelDePoder(p);
         if (n < 0) n = 0;
-        double base = (1.0 + Math.min(n, 200) / 200.0) * getConfig().getDouble("habilidades.dano-multiplicador", 1.3);
+        double base = (1.0 + Math.min(n, Papi.MAXIMO) / 120.0)   /* 20/11: teto 60 (era ate 200: 1x a 2x; agora 1x a 1,5x) */ * getConfig().getDouble("habilidades.dano-multiplicador", 1.3);
         if (runas != null) base *= runas.fatorHab(p);
         return hab == null ? base : base * hab.multiplicador(p);
     }
