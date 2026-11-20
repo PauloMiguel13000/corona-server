@@ -144,6 +144,24 @@ final class Torretas implements Listener {
         return chefe(le) ? dano * DANO_EM_CHEFE : dano;
     }
 
+    /**
+     * 20/11 (Paulo: "faca os monstros ignorarem as torres dos engenheiros caso eles foquem nelas... e quando o player
+     * colocar a torre e correr, o monstro foque ele logo"): monstro que mira numa torre passa a mirar o dono (se estiver
+     * perto, no mesmo mundo e vivo); se nao, larga a torre.
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void naoMiraTorre(org.bukkit.event.entity.EntityTargetLivingEntityEvent e) {
+        if (!(e.getTarget() instanceof ArmorStand t) || !t.getPersistentDataContainer().has(chaveTorreta, PersistentDataType.STRING)) return;
+        Player dono = donoDe(t);
+        if (dono != null && dono.isValid() && !dono.isDead() && dono.getWorld() == e.getEntity().getWorld()
+                && dono.getLocation().distanceSquared(e.getEntity().getLocation()) < 40 * 40
+                && dono.getGameMode() != org.bukkit.GameMode.CREATIVE && dono.getGameMode() != org.bukkit.GameMode.SPECTATOR) {
+            e.setTarget(dono);
+        } else {
+            e.setCancelled(true);
+        }
+    }
+
     Player donoDe(ArmorStand t) {
         String v = t.getPersistentDataContainer().get(chaveTorreta, PersistentDataType.STRING);
         try {

@@ -72,7 +72,7 @@ final class Coroas {
         }
         ItemStack it = new ItemStack(base);
         try {
-            it.setData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL, net.kyori.adventure.key.Key.key("corona", "item/chefes/" + t.id.toLowerCase(Locale.ROOT)));
+            it.setData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL, net.kyori.adventure.key.Key.key("corona", "item/chefes/" + Reliquias.NIVEL6_VISUAL.getOrDefault(t.id, t.id).toLowerCase(Locale.ROOT)));   // 20/11: nv6 sem coroa propria ainda (era o cubo roxo e preto)
         } catch (Throwable ignored) {
         }
         return it;

@@ -279,10 +279,9 @@ final class MundoMasmorras implements Listener {
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void fome(FoodLevelChangeEvent e) {
         if (!ehNosso(e.getEntity().getWorld())) return;
-        if (e.getFoodLevel() < e.getEntity().getFoodLevel()) {
-            e.setCancelled(true);
-            if (e.getEntity() instanceof Player p && p.getFoodLevel() < 20) p.setFoodLevel(20);
-        }
+        // 20/11 (Paulo: "adicionar fome, mas fome baixa no mundo das masmorras"): a fome desce so 1/3 do normal
+        if (e.getFoodLevel() < e.getEntity().getFoodLevel()
+                && java.util.concurrent.ThreadLocalRandom.current().nextDouble() >= pl.getConfig().getDouble("fome.chance-masmorras", 0.33)) e.setCancelled(true);
     }
 
     private static final Set<CreatureSpawnEvent.SpawnReason> NATURAIS = Set.of(CreatureSpawnEvent.SpawnReason.NATURAL, CreatureSpawnEvent.SpawnReason.CHUNK_GEN,
@@ -342,7 +341,6 @@ final class MundoMasmorras implements Listener {
     @EventHandler
     public void entrou(PlayerJoinEvent e) {
         Player p = e.getPlayer();
-        if (ehNosso(p.getWorld()) && p.getFoodLevel() < 20) p.setFoodLevel(20);
     }
 
     /** Leva ao lobby do mundo novo. */

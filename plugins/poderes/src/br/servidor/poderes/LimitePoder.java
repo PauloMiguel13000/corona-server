@@ -31,6 +31,47 @@ final class LimitePoder implements Listener {
         return Math.min(pl.getConfig().getInt("skills.limite-maximo", 60), base + por * (rb == null ? 0 : Math.max(0, rb)));
     }
 
+    /**
+     * 20/11 (Paulo: "o meu nao ficou limitado lvl 15 que nem os outros"): quem ja tinha passado do limite volta para ele
+     * (ao entrar e a cada 5 min). Config skills.cortar-acima (padrao true).
+     */
+    void cortar(Player p) {
+        if (!pl.getConfig().getBoolean("skills.cortar-acima", true)) return;
+        int lim = limite(p);
+        try {
+            var api = dev.aurelium.auraskills.api.AuraSkillsApi.get();
+            var u = api.getUser(p.getUniqueId());
+            if (u == null || !u.isLoaded()) return;
+            StringBuilder cortadas = new StringBuilder();
+            for (var sk : api.getGlobalRegistry().getSkills()) {
+                if (!sk.isEnabled()) continue;
+                int n = u.getSkillLevel(sk);
+                if (n > lim) {
+                    u.setSkillLevel(sk, lim);
+                    cortadas.append(cortadas.length() == 0 ? "" : ", ").append(sk.getDisplayName(java.util.Locale.ROOT)).append(" ").append(n).append("→").append(lim);
+                }
+            }
+            if (cortadas.length() > 0) {
+                p.sendMessage(Poderes.txt("§6§lLIMITE DAS SKILLS §8» §7As skills agora vão até o §f" + lim + "§7 (+5 por REBIRTH): " + cortadas));
+                pl.getLogger().info("Skills de " + p.getName() + " cortadas para " + lim + ": " + cortadas);
+            }
+        } catch (Throwable t) {
+            pl.getLogger().warning("Cortar skills de " + p.getName() + ": " + t);
+        }
+    }
+
+    void iniciar() {
+        org.bukkit.Bukkit.getScheduler().runTaskTimer(pl, () -> {
+            for (Player p : org.bukkit.Bukkit.getOnlinePlayers()) cortar(p);
+        }, 20L * 30, 20L * 300);
+    }
+
+    @EventHandler
+    public void entrou(org.bukkit.event.player.PlayerJoinEvent e) {
+        Player p = e.getPlayer();
+        org.bukkit.Bukkit.getScheduler().runTaskLater(pl, () -> { if (p.isOnline()) cortar(p); }, 20L * 8);
+    }
+
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void xp(dev.aurelium.auraskills.api.event.skill.XpGainEvent e) {
         Player p = e.getPlayer();

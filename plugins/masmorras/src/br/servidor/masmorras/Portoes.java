@@ -142,7 +142,7 @@ final class Portoes implements Listener {
                 por(w, cx - r + 1, y + dy, cz + dz, borda ? "minecraft:obsidian" : "minecraft:nether_portal[axis=z]");
             }
         texto(w, new Location(w, cx - r + 1.5, y + 6.8, cz + 0.5), "§a§lVOLTAR AO LOBBY\n§7atravesse o portal", 1.0f);
-        texto(w, new Location(w, cx + 0.5, y + 5.5, cz + 0.5), nether ? "§c§lNETHER DAS MASMORRAS\n§7Fale com o Guia: ele te leva até uma masmorra\n§8sem fome, sem quebrar, só os monstros das masmorras"
+        texto(w, new Location(w, cx + 0.5, y + 5.5, cz + 0.5), nether ? "§c§lNETHER DAS MASMORRAS\n§7Fale com o Guia: ele te leva até uma masmorra\n§8fome baixa, sem quebrar, só os monstros das masmorras"
                 : "§d§lEND DAS MASMORRAS\n§7Fale com o Guia: ele te leva até uma masmorra\n§8cuidado com o vazio", 1.1f);
         pl.getLogger().info("Camara de chegada construida em " + w.getName() + " (" + cx + ", " + y + ", " + cz + ").");
     }

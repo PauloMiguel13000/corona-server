@@ -154,6 +154,39 @@ public final class Masmorras extends JavaPlugin implements Listener {
      * 20/11 (Paulo: "a entrada do castelo do Carrasco esta bloqueada"): masmorras ja construidas cujo tunel terminou
      * dentro do morro ganham um corredor reto para o norte ate o ar livre (3 de largura, 4 de altura). Uma vez so.
      */
+    /**
+     * 20/11 (Paulo: "as dungeons novas estao escuras"): luz invisivel (bloco de luz nivel 13) a cada 5 blocos nas salas
+     * e nos corredores das masmorras do nivel 6. Anota o id em clareadas-v1.txt para nao repetir.
+     */
+    void clarear(World w, Masmorra m) {
+        org.bukkit.block.data.type.Light luz = (org.bukkit.block.data.type.Light) Bukkit.createBlockData(Material.LIGHT);
+        luz.setLevel(13);
+        int postas = 0;
+        List<Caixa> todasCaixas = new ArrayList<>(m.salas);
+        todasCaixas.addAll(m.protecao);
+        for (Caixa c : todasCaixas) {
+            for (int x = c.x1() + 1; x <= c.x2() - 1; x += 5)
+                for (int z = c.z1() + 1; z <= c.z2() - 1; z += 5) {
+                    w.getChunkAt(x >> 4, z >> 4).load(true);
+                    for (int y = c.y1() + 1; y <= Math.min(c.y2() - 1, c.y1() + 12); y++) {
+                        Block b = w.getBlockAt(x, y, z), baixo = w.getBlockAt(x, y - 1, z), cima = w.getBlockAt(x, y + 2, z);
+                        if (b.getType() == Material.AIR && baixo.getType().isSolid() && w.getBlockAt(x, y + 1, z).getType() == Material.AIR) {
+                            Block alvo = cima.getType() == Material.AIR ? cima : w.getBlockAt(x, y + 1, z);
+                            alvo.setBlockData(luz, false);
+                            postas++;
+                            break;
+                        }
+                    }
+                }
+        }
+        try {
+            java.nio.file.Files.writeString(new File(getDataFolder(), "clareadas-v1.txt").toPath(), m.id + "\n",
+                    java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
+        } catch (Exception ignored) {
+        }
+        getLogger().info("Masmorra #" + m.id + " " + m.tipo.nome + ": " + postas + " luzes.");
+    }
+
     void abrirEntradasPresas() {
         File marca = new File(getDataFolder(), "entradas-abertas-v1.txt");
         if (marca.exists()) return;
@@ -296,6 +329,24 @@ public final class Masmorras extends JavaPlugin implements Listener {
         Bukkit.getScheduler().runTaskLater(this, () -> { try { inferno.mundo(); } catch (Throwable ex) { getLogger().warning("Mundo de Herobrine: " + ex); } }, 200L);
         Bukkit.getScheduler().runTaskLater(this, () -> { try { inferno.tirarIlhaAntiga(); } catch (Throwable ex) { getLogger().warning("Ilha antiga: " + ex); } }, 300L);
         Bukkit.getScheduler().runTaskLater(this, () -> { try { abrirEntradasPresas(); } catch (Throwable ex) { getLogger().warning("Entradas presas: " + ex); } }, 700L);
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            try {
+                File f = new File(getDataFolder(), "clareadas-v1.txt");
+                java.util.Set<String> ja = new java.util.HashSet<>();
+                if (f.exists()) ja.addAll(java.nio.file.Files.readAllLines(f.toPath()));
+                int n = 0;
+                for (Masmorra m : new ArrayList<>(todas)) {
+                    if (m.demolindo || m.tipo == null || m.tipo.nivel < 6 || ja.contains(String.valueOf(m.id))) continue;
+                    World w = Bukkit.getWorld(m.mundo);
+                    if (w == null) continue;
+                    clarear(w, m);
+                    n++;
+                }
+                if (n > 0) getLogger().info("Masmorras do nivel 6 clareadas: " + n);
+            } catch (Throwable ex) {
+                getLogger().warning("Clarear masmorras: " + ex);
+            }
+        }, 760L);
         getServer().getPluginManager().registerEvents(new Vidas(this), this);
         hub = new Hub(this);
         getServer().getPluginManager().registerEvents(loja, this);
@@ -692,6 +743,7 @@ public final class Masmorras extends JavaPlugin implements Listener {
             if (obra.placa != null) porPlaca(w, obra.placa);
             todas.add(m);
             porId.put(m.id, m);
+            if (m.tipo.nivel >= 6) clarear(w, m);
             salvar();
             soltarChunks(p);
             getLogger().info("Masmorra #" + id + " " + p.tipo.nome + " (nivel " + p.tipo.nivel + ") pronta em " + w.getName() + " "

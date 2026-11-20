@@ -194,7 +194,9 @@ public final class Poderes extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(lut, this);
         if (Bukkit.getPluginManager().getPlugin("AuraSkills") != null) {
             try {
-                Bukkit.getPluginManager().registerEvents(new LimitePoder(this), this);
+                LimitePoder lim = new LimitePoder(this);
+                Bukkit.getPluginManager().registerEvents(lim, this);
+                lim.iniciar();
             } catch (Throwable ex) {
                 getLogger().warning("Limite do nivel de poder (AuraSkills): " + ex);
             }

@@ -127,18 +127,24 @@ final class Progresso implements Listener {
     }
 
     /** Terminou TODAS as masmorras de TODOS os niveis (1 a MAX). */
+    /** 20/11 (Paulo: "o rebirth 1, so precise a pessoa fazer as dungeons ate as lvl 5"): ate que nivel precisa vencer tudo. */
+    int nivelDoRebirth(Player p) {
+        return rebirths(p) == 0 ? Math.min(MAX, pl.getConfig().getInt("rebirth.primeiro-ate-nivel", 5)) : MAX;
+    }
+
     boolean podeRenascer(Player p) {
         if (!ativo()) return false;
         recalcular(p, false);
-        if (nivel(p) < MAX) return false;
-        for (int n = 1; n <= MAX; n++) if (!faltam(p, n).isEmpty()) return false;
+        int ate = nivelDoRebirth(p);
+        if (nivel(p) < ate) return false;
+        for (int n = 1; n <= ate; n++) if (!faltam(p, n).isEmpty()) return false;
         return true;
     }
 
     void comandoRebirth(Player p, String[] a) {
         int ja = rebirths(p);
         if (!podeRenascer(p)) {
-            p.sendMessage(Masmorras.txt("§5§l✦ REBIRTH §8» §7Para renascer, vença o chefe de §fTODAS §7as masmorras de §fTODOS §7os níveis (1 a " + MAX + ")."));
+            p.sendMessage(Masmorras.txt("§5§l✦ REBIRTH §8» §7Para renascer, vença o chefe de §fTODAS §7as masmorras dos níveis §f1 a " + nivelDoRebirth(p) + "§7."));
             p.sendMessage(Masmorras.txt("§7Você volta ao §fNível de Masmorra 1 §7e refaz tudo, mas ganha §d+1 slot de runa §7(§c+0,3% de dano §7e §a+0,3% de defesa§7) e o título §5§l✦§d§lREBIRTH§5§l✦§7."));
             if (ja > 0) p.sendMessage(Masmorras.txt("§7Seus renascimentos: §d" + ja));
             String f = falta(p);
