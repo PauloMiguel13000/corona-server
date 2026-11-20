@@ -142,6 +142,48 @@ final class Trilha implements Listener {
         fam("nether", "BASTIAO", "WITHER", "CARMESIM", "DISTORCIDO", "ALMAS", "OBSIDIANA", "FORTALEZA");
         fam("vazio", "CIDADELA", "PRISAO", "ILHAS", "NAVE", "CORO", "VAZIO", "ABISMO", "CIDADE_END", "CAOS");
         fam("antiga", "CIDADE_ANTIGA", "SECRETA", "ECO");
+        // 20/11 (Paulo: "faltou as musicas novas dos bosses novos, alem da de luta"): nivel 6 com musica propria
+        // por masmorra (sons/gerar_nivel6.py): n6_<tema>, n6_<tema>_luta e chefe_n6_<tema> (pacote corona_trilha6)
+        DURACAO.put("n6_cinzas", 27.83);
+        DURACAO.put("n6_cinzas_luta", 27.83);
+        DURACAO.put("chefe_n6_cinzas", 39.51);
+        DURACAO.put("n6_catacumba", 45.71);
+        DURACAO.put("n6_catacumba_luta", 45.71);
+        DURACAO.put("chefe_n6_catacumba", 58.91);
+        DURACAO.put("n6_pinaculo", 24.62);
+        DURACAO.put("n6_pinaculo_luta", 24.62);
+        DURACAO.put("chefe_n6_pinaculo", 38.57);
+        DURACAO.put("n6_rubra", 34.91);
+        DURACAO.put("n6_rubra_luta", 34.91);
+        DURACAO.put("chefe_n6_rubra", 47.65);
+        DURACAO.put("n6_eco", 53.33);
+        DURACAO.put("n6_eco_luta", 53.33);
+        DURACAO.put("chefe_n6_eco", 66.12);
+        DURACAO.put("n6_putrido", 40.85);
+        DURACAO.put("n6_putrido_luta", 40.85);
+        DURACAO.put("chefe_n6_putrido", 54.00);
+        DURACAO.put("n6_glaciar", 42.67);
+        DURACAO.put("n6_glaciar_luta", 42.67);
+        DURACAO.put("chefe_n6_glaciar", 55.86);
+        DURACAO.put("n6_abissal", 50.53);
+        DURACAO.put("n6_abissal_luta", 50.53);
+        DURACAO.put("chefe_n6_abissal", 63.53);
+        DURACAO.put("n6_titas", 36.23);
+        DURACAO.put("n6_titas_luta", 36.23);
+        DURACAO.put("chefe_n6_titas", 49.09);
+        DURACAO.put("n6_caos", 30.48);
+        DURACAO.put("n6_caos_luta", 30.48);
+        DURACAO.put("chefe_n6_caos", 42.63);
+        fam("n6_cinzas", "CINZAS");
+        fam("n6_catacumba", "CATACUMBA");
+        fam("n6_pinaculo", "PINACULO");
+        fam("n6_rubra", "RUBRA");
+        fam("n6_eco", "ECO");
+        fam("n6_putrido", "PUTRIDO");
+        fam("n6_glaciar", "GLACIAR");
+        fam("n6_abissal", "ABISSAL");
+        fam("n6_titas", "TITAS");
+        fam("n6_caos", "CAOS");
     }
 
     private static void fam(String faixa, String... ids) {

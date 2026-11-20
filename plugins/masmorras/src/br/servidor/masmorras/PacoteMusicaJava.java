@@ -22,6 +22,10 @@ final class PacoteMusicaJava implements Listener {
     static final String URL_TROVAO = "https://corona-server.duckdns.org/pacotes/corona_trovao_java-f26ea96da2.zip";   // servido pela propria loja (pacotes-site)
     static final String SHA1_TROVAO = "f26ea96da2163da210d7ea419ac715950aa14a79";
     private static final UUID ID_TROVAO = UUID.nameUUIDFromBytes("corona-trilha-trovao".getBytes());
+    /** 20/11: musicas do nivel 6 (pacote separado, servido pelo site da loja: plugins/CoronaPack/pacotes-site). */
+    static final String URL_N6 = "https://corona-server.duckdns.org/pacotes/corona_trilha6_java-0fd3bb7f6c.zip";
+    static final String SHA1_N6 = "0fd3bb7f6ca5e30090a0b7efe6765440f1b03123";
+    private static final UUID ID_N6 = UUID.nameUUIDFromBytes("corona-trilha-nivel6".getBytes());
     private final Masmorras pl;
 
     PacoteMusicaJava(Masmorras pl) {
@@ -34,6 +38,9 @@ final class PacoteMusicaJava implements Listener {
             if (pl.getConfig().getBoolean("trilha.pacote-java-trovao", true))
                 l.addAll(java.util.List.of(ID_TROVAO.toString(), pl.getConfig().getString("trilha.pacote-java-trovao-url", URL_TROVAO),
                         pl.getConfig().getString("trilha.pacote-java-trovao-sha1", SHA1_TROVAO), "Musica do Templo do Trovao"));
+            if (pl.getConfig().getBoolean("trilha.pacote-java-n6", true))
+                l.addAll(java.util.List.of(ID_N6.toString(), pl.getConfig().getString("trilha.pacote-java-n6-url", URL_N6),
+                        pl.getConfig().getString("trilha.pacote-java-n6-sha1", SHA1_N6), "Musicas do nivel 6"));
             return l;
         };
         Bukkit.getServicesManager().register(java.util.function.Function.class, pacotes, pl, org.bukkit.plugin.ServicePriority.Normal);
@@ -70,6 +77,10 @@ final class PacoteMusicaJava implements Listener {
                     p.addResourcePack(ID_TROVAO, pl.getConfig().getString("trilha.pacote-java-trovao-url", URL_TROVAO),
                             HexFormat.of().parseHex(pl.getConfig().getString("trilha.pacote-java-trovao-sha1", SHA1_TROVAO)),
                             "§e§lCorona Server§r\n§fMúsica do Templo do Trovão", false);
+                if (pl.getConfig().getBoolean("trilha.pacote-java-n6", true))
+                    p.addResourcePack(ID_N6, pl.getConfig().getString("trilha.pacote-java-n6-url", URL_N6),
+                            HexFormat.of().parseHex(pl.getConfig().getString("trilha.pacote-java-n6-sha1", SHA1_N6)),
+                            "§e§lCorona Server§r\n§fMúsicas do nível 6", false);
             } catch (Throwable t) {
                 pl.getLogger().warning("Pacote de musica do Java para " + p.getName() + ": " + t);
             }
