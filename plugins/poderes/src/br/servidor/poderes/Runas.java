@@ -158,6 +158,8 @@ final class Runas implements Listener {
     }
 
     void iniciar() {
+        custoBase = pl.getConfig().getInt("runas.custo-base", 250);
+        custoPorNivel = pl.getConfig().getInt("runas.custo-por-nivel", 90);
         Bukkit.getScheduler().runTaskTimer(pl, this::aCadaDoisSegundos, 60L, 40L);
         Bukkit.getScheduler().runTaskTimer(pl, this::salvar, 1200L, 1200L);
     }
@@ -420,8 +422,11 @@ final class Runas implements Listener {
     }
 
     /** Preco (pontos de XP) da runa do nivel n (2 a 60). */
+    // 20/11 (Paulo: "aumente o custo de xp para upar a runa"): 3x mais caro (era 80 + 30 x nivel); config runas.custo-base/-por-nivel
+    static int custoBase = 250, custoPorNivel = 90;
+
     static int custo(int n) {
-        return 80 + 30 * n;
+        return custoBase + custoPorNivel * n;
     }
 
     // ------------------------------------------------------------------ menu
@@ -479,8 +484,9 @@ final class Runas implements Listener {
         h.pagina = pagina;
         Inventory inv = Bukkit.createInventory(h, 54, Poderes.txt("§5§lRunas " + c.cor + c.nome + " §8(nv " + n + "/" + MAX + ")"));
         h.inv = inv;
-        ItemStack fundo = item(Material.BLACK_STAINED_GLASS_PANE, " ", List.of(), false);
-        for (int i = 0; i < 54; i++) inv.setItem(i, fundo);
+        // 20/11 (Paulo: "coloque vermelho no que nao esta habilitado, e nao preto em todos"): moldura roxa, o resto vazio
+        ItemStack moldura = item(Material.PURPLE_STAINED_GLASS_PANE, " ", List.of(), false);
+        for (int i = 0; i < 54; i++) if (i < 9 || i >= 45 || i % 9 == 0 || i % 9 == 8) inv.setItem(i, moldura);
         // resumo
         List<String> res = new ArrayList<>();
         res.add("§7Nível da classe: §f§l" + n + " §7de " + MAX);
@@ -495,7 +501,7 @@ final class Runas implements Listener {
         for (int i = 0; i < SLOTS_ABA.length; i++) {
             int de = i * 10 + 1, ate = i * 10 + 10;
             boolean feita = n >= ate, atual = i == pagina;
-            Material m = feita ? Material.LIME_STAINED_GLASS_PANE : n >= de ? Material.YELLOW_STAINED_GLASS_PANE : Material.GRAY_STAINED_GLASS_PANE;
+            Material m = feita ? Material.LIME_STAINED_GLASS_PANE : n >= de ? Material.YELLOW_STAINED_GLASS_PANE : Material.RED_STAINED_GLASS_PANE;
             inv.setItem(SLOTS_ABA[i], item(m, (atual ? "§f§l▶ " : "§7") + "Níveis " + de + " a " + ate,
                     List.of(feita ? "§aCompleta" : n >= de ? "§eEm andamento" : "§8Ainda trancada", "§7Clique para ver"), atual));
         }
@@ -522,15 +528,16 @@ final class Runas implements Listener {
                 nome = "§a§lRuna " + nv + " §a✔";
                 l.add("§aLiberada");
             } else if (proxima) {
-                mat = marco ? Material.GOLD_NUGGET : Material.LIME_DYE;
+                boolean semPoder = poder >= 0 && poder < nv && !p.hasPermission("poderes.todos");
+                mat = semPoder ? Material.RED_DYE : marco ? Material.GOLD_NUGGET : Material.LIME_DYE;
                 nome = "§e§lRuna " + nv;
                 l.add("§7Preço: §a" + custo(nv) + " pontos de XP §7(você tem " + xpTotal(p) + ")");
                 if (poder >= 0 && poder < nv) l.add("§cPrecisa do nível de poder " + nv + " §7(você: " + poder + ")");
                 else l.add("§a§l▶ Clique para comprar");
             } else {
-                mat = Material.GRAY_DYE;
-                nome = "§8Runa " + nv;
-                l.add("§8Compre as anteriores primeiro");
+                mat = Material.RED_STAINED_GLASS_PANE;
+                nome = "§cRuna " + nv + " §8(trancada)";
+                l.add("§cCompre as anteriores primeiro");
             }
             inv.setItem(SLOTS_RUNA[k], item(mat, nome, l, tem && marco));
         }
@@ -538,8 +545,8 @@ final class Runas implements Listener {
         int rb = rebirths(p);
         for (int i = 0; i < SLOTS_REBIRTH.length; i++) {
             boolean ok = rb > i;
-            inv.setItem(SLOTS_REBIRTH[i], item(ok ? Material.PURPLE_STAINED_GLASS_PANE : Material.GRAY_STAINED_GLASS_PANE,
-                    ok ? "§d§lRuna de REBIRTH " + (i + 1) + " §a✔" : "§8Runa de REBIRTH " + (i + 1),
+            inv.setItem(SLOTS_REBIRTH[i], item(ok ? Material.MAGENTA_STAINED_GLASS_PANE : Material.RED_STAINED_GLASS_PANE,
+                    ok ? "§d§lRuna de REBIRTH " + (i + 1) + " §a✔" : "§cRuna de REBIRTH " + (i + 1) + " §8(trancada)",
                     List.of("§7+0,3% de dano e +0,3% de defesa", ok ? "§aLiberada" : "§8Vem com o " + (i + 1) + "º REBIRTH"), ok));
         }
         inv.setItem(45, item(Material.END_CRYSTAL, "§5§l✦ §d§lREBIRTH §5§l✦",
